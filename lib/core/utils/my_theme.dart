@@ -39,7 +39,7 @@ class AppTheme {
   static ThemeData light() {
     return ThemeData.from(
       colorScheme: colorScheme,
-      textTheme: GoogleFonts.ubuntuTextTheme(),
+      textTheme: GoogleFonts.poppinsTextTheme(),
       useMaterial3: true,
     ).copyWith(
       scaffoldBackgroundColor: colorScheme.surface,
@@ -96,7 +96,7 @@ class AppTheme {
   static ThemeData dark() {
     return ThemeData.from(
       colorScheme: darkColorScheme,
-      textTheme: GoogleFonts.ubuntuTextTheme(ThemeData.dark().textTheme),
+      textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
       useMaterial3: true,
     ).copyWith(
       scaffoldBackgroundColor: darkColorScheme.surface,

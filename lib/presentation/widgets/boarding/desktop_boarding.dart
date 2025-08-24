@@ -4,16 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:lazycopy/core/utils/my_background.dart';
 
 
-class MobileBoarding extends StatefulWidget {
+class DesktopBoarding extends StatefulWidget {
   
-  const MobileBoarding({super.key});
+  const DesktopBoarding({super.key});
 
   @override
-  State<MobileBoarding> createState() => _MobileBoardingState();
+  State<DesktopBoarding> createState() => _DesktopBoardingState();
 }
 
-class _MobileBoardingState extends State<MobileBoarding> {
+class _DesktopBoardingState extends State<DesktopBoarding> {
   Color _buttonColor = Colors.black87;
+
 
   @override
   Widget build(BuildContext context) {

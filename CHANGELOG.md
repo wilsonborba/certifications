@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 🚀 Features
+
+- *(landing)* First and initial screen created for the app
+
 ### ⚙️ Miscellaneous Tasks
 
 - *(env)* Initial structure of app created

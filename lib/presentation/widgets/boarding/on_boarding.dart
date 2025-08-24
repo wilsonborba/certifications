@@ -2,8 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:lazycopy/presentation/screen_adjuster.dart';
+import 'package:lazycopy/presentation/widgets/boarding/desktop_boarding.dart';
 import 'package:lazycopy/presentation/widgets/boarding/mobile_boarding.dart';
-import 'package:lazycopy/presentation/widgets/fallback.dart';
+
 
 
 
@@ -15,7 +16,7 @@ class OnBoardingScreen  extends StatelessWidget {
   Widget build(BuildContext context) {
        return ScreenAdjuster(
           mobileWidget: MobileBoarding(),
-          desktopWidget:  FallbackDesktop(),
+          desktopWidget:  DesktopBoarding(),
        ).adjust(context);
 }
 
