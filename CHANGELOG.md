@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### 🚀 Features
 
 - *(landing)* First and initial screen created for the app
+- *(app)* Changed the purpose of the app
 
 ### ⚙️ Miscellaneous Tasks
 

@@ -34,7 +34,7 @@ class _MobileBoardingState extends State<MobileBoarding> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-              Text('Welcome to LazyCopy', style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold)),
+              Text('Welcome to Accredit', style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold)),
             SizedBox(height: 30),
                ElevatedButton.icon(
               
@@ -55,7 +55,7 @@ class _MobileBoardingState extends State<MobileBoarding> {
                   _buttonColor = isHovered ? Colors.black38 : Colors.black87;
                 });
               },
-              label: Text('New Note'),
+              label: Text('New Certification'),
             ),
           ],
         ),
