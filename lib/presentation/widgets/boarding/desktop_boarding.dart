@@ -2,6 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:lazycopy/core/utils/my_background.dart';
+import 'package:lazycopy/presentation/components/boarding/first_phrase.dart';
+import 'package:lazycopy/presentation/components/boarding/middle_button.dart';
+import 'package:lazycopy/presentation/components/boarding/second_phrase.dart';
 
 
 class DesktopBoarding extends StatefulWidget {
@@ -13,7 +16,7 @@ class DesktopBoarding extends StatefulWidget {
 }
 
 class _DesktopBoardingState extends State<DesktopBoarding> {
-  Color _buttonColor = Colors.black87;
+
 
 
   @override
@@ -32,34 +35,48 @@ class _DesktopBoardingState extends State<DesktopBoarding> {
                 speed: 28,            // px/sec nominal speed
               ),
             ), Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-              Text('Welcome to Accredit', style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold)),
-            SizedBox(height: 30),
-               ElevatedButton.icon(
+        child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
               
-              icon: const Icon(Icons.add),
-              onPressed: () {
-              },
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(150, 50),
-                backgroundColor: _buttonColor,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  
+              child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          
+          children: [
+               Align(
+                  alignment: Alignment.topLeft,
+                  child: Padding(
+                     padding: EdgeInsets.only(left: 10),
+                    child: FirstPhrase(fontSize: 50),
+                  ),
+                ),
+            SizedBox(height: 30),
+             Align(
+                  alignment: Alignment.center,
+                  child: Padding(
+                    padding: EdgeInsets.all(1),
+                    child: MiddleButton(
+                  label: "New Certification",
+                  fontSize: 22,
+                  minimumSize: const Size(200, 80),
+                  iconSize: 30,
+                  onPressed: () {
+                    print("Button pressed!");
+                  },
+                ),
+                  ),
+                ),
+              SizedBox(height: 30),
+              const Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: EdgeInsets.all(1),
+                  child: SecondPhrase(fontSize: 50),
                 ),
               ),
-              onHover: (isHovered) {
-                // Change the button color on hover
-                setState(() {
-                  _buttonColor = isHovered ? Colors.black38 : Colors.black87;
-                });
-              },
-              label: Text('New Certification'),
-            ),
+
+
           ],
-        ),
+        )),
       )]) 
     );
   }
