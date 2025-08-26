@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - *(attachment)* Set the push function to go to attachment page
 - *(attachment)* Created the initial pdf picker card
 - *(attachment)* Added a pdf loader on picker card
+- *(attachment)* Pdf loader without drag and drop
 
 ### ⚙️ Miscellaneous Tasks
 

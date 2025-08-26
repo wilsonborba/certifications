@@ -30,7 +30,7 @@ class _AppState extends State<App> {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.light,
       home: OnBoardingScreen(),
     );
   }

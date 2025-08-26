@@ -173,9 +173,9 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
                     height: 1.35,
                   ),
                   children:  [
-                    TextSpan(text: 'Click on button\nor\n'),
+                    TextSpan(text: 'Click on button to attach a file\n\n'),
                     TextSpan(
-                      text: 'drag a file here.',
+                      text: 'Drag & drop is not supported yet...',
                       style: TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ],
