@@ -1,6 +1,8 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:lazycopy/presentation/components/attachment/card_pdf_picker.dart';
+import 'package:lazycopy/presentation/components/attachment/top_headers.dart';
 
 
 
@@ -21,8 +23,28 @@ class _DesktopAttachmentState extends State<DesktopAttachment> {
     // Implement the mobile landing screen UI here
     return Scaffold(
 
-      body: Container(
-        child: Text('Desktop Attachment Screen'),
+      body: SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              
+              child: Column(
+          children: [
+            TopHeaders(),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    color: Colors.grey[200],
+
+                  ),
+                ),
+                Expanded(
+                  child: CardPdfPicker(),
+                ),
+              ],
+            ),
+
+          ],
+        ),
       ));
   }
 }
