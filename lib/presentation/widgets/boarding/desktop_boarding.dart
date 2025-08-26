@@ -24,10 +24,17 @@ class _DesktopBoardingState extends State<DesktopBoarding> {
     // Implement the mobile landing screen UI here
     return Scaffold(
 
-      body: Stack(
+      body: SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              
+              child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [ 
+             Stack(
           children: [
             // BACKGROUND (under everything)
-            const Positioned.fill(
+             Positioned.fill(
               child: LiquidMetalBackground(
                 blobCount: 10,
                 blurSigma: 22,        // ≈ “70% blur” feel
@@ -45,11 +52,11 @@ class _DesktopBoardingState extends State<DesktopBoarding> {
                Align(
                   alignment: Alignment.topLeft,
                   child: Padding(
-                     padding: EdgeInsets.only(left: 10),
+                     padding: EdgeInsets.only(left: 10, top: 80),
                     child: FirstPhrase(fontSize: 50),
                   ),
                 ),
-            SizedBox(height: 30),
+            SizedBox(height: 80),
              Align(
                   alignment: Alignment.center,
                   child: Padding(
@@ -65,11 +72,11 @@ class _DesktopBoardingState extends State<DesktopBoarding> {
                 ),
                   ),
                 ),
-              SizedBox(height: 30),
+              SizedBox(height: 80),
               const Align(
                 alignment: Alignment.topLeft,
                 child: Padding(
-                  padding: EdgeInsets.all(1),
+                  padding:  EdgeInsets.only(right: 10, bottom: 80),
                   child: SecondPhrase(fontSize: 50),
                 ),
               ),
@@ -77,7 +84,18 @@ class _DesktopBoardingState extends State<DesktopBoarding> {
 
           ],
         )),
-      )]) 
-    );
+      )]),
+      Stack(
+        children: [
+          Container(
+            color: Colors.blueAccent,
+            height: 800 ,
+          )
+        ],
+      )
+      
+      
+      ]) 
+    ));
   }
 }
