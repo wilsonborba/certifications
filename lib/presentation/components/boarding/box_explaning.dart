@@ -7,6 +7,8 @@ class BoxExplaning extends StatelessWidget {
   /// Title and body text
   final String title;
   final String body;
+  final double width;
+  final double height;
 
   /// Text sizes (you control them; they’re static)
   final double titleSize;
@@ -36,12 +38,14 @@ class BoxExplaning extends StatelessWidget {
     required this.title,
     required this.body,
     required this.image,
+    this.width = 400,
+    this.height = 250,
     this.isSvg = false,
     this.imageSource = BadgeImageSource.asset,
     this.titleSize = 20,
     this.bodySize = 14,
     this.cardColor = const Color(0xFF2B2B2B), // near-black
-    this.borderRadius = 16,
+    this.borderRadius = 20,
     this.padding = const EdgeInsets.fromLTRB(16, 16, 16, 16),
     this.margin = const EdgeInsets.all(0),
     this.boxShadow = const [
@@ -83,27 +87,34 @@ class BoxExplaning extends StatelessWidget {
 
     return Container(
       margin: margin,
-      child: Stack(
+      width: width,
+      height: height,
+ 
+      child: Center( child: Stack(
         clipBehavior: Clip.none,
         children: [
           // Base card with accent "shadow" border
           Container(
+            width: width - 100,
+            height: height - 200,
             decoration: BoxDecoration(
-              color: cardColor,
+              color: accentColor,
               borderRadius: BorderRadius.circular(borderRadius),
               boxShadow: boxShadow,
+              
             ),
             child: Stack(
               children: [
                 // Accent strip (like the green underglow)
                 Positioned(
-                  right: 8,
+                  right: 0,
                   bottom: 8,
                   left: 8,
                   child: Container(
-                    height: accentThickness,
+                    height: height - 200,
+                    width: width - 300,
                     decoration: BoxDecoration(
-                      color: accentColor,
+                      color: cardColor,
                       borderRadius: BorderRadius.circular(borderRadius),
                     ),
                   ),
@@ -117,7 +128,7 @@ class BoxExplaning extends StatelessWidget {
                     bottom: resolvedPadding.bottom,
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       // Title
                       Text(
@@ -131,34 +142,52 @@ class BoxExplaning extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       // Body
-                      Text(
-                        body,
-                        style: TextStyle(
-                          fontSize: bodySize,
-                          fontWeight: FontWeight.w400,
-                          // 0.9 opacity but using .withValues
-                          color: Colors.white.withValues(alpha: 230),
-                          height: 1.35,
-                        ),
-                      ),
+                      Padding(
+                        padding: EdgeInsets.only(left: 20, top: 10),
+                        child:  LayoutBuilder(
+                          builder: (context, constraints) {
+                            // If parent is unconstrained (e.g. inside a horizontal scroller),
+                            // fall back to the screen width so Text gets a finite max width.
+                            final maxW = constraints.maxWidth.isFinite
+                                ? constraints.maxWidth
+                                : MediaQuery.of(context).size.width;
+
+                            return ConstrainedBox(
+                              constraints: BoxConstraints(maxWidth: maxW),
+                              child: Text(
+                                body,
+                                softWrap: true,
+                                maxLines: null,                // allow multiple lines
+                                overflow: TextOverflow.visible,
+                                textAlign: TextAlign.left,
+                                textWidthBasis: TextWidthBasis.parent,
+                                style: TextStyle(
+                                  fontSize: bodySize,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.white.withValues(alpha: 100), // or .withOpacity(0.9)
+                                  height: 1.35,
+                                ),
+                              ),
+                            );
+                          },
+                      )),
                     ],
                   ),
                 ),
+                
               ],
             ),
           ),
 
-          // Overlapping image on the top-right
           Positioned(
-            top: -imageOffset,
-            right: -imageOffset,
-            child: Padding(
-              padding: EdgeInsets.only(top: imageInset, right: imageInset),
-              child: _buildImage(),
-            ),
+            top: imageOffset,
+            right: imageOffset,
+            child:  _buildImage(),
+            
           ),
+          
         ],
-      ),
+      )),
     );
   }
 }

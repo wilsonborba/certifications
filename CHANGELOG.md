@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - *(app)* Changed the purpose of the app
 - *(landing)* First and initial screen full implemented
 - *(landing)* Implemented scroll on boarding
+- *(landing)* Fully implemented the second screen on boarding
 
 ### ⚙️ Miscellaneous Tasks
 

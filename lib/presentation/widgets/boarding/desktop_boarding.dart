@@ -1,7 +1,9 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:lazycopy/core/utils/my_background.dart';
+import 'package:lazycopy/presentation/components/boarding/box_explaning.dart';
 import 'package:lazycopy/presentation/components/boarding/first_phrase.dart';
 import 'package:lazycopy/presentation/components/boarding/middle_button.dart';
 import 'package:lazycopy/presentation/components/boarding/second_phrase.dart';
@@ -84,15 +86,74 @@ class _DesktopBoardingState extends State<DesktopBoarding> {
 
           ],
         )),
-      )]),
-      Stack(
-        children: [
-          Container(
-            color: Colors.blueAccent,
-            height: 800 ,
-          )
-        ],
       )
+      ]),
+// 2) SECTION: background fills the area, content centered, scrolls if needed
+SizedBox(
+  height: 1200,                  // pick a static section height for your design
+  width: double.infinity,       // fill the viewport width
+  child: Stack(
+    children: [
+      // background fills the whole section
+      Positioned.fill(
+        child: SvgPicture.asset(
+          'lib/presentation/assets/img/second_screen_bkg.svg',
+          fit: BoxFit.cover,
+        ),
+      ),
+
+      // centered content; if total row > viewport, it scrolls horizontally
+      Center(
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Padding(
+            // gutters so cards never touch the screen edges
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,        // shrink to content width
+              children: [
+                BoxExplaning(
+                  title: 'Playful Side',
+                  body:
+                      'Turn anything into a badge. From memes to random notes, transform everyday texts into funny certificates you can show off. Lighthearted, creative, and perfect for sharing laughs.',
+                  height: 820,
+                  width: 600,
+                  image: 'lib/presentation/assets/img/creeper.png',
+                  isSvg: false,
+                  imageSource: BadgeImageSource.asset,
+                  titleSize: 45,
+                  bodySize: 30,
+                  imageSize: 180,
+                  imageOffset: -60,
+                  imageInset: -20,
+                  margin: const EdgeInsets.all(12),
+                ),
+                const SizedBox(width: 24),
+                BoxExplaning(
+                  title: 'Serious Mode',
+                  body:
+                      'When knowledge really counts. Upload books, study materials, or professional texts, then take AI-generated quizzes to prove your skills. Verified results for those who want recognition that matters.',
+                  height: 820,
+                  width: 600,
+                  image: 'lib/presentation/assets/img/stamp.png',
+                  isSvg: false,
+                  imageSource: BadgeImageSource.asset,
+                  titleSize: 45,
+                  bodySize: 30,
+                  imageSize: 200,
+                  imageOffset: -70,
+                  imageInset: -30,
+                  margin: const EdgeInsets.all(12),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ],
+  ),
+)
+
       
       
       ]) 
