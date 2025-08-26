@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - *(landing)* Implemented scroll on boarding
 - *(landing)* Fully implemented the second screen on boarding
 - *(landing)* Fully implemented the second screen on mobile
+- *(attachment)* Set the push function to go to attachment page
 
 ### ⚙️ Miscellaneous Tasks
 

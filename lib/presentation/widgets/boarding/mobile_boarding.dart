@@ -2,10 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:lazycopy/core/utils/my_background.dart';
+import 'package:lazycopy/core/utils/my_nagivation.dart';
 import 'package:lazycopy/presentation/components/boarding/box_explaning.dart';
 import 'package:lazycopy/presentation/components/boarding/first_phrase.dart';
 import 'package:lazycopy/presentation/components/boarding/second_phrase.dart';
 import 'package:lazycopy/presentation/components/boarding/middle_button.dart';
+import 'package:lazycopy/presentation/widgets/attachment/mobile_attachment.dart';
 
 class MobileBoarding extends StatelessWidget {
   const MobileBoarding({super.key});
@@ -59,7 +61,7 @@ class MobileBoarding extends StatelessWidget {
                   minimumSize: const Size(150, 50),
                   iconSize: 22,
                   onPressed: () {
-                    print("Button pressed!");
+                    NavigationService.push(MobileAttachment());
                   },
                 ),
                   ),
@@ -124,7 +126,7 @@ SizedBox(
                   title: 'Serious Mode',
                   body:
                       'When knowledge really counts. Upload books, study materials, or professional texts, then take AI-generated quizzes to prove your skills. Verified results for those who want recognition that matters.',
-                  height: 650,
+                  height: 670,
                   width: 350,
                   image: 'lib/presentation/assets/img/stamp.png',
                   isSvg: false,
