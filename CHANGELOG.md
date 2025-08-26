@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - *(landing)* First and initial screen full implemented
 - *(landing)* Implemented scroll on boarding
 - *(landing)* Fully implemented the second screen on boarding
+- *(landing)* Fully implemented the second screen on mobile
 
 ### ⚙️ Miscellaneous Tasks
 

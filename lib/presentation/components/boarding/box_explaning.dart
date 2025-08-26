@@ -38,6 +38,7 @@ class BoxExplaning extends StatelessWidget {
     required this.title,
     required this.body,
     required this.image,
+    required this.accentColor,
     this.width = 400,
     this.height = 250,
     this.isSvg = false,
@@ -58,7 +59,6 @@ class BoxExplaning extends StatelessWidget {
     this.imageSize = 52,
     this.imageOffset = 6,
     this.imageInset = 8,
-    this.accentColor = const Color(0xFF38E38A),
     this.accentThickness = 6,
   });
 
@@ -84,6 +84,8 @@ class BoxExplaning extends StatelessWidget {
     // Make sure text never goes under the image by padding the right side.
     final EdgeInsets resolvedPadding = padding.resolve(Directionality.of(context));
     final contentRightPadding = resolvedPadding.right + imageSize * 0.6;
+
+    
 
     return Container(
       margin: margin,
