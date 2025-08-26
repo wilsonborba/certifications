@@ -1,10 +1,10 @@
 import 'dart:typed_data';
-import 'dart:ui' as ui show ImageByteFormat;
+import 'dart:ui' as ui show ImageByteFormat, Image;
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:pdf_render/pdf_render.dart';
+import 'package:printing/printing.dart';
 
 class CardPdfPicker extends StatefulWidget {
   const CardPdfPicker({
@@ -83,19 +83,16 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
       return;
     }
 
-    // ---- Render first page into PNG bytes using pdf_render ----
-   try {
-      final doc = await PdfDocument.openData(_pdfBytes!);
-      final page = await doc.getPage(1);
-
-      final pageImage = await page.render(width: 1400);       // get first page
-      final uiImg = await pageImage.createImageIfNotAvailable();
-      final byteData = await uiImg.toByteData(format: ui.ImageByteFormat.png);
+    try {
+      // Rasterize only page 1 (index 0). Increase dpi for sharper preview.
+      final stream = Printing.raster(_pdfBytes!, pages: const [0], dpi: 144);
+      final raster = await stream.first;                // PdfRaster
+      final ui.Image img = await raster.toImage();      // convert to ui.Image
+      final byteData =
+          await img.toByteData(format: ui.ImageByteFormat.png);
       final png = byteData!.buffer.asUint8List();
 
-      // Clean up
-      pageImage.dispose();     // <-- NO 'await' (returns void)
-      await doc.dispose();     // <-- DO await (Future<void>)
+      // (optional) img.dispose();  // if you're on a Flutter version with ui.Image.dispose()
 
       setState(() {
         _previewPng = png;
@@ -107,8 +104,7 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
         _error = 'Failed to render preview: $e';
       });
     }
-      }
-
+  }
   // Stub: always returns true. Replace with your backend call later.
   Future<bool> _fakeCheckFileHashForThreat(String sha256) async {
     if (kDebugMode) {
@@ -143,10 +139,14 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
           child: Column(
             children: [
               // Red warning icon
-              Icon(
+              _fileName == null ? Icon(
                 Icons.report_gmailerrorred_outlined,
                 size: widget.iconSize,
                 color: const Color(0xFFB00020),
+              ) : Icon(
+                Icons.picture_as_pdf,
+                size: widget.iconSize,
+                color: Theme.of(context).colorScheme.primary,
               ),
               const SizedBox(height: 20),
 
@@ -164,7 +164,7 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
               const SizedBox(height: 18),
 
               // Body (with bold segment)
-              RichText(
+              _fileName == null ? RichText(
                 textAlign: TextAlign.center,
                 text: TextSpan(
                   style: TextStyle(
@@ -172,7 +172,7 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
                     color: Colors.black87,
                     height: 1.35,
                   ),
-                  children: const [
+                  children:  [
                     TextSpan(text: 'Click on button\nor\n'),
                     TextSpan(
                       text: 'drag a file here.',
@@ -180,13 +180,21 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
                     ),
                   ],
                 ),
+              ) : Text(
+                'You can attach another file if you want.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: widget.bodySize,
+                  color: Colors.black87,
+                  height: 1.35,
+                ),
               ),
 
               const Spacer(),
 
               // Preview area
               Container(
-                height: 260,
+                height: 350,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: Colors.white,

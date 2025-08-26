@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - *(landing)* Fully implemented the second screen on mobile
 - *(attachment)* Set the push function to go to attachment page
 - *(attachment)* Created the initial pdf picker card
+- *(attachment)* Added a pdf loader on picker card
 
 ### ⚙️ Miscellaneous Tasks
 

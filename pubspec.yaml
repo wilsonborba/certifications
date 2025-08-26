@@ -42,8 +42,8 @@ dependencies:
   google_fonts: ^4.0.3
   flutter_svg: ^2.0.7
   file_picker: ^8.0.0
-  pdf_render: ^1.4.7
   crypto: ^3.0.3 
+  printing: ^5.13.1
 
 dev_dependencies:
   flutter_test:
