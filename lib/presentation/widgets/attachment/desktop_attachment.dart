@@ -1,5 +1,6 @@
 
 
+import 'package:accredit/presentation/components/attachment/tab_card_sources.dart';
 import 'package:flutter/material.dart';
 import 'package:accredit/presentation/components/attachment/card_pdf_picker.dart';
 import 'package:accredit/presentation/components/attachment/top_headers.dart';
@@ -32,9 +33,13 @@ class _DesktopAttachmentState extends State<DesktopAttachment> {
             Row(
               children: [
                 Expanded(
-                  child: Container(
-                    color: Colors.grey[200],
-
+                  child: Center(
+                    child: TabCardSources(
+                      leftLabel: 'Playful Mode',     // won’t wrap
+                      rightLabel: 'Serious Mode',    // won’t wrap
+                      leftChild: const Center(child: Text('Left content')),
+                      rightChild: const Center(child: Text('Right content')),
+                    ),
                   ),
                 ),
                 Expanded(

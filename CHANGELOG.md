@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - *(attachment)* Added a pdf loader on picker card
 - *(attachment)* Pdf loader without drag and drop
 - *(attachment)* Added a prescan malware for pdf picker
+- *(explorer_card)* Created the card switcher for explorer sources
 
 ### ⚙️ Miscellaneous Tasks
 
