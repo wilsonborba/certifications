@@ -1,6 +1,6 @@
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:lazycopy/core/utils/my_logs.dart';
+import 'package:accredit/core/utils/my_logs.dart';
 
 
 

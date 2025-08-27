@@ -2,7 +2,7 @@
 
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:lazycopy/dal/local/local_source_adapter.dart';
+import 'package:accredit/dal/local/local_source_adapter.dart';
 
 
 

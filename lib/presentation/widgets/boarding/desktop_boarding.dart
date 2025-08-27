@@ -2,13 +2,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:lazycopy/core/utils/my_background.dart';
-import 'package:lazycopy/core/utils/my_nagivation.dart';
-import 'package:lazycopy/presentation/components/boarding/box_explaning.dart';
-import 'package:lazycopy/presentation/components/boarding/first_phrase.dart';
-import 'package:lazycopy/presentation/components/boarding/middle_button.dart';
-import 'package:lazycopy/presentation/components/boarding/second_phrase.dart';
-import 'package:lazycopy/presentation/widgets/attachment/desktop_attachment.dart';
+import 'package:accredit/core/utils/my_background.dart';
+import 'package:accredit/core/utils/my_nagivation.dart';
+import 'package:accredit/presentation/components/boarding/box_explaning.dart';
+import 'package:accredit/presentation/components/boarding/first_phrase.dart';
+import 'package:accredit/presentation/components/boarding/middle_button.dart';
+import 'package:accredit/presentation/components/boarding/second_phrase.dart';
+import 'package:accredit/presentation/widgets/attachment/desktop_attachment.dart';
 
 
 class DesktopBoarding extends StatefulWidget {

@@ -1,8 +1,8 @@
 
 
 import 'package:flutter/material.dart';
-import 'package:lazycopy/app.dart';
-import 'package:lazycopy/core/settings.dart';
+import 'package:accredit/app.dart';
+import 'package:accredit/core/settings.dart';
 
 
 

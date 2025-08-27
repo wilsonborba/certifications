@@ -1,10 +1,10 @@
 
 
 import 'package:flutter/material.dart';
-import 'package:lazycopy/core/utils/my_logs.dart';
-import 'package:lazycopy/core/utils/my_nagivation.dart';
-import 'package:lazycopy/core/utils/my_theme.dart';
-import 'package:lazycopy/presentation/widgets/boarding/on_boarding.dart';
+import 'package:accredit/core/utils/my_logs.dart';
+import 'package:accredit/core/utils/my_nagivation.dart';
+import 'package:accredit/core/utils/my_theme.dart';
+import 'package:accredit/presentation/widgets/boarding/on_boarding.dart';
 
 
 

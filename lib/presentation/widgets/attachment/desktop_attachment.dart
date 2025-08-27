@@ -1,8 +1,8 @@
 
 
 import 'package:flutter/material.dart';
-import 'package:lazycopy/presentation/components/attachment/card_pdf_picker.dart';
-import 'package:lazycopy/presentation/components/attachment/top_headers.dart';
+import 'package:accredit/presentation/components/attachment/card_pdf_picker.dart';
+import 'package:accredit/presentation/components/attachment/top_headers.dart';
 
 
 
@@ -40,8 +40,10 @@ class _DesktopAttachmentState extends State<DesktopAttachment> {
                 Expanded(
                   child: CardPdfPicker(),
                 ),
+
               ],
             ),
+            SizedBox(height: 40),
 
           ],
         ),

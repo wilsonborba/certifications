@@ -3,7 +3,7 @@
 
 
 import 'package:flutter/material.dart';
-import 'package:lazycopy/core/utils/my_router_parser.dart';
+import 'package:accredit/core/utils/my_router_parser.dart';
 
 
 

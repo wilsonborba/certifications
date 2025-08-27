@@ -4,6 +4,7 @@ import 'package:crypto/crypto.dart' as crypto;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:accredit/core/utils/my_pdf_frontend_prescan.dart' as pre;
 import 'package:printing/printing.dart';
 
 class CardPdfPicker extends StatefulWidget {
@@ -106,12 +107,14 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
     }
   }
   // Stub: always returns true. Replace with your backend call later.
-  Future<bool> _fakeCheckFileHashForThreat(String sha256) async {
-    if (kDebugMode) {
-      // print('SHA-256: $sha256');  // for debugging
-    }
-    await Future<void>.delayed(const Duration(milliseconds: 200));
-    return true;
+  Future<bool> _fakeCheckFileHashForThreat(String sha256) {
+    // You can pass bytes/name/mime now for full checks:
+    return pre.fakeCheckFileHashForThreat(
+      sha256,
+      bytes: _pdfBytes,           // your picked bytes
+      fileName: _fileName,        // optional
+      mimeType: 'application/pdf' // optional (from dropzone if you have it)
+    );
   }
 
   @override
@@ -173,9 +176,9 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
                     height: 1.35,
                   ),
                   children:  [
-                    TextSpan(text: 'Click on button to attach a file\n\n'),
+                    TextSpan(text: '\n\n'),
                     TextSpan(
-                      text: 'Drag & drop is not supported yet...',
+                      text: 'Click on button to attach a file',
                       style: TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ],
@@ -254,7 +257,7 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
               if (_error != null) ...[
                 const SizedBox(height: 12),
                 Text(
-                  _error!,
+                  "Sorry, we could not upload due to some unknown error.",
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: Color(0xFFB00020),

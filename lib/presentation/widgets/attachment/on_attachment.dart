@@ -1,9 +1,9 @@
 
 
 import 'package:flutter/material.dart';
-import 'package:lazycopy/presentation/screen_adjuster.dart';
-import 'package:lazycopy/presentation/widgets/attachment/desktop_attachment.dart';
-import 'package:lazycopy/presentation/widgets/attachment/mobile_attachment.dart';
+import 'package:accredit/presentation/screen_adjuster.dart';
+import 'package:accredit/presentation/widgets/attachment/desktop_attachment.dart';
+import 'package:accredit/presentation/widgets/attachment/mobile_attachment.dart';
 
 
 

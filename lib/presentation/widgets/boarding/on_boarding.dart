@@ -1,9 +1,9 @@
 
 
 import 'package:flutter/material.dart';
-import 'package:lazycopy/presentation/screen_adjuster.dart';
-import 'package:lazycopy/presentation/widgets/boarding/desktop_boarding.dart';
-import 'package:lazycopy/presentation/widgets/boarding/mobile_boarding.dart';
+import 'package:accredit/presentation/screen_adjuster.dart';
+import 'package:accredit/presentation/widgets/boarding/desktop_boarding.dart';
+import 'package:accredit/presentation/widgets/boarding/mobile_boarding.dart';
 
 
 
