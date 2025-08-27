@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - *(attachment)* Added a prescan malware for pdf picker
 - *(explorer_card)* Created the card switcher for explorer sources
 - *(explorer_card)* Created the card values to return a example of view
+- *(explorer_card)* Created the better card values img to return a example of view
 
 ### ⚙️ Miscellaneous Tasks
 
