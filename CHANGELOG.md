@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - *(explorer_card)* Created the card switcher for explorer sources
 - *(explorer_card)* Created the card values to return a example of view
 - *(explorer_card)* Created the better card values img to return a example of view
+- *(attachment)* Improved a minimal design on cards
 
 ### ⚙️ Miscellaneous Tasks
 

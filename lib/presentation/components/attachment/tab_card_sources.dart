@@ -209,6 +209,7 @@ class _TabCardSourcesState extends State<TabCardSources> {
                 decoration: BoxDecoration(
                   color: widget.cardColor,
                   borderRadius: BorderRadius.circular(widget.cardRadius),
+                 
                   boxShadow: [
                     // colored “glow” that follows the switcher
                     // BoxShadow(
@@ -218,11 +219,11 @@ class _TabCardSourcesState extends State<TabCardSources> {
                     //   offset: const Offset(0, 14),
                     // ),
                     // subtle base shadow to keep depth consistent
-                    BoxShadow(
-                      color: Colors.black.withAlpha(100),
-                      blurRadius: 14,
-                      offset: const Offset(0, 6),
-                    ),
+                    // BoxShadow(
+                    //   color: Colors.black.withAlpha(100),
+                    //   blurRadius: 14,
+                    //   offset: const Offset(0, 6),
+                    // ),
                   ],
                 ),
                 child: Padding(

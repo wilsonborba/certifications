@@ -126,15 +126,16 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
         width: widget.width,
         height: widget.height,
         decoration: BoxDecoration(
-          color: const Color(0xFFF2F2F2),
+          // color: const Color(0xFFF2F2F2),
           borderRadius: BorderRadius.circular(widget.cornerRadius),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 18,
-              offset: Offset(0, 10),
-            )
-          ],
+           border: Border.all(color: Colors.black12),
+          // boxShadow: const [
+          //   BoxShadow(
+          //     color: Colors.black26,
+          //     blurRadius: 18,
+          //     offset: Offset(0, 10),
+          //   )
+          // ],
         ),
         clipBehavior: Clip.antiAlias,
         child: Padding(
