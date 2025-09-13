@@ -29,7 +29,7 @@ class SourceGroupsList extends StatelessWidget {
     this.tileSize = 96,
     this.tileRadius = 16,
     this.sectionSpacing = 28,
-    this.rowSpacing = 12,
+    this.rowSpacing = 20,
     this.tileSpacing = 12,
     this.titleTextStyle = const TextStyle(
       fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black87),
@@ -42,12 +42,12 @@ class SourceGroupsList extends StatelessWidget {
   final ItemTap onTapWithoutTopic;
   final SeeMoreTap onSeeMore;
 
-  final int maxPerRow;                 // show up to N tiles, then a "See more"
-  final double tileSize;               // square tile (w = h)
-  final double tileRadius;             // rounded corners
-  final double sectionSpacing;         // gap between sections
-  final double rowSpacing;             // gap between title/divider/row
-  final double tileSpacing;            // gap between tiles in row
+  final int maxPerRow;
+  final double tileSize;
+  final double tileRadius;
+  final double sectionSpacing;
+  final double rowSpacing;
+  final double tileSpacing;
   final TextStyle titleTextStyle;
   final Color dividerColor;
   final double dividerThickness;
@@ -71,49 +71,205 @@ class SourceGroupsList extends StatelessWidget {
       children.add(SizedBox(height: rowSpacing * 0.5));
       children.add(Divider(
         height: dividerThickness, thickness: dividerThickness, color: dividerColor,
-        
       ));
       children.add(SizedBox(height: rowSpacing));
 
-      // row of up to maxPerRow tiles + optional "See more"
-      final showCount = groupItems.length.clamp(0, maxPerRow);
-      final rowTiles = <Widget>[];
-
-      for (var i = 0; i < showCount; i++) {
-        final item = groupItems[i];
-        rowTiles.add(_SourceTile(
-          item: item,
-          size: tileSize,
-          radius: tileRadius,
-          onTap: () => (item.hasTopic ? onTapWithTopic : onTapWithoutTopic)(item),
-        ));
-        if (i != showCount - 1) rowTiles.add(SizedBox(width: tileSpacing));
-      }
-
-      // add "See more" if there are more than maxPerRow
-      if (groupItems.length > maxPerRow) {
-        if (rowTiles.isNotEmpty) rowTiles.add(SizedBox(width: tileSpacing));
-        rowTiles.add(_SeeMoreTile(
-          size: tileSize,
-          radius: tileRadius,
-          onTap: () => onSeeMore(source),
-        ));
-      }
-
-      children.add(SingleChildScrollView(
-        scrollDirection: Axis.horizontal,   // if row overflows, allow manual scroll
-        child: Row(children: rowTiles),
+      // NEW: stateful, animated, infinite “carousel” row:
+      children.add(_GroupCarouselRow(
+        sourceName: source,
+        items: groupItems,
+        maxPerRow: maxPerRow,
+        tileSpacing: tileSpacing,
+        tileSize: tileSize,
+        tileRadius: tileRadius,
+        onTapWithTopic: onTapWithTopic,
+        onTapWithoutTopic: onTapWithoutTopic,
+        onSeeMore: onSeeMore, // still exposed; we call it after rotating
       ));
     });
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: children,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
+    );
+  }
+}
+
+class _GroupCarouselRow extends StatefulWidget {
+  const _GroupCarouselRow({
+    required this.sourceName,
+    required this.items,
+    required this.maxPerRow,
+    required this.tileSpacing,
+    required this.tileSize,
+    required this.tileRadius,
+    required this.onTapWithTopic,
+    required this.onTapWithoutTopic,
+    required this.onSeeMore,
+  });
+
+  final String sourceName;
+  final List<SourceItem> items;
+  final int maxPerRow;
+  final double tileSpacing;
+  final double tileSize;
+  final double tileRadius;
+  final ItemTap onTapWithTopic;
+  final ItemTap onTapWithoutTopic;
+  final SeeMoreTap onSeeMore;
+
+  @override
+  State<_GroupCarouselRow> createState() => _GroupCarouselRowState();
+}
+
+class _GroupCarouselRowState extends State<_GroupCarouselRow> {
+  int _offset = 0;
+
+  List<SourceItem> _windowed() {
+    final list = widget.items;
+    final n = list.length;
+    final m = widget.maxPerRow.clamp(0, n);
+    if (n <= widget.maxPerRow) return List<SourceItem>.from(list);
+
+    final out = <SourceItem>[];
+    for (var i = 0; i < m; i++) {
+      out.add(list[(_offset + i) % n]);
+    }
+    return out;
+  }
+
+  void _advance() {
+    final n = widget.items.length;
+    if (n == 0) return;
+    if (n <= widget.maxPerRow) return; // nothing to rotate
+
+    setState(() {
+      _offset = (_offset + widget.maxPerRow) % n;
+    });
+
+    // Optional: still let parent know a "see more" happened.
+    // You can remove this if you don't want the external callback.
+    widget.onSeeMore(widget.sourceName);
+  }
+
+  Widget _buildScrollableRow(List<SourceItem> visible, {Key? key}) {
+    final rowTiles = <Widget>[];
+    for (var i = 0; i < visible.length; i++) {
+      final item = visible[i];
+      rowTiles.add(_SourceTile(
+        item: item,
+        size: widget.tileSize,
+        radius: widget.tileRadius,
+        onTap: () => (item.hasTopic
+            ? widget.onTapWithTopic
+            : widget.onTapWithoutTopic)(item),
+      ));
+      if (i != visible.length - 1) {
+        rowTiles.add(SizedBox(width: widget.tileSpacing, height: widget.tileSpacing));
+      }
+    }
+
+    final canRotate = widget.items.length > widget.maxPerRow;
+    if (canRotate) {
+      if (rowTiles.isNotEmpty) {
+        rowTiles.add(SizedBox(width: widget.tileSpacing, height: widget.tileSpacing));
+      }
+      rowTiles.add(_SeeMoreTile(
+        size: widget.tileSize,
+        radius: widget.tileRadius,
+        onTap: _advance,
+      ));
+    }
+
+    // IMPORTANT: add outer padding & fixed height to avoid shadow clipping
+    // and provide breathing room around rounded icons.
+    return Padding(
+      key: key,
+      padding: EdgeInsets.symmetric(
+        horizontal: widget.tileSpacing,     // side gutter
+        vertical: widget.tileSpacing,       // top/bottom gutter
+      ),
+      child: SizedBox(
+        height: widget.tileSize + widget.tileSpacing * 2, // room for shadows
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(children: rowTiles),
+        ),
+      ),
     );
   }
 
 
+  @override
+  Widget build(BuildContext context) {
+    final visible = _windowed();
+
+    // Build the row tiles for the current window
+    final rowTiles = <Widget>[];
+    for (var i = 0; i < visible.length; i++) {
+      final item = visible[i];
+      rowTiles.add(_SourceTile(
+        item: item,
+        size: widget.tileSize,
+        radius: widget.tileRadius,
+        onTap: () => (item.hasTopic
+            ? widget.onTapWithTopic
+            : widget.onTapWithoutTopic)(item),
+      ));
+      if (i != visible.length - 1) {
+        rowTiles.add(SizedBox(width: widget.tileSpacing, height: widget.tileSpacing));
+      }
+    }
+
+    // Append an always-present See More tile only when rotation makes sense
+    final canRotate = widget.items.length > widget.maxPerRow;
+    if (canRotate) {
+      if (rowTiles.isNotEmpty) rowTiles.add(SizedBox(width: widget.tileSpacing, height: widget.tileSpacing));
+      rowTiles.add(_SeeMoreTile(
+        size: widget.tileSize,
+        radius: widget.tileRadius,
+        onTap: _advance,
+      ));
+    }
+
+
+
+    // Animate the “shift left” using AnimatedSwitcher
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 320),
+      switchInCurve: Curves.easeInOutCubic,
+      switchOutCurve: Curves.easeInOutCubic,
+      transitionBuilder: (child, anim) {
+        final curved = CurvedAnimation(parent: anim, curve: Curves.easeInOutCubic);
+        return FadeTransition(
+          opacity: curved,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.12, 0), // small, silky slide from right
+              end: Offset.zero,
+            ).animate(curved),
+            child: child,
+          ),
+        );
+      },
+      // Stack previous + current instead of replacing layout abruptly.
+      layoutBuilder: (currentChild, previousChildren) {
+        return Stack(
+          alignment: Alignment.centerLeft,
+          children: <Widget>[
+            ...previousChildren,
+            if (currentChild != null) currentChild,
+          ],
+        );
+      },
+      child: _buildScrollableRow(visible, key: ValueKey<int>(_offset)),
+    );
+  }
 }
+
 
 class _SourceTile extends StatefulWidget {
   const _SourceTile({
@@ -143,7 +299,9 @@ class _SourceTileState extends State<_SourceTile> {
       onEnter: (_) => setState(() => _hover = true),
       onExit:  (_) => setState(() => _hover = false),
       cursor: SystemMouseCursors.click,
-      child: Material(
+      child:  Padding( // NEW: space so the shadow can render fully
+  padding: const EdgeInsets.symmetric(vertical: 2), 
+  child:  Material(
         color: Colors.white,
         elevation: _hover ? 6 : 3,
         borderRadius: BorderRadius.circular(widget.radius),
@@ -190,7 +348,7 @@ class _SourceTileState extends State<_SourceTile> {
           ),
         ),
       ),
-    );
+    ));
   }
 }
 
