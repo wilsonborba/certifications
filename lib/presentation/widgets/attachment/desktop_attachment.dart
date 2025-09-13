@@ -2,7 +2,9 @@
 
 import 'dart:convert';
 
+import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/domain/models/source_item.dart';
+import 'package:accredit/domain/services/card_items_manager.dart';
 import 'package:accredit/presentation/components/attachment/source_groups_list.dart';
 import 'package:accredit/presentation/components/attachment/tab_card_sources.dart';
 import 'package:flutter/material.dart';
@@ -88,70 +90,116 @@ class DesktopAttachment extends StatefulWidget {
 
 class _DesktopAttachmentState extends State<DesktopAttachment> {
 
+  late Future<List<SourceItem>> _cardsFuture;
+
+   @override
+  void initState() {
+    super.initState();
+    _cardsFuture = _loadCards();
+  }
+
+
+   Future<List<SourceItem>> _loadCards() async {
+    final resp = await CardItemsManager().getCards(); // likely Future<Response>
+    if (resp.statusCode != 200) {
+      throw Exception('Failed to load cards (status ${resp.statusCode})');
+    }
+
+    final decoded = json.decode(resp.body);
+    // Your sample shows: {"message": "...", "data": [ {id:..., mode:..., ...}, ... ] }
+    if (decoded is Map && decoded['data'] is List) {
+      final list = decoded['data'] as List<dynamic>;
+      return list
+          .map((e) => SourceItem.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+
+    throw Exception('Unexpected cards payload shape');
+  }
+
+
 
 
   @override
   Widget build(BuildContext context) {
-    final playful = _decodeItems(playfulPayload);
-    final serious = _decodeItems(seriousPayload);
     return Scaffold(
-
       body: SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              
-              child: Column(
+        scrollDirection: Axis.vertical,
+        child: Column(
           children: [
-            TopHeaders(),
+            const TopHeaders(),
             Row(
               children: [
                 Expanded(
                   child: Center(
-                    child: TabCardSources(
-                      leftLabel: 'Playful Mode',     // won’t wrap
-                      rightLabel: 'Serious Mode',    // won’t wrap
-                      leftChild: SourceGroupsList(
-                        items: playful,
-                        onTapWithTopic: (item) {
-                          // go to topic flow
-                          debugPrint('WITH topic → ${item.sourceName}/${item.itemName}');
-                        },
-                        onTapWithoutTopic: (item) {
-                          // go to alternate flow (no topic)
-                          debugPrint('NO topic → ${item.sourceName}/${item.itemName}');
-                        },
-                        onSeeMore: (sourceName) {
-                          // navigate to "more" page for that source
-                          debugPrint('See more → $sourceName');
-                        },
-                      ),
-                      rightChild: SourceGroupsList(
-                        items: serious,
-                        onTapWithTopic: (item) {
-                          // go to topic flow
-                          debugPrint('WITH topic → ${item.sourceName}/${item.itemName}');
-                        },
-                        onTapWithoutTopic: (item) {
-                          // go to alternate flow (no topic)
-                          debugPrint('NO topic → ${item.sourceName}/${item.itemName}');
-                        },
-                        onSeeMore: (sourceName) {
-                          // navigate to "more" page for that source
-                          debugPrint('See more → $sourceName');
-                        },
-                      )
+                    child: FutureBuilder<List<SourceItem>>(
+                      future: _cardsFuture,
+                      builder: (context, snap) {
+                        if (snap.connectionState == ConnectionState.waiting) {
+                          return const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        if (snap.hasError) {
+                          debug('Cards load error: ${snap.error}');
+                          return const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Text('Failed to load cards'),
+                          );
+                        }
+
+                        final items = snap.data ?? const <SourceItem>[];
+
+                        // Normalize mode and split: "both" goes to both lists
+                        bool _isPlayful(SourceItem s) {
+                          final m = (s.mode ?? '').toLowerCase().trim();
+                          return m == 'playful' || m == 'both';
+                        }
+
+                        bool _isSerious(SourceItem s) {
+                          final m = (s.mode ?? '').toLowerCase().trim();
+                          return m == 'serious' || m == 'both';
+                        }
+
+                        final playfulItems = items.where(_isPlayful).toList();
+                        final seriousItems = items.where(_isSerious).toList();
+
+                        debug('Playful count: ${playfulItems.length}, Serious count: ${seriousItems.length}');
+
+                        return TabCardSources(
+                          leftLabel: 'Playful Mode',
+                          rightLabel: 'Serious Mode',
+                          leftChild: SourceGroupsList(
+                            items: playfulItems,
+                            onTapWithTopic: (item) =>
+                                debugPrint('WITH topic → ${item.sourceName}/${item.itemName}'),
+                            onTapWithoutTopic: (item) =>
+                                debugPrint('NO topic → ${item.sourceName}/${item.itemName}'),
+                            onSeeMore: (sourceName) =>
+                                debugPrint('See more → $sourceName'),
+                          ),
+                          rightChild: SourceGroupsList(
+                            items: seriousItems,
+                            onTapWithTopic: (item) =>
+                                debugPrint('WITH topic → ${item.sourceName}/${item.itemName}'),
+                            onTapWithoutTopic: (item) =>
+                                debugPrint('NO topic → ${item.sourceName}/${item.itemName}'),
+                            onSeeMore: (sourceName) =>
+                                debugPrint('See more → $sourceName'),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
-                Expanded(
-                  child: CardPdfPicker(),
-                ),
-
+                const Expanded(child: CardPdfPicker()),
               ],
             ),
-            SizedBox(height: 40),
-
+            const SizedBox(height: 40),
           ],
         ),
-      ));
+      ),
+    );
   }
 }

@@ -71,6 +71,7 @@ class SourceGroupsList extends StatelessWidget {
       children.add(SizedBox(height: rowSpacing * 0.5));
       children.add(Divider(
         height: dividerThickness, thickness: dividerThickness, color: dividerColor,
+        
       ));
       children.add(SizedBox(height: rowSpacing));
 
