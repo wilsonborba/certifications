@@ -76,7 +76,7 @@ class _DesktopAttachmentState extends State<DesktopAttachment> {
         scrollDirection: Axis.vertical,
         child: Column(
           children: [
-            const TopHeaders(),
+            const TopHeaders(isDesktop: true),
             Row(
               children: [
                 Expanded(

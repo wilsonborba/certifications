@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - *(attachment)* Improved a minimal design on cards
 - *(items)* Load items from localhost api
 - *(items)* Load error report email if fails to load cards
+- *(items)* Added mobile screen for load items card
 
 ### ⚙️ Miscellaneous Tasks
 

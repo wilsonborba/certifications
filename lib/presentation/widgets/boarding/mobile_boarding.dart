@@ -1,4 +1,5 @@
 // mobile_boarding.dart
+import 'package:accredit/presentation/widgets/attachment/on_attachment.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:accredit/core/utils/my_background.dart';
@@ -7,7 +8,7 @@ import 'package:accredit/presentation/components/boarding/box_explaning.dart';
 import 'package:accredit/presentation/components/boarding/first_phrase.dart';
 import 'package:accredit/presentation/components/boarding/second_phrase.dart';
 import 'package:accredit/presentation/components/boarding/middle_button.dart';
-import 'package:accredit/presentation/widgets/attachment/mobile_attachment.dart';
+
 
 class MobileBoarding extends StatelessWidget {
   const MobileBoarding({super.key});
@@ -61,7 +62,7 @@ class MobileBoarding extends StatelessWidget {
                   minimumSize: const Size(150, 50),
                   iconSize: 22,
                   onPressed: () {
-                    NavigationService.push(MobileAttachment());
+                    NavigationService.push(OnAttachmentScreen());
                   },
                 ),
                   ),

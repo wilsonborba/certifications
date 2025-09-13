@@ -8,9 +8,9 @@ import 'package:accredit/presentation/widgets/attachment/mobile_attachment.dart'
 
 
 
-class OnBoardingScreen  extends StatelessWidget {
+class OnAttachmentScreen  extends StatelessWidget {
 
-   const OnBoardingScreen({super.key});
+   const OnAttachmentScreen({super.key});
 
    @override
   Widget build(BuildContext context) {

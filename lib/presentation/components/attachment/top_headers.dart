@@ -3,7 +3,29 @@
 
 import 'package:flutter/material.dart';
 class TopHeaders extends StatelessWidget {
-  const TopHeaders({super.key});
+
+
+  // bool field about isDesktop;
+  final bool isDesktop;
+
+  const TopHeaders({super.key, required this.isDesktop});
+
+
+  desktopTextStyle() {
+    return TextStyle(
+      fontSize: 32,
+      fontWeight: FontWeight.bold,
+      color: Colors.black87,
+    );
+  }
+
+  mobileTextStyle() {
+    return TextStyle(
+      fontSize: 24,
+      fontWeight: FontWeight.bold,
+      color: Colors.black87,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,10 +39,10 @@ class TopHeaders extends StatelessWidget {
 
          Text(
           "Don't know what\nto attach?",
-          style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold),
+          style: isDesktop ? desktopTextStyle() : mobileTextStyle(),
         )),
         // Let the image live on the right side of the Row
-        Expanded(
+        isDesktop ? Expanded(
           child: Align(
             alignment: Alignment.topRight,
             child: Image.asset(
@@ -29,7 +51,7 @@ class TopHeaders extends StatelessWidget {
               height: 200,           // pick a static size you like
             ),
           ),
-        ),
+        ): Container(),
       ],
     );
   }

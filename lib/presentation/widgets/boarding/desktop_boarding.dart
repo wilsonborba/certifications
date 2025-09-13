@@ -1,5 +1,6 @@
 
 
+import 'package:accredit/presentation/widgets/attachment/on_attachment.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:accredit/core/utils/my_background.dart';
@@ -8,7 +9,7 @@ import 'package:accredit/presentation/components/boarding/box_explaning.dart';
 import 'package:accredit/presentation/components/boarding/first_phrase.dart';
 import 'package:accredit/presentation/components/boarding/middle_button.dart';
 import 'package:accredit/presentation/components/boarding/second_phrase.dart';
-import 'package:accredit/presentation/widgets/attachment/desktop_attachment.dart';
+
 
 
 class DesktopBoarding extends StatefulWidget {
@@ -71,7 +72,7 @@ class _DesktopBoardingState extends State<DesktopBoarding> {
                   minimumSize: const Size(200, 80),
                   iconSize: 30,
                   onPressed: () {
-                    NavigationService.push(DesktopAttachment());
+                    NavigationService.push(OnAttachmentScreen());
                   },
                 ),
                   ),
