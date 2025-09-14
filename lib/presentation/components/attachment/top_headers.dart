@@ -21,7 +21,7 @@ class TopHeaders extends StatelessWidget {
 
   mobileTextStyle() {
     return TextStyle(
-      fontSize: 24,
+      fontSize: 28,
       fontWeight: FontWeight.bold,
       color: Colors.black87,
     );
@@ -30,7 +30,7 @@ class TopHeaders extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: isDesktop ? MainAxisAlignment.spaceBetween : MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         
@@ -51,7 +51,7 @@ class TopHeaders extends StatelessWidget {
               height: 200,           // pick a static size you like
             ),
           ),
-        ): Container(),
+        ): SizedBox(width: 1), // empty widget for mobile
       ],
     );
   }

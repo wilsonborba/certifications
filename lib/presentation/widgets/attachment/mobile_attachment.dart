@@ -5,6 +5,7 @@ import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/core/utils/my_nagivation.dart';
 import 'package:accredit/domain/models/source_item.dart';
 import 'package:accredit/domain/services/card_items_manager.dart';
+import 'package:accredit/presentation/components/attachment/card_pdf_picker.dart';
 import 'package:accredit/presentation/components/attachment/source_groups_list.dart';
 import 'package:accredit/presentation/components/attachment/tab_card_sources.dart';
 import 'package:accredit/presentation/components/attachment/top_headers.dart';
@@ -79,9 +80,8 @@ class _MobileAttachmentState extends State<MobileAttachment> {
             mainAxisSize: MainAxisSize.min, // ✅ shrink-wrap
             children: [
               const TopHeaders(isDesktop: false),
-              const SizedBox(height: 12),
+              const SizedBox(height: 40),
 
-              // ❇️ No Expanded here — just place the FutureBuilder
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: FutureBuilder<List<SourceItem>>(
@@ -91,6 +91,9 @@ class _MobileAttachmentState extends State<MobileAttachment> {
               ),
 
               const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: CardPdfPicker())
             ],
           ),
         ),
@@ -162,8 +165,13 @@ class _MobileAttachmentState extends State<MobileAttachment> {
     return TabCardSources(
       leftLabel: 'Playful Mode',
       rightLabel: 'Serious Mode',
+      cardWidth: 400,
+      spacing: 6,
+      toggleWidth: 220,
+      toggleHeight: 35,
       leftChild: SourceGroupsList(
         items: buckets.playful,
+        tileSize: 60,
         onTapWithTopic: (item) =>
             {},
         onTapWithoutTopic: (item) =>
@@ -171,6 +179,7 @@ class _MobileAttachmentState extends State<MobileAttachment> {
         onSeeMore: (sourceName) => {},
       ),
       rightChild: SourceGroupsList(
+        tileSize: 60,
         items: buckets.serious,
         onTapWithTopic: (item) =>
             {},
