@@ -4,7 +4,7 @@ import 'package:crypto/crypto.dart' as crypto;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:accredit/core/utils/my_pdf_frontend_prescan.dart' as pre;
+import 'package:accredit/domain/services/pdf_frontend_prescan_manager.dart' as pre;
 import 'package:printing/printing.dart';
 
 class CardPdfPicker extends StatefulWidget {

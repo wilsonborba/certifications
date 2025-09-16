@@ -27,7 +27,7 @@ class Settings {
 
 
   // not accessible from outside
-  final LocalSourceAdapter _localSourceAdapter = LocalSourceAdapter();
+  final LocalSourceAdapter _localSourceAdapter = LocalSourceAdapter(namespace: 'settings');
 
   static final Settings _instance = Settings._internal();
 
@@ -44,7 +44,7 @@ class Settings {
   Future<void> init() async {
 
 
-    FERNET_KEY_SECRET = await _getEnv('FERNET_KEY_SECRET');
+    FERNET_KEY_SECRET = 'FEfpKZshLL36rTMY3P_dv0ADiO8bqC8Jd1eE2lkyFZ0=';
 
 
   }

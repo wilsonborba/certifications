@@ -1,10 +1,11 @@
 // mobile_boarding.dart
-import 'dart:convert';
+
 
 import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/core/utils/my_nagivation.dart';
+import 'package:accredit/domain/models/mode_buckets.dart';
 import 'package:accredit/domain/models/source_item.dart';
-import 'package:accredit/domain/services/card_items_manager.dart';
+
 import 'package:accredit/presentation/components/attachment/card_pdf_picker.dart';
 import 'package:accredit/presentation/components/attachment/source_groups_list.dart';
 import 'package:accredit/presentation/components/attachment/tab_card_sources.dart';
@@ -12,42 +13,24 @@ import 'package:accredit/presentation/components/attachment/top_headers.dart';
 import 'package:flutter/material.dart';
 
 class MobileAttachment extends StatefulWidget {
-  const MobileAttachment({super.key});
+  final Future<List<SourceItem>> items;
+  const MobileAttachment({super.key, required this.items});
 
   @override
   State<MobileAttachment> createState() => _MobileAttachmentState();
 }
 
 class _MobileAttachmentState extends State<MobileAttachment> {
-  late final Future<List<SourceItem>> _cardsFuture;
+  
 
 
 @override
   void initState() {
     super.initState();
-    _cardsFuture = _fetchCards();
+   
   }
 
-  /// ---- Data Access ----
-  Future<List<SourceItem>> _fetchCards() async {
-    final resp = await CardItemsManager().getCards(); // likely Future<Response>
-    if (resp.statusCode != 200) {
-      throw Exception('Failed to load cards (status ${resp.statusCode})');
-    }
-
-    final decoded = json.decode(resp.body);
-    if (decoded is Map && decoded['data'] is List) {
-      final list = decoded['data'] as List<dynamic>;
-      final items = list
-          .map((e) => SourceItem.fromJson(e as Map<String, dynamic>))
-          .toList();
-
-      debug('Fetched ${items.length} items from API');
-      return items;
-    }
-
-    throw Exception('Unexpected cards payload shape');
-  }
+  
 
   /// ---- Business Logic ----
   String _normalizedMode(SourceItem s) =>
@@ -66,7 +49,7 @@ class _MobileAttachmentState extends State<MobileAttachment> {
       if (isSerious) serious.add(s);
     }
 
-    debug('Partitioned → playful: ${playful.length}, serious: ${serious.length}');
+    // debug('Partitioned → playful: ${playful.length}, serious: ${serious.length}');
     return ModeBuckets(playful: playful, serious: serious);
   }
 
@@ -85,7 +68,7 @@ class _MobileAttachmentState extends State<MobileAttachment> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: FutureBuilder<List<SourceItem>>(
-                  future: _cardsFuture,
+                  future: widget.items,
                   builder: (context, snap) => _buildBody(context, snap),
                 ),
               ),
@@ -192,12 +175,4 @@ class _MobileAttachmentState extends State<MobileAttachment> {
 }
 
 /// Small data holder for partition results
-class ModeBuckets {
-  final List<SourceItem> playful;
-  final List<SourceItem> serious;
 
-  const ModeBuckets({
-    required this.playful,
-    required this.serious,
-  });
-}

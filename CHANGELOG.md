@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - *(items)* Load error report email if fails to load cards
 - *(items)* Added mobile screen for load items card
 - *(items)* Added mobile screen for attach pdf
+- *(cards)* Saved locally on browser encrypted
 
 ### ⚙️ Miscellaneous Tasks
 

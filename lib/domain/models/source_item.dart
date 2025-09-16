@@ -5,14 +5,16 @@ class SourceItem {
   final String sourceName;  // e.g. "apps", "newspapers"
   final bool hasTopic;
   final String itemName;    // e.g. "google"
-  final String itemImg;     // png/svg url
+  final String itemImg;
+  dynamic expirationTime; // expiration time
 
-  const SourceItem({
+  SourceItem({
     required this.mode,
     required this.sourceName,
     required this.hasTopic,
     required this.itemName,
     required this.itemImg,
+    this.expirationTime,
   });
 
   factory SourceItem.fromJson(Map<String, dynamic> j) => SourceItem(
@@ -21,5 +23,6 @@ class SourceItem {
         hasTopic: j['has_topic'] == true,
         itemName: (j['item_name'] ?? '').toString(),
         itemImg: (j['item_img'] ?? '').toString(),
+        expirationTime: j['expiration_time'],
       );
 }
