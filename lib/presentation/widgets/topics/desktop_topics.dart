@@ -98,7 +98,7 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
     builder: (context, constraints) {
       final maxW = constraints.maxWidth;
       // responsive: 2 columns on wide, 1 on narrow
-      final bool isNarrow = maxW < 1000; // tune this threshold if you want
+      final bool isNarrow = maxW < 1100; // tune this threshold if you want
       final int columns = isNarrow ? 1 : 2;
 
       // also make padding responsive
@@ -106,7 +106,7 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
 
       return Padding(
         key: _gridKey,
-        padding: EdgeInsets.symmetric(horizontal: horizPad, vertical: 30),
+        padding: EdgeInsets.symmetric(horizontal: 100, vertical: 30),
         child: GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(), // outer scroll drives
@@ -334,6 +334,7 @@ class _TopicCardState extends State<_TopicCard> {
 
     return Card(
       elevation: 2,
+      
       color: const Color.fromARGB(255, 250, 253, 255),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       child: Padding(

@@ -30,6 +30,10 @@ All notable changes to this project will be documented in this file.
 - *(cards)* Created the card topics pagination
 - *(cards)* Created the card topics pagination for both mobile and desktop
 
+### 🐛 Bug Fixes
+
+- *(cards)* Adjusted the layout break on desktop
+
 ### ⚙️ Miscellaneous Tasks
 
 - *(env)* Initial structure of app created
