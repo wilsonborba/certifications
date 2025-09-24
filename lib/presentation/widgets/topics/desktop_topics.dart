@@ -93,6 +93,51 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
     _loadPage(_page + 1);
   }
 
+  Widget _buildGrid(BuildContext context) {
+  return LayoutBuilder(
+    builder: (context, constraints) {
+      final maxW = constraints.maxWidth;
+      // responsive: 2 columns on wide, 1 on narrow
+      final bool isNarrow = maxW < 1000; // tune this threshold if you want
+      final int columns = isNarrow ? 1 : 2;
+
+      // also make padding responsive
+      final double horizPad = isNarrow ? 16.0 : 400.0;
+
+      return Padding(
+        key: _gridKey,
+        padding: EdgeInsets.symmetric(horizontal: horizPad, vertical: 30),
+        child: GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(), // outer scroll drives
+          itemCount: _topics.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            childAspectRatio: 1.0,
+            crossAxisSpacing: 0.0,
+            mainAxisSpacing: 12,
+            mainAxisExtent: 180,
+          ),
+          itemBuilder: (ctx, i) {
+            final t = _topics[i];
+            final ident = getTopicIdentifications(t)!; // already validated
+            final title = ident.titleIdentification!;
+            final link  = ident.linkIdentification!;
+            final img   = safeImageFromIdent(ident); // nullable
+
+            return _TopicCard(
+              title: title,
+              about: 'About',
+              link: link,
+              imageUrl: img,
+            );
+          },
+        ),
+      );
+    },
+  );
+}
+
   @override
   Widget build(BuildContext context) {
     final header = Column(
@@ -126,84 +171,52 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
       ),
     );
 
-    // The grid of cards (non-scrollable; page replacement only)
-    final grid = Padding(
-      key: _gridKey,
-      padding: const EdgeInsets.symmetric(horizontal: 400, vertical: 30),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: _topics.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 1.0,
-          crossAxisSpacing: 0.0,
-          mainAxisSpacing: 12,
-          mainAxisExtent: 180,
-        ),
-        itemBuilder: (ctx, i) {
-          final t = _topics[i];
-          final ident = getTopicIdentifications(t)!; // already validated
-          final title = ident.titleIdentification!;
-          final link  = ident.linkIdentification!;
-          final img   = safeImageFromIdent(ident); // nullable
 
-          return _TopicCard(
-            title: title,
-            about: 'About',
-            link: link,
-            imageUrl: img,
-          );
-        },
-      ),
-    );
-
-    // If we are loading a new page AND already have a grid height,
-    // show a fixed-height placeholder with a centered spinner to avoid layout jump.
-    final gridLoadingPlaceholder = (_loading && _topics.isNotEmpty && _lastGridHeight > 0)
-        ? SizedBox(
-            height: _lastGridHeight,
-            child: const Center(
-              child: SizedBox(height: 28, width: 28, child: CircularProgressIndicator()),
-            ),
-          )
-        : const SizedBox.shrink();
+    
 
     final footer = Column(
       children: [
         const SizedBox(height: 24),
         const Divider(height: 1, thickness: 1, indent: 120, endIndent: 120),
-        const SizedBox(height: 10),
+        const SizedBox(height: 30),
         // Two buttons side-by-side: PREV | NEXT
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            FilledButton.icon(
+            ElevatedButton.icon(
               onPressed: (_loading || _page <= 1) ? null : _loadPrev,
-              icon: const Icon(Icons.arrow_upward, size: 18),
-              label: const Text('Load previous page'),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(160, 40),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              ),
+              icon: const Icon(Icons.arrow_upward, size: 14),
+              label: const Text('Load previous page', style: TextStyle(fontSize: 14)),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(80, 60),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap
+              )
+              
             ),
             const SizedBox(width: 16),
-            FilledButton.icon(
+            ElevatedButton.icon(
               onPressed: (_loading || !_hasMore) ? null : _loadNext,
-              icon: const Icon(Icons.arrow_downward, size: 18),
-              label: const Text('Load next page'),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(160, 40),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              ),
-            ),
+              icon: const Icon(Icons.arrow_downward, size: 14),
+              label: const Text('Load next page', style: TextStyle(fontSize: 14)),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(80, 60),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap
+            )),
           ],
         ),
-        const SizedBox(height: 40),
+        const SizedBox(height: 80),
       ],
     );
 
     return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 248, 248, 248),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+    onPressed: () => Navigator.of(context).pop(),
+        ),
+        backgroundColor:  Color.fromARGB(255, 36, 36, 36),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -217,8 +230,14 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
               if (_initialDone && _topics.isEmpty && !_loading) emptyState,
 
               // 3) Grid or fixed-height spinner while a new page is loading
-              if (_topics.isNotEmpty && !_loading) grid,
-              if (_topics.isNotEmpty && _loading) gridLoadingPlaceholder,
+              if (_topics.isNotEmpty && !_loading) _buildGrid(context),
+              if (_topics.isNotEmpty && _loading)
+                SizedBox(
+                  height: _lastGridHeight > 0 ? _lastGridHeight : 180,
+                  child: const Center(
+                    child: SizedBox(height: 28, width: 28, child: CircularProgressIndicator()),
+                  ),
+                ),
 
               // 4) Footer with Prev/Next buttons
               footer,
@@ -229,12 +248,10 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
     );
   }
 }
-
-/// Card stays the same, including redirectToUrl(link, replace: false)
 class _TopicCard extends StatefulWidget {
   final String title;
-  final String about;
-  final String link;
+  final String about;   // static label "About"
+  final String link;    // open in new tab / replace: false
   final String? imageUrl;
 
   const _TopicCard({
@@ -281,25 +298,32 @@ class _TopicCardState extends State<_TopicCard> {
     return uri != null && (uri.isScheme('http') || uri.isScheme('https'));
   }
 
-  // preload to confirm successful render before showing on the right side
+  /// Invisible, non-interactive preloader that still lets us detect when
+  /// the first frame is available. It **does not** paint or receive clicks.
   Widget _preloadImage() {
     if (_provider == null) return const SizedBox.shrink();
-    return Image(
-      image: _provider!,
-      width: 0,
-      height: 0,
-      frameBuilder: (context, child, frame, wasSync) {
-        if (frame != null && !_imageOk) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) setState(() => _imageOk = true);
-          });
-        }
-        return const SizedBox.shrink();
-      },
-      errorBuilder: (context, error, stack) {
-        if (_imageOk && mounted) setState(() => _imageOk = false);
-        return const SizedBox.shrink();
-      },
+
+    return IgnorePointer(
+      ignoring: true, // <- never receives pointer events
+      child: Offstage(
+        offstage: true, // <- not painted, but built/layout so frameBuilder runs
+        child: Image(
+          image: _provider!,
+          excludeFromSemantics: true,
+          frameBuilder: (context, child, frame, wasSync) {
+            if (frame != null && !_imageOk) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) setState(() => _imageOk = true);
+              });
+            }
+            return child; // must return child for frameBuilder contract
+          },
+          errorBuilder: (context, error, stack) {
+            if (_imageOk && mounted) setState(() => _imageOk = false);
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
     );
   }
 
@@ -310,22 +334,29 @@ class _TopicCardState extends State<_TopicCard> {
 
     return Card(
       elevation: 2,
+      color: const Color.fromARGB(255, 250, 253, 255),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // Invisible preloader (no hit testing, no painting)
             _preloadImage(),
+
+            // LEFT: title + about/visit
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(widget.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: titleStyle),
+                  Text(
+                    widget.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: titleStyle,
+                  ),
                   const SizedBox(height: 12),
+
                   Row(
                     children: [
                       Text(
@@ -336,7 +367,7 @@ class _TopicCardState extends State<_TopicCard> {
                         ),
                       ),
                       const Spacer(),
-                      FilledButton.icon(
+                      ElevatedButton.icon(
                         onPressed: () =>
                             redirectToUrl(widget.link, replace: false),
                         icon: Icon(
@@ -352,12 +383,16 @@ class _TopicCardState extends State<_TopicCard> {
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
-                        style: FilledButton.styleFrom(
+                        style: ElevatedButton.styleFrom(
                           backgroundColor:
                               Theme.of(context).colorScheme.secondary,
-                          minimumSize: const Size(80, 34),
+                          minimumSize: const Size(80, 60),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 8),
+                            horizontal: 14,
+                            vertical: 8,
+                          ),
+                          // (optional) makes the clickable region tight & clear
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                       ),
                     ],
@@ -365,6 +400,8 @@ class _TopicCardState extends State<_TopicCard> {
                 ],
               ),
             ),
+
+            // RIGHT: divider + image ONLY after the first frame renders
             if (_imageOk && _provider != null) ...[
               const SizedBox(width: 12),
               const VerticalDivider(width: 1, thickness: 1),
@@ -376,6 +413,7 @@ class _TopicCardState extends State<_TopicCard> {
                   width: 120,
                   height: 72,
                   fit: BoxFit.cover,
+                  excludeFromSemantics: true,
                 ),
               ),
             ],
