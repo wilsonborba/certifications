@@ -74,13 +74,21 @@ class _OnAttachmentScreenState extends State<OnAttachmentScreen> {
   }
 
   List<SourceItem> _deserializeItems(dynamic decoded) {
-    if (decoded is List) {
-      return decoded
-          .map((e) => SourceItem.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    throw Exception('Unexpected decrypted payload shape');
+  if (decoded is List) {
+    return decoded.map((e) {
+      final m = e as Map<String, dynamic>;
+      final item = SourceItem.fromJson(m);
+
+      final expRaw = m['expiration_time'];
+      if (expRaw is String) {
+        item.expirationTime = DateTime.tryParse(expRaw);
+      }
+      return item;
+    }).toList();
   }
+  throw Exception('Unexpected decrypted payload shape');
+}
+
 
     Future<void> _saveEncryptedCards(List<SourceItem> items) async {
     final encryption = MyEncryption();

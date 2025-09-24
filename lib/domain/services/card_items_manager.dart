@@ -16,4 +16,13 @@ class CardItemsManager {
       Uri.parse('http://localhost:8001/all_items'),
     );
   }
+
+  Future<Response> getTopicsFromCard(String itemName) {
+    return ApiAdapter(defaultHeaders: defaultHeaders).get(
+      Uri.parse('http://localhost:8001/topics/$itemName'),
+    );
+  }
+
+  
+
 }
