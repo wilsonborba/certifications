@@ -21,6 +21,7 @@ class AppTheme {
   ).copyWith(
     surface: surface,
     onSurface: onSurface,
+    onSecondary: onSecondary,
     error: error,
     onError: onError,
   );

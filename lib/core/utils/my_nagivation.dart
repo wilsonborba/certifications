@@ -7,10 +7,16 @@ import 'package:accredit/core/utils/my_router_parser.dart';
 
 
 
-void redirectToUrl(String url) {
+void redirectToUrl(String url, {bool replace = true}) {
   // delegate to the web-safe implementation in my_route_parser.dart
-  replaceLocation(url);
+  if (replace) {
+    replaceLocation(url);
+  } else {
+    redirectLocation(url);
+  }
 }
+
+
 
 class MyRedirectingWidget extends StatelessWidget {
   static const String route = '/';

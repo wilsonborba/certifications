@@ -10,6 +10,13 @@ String getLocationHref() {
   }
 }
 
+void redirectLocation(String url) {
+  // will open in another tab
+  try {
+    html.window.open(url, '_blank');
+  } catch (_) {}
+}
+
 void replaceLocation(String url) {
   try {
     html.window.location.replace(url);

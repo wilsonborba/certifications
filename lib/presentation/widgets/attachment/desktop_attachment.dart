@@ -1,3 +1,4 @@
+import 'package:accredit/presentation/widgets/topics/on_topics.dart';
 import 'package:flutter/material.dart';
 
 import 'package:accredit/core/utils/my_logs.dart';
@@ -13,6 +14,7 @@ import 'package:accredit/presentation/components/attachment/card_pdf_picker.dart
 import 'base_attachment.dart';
 
 class DesktopAttachment extends BaseAttachment {
+  
   const DesktopAttachment({super.key, required Future<List<SourceItem>> items})
       : super(items: items);
 
@@ -87,33 +89,22 @@ class _DesktopAttachmentState extends BaseAttachmentState<DesktopAttachment> {
       rightLabel: 'Serious Mode',
       leftChild: SourceGroupsList(
         items: buckets.playful,
-        onTapWithTopic: (item) => {
-          fetchTopicsForCard(item.itemName).then((topics) {
-            debug('Topics for ${item.itemName}: $topics');
-            // Handle topics (e.g., show a dialog or navigate)
-          }).catchError((error) {
-            warning('Failed to fetch topics for ${item.itemName}: $error');
-            // Handle error (e.g., show a snackbar)
-          })},
-        onTapWithoutTopic: (item) => {
-          debug('Tapped on item without topic: ${item.itemName}')
-        },
+       onTapWithTopic: (item) => {
+                  NavigationService.push(OnTopicsScreen(itemName: item.itemName))
+                },
+                onTapWithoutTopic: (item) => {
+                  NavigationService.push(OnTopicsScreen(itemName: item.itemName))
+                },
         onSeeMore: (sourceName) => {},
       ),
       rightChild: SourceGroupsList(
         items: buckets.serious,
         onTapWithTopic: (item) => {
-          fetchTopicsForCard(item.itemName).then((topics) {
-            debug('Topics for ${item.itemName}: $topics');
-            // Handle topics (e.g., show a dialog or navigate)
-          }).catchError((error) {
-            warning('Failed to fetch topics for ${item.itemName}: $error');
-            // Handle error (e.g., show a snackbar)
-          })
-        },
-        onTapWithoutTopic: (item) => {
-          debug('Tapped on item without topic: ${item.itemName}')
-        },
+                  NavigationService.push(OnTopicsScreen(itemName: item.itemName))
+                },
+                onTapWithoutTopic: (item) => {
+                  NavigationService.push(OnTopicsScreen(itemName: item.itemName))
+                },
         onSeeMore: (sourceName) => {},
       ),
     );

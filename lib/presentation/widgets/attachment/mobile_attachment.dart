@@ -1,3 +1,4 @@
+import 'package:accredit/presentation/widgets/topics/on_topics.dart';
 import 'package:flutter/material.dart';
 
 import 'package:accredit/core/utils/my_logs.dart';
@@ -93,15 +94,23 @@ class _MobileAttachmentState extends BaseAttachmentState<MobileAttachment> {
       leftChild: SourceGroupsList(
         items: buckets.playful,
         tileSize: 60,
-        onTapWithTopic: (item) => {},
-        onTapWithoutTopic: (item) => {},
+        onTapWithTopic: (item) => {
+          NavigationService.push(OnTopicsScreen(itemName: item.itemName))
+        },
+        onTapWithoutTopic: (item) => {
+          NavigationService.push(OnTopicsScreen(itemName: item.itemName))
+        },
         onSeeMore: (sourceName) => {},
       ),
       rightChild: SourceGroupsList(
         items: buckets.serious,
         tileSize: 60,
-        onTapWithTopic: (item) => {},
-        onTapWithoutTopic: (item) => {},
+       onTapWithTopic: (item) => {
+          NavigationService.push(OnTopicsScreen(itemName: item.itemName))
+        },
+        onTapWithoutTopic: (item) => {
+          NavigationService.push(OnTopicsScreen(itemName: item.itemName))
+        },
         onSeeMore: (sourceName) => {},
       ),
     );

@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - *(items)* Added mobile screen for attach pdf
 - *(cards)* Saved locally on browser encrypted
 - *(cards)* Fixed the load from cache and class refactor redundance
+- *(cards)* Created the card topics pagination
 
 ### ⚙️ Miscellaneous Tasks
 

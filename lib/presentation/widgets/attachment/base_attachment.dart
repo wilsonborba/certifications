@@ -1,7 +1,4 @@
-import 'dart:convert';
 
-import 'package:accredit/core/utils/my_logs.dart';
-import 'package:accredit/domain/services/card_items_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:accredit/domain/models/source_item.dart';
 import 'package:accredit/domain/models/mode_buckets.dart';
@@ -74,25 +71,6 @@ abstract class BaseAttachmentState<T extends BaseAttachment> extends State<T> {
   Widget buildError(Object? error);
   Widget buildTabs(ModeBuckets buckets);
 
-  fetchTopicsForCard(String itemName) async {
-    final manager = CardItemsManager();
-    final response = await manager.getTopicsFromCard(itemName);
+  
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to fetch topics for $itemName');
-    }
-
-    final decoded = response.body.isNotEmpty ? json.decode(response.body) : null;
-    if (decoded is Map && decoded['data'] is List) {
-      final list = decoded['data'] as List<dynamic>;
-      final topics = list
-          .map((e) => e as String)
-          .toList();
-
-      debug('Fetched ${topics.length} topics for $itemName from API');
-      return topics;
-    }
-
-    throw Exception('Unexpected topics payload shape for $itemName');
-  }
 }

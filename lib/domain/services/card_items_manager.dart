@@ -17,9 +17,9 @@ class CardItemsManager {
     );
   }
 
-  Future<Response> getTopicsFromCard(String itemName) {
+  Future<Response> getTopicsFromCard(String itemName, int page, int perPage) {
     return ApiAdapter(defaultHeaders: defaultHeaders).get(
-      Uri.parse('http://localhost:8001/topics/$itemName'),
+      Uri.parse('http://localhost:8001/topics/$itemName?page=$page&per_page=$perPage'),
     );
   }
 
