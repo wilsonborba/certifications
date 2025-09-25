@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui show ImageByteFormat, Image;
+import 'package:accredit/core/utils/my_logs.dart';
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -16,7 +17,7 @@ class CardPdfPicker extends StatefulWidget {
     this.iconSize = 64,
     this.titleSize = 28,
     this.bodySize = 20,
-    this.buttonFontSize = 20,
+    this.buttonFontSize = 16,
     this.buttonMinSize = const Size(220, 64),
   });
 
@@ -232,16 +233,42 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
               const SizedBox(height: 24),
 
               // Attach button
-              SizedBox(
-                width: 260,
+              _fileName == null  ? SizedBox(
+                width: 160,
                 child: ElevatedButton.icon(
                   onPressed: _busy ? null : _pickPdf,
-                  icon: const Icon(Icons.attachment, size: 22),
+                  icon: const Icon(Icons.attachment, size: 16),
                   label: Text(
                     'Attach File',
                     style: TextStyle(
                       fontSize: widget.buttonFontSize,
                       fontWeight: FontWeight.w600,
+                      
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: widget.buttonMinSize,
+                    backgroundColor: Colors.black87,
+                    foregroundColor: Colors.white,
+                    shape: const StadiumBorder(),
+                    elevation: 6,
+                    shadowColor: Colors.black45,
+                  ),
+                ),
+              ) : Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                SizedBox(
+                width: 160,
+                child: ElevatedButton.icon(
+                  onPressed: _busy ? null : _pickPdf,
+                  icon: const Icon(Icons.attachment, size: 16),
+                  label: Text(
+                    'Attach File',
+                    style: TextStyle(
+                      fontSize: widget.buttonFontSize,
+                      fontWeight: FontWeight.w600,
+                      
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
@@ -254,11 +281,40 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
                   ),
                 ),
               ),
+              
+
+              SizedBox(
+                width: 160,
+                child: ElevatedButton.icon(
+                  onPressed:() {
+                    debug('Next button pressed');
+                  },
+                  icon: const Icon(Icons.arrow_forward, size: 16),
+                  label: Text(
+                    'Next',
+                    style: TextStyle(
+                      fontSize: widget.buttonFontSize,
+                      fontWeight: FontWeight.w600,
+                      
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: widget.buttonMinSize,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Colors.white,
+                    shape: const StadiumBorder(),
+                    elevation: 6,
+                    shadowColor: Theme.of(context).colorScheme.primaryContainer,
+                  ),
+                ),
+              ),
+              ],),
 
               if (_error != null) ...[
+                
                 const SizedBox(height: 12),
                 Text(
-                  "Sorry, we could not upload due to some unknown error.",
+                  "Sorry, we could not upload.",
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: Color(0xFFB00020),

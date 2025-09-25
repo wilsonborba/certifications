@@ -29,6 +29,7 @@ All notable changes to this project will be documented in this file.
 - *(cards)* Fixed the load from cache and class refactor redundance
 - *(cards)* Created the card topics pagination
 - *(cards)* Created the card topics pagination for both mobile and desktop
+- *(pdf)* Created a button to go next step after load pdf
 
 ### 🐛 Bug Fixes
 
