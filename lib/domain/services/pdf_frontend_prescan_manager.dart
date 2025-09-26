@@ -2,6 +2,12 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:accredit/dal/remote/api_adapter.dart';
+import 'package:http/http.dart';
+
+import 'package:http/http.dart' show Response;
+import 'package:http_parser/http_parser.dart';
+
 /// Result of the quick client-side scan.
 class FrontendScanResult {
   final bool isAcceptable;
@@ -50,6 +56,58 @@ class PreScanConfig {
 const Set<String> _deniedSha256 = {
   // 'aaaaaaaa...'
 };
+
+Map<String, String> defaultHeadersPdfApi = const {
+  'Accept': 'application/json',
+};
+
+/// SAME NAME, refactored to use ApiAdapter (multipart POST)
+/// Calls: POST {baseUrl}/pdf/topic?ocr_force=...&ocr_lang=...&ocr_dpi=...&max_chars=...&overlap_chars=...
+Future<Response> loadPdftoApi({
+  required Uint8List fileBytes,
+  required String fileName,
+  String baseUrl = 'http://127.0.0.1:8001',
+  bool ocrForce = false,
+  String ocrLang = 'eng',
+  int ocrDpi = 300,
+  int maxChars = 8000,
+  int overlapChars = 400,
+  Map<String, String>? extraHeaders,
+}) {
+  final adapter = ApiAdapter(
+    defaultHeaders: {
+      ...defaultHeadersPdfApi,
+      if (extraHeaders != null) ...extraHeaders,
+    },
+  );
+
+  // Query params expected by your FastAPI route
+  final query = <String, dynamic>{
+    'ocr_force': ocrForce.toString(),
+    'ocr_lang': ocrLang,
+    'ocr_dpi': ocrDpi.toString(),
+    'max_chars': maxChars.toString(),
+    'overlap_chars': overlapChars.toString(),
+  };
+
+  final url = Uri.parse('$baseUrl/pdf/topic');
+
+  // Uses the multipart extension on ApiAdapter (postMultipart)
+  return adapter.postMultipart(
+    url: url,
+    queryParams: query,
+    // Optional extra form fields if you ever need them:
+    fields: const <String, String>{},
+    files: [
+      MultipartFileData(
+        field: 'file',
+        bytes: fileBytes,
+        filename: fileName,
+        contentType: MediaType('application', 'pdf'),
+      ),
+    ],
+  );
+}
 
 /// Public entry: full pre-scan using bytes + metadata.
 /// Returns details you can log or show.

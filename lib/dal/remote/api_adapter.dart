@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import 'package:http_parser/http_parser.dart';
+
 class ApiAdapter {
   final Map<String, String> defaultHeaders;
 
@@ -64,3 +66,60 @@ class ApiAdapter {
       request(method: 'DELETE', url: url, headers: headers, body: body, encoding: encoding);
 }
 
+
+class MultipartFileData {
+  final String field;           // ex: 'file'
+  final List<int> bytes;        // conteúdo do arquivo
+  final String filename;        // ex: 'documento.pdf'
+  final MediaType? contentType; // ex: MediaType('application', 'pdf')
+
+  const MultipartFileData({
+    required this.field,
+    required this.bytes,
+    required this.filename,
+    this.contentType,
+  });
+}
+
+extension ApiAdapterMultipart on ApiAdapter {
+  /// POST multipart/form-data (com query params).
+  /// Retorna http.Response para manter mesma ergonomia do adapter.
+  Future<http.Response> postMultipart({
+    required Uri url,
+    Map<String, dynamic>? queryParams,
+    Map<String, String>? headers,
+    Map<String, String>? fields,
+    List<MultipartFileData>? files,
+  }) async {
+    final fullHeaders = {...defaultHeaders, if (headers != null) ...headers};
+
+    // NÃO fixe 'Content-Type': o http.MultipartRequest define o boundary.
+    fullHeaders.removeWhere((k, _) => k.toLowerCase() == 'content-type');
+
+    final resolvedUrl =
+        queryParams != null ? url.replace(queryParameters: queryParams) : url;
+
+    final req = http.MultipartRequest('POST', resolvedUrl);
+    req.headers.addAll(fullHeaders);
+
+    if (fields != null && fields.isNotEmpty) {
+      req.fields.addAll(fields);
+    }
+
+    if (files != null) {
+      for (final f in files) {
+        req.files.add(
+          http.MultipartFile.fromBytes(
+            f.field,
+            f.bytes,
+            filename: f.filename,
+            contentType: f.contentType,
+          ),
+        );
+      }
+    }
+
+    final streamed = await req.send();
+    return http.Response.fromStream(streamed);
+  }
+}
