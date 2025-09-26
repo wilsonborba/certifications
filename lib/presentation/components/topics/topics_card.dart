@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:accredit/core/utils/my_nagivation.dart';
 
 /// Reusable Topic card for both Desktop & Mobile.
-/// Tweak layout with the optional sizing params.
+/// Adds hover + press affordances to action buttons.
 class TopicsCard extends StatefulWidget {
   final String title;
   final String about;      // e.g., "About"
@@ -12,7 +12,8 @@ class TopicsCard extends StatefulWidget {
   // Layout knobs so Desktop/Mobile can look slightly different without forking:
   final EdgeInsets padding;
   final double titleFontSize;
-  final double titleFontWeight; // 600 → FontWeight.w600
+  /// 600 -> FontWeight.w600 (we map 100..900 to FontWeight.values[1..9])
+  final double titleFontWeight;
   final double buttonMinHeight;
   final double buttonMinWidth;
   final double imageWidth;
@@ -33,7 +34,7 @@ class TopicsCard extends StatefulWidget {
     this.buttonMinWidth = 80,
     this.imageWidth = 120,
     this.imageHeight = 72,
-    this.gap = 12,
+    this.gap = 30,
     this.showDivider = true,
   });
 
@@ -110,6 +111,8 @@ class _TopicsCardState extends State<TopicsCard> {
         (widget.titleFontWeight / 100).clamp(0, 9).round()
       ],
     );
+    final baseColor = Theme.of(context).colorScheme.onSurface;
+    final hoverColor = Theme.of(context).colorScheme.primary;
 
     return Card(
       elevation: 2,
@@ -122,50 +125,41 @@ class _TopicsCardState extends State<TopicsCard> {
           children: [
             _preloadImage(),
 
-            // LEFT: title + about/visit
+            // LEFT: title + actions
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    widget.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: titleStyle,
-                  ),
-                  SizedBox(height: widget.gap),
+                  Text(widget.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: titleStyle),
+                  const Spacer(),
 
                   Row(
                     children: [
-                      Text(
-                        widget.about,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87,
-                        ),
+                      // See more -> opens link
+                      _HoverableAction(
+                        label: 'See more',
+                        icon: Icons.remove_red_eye_outlined,
+                        minSize: Size(widget.buttonMinWidth, widget.buttonMinHeight),
+                        baseColor: baseColor,
+                        hoverColor: hoverColor,
+                        onTap: () => redirectToUrl(widget.link, replace: false),
                       ),
+
                       const Spacer(),
-                      ElevatedButton.icon(
-                        onPressed: () => redirectToUrl(widget.link, replace: false),
-                        icon: Icon(
-                          Icons.remove_red_eye_outlined,
-                          size: 18,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                        label: Text(
-                          'Visit',
-                          style: TextStyle(
-                            fontSize: (widget.titleFontSize - 4).clamp(12, 16).toDouble(),
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.secondary,
-                          minimumSize: Size(widget.buttonMinWidth, widget.buttonMinHeight),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
+
+                      // Select -> hook up when you have a handler
+                      _HoverableAction(
+                        label: 'Select',
+                        icon: Icons.check_circle_outline,
+                        minSize: Size(widget.buttonMinWidth, widget.buttonMinHeight),
+                        baseColor: baseColor,
+                        hoverColor: hoverColor,
+                        onTap: () {
+                          // TODO: implement your selection behavior
+                        },
                       ),
                     ],
                   ),
@@ -173,7 +167,7 @@ class _TopicsCardState extends State<TopicsCard> {
               ),
             ),
 
-            // RIGHT: divider + image ONLY after the first frame renders
+            // RIGHT: divider + image after first frame renders
             if (_imageOk && _provider != null) ...[
               SizedBox(width: widget.gap),
               if (widget.showDivider) const VerticalDivider(width: 1, thickness: 1),
@@ -190,6 +184,98 @@ class _TopicsCardState extends State<TopicsCard> {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A tiny reusable button-like control with **hover + press** affordances:
+/// - Hover: tint to hoverColor and slide by a couple pixels
+/// - Press: slight scale-down
+/// - Ripple: InkWell splash, with click cursor on desktop/web
+class _HoverableAction extends StatefulWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  final Size minSize;
+  final Color baseColor;
+  final Color hoverColor;
+
+  const _HoverableAction({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    required this.minSize,
+    required this.baseColor,
+    required this.hoverColor,
+  });
+
+  @override
+  State<_HoverableAction> createState() => _HoverableActionState();
+}
+
+
+class _HoverableActionState extends State<_HoverableAction> {
+  bool _hovered = false;
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _hovered ? widget.hoverColor : widget.baseColor;
+
+    // Slight translation on hover; slight scale on press
+    final dx = _hovered ? 2.0 : 0.0;     // move right 2px on hover
+    final dy = _hovered ? -1.0 : 0.0;    // and up 1px
+    final scale = _pressed ? 0.98 : 1.0; // tiny press feedback
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapCancel: () => setState(() => _pressed = false),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTap: widget.onTap,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            splashColor: widget.hoverColor.withAlpha((.12 * 255).toInt()),
+            highlightColor: Colors.transparent,
+            borderRadius: BorderRadius.circular(6),
+            onTap: widget.onTap,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 140),
+              curve: Curves.easeOut,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              constraints: BoxConstraints(
+                minWidth: widget.minSize.width,
+                minHeight: widget.minSize.height,
+              ),
+              transform: Matrix4.identity()
+                ..translateByDouble(dx, dy, 0, 1.0)           // add w = 1.0
+                ..scaleByDouble(scale, scale, scale, 1.0),    // scale across all axes
+
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(widget.icon, size: 18, color: color),
+                  const SizedBox(width: 8),
+                  AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 140),
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    child: Text(widget.label),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

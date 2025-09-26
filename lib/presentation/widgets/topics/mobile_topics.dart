@@ -48,6 +48,17 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
                       border: OutlineInputBorder(),
                       isDense: true,
                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFFCCCCCC), width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFF888888), width: 1)),
+                      errorBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.red, width: 1)),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.red, width: 1)),
+                      
+                      
                     ),
                   ),
                 ),
@@ -205,77 +216,77 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
     );
 
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 248, 248, 248),
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
+        backgroundColor: const Color.fromARGB(255, 248, 248, 248),
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          backgroundColor: const Color(0xFF242424),
         ),
-        backgroundColor: const Color(0xFF242424),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              // Header with title + search
-              _buildHeaderBar(),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildHeaderBar(),
 
-              // 1) Initial loading (first ever load)
-              if (!initialDone && !hasAny) initialLoading,
+                // 1) First-ever initial load
+                if (!initialDone && !hasAny) initialLoading
 
-              // 2) Empty state after load, no items
-              if (initialDone && !hasAny && !isBusy) emptyState,
-
-              // 3) Grid or fixed-height spinner while loading next page
-              if (hasAny && !isBusy) _buildGrid(context),
-
-              if (hasAny && isBusy)
-                SizedBox(
-                  height: lastGridHeight > 0 ? lastGridHeight : 180,
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const SizedBox(height: 28, width: 28, child: CircularProgressIndicator()),
-                          const SizedBox(height: 12),
-                          // Smooth rotating phrases during non-initial loads
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 300),
-                            transitionBuilder: (child, anim) => FadeTransition(
-                              opacity: anim,
-                              child: SlideTransition(
-                                position: Tween<Offset>(
-                                  begin: const Offset(0, .25),
-                                  end: Offset.zero,
-                                ).animate(anim),
-                                child: child,
+                // 2) Any ongoing load (topics OR search) => spinner even when empty
+                else if (isBusy)
+                  SizedBox(
+                    height: lastGridHeight > 0 ? lastGridHeight : 180,
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(height: 28, width: 28, child: CircularProgressIndicator()),
+                            const SizedBox(height: 12),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              transitionBuilder: (child, anim) => FadeTransition(
+                                opacity: anim,
+                                child: SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0, .25),
+                                    end: Offset.zero,
+                                  ).animate(anim),
+                                  child: child,
+                                ),
+                              ),
+                              child: Text(
+                                loadingPhrases[loadingIndex],
+                                key: ValueKey<int>(loadingIndex),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
                               ),
                             ),
-                            child: Text(
-                              loadingPhrases[loadingIndex],
-                              key: ValueKey<int>(loadingIndex),
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ),
+                  )
 
-              // 4) Footer with paging + page info
-              _buildFooter(),
-            ],
+                // 3) Loaded but empty
+                else if (!hasAny)
+                  emptyState
+
+                // 4) Normal grid
+                else
+                  _buildGrid(context),
+
+                _buildFooter(),
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
   }
 }

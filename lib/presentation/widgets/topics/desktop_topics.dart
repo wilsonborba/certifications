@@ -54,6 +54,16 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
                           border: OutlineInputBorder(),
                           isDense: true,
                           contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 18),
+                          enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFFCCCCCC), width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFF888888), width: 1)),
+                      errorBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.red, width: 1)),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.red, width: 1)),
+                      
                         ),
                       ),
                     ),
@@ -63,10 +73,12 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
                     height: 44,
                     child: ElevatedButton.icon(
                       onPressed: startSearch,
-                      icon: const Icon(Icons.search, size: 18),
-                      label: const Text('Search'),
+                      icon:  Icon(Icons.search, size: 18, color: Theme.of(context).colorScheme.onSecondary),
+                      label:  Text('Search', style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSecondary)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.secondary,
                     ),
-                  ),
+                  )),
                   if (searchMode) ...[
                     const SizedBox(width: 8),
                     SizedBox(
@@ -106,7 +118,7 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: columns,
               childAspectRatio: 1.0,
-              crossAxisSpacing: 0.0,
+              crossAxisSpacing: 5,
               mainAxisSpacing: 12,
               mainAxisExtent: 180,
             ),
@@ -215,75 +227,78 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
     );
 
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 248, 248, 248),
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        backgroundColor: const Color.fromARGB(255, 36, 36, 36),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              _buildHeaderBar(),
-
-              // 1) Initial loading (first ever load)
-              if (!initialDone && !hasAny) initialLoading,
-
-              // 2) Empty state (after first load)
-              if (initialDone && !hasAny && !isBusy) emptyState,
-
-              // 3) Grid or fixed-height spinner while a new page is loading
-              if (hasAny && !isBusy) _buildGrid(context),
-
-              if (hasAny && isBusy)
-                SizedBox(
-                  height: lastGridHeight > 0 ? lastGridHeight : 180,
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const SizedBox(height: 28, width: 28, child: CircularProgressIndicator()),
-                          const SizedBox(height: 12),
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 300),
-                            transitionBuilder: (child, anim) => FadeTransition(
-                              opacity: anim,
-                              child: SlideTransition(
-                                position: Tween<Offset>(
-                                  begin: const Offset(0, .25),
-                                  end: Offset.zero,
-                                ).animate(anim),
-                                child: child,
-                              ),
-                            ),
-                            child: Text(
-                              loadingPhrases[loadingIndex],
-                              key: ValueKey<int>(loadingIndex),
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-              // 4) Footer with Prev/Next buttons + page info
-              _buildFooter(),
-            ],
+          backgroundColor: const Color.fromARGB(255, 248, 248, 248),
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            backgroundColor: const Color.fromARGB(255, 36, 36, 36),
           ),
-        ),
-      ),
-    );
+          body: SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildHeaderBar(),
+
+                  // 1) First-ever initial load (topics)
+                  if (!initialDone && !hasAny) initialLoading
+
+                  // 2) Any ongoing load (topics OR search) => show spinner even if list empty
+                  else if (isBusy)
+                    SizedBox(
+                      height: lastGridHeight > 0 ? lastGridHeight : 180,
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const SizedBox(height: 28, width: 28, child: CircularProgressIndicator()),
+                              const SizedBox(height: 12),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 300),
+                                transitionBuilder: (child, anim) => FadeTransition(
+                                  opacity: anim,
+                                  child: SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: const Offset(0, .25),
+                                      end: Offset.zero,
+                                    ).animate(anim),
+                                    child: child,
+                                  ),
+                                ),
+                                child: Text(
+                                  loadingPhrases[loadingIndex],
+                                  key: ValueKey<int>(loadingIndex),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+
+                  // 3) Loaded but empty
+                  else if (!hasAny)
+                    emptyState
+
+                  // 4) Normal grid
+                  else
+                    _buildGrid(context),
+
+                  // 5) Footer
+                  _buildFooter(),
+                ],
+              ),
+            ),
+          ),
+        );
   }
 }

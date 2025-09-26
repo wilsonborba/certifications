@@ -4,6 +4,8 @@ import 'dart:async';
 import 'dart:ui' as ui show ImageByteFormat, Image;
 
 import 'package:accredit/core/utils/my_logs.dart';
+import 'package:accredit/core/utils/my_nagivation.dart';
+import 'package:accredit/presentation/widgets/page_filter/on_page_filter.dart';
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -70,6 +72,7 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
   String? _fileName;
   String? _error;
   bool _busy = false;
+  String? documentId; // returned from API on success
 
   // --- Loading phrase ticker ---
   Timer? _loadingTicker;
@@ -218,6 +221,21 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
 
       final code = resp.statusCode;
       // Only show popups on errors; on 200, do nothing extra
+
+      if (code == 200) {
+        if (!mounted) return;
+        final body = resp.body.isNotEmpty ? json.decode(resp.body) : null;
+        
+        
+        setState(() {
+          _busy = false;
+          _error = null; // clear any previous error
+          documentId = body['data']?['parsed']?['document_id'];
+        });
+        _stopLoadingTicker();
+        return;
+      }
+
       if (code != 200) {
         String msg = 'Unexpected server response.';
         try {
@@ -229,23 +247,37 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
         switch (code) {
           case 400:
             _showDialog(title: 'Bad request', message: msg);
+            _error = msg;
+            _previewPng = null; // clear preview on bad upload
             break;
           case 404:
             _showDialog(title: 'Not found', message: msg);
+            _error = msg;
+            _previewPng = null; // clear preview on bad upload
             break;
           case 409:
             _showDialog(title: 'Blocked', message: msg);
+            _error = msg;
+            _previewPng = null; // clear preview on bad upload
             break;
           case 415:
             _showDialog(title: 'Unsupported file', message: msg);
+            _error = msg;
+            _previewPng = null; // clear preview on bad upload
             break;
           case 422:
             _showDialog(title: 'Invalid pages', message: msg);
+            _error = msg;
+            _previewPng = null; // clear preview on bad upload
             break;
           case 503:
             _showDialog(title: 'Service unavailable', message: msg);
+            _error = msg;
+            _previewPng = null; // clear preview on bad upload
             break;
           default:
+            _error = 'Server error...';
+            _previewPng = null; // clear preview on bad upload
             _showDialog(title: 'Server error', message: msg);
         }
       }
@@ -485,8 +517,19 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
                           width: 160,
                           child: ElevatedButton.icon(
                             onPressed: () {
-                              debug('Next button pressed');
-                              // No navigation here (by request).
+                              if (documentId != null) {
+                                 NavigationService.push(OnPageFilterScreen(documentId: documentId!));
+                              } else {
+                                _showDialog(
+                                  title: 'Invalid PDF',
+                                  message: 'Please attach and upload a valid PDF first.',
+                                );
+
+                                setState(() {
+                                  _error = 'Please attach and upload a valid PDF first.';
+                                  _previewPng = null; // clear preview on bad upload
+                                });
+                              }
                             },
                             icon: const Icon(Icons.arrow_forward, size: 16),
                             label: Text(
