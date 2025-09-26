@@ -19,6 +19,8 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
   /// Returns a record: (topics, page, perPage, hasMore)
   final LocalSourceAdapter _topicsStorage = LocalSourceAdapter(namespace: 'topics');
   final Duration _pageCacheTtl = const Duration(hours: 3);
+  final LocalSourceAdapter _searchStorage = LocalSourceAdapter(namespace: 'search');
+  final Duration _searchTtl = const Duration(minutes: 15);
 
   String _pageKey(String itemName, int page) => 'topics:$itemName:$page';
   String _currentKey(String itemName) => 'topics:$itemName:current';
@@ -180,6 +182,143 @@ bool shouldUseIdentifications(Identifications? ident) {
   String? safeImageFromIdent(Identifications ident) {
     final s = ident.imgLinkIdentification?.trim();
     return (s == null || s.isEmpty) ? null : s;
+  }
+
+
+
+
+
+
+  String _searchPageKey(String itemName, String query, int page) =>
+      'search:$itemName:${query.trim().toLowerCase()}:$page';
+  String _searchCurrentKey(String itemName) => 'search:$itemName:current';
+
+  Future<void> saveSearchCurrent(
+    String itemName, {
+    required String query,
+    required int page,
+  }) async {
+    final enc = MyEncryption();
+    final clear = json.encode({
+      'query': query,
+      'page': page,
+      'expiration_time': DateTime.now().add(_searchTtl).toIso8601String(),
+    });
+    final cipher = await enc.encryptPayload(clear);
+    if (cipher != null) {
+      await _searchStorage.upsert(_searchCurrentKey(itemName), cipher);
+    }
+  }
+
+  Future<(List<Map<String, dynamic>>, int?, int?, bool)?>
+      loadSearchPageCache(String itemName, String query, int page) async {
+    final enc = MyEncryption();
+    final stored = await _searchStorage.read<dynamic>(_searchPageKey(itemName, query, page));
+    if (stored is! String || stored.isEmpty) return null;
+
+    final clear = await enc.decryptPayload(stored);
+    if (clear == null) return null;
+
+    final decoded = json.decode(clear);
+    if (decoded is! Map) return null;
+
+    final expStr = decoded['expiration_time'] as String?;
+    final exp    = expStr != null ? DateTime.tryParse(expStr) : null;
+    if (exp == null || DateTime.now().isAfter(exp)) return null;
+
+    final topics  = (decoded['topics'] as List).cast<Map<String, dynamic>>();
+    final int? pg = decoded['page'] as int?;
+    final int? pp = decoded['per_page'] as int?;
+    final bool hm = decoded['has_more'] as bool? ?? false;
+    return (topics, pg, pp, hm);
+  }
+
+  Future<void> saveSearchPageCache({
+    required String itemName,
+    required String query,
+    required int page,
+    required List<Map<String, dynamic>> topics,
+    required int? perPage,
+    required bool hasMore,
+  }) async {
+    final enc = MyEncryption();
+    final clear = json.encode({
+      'query': query,
+      'page': page,
+      'per_page': perPage,
+      'has_more': hasMore,
+      'topics': topics,
+      'expiration_time': DateTime.now().add(_searchTtl).toIso8601String(),
+    });
+    final cipher = await enc.encryptPayload(clear);
+    if (cipher != null) {
+      await _searchStorage.upsert(_searchPageKey(itemName, query, page), cipher);
+    }
+  }
+
+  Future<(List<Map<String, dynamic>>, int?, int?, bool)> loadOrFetchSearchPage(
+    String itemName, {
+    required String query,
+    required int page,
+    required int perPage,
+    String mode = 'fulltext',
+    bool fillPage = true,
+    int maxExtraPages = 2,
+  }) async {
+    // 1) cache first
+    final cached = await loadSearchPageCache(itemName, query, page);
+    if (cached != null) return cached;
+
+    // 2) fetch via CardItemsManager
+    final (topics, pg, pp, hm) =
+        await fetchSearchForCard(itemName, query, page, perPage, mode, fillPage, maxExtraPages);
+
+    // 3) persist
+    await saveSearchPageCache(
+      itemName: itemName,
+      query: query,
+      page: pg ?? page,
+      topics: topics,
+      perPage: pp,
+      hasMore: hm,
+    );
+
+    return (topics, pg, pp, hm);
+  }
+
+  // Uses the EXISTING CardItemsManager (no new manager)
+  Future<(List<Map<String, dynamic>>, int?, int?, bool)> fetchSearchForCard(
+    String itemName,
+    String query,
+    int page,
+    int perPage, [
+    String mode = 'fulltext',
+    bool fillPage = true,
+    int maxExtraPages = 2,
+  ]) async {
+    final manager = CardItemsManager();
+    final response = await manager.searchTopics(itemName, query, page, perPage, mode, fillPage, maxExtraPages);
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to search topics for $itemName');
+    }
+
+    final decoded = response.body.isNotEmpty ? json.decode(response.body) : null;
+    if (decoded is! Map || decoded['data'] == null) {
+      throw Exception('Unexpected search payload shape for $itemName');
+    }
+
+    final data = decoded['data'];
+    if (data is! Map || data['topics'] is! List) {
+      throw Exception('Unexpected search payload shape for $itemName');
+    }
+
+    final topics = (data['topics'] as List).cast<Map<String, dynamic>>();
+    final int? _page = data['page'] is int ? data['page'] as int : null;
+    final int? _perPage = data['per_page'] is int ? data['per_page'] as int : null;
+    final bool hasMore = (data['has_more'] is bool) ? data['has_more'] as bool : false;
+
+    return (topics, _page, _perPage, hasMore);
   }
 
 }

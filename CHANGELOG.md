@@ -31,6 +31,7 @@ All notable changes to this project will be documented in this file.
 - *(cards)* Created the card topics pagination for both mobile and desktop
 - *(pdf)* Created a button to go next step after load pdf
 - *(pdf)* Improved the process of loading pdf
+- *(cards)* Created a search method for all cards
 
 ### 🐛 Bug Fixes
 
