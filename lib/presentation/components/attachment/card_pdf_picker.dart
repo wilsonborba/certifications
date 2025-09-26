@@ -18,8 +18,8 @@ class CardPdfPicker extends StatefulWidget {
     this.height = 720,
     this.cornerRadius = 36,
     this.iconSize = 64,
-    this.titleSize = 28,
-    this.bodySize = 20,
+    this.titleSize = 22,
+    this.bodySize = 16,
     this.buttonFontSize = 16,
     this.buttonMinSize = const Size(220, 64),
 
@@ -329,6 +329,7 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
                   fontWeight: FontWeight.w600,
                   color: Colors.black87,
                   height: 1.1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(height: 18),
@@ -362,7 +363,7 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
                       ),
                     ),
 
-              const Spacer(),
+              const SizedBox(height: 10),
 
               // Preview area
               Container(

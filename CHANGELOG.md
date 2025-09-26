@@ -32,6 +32,7 @@ All notable changes to this project will be documented in this file.
 - *(pdf)* Created a button to go next step after load pdf
 - *(pdf)* Improved the process of loading pdf
 - *(cards)* Created a search method for all cards
+- *(cards)* Improved usage to base class for card topics
 
 ### 🐛 Bug Fixes
 

@@ -1,10 +1,12 @@
+import 'dart:async';
 import 'dart:convert';
+
+import 'package:flutter/material.dart';
 
 import 'package:accredit/core/utils/my_encryption.dart';
 import 'package:accredit/dal/local/local_source_adapter.dart';
 import 'package:accredit/domain/models/topic_identifications.dart';
 import 'package:accredit/domain/services/card_items_manager.dart';
-import 'package:flutter/material.dart';
 
 /// BaseTopics is a StatefulWidget holding shared logic for Mobile/Desktop
 abstract class BaseTopics extends StatefulWidget {
@@ -13,10 +15,14 @@ abstract class BaseTopics extends StatefulWidget {
 }
 
 /// Shared state with common helpers for topics screens.
-/// Subclasses inherit `fetchTopicsForCard` and helpers.
+/// Subclasses get:
+/// - controller (paging/search/ticker/grid-height)
+/// - data/cache/search helpers
+/// - convenience getters (visibleItems/isBusy/windowInfo)
 abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
-  /// Fetch topics for an item.
-  /// Returns a record: (topics, page, perPage, hasMore)
+  // =========================================================
+  //                 DATA / CACHE HELPERS (yours)
+  // =========================================================
   final LocalSourceAdapter _topicsStorage = LocalSourceAdapter(namespace: 'topics');
   final Duration _pageCacheTtl = const Duration(hours: 3);
   final LocalSourceAdapter _searchStorage = LocalSourceAdapter(namespace: 'search');
@@ -56,7 +62,6 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
     return 1;
   }
 
-  /// Save a full page payload: topics + page + per_page + has_more + expiration
   Future<void> saveTopicsPageCache({
     required String itemName,
     required int page,
@@ -78,9 +83,10 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
     }
   }
 
-  /// Load a full page payload if present and not expired. Returns null if stale/missing.
-  Future<(List<Map<String, dynamic>>, int?, int?, bool)?>
-      loadTopicsPageCache(String itemName, int page) async {
+  Future<(List<Map<String, dynamic>>, int?, int?, bool)?> loadTopicsPageCache(
+    String itemName,
+    int page,
+  ) async {
     final enc = MyEncryption();
     final stored = await _topicsStorage.read<dynamic>(_pageKey(itemName, page));
     if (stored is! String || stored.isEmpty) return null;
@@ -102,7 +108,6 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
     return (topics, pg, pp, hm);
   }
 
-  /// Load a page from cache first; if missing/stale, fetch → cache → return.
   Future<(List<Map<String, dynamic>>, int?, int?, bool)> loadOrFetchTopicsPage(
     String itemName, {
     required int page,
@@ -111,10 +116,8 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
     final cached = await loadTopicsPageCache(itemName, page);
     if (cached != null) return cached;
 
-    final (topics, pg, pp, hm) =
-        await fetchTopicsForCard(itemName, page, perPage);
+    final (topics, pg, pp, hm) = await fetchTopicsForCard(itemName, page, perPage);
 
-    // persist the freshly fetched page
     await saveTopicsPageCache(
       itemName: itemName,
       page: pg ?? page,
@@ -125,10 +128,14 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
 
     return (topics, pg, pp, hm);
   }
-  Future<(List<Map<String, dynamic>>, int?, int?, bool)> fetchTopicsForCard(String itemName, int page, int perPage) async {
-    
+
+  Future<(List<Map<String, dynamic>>, int?, int?, bool)> fetchTopicsForCard(
+    String itemName,
+    int page,
+    int perPage,
+  ) async {
     final manager = CardItemsManager();
-    final response = await manager.getTopicsFromCard(itemName,  page, perPage);
+    final response = await manager.getTopicsFromCard(itemName, page, perPage);
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch topics for $itemName');
@@ -149,11 +156,9 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
     final int? _perPage = data['per_page'] is int ? data['per_page'] as int : null;
     final bool hasMore = (data['has_more'] is bool) ? data['has_more'] as bool : false;
 
-    //debug('Fetched ${topics.length} topics (objects) for $itemName from API');
     return (topics, _page, _perPage, hasMore);
   }
 
-  /// Helper to parse identifications object
   Identifications? getTopicIdentifications(Map<String, dynamic> topic) {
     if (topic['identifications'] is Map) {
       final idMap = topic['identifications'] as Map<String, dynamic>;
@@ -162,32 +167,24 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
     return null;
   }
 
-  // In base_topics.dart (inside BaseTopicsState)
-bool shouldUseIdentifications(Identifications? ident) {
+  bool shouldUseIdentifications(Identifications? ident) {
     if (ident == null) return false;
 
     final id    = ident.inputIdentification.trim();
     final title = (ident.titleIdentification ?? '').trim();
     final link  = (ident.linkIdentification ?? '').trim();
 
-    // Required: input_identification, title_identification, link_identification
     if (id.isEmpty) return false;
     if (title.isEmpty) return false;
     if (link.isEmpty) return false;
 
-    // img_link_identification may be empty/null (no image)
-    return true;
+    return true; // image may be null/empty
   }
 
   String? safeImageFromIdent(Identifications ident) {
     final s = ident.imgLinkIdentification?.trim();
     return (s == null || s.isEmpty) ? null : s;
   }
-
-
-
-
-
 
   String _searchPageKey(String itemName, String query, int page) =>
       'search:$itemName:${query.trim().toLowerCase()}:$page';
@@ -210,8 +207,11 @@ bool shouldUseIdentifications(Identifications? ident) {
     }
   }
 
-  Future<(List<Map<String, dynamic>>, int?, int?, bool)?>
-      loadSearchPageCache(String itemName, String query, int page) async {
+  Future<(List<Map<String, dynamic>>, int?, int?, bool)?> loadSearchPageCache(
+    String itemName,
+    String query,
+    int page,
+  ) async {
     final enc = MyEncryption();
     final stored = await _searchStorage.read<dynamic>(_searchPageKey(itemName, query, page));
     if (stored is! String || stored.isEmpty) return null;
@@ -265,15 +265,12 @@ bool shouldUseIdentifications(Identifications? ident) {
     bool fillPage = true,
     int maxExtraPages = 2,
   }) async {
-    // 1) cache first
     final cached = await loadSearchPageCache(itemName, query, page);
     if (cached != null) return cached;
 
-    // 2) fetch via CardItemsManager
     final (topics, pg, pp, hm) =
         await fetchSearchForCard(itemName, query, page, perPage, mode, fillPage, maxExtraPages);
 
-    // 3) persist
     await saveSearchPageCache(
       itemName: itemName,
       query: query,
@@ -286,7 +283,6 @@ bool shouldUseIdentifications(Identifications? ident) {
     return (topics, pg, pp, hm);
   }
 
-  // Uses the EXISTING CardItemsManager (no new manager)
   Future<(List<Map<String, dynamic>>, int?, int?, bool)> fetchSearchForCard(
     String itemName,
     String query,
@@ -297,7 +293,8 @@ bool shouldUseIdentifications(Identifications? ident) {
     int maxExtraPages = 2,
   ]) async {
     final manager = CardItemsManager();
-    final response = await manager.searchTopics(itemName, query, page, perPage, mode, fillPage, maxExtraPages);
+    final response =
+        await manager.searchTopics(itemName, query, page, perPage, mode, fillPage, maxExtraPages);
 
     if (response.statusCode != 200) {
       throw Exception('Failed to search topics for $itemName');
@@ -321,4 +318,259 @@ bool shouldUseIdentifications(Identifications? ident) {
     return (topics, _page, _perPage, hasMore);
   }
 
+  // =========================================================
+  //                    SHARED CONTROLLER
+  // =========================================================
+
+  // ---------- state ----------
+  int page = 1;
+  int perPage = 8; // child overrides via initialPerPage
+  bool hasMore = true;
+  bool loading = false;
+  bool initialDone = false;
+
+  // Search
+  final TextEditingController qCtrl = TextEditingController();
+  bool searchMode = false;
+  int searchPage = 1;
+  bool searchHasMore = false;
+  bool searchLoading = false;
+
+  // Visible data
+  List<Map<String, dynamic>> topics = const [];
+  List<Map<String, dynamic>> searchResults = const [];
+
+  // Grid height memory (spinner placeholder)
+  final GlobalKey gridKey = GlobalKey();
+  double lastGridHeight = 0;
+
+  // Non-initial loading phrase ticker
+  Timer? _loadingTicker;
+  int loadingIndex = 0;
+  final List<String> loadingPhrases = const [
+    'Fetching topics…',
+    'Some topics take longer to load…',
+    'Checking availability…',
+    'Still working on it…',
+    'Almost there…',
+  ];
+
+  // ---------- lifecycle ----------
+  @protected
+  int get initialPerPage => 8; // Desktop overrides to 8, Mobile to 4, etc.
+
+  @override
+  void initState() {
+    super.initState();
+    perPage = initialPerPage;
+    _bootstrap();
+  }
+
+  @override
+  void dispose() {
+    qCtrl.dispose();
+    _stopLoadingTicker();
+    super.dispose();
+  }
+
+  Future<void> _bootstrap() async {
+    final saved = await loadSavedPageOr1(widget.itemName);
+    page = saved;
+    await loadPage(page);
+  }
+
+  // ---------- ticker ----------
+  void _startLoadingTickerIfNeeded() {
+    if (!initialDone) return;
+    _loadingTicker?.cancel();
+    loadingIndex = 0;
+    _loadingTicker = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!mounted) return;
+      setState(() {
+        loadingIndex = (loadingIndex + 1) % loadingPhrases.length;
+      });
+    });
+  }
+
+  void _stopLoadingTicker() {
+    _loadingTicker?.cancel();
+    _loadingTicker = null;
+    loadingIndex = 0;
+  }
+
+  // ---------- paging (topics) ----------
+  @protected
+  Future<void> loadPage(int targetPage) async {
+    if (loading || searchLoading) return;
+
+    setState(() => loading = true);
+    _startLoadingTickerIfNeeded();
+    try {
+      final (raw, pg, pp, hm) = await loadOrFetchTopicsPage(
+        widget.itemName,
+        page: targetPage,
+        perPage: perPage,
+      );
+
+      final valid = raw
+          .where((t) => shouldUseIdentifications(getTopicIdentifications(t)))
+          .toList();
+
+      if (!mounted) return;
+      setState(() {
+        topics = valid;
+        page = pg ?? targetPage;
+        perPage = pp ?? perPage;
+        hasMore = hm;
+        initialDone = true;
+      });
+
+      await saveCurrentPage(widget.itemName, page);
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final h = gridKey.currentContext?.size?.height ?? 0;
+        if (h > 0 && (lastGridHeight - h).abs() > 0.1) {
+          setState(() => lastGridHeight = h);
+        }
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        initialDone = true;
+      });
+    } finally {
+      if (!mounted) return;
+      _stopLoadingTicker();
+      setState(() => loading = false);
+    }
+  }
+
+  @protected
+  void loadPrev() {
+    if (searchMode) {
+      loadSearchPrev();
+      return;
+    }
+    if (loading || page <= 1) return;
+    loadPage(page - 1);
+  }
+
+  @protected
+  void loadNext() {
+    if (searchMode) {
+      loadSearchNext();
+      return;
+    }
+    if (loading || !hasMore) return;
+    loadPage(page + 1);
+  }
+
+  // ---------- search ----------
+  @protected
+  Future<void> startSearch() async {
+    final q = qCtrl.text.trim();
+    if (q.isEmpty) return;
+
+    setState(() {
+      searchMode = true;
+      searchPage = 1;
+    });
+    await loadSearchPage(1);
+  }
+
+  @protected
+  Future<void> clearSearch() async {
+    if (searchLoading) return;
+    setState(() {
+      searchMode = false;
+      searchResults = const [];
+      searchPage = 1;
+      searchHasMore = false;
+      qCtrl.clear();
+    });
+  }
+
+  @protected
+  Future<void> loadSearchPage(int targetPage) async {
+    if (searchLoading || loading) return;
+    final q = qCtrl.text.trim();
+    if (q.isEmpty) {
+      await clearSearch();
+      return;
+    }
+
+    setState(() => searchLoading = true);
+    _startLoadingTickerIfNeeded();
+    try {
+      final (topicsRaw, pg, pp, hm) = await loadOrFetchSearchPage(
+        widget.itemName,
+        query: q,
+        page: targetPage,
+        perPage: perPage,
+      );
+
+      final valid = topicsRaw
+          .where((t) => shouldUseIdentifications(getTopicIdentifications(t)))
+          .toList();
+
+      if (!mounted) return;
+      setState(() {
+        searchResults = valid;
+        searchPage = pg ?? targetPage;
+        perPage = pp ?? perPage;
+        searchHasMore = hm;
+        initialDone = true;
+      });
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final h = gridKey.currentContext?.size?.height ?? 0;
+        if (h > 0 && (lastGridHeight - h).abs() > 0.1) {
+          setState(() => lastGridHeight = h);
+        }
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        initialDone = true;
+      });
+    } finally {
+      if (!mounted) return;
+      _stopLoadingTicker();
+      setState(() => searchLoading = false);
+    }
+  }
+
+  @protected
+  void loadSearchPrev() {
+    if (searchLoading || searchPage <= 1) return;
+    loadSearchPage(searchPage - 1);
+  }
+
+  @protected
+  void loadSearchNext() {
+    if (searchLoading || !searchHasMore) return;
+    loadSearchPage(searchPage + 1);
+  }
+
+  // ---------- convenience getters ----------
+  @protected
+  bool get isBusy => searchMode ? searchLoading : loading;
+
+  @protected
+  List<Map<String, dynamic>> get visibleItems =>
+      searchMode ? searchResults : topics;
+
+  /// Returns (startIndex, endIndex, currentPage, hasMoreForCurrentMode)
+  @protected
+  (int start, int end, int curPage, bool curHasMore) get windowInfo {
+    final items = visibleItems;
+    final curPage = searchMode ? searchPage : page;
+    final curHasMore = searchMode ? searchHasMore : hasMore;
+
+    final startIndex = ((curPage - 1) * perPage) + (items.isEmpty ? 0 : 1);
+    final endIndex = startIndex + items.length - (items.isEmpty ? 0 : 1);
+    return (startIndex, endIndex, curPage, curHasMore);
+  }
 }
