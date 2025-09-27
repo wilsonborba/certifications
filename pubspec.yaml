@@ -47,6 +47,7 @@ dependencies:
   http: ^1.4.0
   web: ^1.1.1
   http_parser: ^4.0.2
+  syncfusion_flutter_pdfviewer: ^26.1.42
 
 dev_dependencies:
   flutter_test:
@@ -79,6 +80,7 @@ flutter:
     - lib/presentation/assets/img/attachment_lines.svg
     - lib/presentation/assets/img/attachment_lines.svg
     - lib/presentation/assets/img/attach_line.png
+    - lib/presentation/assets/img/book.png
     
 
   #   - images/a_dot_burr.jpeg

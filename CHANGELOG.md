@@ -34,6 +34,7 @@ All notable changes to this project will be documented in this file.
 - *(cards)* Created a search method for all cards
 - *(cards)* Improved usage to base class for card topics
 - *(pdf)* Catch the document id and redirect to page
+- *(pdf)* Added a counter and limiter
 
 ### 🐛 Bug Fixes
 

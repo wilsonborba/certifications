@@ -27,7 +27,7 @@ class FrontendScanResult {
 }
 
 /// Tweakable limits/policy.
-class PreScanConfig {
+class PdfManager {
   /// Hard size cap (bytes). Large PDFs are often unnecessary and slow to handle in the browser.
   final int maxBytes;
 
@@ -43,7 +43,7 @@ class PreScanConfig {
   /// MIME expected (if provided from the drop API).
   final String expectedMime;
 
-  const PreScanConfig({
+  const PdfManager({
     this.maxBytes = 20 * 1024 * 1024, // 20 MB
     this.minBytes = 512,              // half a KB
     this.blockOnJavaScript = true,
@@ -107,7 +107,33 @@ Future<Response> loadPdftoApi({
       ),
     ],
   );
+
+
+
 }
+
+
+    Future<Response> getPdfInputFromApi({
+      required String documentId,
+      String baseUrl = 'http://localhost:8001',
+      String selectedPages = '1-2',
+    }) {
+      final adapter = ApiAdapter(
+        defaultHeaders: {
+          ...defaultHeadersPdfApi,
+        
+        },
+      );
+      final url = Uri.parse('$baseUrl/pdf/input/$documentId?selected_pages=$selectedPages');
+
+      return adapter.get(url);
+      
+    }
+
+
+
+
+
 
 /// Public entry: full pre-scan using bytes + metadata.
 /// Returns details you can log or show.
@@ -116,7 +142,7 @@ Future<FrontendScanResult> frontEndPreScan({
   String? sha256,
   String? fileName,
   String? mime,
-  PreScanConfig config = const PreScanConfig(),
+  PdfManager config = const PdfManager(),
 }) async {
   final flags = <String>[];
 
@@ -199,7 +225,7 @@ Future<bool> fakeCheckFileHashForThreat(
   Uint8List? bytes,
   String? fileName,
   String? mimeType,
-  PreScanConfig config = const PreScanConfig(),
+  PdfManager config = const PdfManager(),
 }) async {
   if (bytes == null) {
     // Hash-only quick check
@@ -245,8 +271,8 @@ Map<String, bool> _scanForTokens(Uint8List b) {
           .toLowerCase();
 
   final tokens = <String>[
-    '/js', '/javascript', '/openaction', '/aa', '/launch',
-    '/embeddedfile', '/richmedia', '/xfa', '/submitform', '/gotoe', '/uri',
+    '/js', '/javascript', '/openaction', '/launch',
+    '/embeddedfile', '/richmedia', '/xfa', '/submitform', '/gotoe', 
     '/acroform',
   ];
 

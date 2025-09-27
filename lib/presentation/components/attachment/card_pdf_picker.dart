@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:async';
 import 'dart:ui' as ui show ImageByteFormat, Image;
 
+import 'package:accredit/core/utils/my_dialogs.dart';
 import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/core/utils/my_nagivation.dart';
 import 'package:accredit/presentation/widgets/page_filter/on_page_filter.dart';
@@ -26,7 +27,7 @@ class CardPdfPicker extends StatefulWidget {
     this.buttonMinSize = const Size(220, 64),
 
     // Optional: tweak prescan policy if your manager exposes PreScanConfig
-    this.preScanConfig = const pre.PreScanConfig(
+    this.preScanConfig = const pre.PdfManager(
       maxBytes: 20 * 1024 * 1024,
       minBytes: 512,
       blockOnJavaScript: true,
@@ -52,7 +53,7 @@ class CardPdfPicker extends StatefulWidget {
   final double buttonFontSize;
   final Size buttonMinSize;
 
-  final pre.PreScanConfig preScanConfig;
+  final pre.PdfManager preScanConfig;
 
   // FastAPI params
   final String apiBase;
@@ -160,7 +161,7 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
           _error = 'File did not pass safety checks.';
         });
         _stopLoadingTicker();
-        _showDialog(
+        showMyDialog(context,
           title: 'File blocked',
           message: scan.flags.isEmpty
               ? 'Blocked by policy.'
@@ -175,7 +176,7 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
         _error = 'PreScan failed.';
       });
       _stopLoadingTicker();
-      _showDialog(title: 'PreScan error', message: 'An error occurred during file checks.');
+      showMyDialog(context,title: 'PreScan error', message: 'An error occurred during file checks.');
       return;
     }
 
@@ -246,45 +247,45 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
         } catch (_) {}
         switch (code) {
           case 400:
-            _showDialog(title: 'Bad request', message: msg);
+            showMyDialog(context,title: 'Bad request', message: msg);
             _error = msg;
             _previewPng = null; // clear preview on bad upload
             break;
           case 404:
-            _showDialog(title: 'Not found', message: msg);
+            showMyDialog(context,title: 'Not found', message: msg);
             _error = msg;
             _previewPng = null; // clear preview on bad upload
             break;
           case 409:
-            _showDialog(title: 'Blocked', message: msg);
+            showMyDialog(context,title: 'Blocked', message: msg);
             _error = msg;
             _previewPng = null; // clear preview on bad upload
             break;
           case 415:
-            _showDialog(title: 'Unsupported file', message: msg);
+            showMyDialog(context,title: 'Unsupported file', message: msg);
             _error = msg;
             _previewPng = null; // clear preview on bad upload
             break;
           case 422:
-            _showDialog(title: 'Invalid pages', message: msg);
+            showMyDialog(context,title: 'Invalid pages', message: msg);
             _error = msg;
             _previewPng = null; // clear preview on bad upload
             break;
           case 503:
-            _showDialog(title: 'Service unavailable', message: msg);
+            showMyDialog(context,title: 'Service unavailable', message: msg);
             _error = msg;
             _previewPng = null; // clear preview on bad upload
             break;
           default:
             _error = 'Server error...';
             _previewPng = null; // clear preview on bad upload
-            _showDialog(title: 'Server error', message: msg);
+            showMyDialog(context,title: 'Server error', message: msg);
         }
       }
     } catch (e, st) {
       debug('Upload error: $e\n$st');
       if (!mounted) return;
-      _showDialog(title: 'Network error', message: 'Could not reach the server.');
+      showMyDialog(context,title: 'Network error', message: 'Could not reach the server.');
     } finally {
       if (mounted) {
         setState(() {
@@ -305,21 +306,7 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
     );
   }
 
-  void _showDialog({required String title, required String message}) {
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -516,11 +503,17 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
                         SizedBox(
                           width: 160,
                           child: ElevatedButton.icon(
-                            onPressed: () {
+                            onPressed:  _busy ? null : () {
                               if (documentId != null) {
-                                 NavigationService.push(OnPageFilterScreen(documentId: documentId!));
+                                 NavigationService.push(
+                                  OnPageFilterScreen( 
+                                  documentId: documentId!,     // from your upload response
+                                  pdfBytes: _pdfBytes!,        // from FilePicker
+                                  fileName: _fileName ?? 'document.pdf'
+                                ),  
+                                );
                               } else {
-                                _showDialog(
+                                showMyDialog(context,
                                   title: 'Invalid PDF',
                                   message: 'Please attach and upload a valid PDF first.',
                                 );
