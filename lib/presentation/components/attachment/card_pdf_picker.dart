@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'dart:async';
 import 'dart:ui' as ui show ImageByteFormat, Image;
 
@@ -212,7 +211,6 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
       final resp = await pre.loadPdftoApi(
         fileBytes: _pdfBytes!,
         fileName: _fileName!,
-        baseUrl: widget.apiBase,
         ocrForce: widget.ocrForce,
         ocrLang: widget.ocrLang,
         ocrDpi: widget.ocrDpi,
@@ -296,15 +294,6 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
     }
   }
 
-  // (Kept for consistency; unused now but you can still call if you want a hash-only quick check)
-  Future<bool> _fakeCheckFileHashForThreat(String sha256) {
-    return pre.fakeCheckFileHashForThreat(
-      sha256,
-      bytes: _pdfBytes,
-      fileName: _fileName,
-      mimeType: 'application/pdf',
-    );
-  }
 
 
 
@@ -503,7 +492,7 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
                         SizedBox(
                           width: 160,
                           child: ElevatedButton.icon(
-                            onPressed:  _busy ? null : () {
+                            onPressed:  _busy ? null :  () {
                               if (documentId != null) {
                                  NavigationService.push(
                                   OnPageFilterScreen( 

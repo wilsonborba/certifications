@@ -50,3 +50,40 @@ class Identifications {
     return 'Identifications(inputIdentification: $inputIdentification, titleIdentification: $titleIdentification, linkIdentification: $linkIdentification, imgLinkIdentification: $imgLinkIdentification)';
   }
 }
+
+
+
+class PdfInputInfo {
+  final int pages;
+  final String? pdfUrl;
+  const PdfInputInfo({required this.pages, this.pdfUrl});
+}
+
+
+class   PdfContextInfo {
+  final String message;
+  final Map<String, dynamic> data;
+  final int statusCode;
+  const PdfContextInfo({
+    required this.message,
+    required this.data,
+    required this.statusCode,
+  });
+
+  factory PdfContextInfo.fromJson(Map<String, dynamic> json) {
+    return PdfContextInfo(
+      message: json['message'] as String,
+      data: json['data'] as Map<String, dynamic>,
+      statusCode: json['status_code'] as int,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'message': message,
+      'data': data,
+      'status_code': statusCode,
+    };
+  }
+
+}

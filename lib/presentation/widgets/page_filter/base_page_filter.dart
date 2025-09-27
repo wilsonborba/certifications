@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:accredit/domain/models/topic_identifications.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
@@ -10,11 +11,7 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 typedef PdfInputFetcher = Future<PdfInputInfo> Function(String documentId);
 
-class PdfInputInfo {
-  final int pages;
-  final String? pdfUrl;
-  const PdfInputInfo({required this.pages, this.pdfUrl});
-}
+
 
 PdfInputInfo parsePdfInputInfo(http.Response resp) {
   final jsonMap = json.decode(resp.body) as Map<String, dynamic>;
@@ -214,6 +211,7 @@ class _BasePageFilterState extends State<BasePageFilter> {
     return _ScaffoldShell(
       desktop: widget.desktopLayout,
       title: _TitleRow(
+        desktop: widget.desktopLayout,
         total: _totalPages!,
         selected: selected.length, // 👈 add this
       ),
@@ -257,11 +255,13 @@ class _IntRange {
 class _TitleRow extends StatelessWidget {
   final int total;
   final int selected;
+  final bool desktop;
 
-  const _TitleRow({
+   const _TitleRow({
     Key? key,
     required this.total,
-    required this.selected,
+    required this.selected, 
+    required this.desktop,
   }) : super(key: key);
 
   @override
@@ -278,9 +278,12 @@ class _TitleRow extends StatelessWidget {
         //   height: 200,
         // ),
         const SizedBox(width: 12),
-        const Text(
+         desktop ? Text(
           'Select pages',
           style: TextStyle(fontSize: 48, fontWeight: FontWeight.w800),
+        ) : Text(
+          'Select pages',
+          style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800),
         ),
         const Spacer(),
 
@@ -356,7 +359,7 @@ class _TitleRow extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                   child: LinearProgressIndicator(
                     value: ratio,
-                    backgroundColor: Colors.white.withAlpha((0.25 * 255).toInt()),
+                    backgroundColor: Colors.white.withAlpha((.25 * 255).toInt()),
                     color: Colors.white,
                     minHeight: 6,
                   ),

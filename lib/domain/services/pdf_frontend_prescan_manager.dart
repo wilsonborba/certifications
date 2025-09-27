@@ -8,6 +8,8 @@ import 'package:http/http.dart';
 import 'package:http/http.dart' show Response;
 import 'package:http_parser/http_parser.dart';
 
+String baseUrl = 'http://127.0.0.1:8001';
+
 /// Result of the quick client-side scan.
 class FrontendScanResult {
   final bool isAcceptable;
@@ -66,7 +68,6 @@ Map<String, String> defaultHeadersPdfApi = const {
 Future<Response> loadPdftoApi({
   required Uint8List fileBytes,
   required String fileName,
-  String baseUrl = 'http://127.0.0.1:8001',
   bool ocrForce = false,
   String ocrLang = 'eng',
   int ocrDpi = 300,
@@ -115,7 +116,7 @@ Future<Response> loadPdftoApi({
 
     Future<Response> getPdfInputFromApi({
       required String documentId,
-      String baseUrl = 'http://localhost:8001',
+  
       String selectedPages = '1-2',
     }) {
       final adapter = ApiAdapter(
@@ -125,6 +126,22 @@ Future<Response> loadPdftoApi({
         },
       );
       final url = Uri.parse('$baseUrl/pdf/input/$documentId?selected_pages=$selectedPages');
+
+      return adapter.get(url);
+      
+    }
+
+    Future<Response> getPdfContextFromApi({
+      required String documentId,
+  
+    }) {
+      final adapter = ApiAdapter(
+        defaultHeaders: {
+          ...defaultHeadersPdfApi,
+        
+        },
+      );
+      final url = Uri.parse('$baseUrl/pdf/context/$documentId');
 
       return adapter.get(url);
       

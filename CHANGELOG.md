@@ -35,6 +35,7 @@ All notable changes to this project will be documented in this file.
 - *(cards)* Improved usage to base class for card topics
 - *(pdf)* Catch the document id and redirect to page
 - *(pdf)* Added a counter and limiter
+- *(pdf)* Adjusted screen for ai injection error
 
 ### 🐛 Bug Fixes
 
