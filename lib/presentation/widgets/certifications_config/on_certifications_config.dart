@@ -163,7 +163,7 @@ class _OnCertificationConfigScreenState extends State<OnCertificationConfigScree
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const Icon(Icons.error_outline, size: 64, color: Colors.deepPurple),
                 const SizedBox(height: 16),
                 const Text(
                   "Oops! Something went wrong.",
@@ -179,7 +179,7 @@ class _OnCertificationConfigScreenState extends State<OnCertificationConfigScree
                 const SizedBox(height: 32),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade400,
+                    backgroundColor: Colors.deepPurple.shade400,
                     padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),

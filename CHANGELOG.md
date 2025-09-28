@@ -36,6 +36,7 @@ All notable changes to this project will be documented in this file.
 - *(pdf)* Catch the document id and redirect to page
 - *(pdf)* Added a counter and limiter
 - *(pdf)* Adjusted screen for ai injection error
+- *(ui)* Modified the main color to purple to be more similar
 
 ### 🐛 Bug Fixes
 

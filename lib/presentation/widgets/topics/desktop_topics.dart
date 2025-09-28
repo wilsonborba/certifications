@@ -73,10 +73,10 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
                     height: 44,
                     child: ElevatedButton.icon(
                       onPressed: startSearch,
-                      icon:  Icon(Icons.search, size: 18, color: Theme.of(context).colorScheme.onSecondary),
-                      label:  Text('Search', style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSecondary)),
+                      icon:  Icon(Icons.search, size: 18, color: Theme.of(context).colorScheme.onPrimary),
+                      label:  Text('Search', style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onPrimary)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.secondary,
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                     ),
                   )),
                   if (searchMode) ...[

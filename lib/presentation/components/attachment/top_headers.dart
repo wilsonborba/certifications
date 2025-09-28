@@ -46,7 +46,7 @@ class TopHeaders extends StatelessWidget {
           child: Align(
             alignment: Alignment.topRight,
             child: Image.asset(
-              'lib/presentation/assets/img/attach_line.png',
+              'lib/presentation/assets/img/attach_line_purple.png',
               fit: BoxFit.contain,   // or BoxFit.fitHeight
               height: 200,           // pick a static size you like
             ),

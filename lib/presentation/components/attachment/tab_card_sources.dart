@@ -44,7 +44,7 @@ class RectToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    final Color leftActive  = leftActiveColor  ?? scheme.secondary;
+    final Color leftActive  = leftActiveColor  ?? scheme.primary;
     final Color rightActive = rightActiveColor ?? scheme.primary;
     final Color railColor   = trackColor       ?? scheme.surfaceContainerHigh;
     final Color railBorder  = borderColor      ?? scheme.outlineVariant.withAlpha(230);
@@ -55,7 +55,7 @@ class RectToggle extends StatelessWidget {
 
     final Alignment thumbAlign = leftSelected ? Alignment.centerLeft : Alignment.centerRight;
     final Color thumbColor      = leftSelected ? leftActive : rightActive;
-    final Color leftTextColor   = leftSelected ? scheme.onSecondary : inactiveLbl;
+    final Color leftTextColor   = leftSelected ? scheme.onPrimary : inactiveLbl;
     final Color rightTextColor  = rightSelected ? scheme.onPrimary : inactiveLbl;
 
     return SizedBox(
