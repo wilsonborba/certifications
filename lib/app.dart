@@ -1,5 +1,8 @@
 
 
+import 'package:accredit/core/settings.dart';
+import 'package:accredit/core/utils/my_router_parser.dart';
+import 'package:accredit/presentation/widgets/auth/on_sync_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/core/utils/my_nagivation.dart';
@@ -31,7 +34,27 @@ class _AppState extends State<App> {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: ThemeMode.light,
-      home: OnBoardingScreen(),
+      onGenerateRoute: (settings) {
+        final parser = MyRouteParser(settings: settings);
+        final routePath = parser.path;
+        final tokenizedParam =
+            parser.parsedParams(app_settings.AUTH_PARAM_KEY_NAME);
+
+        debug('Route path: $routePath');
+        debug('Tokenized Param: $tokenizedParam');
+        if (routePath == 'sync') {
+          return MaterialPageRoute(
+            settings: const RouteSettings(name: OnSyncAuthScreen.route),
+            builder: (_) => OnSyncAuthScreen(tokenizedParam: tokenizedParam),
+          );
+        }
+        
+          else {
+          return MaterialPageRoute(
+            builder: (_) => OnBoardingScreen(),
+          );
+        }
+      }
     );
   }
 }

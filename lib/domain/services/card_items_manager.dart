@@ -3,6 +3,8 @@ import 'package:http/http.dart';
 
 class CardItemsManager {
 
+  String baseUrl = 'http://127.0.0.1:8001';
+
   // default headers request
   Map<String, String> defaultHeaders = {
     'Content-Type': 'application/json',
@@ -13,13 +15,13 @@ class CardItemsManager {
 
   Future<Response> getCards() {
     return ApiAdapter(defaultHeaders: defaultHeaders).get(
-      Uri.parse('http://localhost:8001/all_items'),
+      Uri.parse('$baseUrl/all_items'),
     );
   }
 
   Future<Response> getTopicsFromCard(String itemName, int page, int perPage) {
     return ApiAdapter(defaultHeaders: defaultHeaders).get(
-      Uri.parse('http://localhost:8001/topics/$itemName?page=$page&per_page=$perPage'),
+      Uri.parse('$baseUrl/topics/$itemName?page=$page&per_page=$perPage'),
     );
   }
 
@@ -30,7 +32,7 @@ class CardItemsManager {
 
   Future<Response> searchTopics(String itemName, String query, int page, int perPage, String mode, bool fillPage, int maxExtraPages) {
     return ApiAdapter(defaultHeaders: defaultHeaders).get(
-      Uri.parse('http://localhost:8001/search/$itemName?q=$query&page=$page&per_page=$perPage&mode=$mode&fill_page=$fillPage&max_extra_pages=$maxExtraPages'),
+      Uri.parse('$baseUrl/search/$itemName?q=$query&page=$page&per_page=$perPage&mode=$mode&fill_page=$fillPage&max_extra_pages=$maxExtraPages'),
     );
   }
 
