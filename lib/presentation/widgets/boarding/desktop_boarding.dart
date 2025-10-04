@@ -1,5 +1,6 @@
 
 
+import 'package:accredit/presentation/components/boarding/app_bar.dart';
 import 'package:accredit/presentation/widgets/attachment/on_attachment.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -28,7 +29,14 @@ class _DesktopBoardingState extends State<DesktopBoarding> {
   Widget build(BuildContext context) {
     // Implement the mobile landing screen UI here
     return Scaffold(
-
+      appBar: BoardingAppBar(
+        logoAsset: "lib/presentation/assets/img/temp_logo.png",
+      ),
+      endDrawer: MobileSideMenu(
+        onAbout: () => {},
+        onLogin: () => {},
+        onSignUp: () => {},
+      ),
       body: SingleChildScrollView(
               scrollDirection: Axis.vertical,
               
@@ -98,12 +106,12 @@ SizedBox(
   child: Stack(
     children: [
       // background fills the whole section
-      Positioned.fill(
-        child: SvgPicture.asset(
-          'lib/presentation/assets/img/second_screen_bkg.svg',
-          fit: BoxFit.cover,
-        ),
-      ),
+      // Positioned.fill(
+      //   child: SvgPicture.asset(
+      //     'lib/presentation/assets/img/second_screen_bkg.svg',
+      //     fit: BoxFit.cover,
+      //   ),
+      // ),
 
       // centered content; if total row > viewport, it scrolls horizontally
       Center(

@@ -38,6 +38,7 @@ All notable changes to this project will be documented in this file.
 - *(pdf)* Adjusted screen for ai injection error
 - *(ui)* Modified the main color to purple to be more similar
 - *(sync)* Created initial widgets for auth apps
+- *(sync)* Initial communication with righ api routes
 
 ### 🐛 Bug Fixes
 

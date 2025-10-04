@@ -40,8 +40,6 @@ class _AppState extends State<App> {
         final tokenizedParam =
             parser.parsedParams(app_settings.AUTH_PARAM_KEY_NAME);
 
-        debug('Route path: $routePath');
-        debug('Tokenized Param: $tokenizedParam');
         if (routePath == 'sync') {
           return MaterialPageRoute(
             settings: const RouteSettings(name: OnSyncAuthScreen.route),

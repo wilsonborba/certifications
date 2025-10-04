@@ -19,11 +19,13 @@ class Settings {
 
   final bool developmentMode = true;
 
+  String get ASODYA_API_URL => developmentMode ? 'http://localhost:8000' : 'https://api.asodya.com';
+
   final String imgsPath = "lib/presentation/assets/img/";
 
   final String applicationInfo = ApplicationInfo(
-    name: "Accredit",
-    description: "Accredit is a secure and user-friendly platform for getting certifications.",
+    name: "Certifications",
+    description: "Certifications is a secure and user-friendly platform for getting certifications.",
     logoImageUrl: "https://example.com/logo.png",
     urlApp: "http://localhost:1165",
     twoFaAuth: false,
@@ -58,7 +60,7 @@ class Settings {
   Future<void> init() async {
 
 
-    FERNET_KEY_SECRET = 'FEfpKZshLL36rTMY3P_dv0ADiO8bqC8Jd1eE2lkyFZ0=';
+    FERNET_KEY_SECRET = 'mEt5jdm9aTbUYnjhQM_tY_CTQL-JvXe0u9VdKEM2KmY=';
 
 
   }
