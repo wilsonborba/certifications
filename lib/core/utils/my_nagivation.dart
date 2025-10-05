@@ -7,10 +7,10 @@ import 'package:accredit/core/utils/my_router_parser.dart';
 
 
 
-void redirectToUrl(String url, {bool replace = true}) {
+void redirectToUrl(String url, {bool replace = true, bool removeSlash = false}) {
   // delegate to the web-safe implementation in my_route_parser.dart
   if (replace) {
-    replaceLocation(url);
+    replaceLocation(url, removeSlash: removeSlash);
   } else {
     redirectLocation(url);
   }

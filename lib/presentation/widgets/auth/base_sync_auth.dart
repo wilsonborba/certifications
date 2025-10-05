@@ -1,5 +1,8 @@
 import 'package:accredit/core/utils/my_logs.dart';
+import 'package:accredit/core/utils/my_nagivation.dart';
 import 'package:accredit/domain/services/api_auth_manager.dart';
+import 'package:accredit/presentation/components/auth/login_redirect.dart';
+import 'package:accredit/presentation/widgets/attachment/on_attachment.dart';
 import 'package:flutter/material.dart';
 
 /// a StatefulWidget holding shared logic for Mobile/Desktop
@@ -12,46 +15,77 @@ abstract class BaseSyncAuth extends StatefulWidget {
   
 }
 
-/// Shared state with common helpers for sync auth screens.
-/// Subclasses get:
-/// - controller (paging/search/ticker/grid-height)
-/// - data/cache/search helpers
-/// - convenience getters (visibleItems/isBusy/windowInfo)
+
 abstract class BaseSyncAuthState<T extends BaseSyncAuth> extends State<T> {
-
-
-
-
-
-
-
-
-  exchangeToken() async {
-    final manager = ApiAuthManager();
-    if (widget.tokenizedParam != null) {
-      try {
-        final response = await manager.exchange(widget.tokenizedParam!);
-       if (response.statusCode != 200) {
-          throw Exception('Failed to exchange token (status ${response.statusCode})');
-        }
-        debug('Token exchange successful: ${response.body}');
-      } catch (e) {
-        debug('Error during token exchange: $e');
-      }
-    } else {
-      debug('No tokenizedParam provided for token exchange');
-    }
-  }
+  bool _navigated = false;
 
   @override
   void initState() {
     super.initState();
-    exchangeToken();
+    _exchangeTokenAndRoute();
   }
 
-  @override
-  void dispose() {
-    // controller.dispose();
-    super.dispose();
+  Future<void> _exchangeTokenAndRoute() async {
+    final token = widget.tokenizedParam;
+
+    if (token == null || token.isEmpty) {
+      debug('No tokenizedParam provided. Redirecting to login.');
+      _toLogin();
+      return;
+    }
+
+    try {
+      final resp = await ApiAuthManager().exchange(token);
+
+      if (!mounted) return;
+
+      if (resp.statusCode == 200) {
+        debug('Token exchange successful: ${resp.body}');
+        _navOnce(() {
+          // Go to your next screen inside the app.
+          NavigationService.pushReplacement(const OnAttachmentScreen());
+        });
+      } else {
+        debug('Token exchange failed with status ${resp.statusCode}. Redirecting to login.');
+        _toLogin();
+      }
+    } catch (e) {
+      if (!mounted) return;
+      debug('Error during token exchange: $e');
+      _toLogin();
+    }
+  }
+
+  void _toLogin() async {
+    _navOnce(() async {
+      // External redirect (web-safe)
+      redirectToUrl(await urlRedirectionToLogin(), replace: true, removeSlash: true);
+    });
+  }
+
+  // Ensure we navigate only once & never during build
+  void _navOnce(VoidCallback cb) {
+    if (_navigated) return;
+    _navigated = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      cb();
+    });
+  }
+
+  /// Call this from your subclass build to show a loading page
+  Widget buildLoadingScaffold({String title = 'Syncing…'}) {
+    return Scaffold(
+      body: const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Please wait…'),
+          ],
+        ),
+      ),
+    );
   }
 }

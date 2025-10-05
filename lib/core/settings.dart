@@ -19,14 +19,25 @@ class Settings {
 
   final bool developmentMode = true;
 
-  String get ASODYA_API_URL => developmentMode ? 'http://localhost:8000' : 'https://api.asodya.com';
+
+  // ASODYA URLS
+
+  String get ASODYA_MAIN_DOMAIN => 'asodya.com';
+
+  String get ASODYA_API_URL => developmentMode ? 'http://localhost:8000' : 'https://api.$ASODYA_MAIN_DOMAIN';
+
+  // String get ASODYA_AUTH_URL => developmentMode ? 'http://localhost:7000' : 'https://auth.$ASODYA_MAIN_DOMAIN';
+
+  String get ASODYA_AUTH_URL => 'https://auth.$ASODYA_MAIN_DOMAIN';
+
+  String get ASODYA_AUTH_LOGIN_URL => '$ASODYA_AUTH_URL/log_in?tokenized=';
 
   final String imgsPath = "lib/presentation/assets/img/";
 
-  final String applicationInfo = ApplicationInfo(
+  final  applicationInfo = ApplicationInfo(
     name: "Certifications",
     description: "Certifications is a secure and user-friendly platform for getting certifications.",
-    logoImageUrl: "https://example.com/logo.png",
+    logoImageUrl: "https://dict-to-json.vercel.app/assets/logo-png-8fe051d1.png",
     urlApp: "http://localhost:1165",
     twoFaAuth: false,
     primaryColor: "#3498db",
@@ -34,7 +45,7 @@ class Settings {
     tertiaryColor: "#e74c3c",
     quartaryColor: null,
     createdAt: DateTime.now().toIso8601String(),
-  ).toJson().toString();
+  ).toJson();
 
   final String AUTH_PARAM_KEY_NAME = "tokenized";
 

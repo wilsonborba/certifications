@@ -16,14 +16,6 @@ class DesktopSyncAuth extends BaseSyncAuth {
 class _DesktopSyncAuthState extends BaseSyncAuthState<DesktopSyncAuth> {
   @override
   Widget build(BuildContext context) {
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Desktop Sync Auth'),
-      ),
-      body: Center(
-        child: Text('Desktop Sync Auth'),
-      ),
-    );
+    return buildLoadingScaffold(title: 'Signing you in…');
   }
 }

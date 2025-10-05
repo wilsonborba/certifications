@@ -16,13 +16,6 @@ class MobileSyncAuth extends BaseSyncAuth {
 class _MobileSyncAuthState extends BaseSyncAuthState<MobileSyncAuth> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Desktop Sync Auth'),
-      ),
-      body: Center(
-        child: Text('Desktop Sync Auth'),
-      ),
-    );
+    return buildLoadingScaffold(title: 'Signing you in…');
   }
 }

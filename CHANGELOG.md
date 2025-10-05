@@ -39,6 +39,7 @@ All notable changes to this project will be documented in this file.
 - *(ui)* Modified the main color to purple to be more similar
 - *(sync)* Created initial widgets for auth apps
 - *(sync)* Initial communication with righ api routes
+- *(sync)* Redirecting to auth initially implemented
 
 ### 🐛 Bug Fixes
 

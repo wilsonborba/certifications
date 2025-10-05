@@ -18,11 +18,24 @@ void redirectLocation(String url) {
   } catch (_) {}
 }
 
-void replaceLocation(String url) {
+void replaceLocation(String url, {bool removeSlash = false}) {
   try {
-    html.window.location.replace(url);
+    final finalUrl = removeSlash ? _stripTrailingSlash(url) : url;
+    // Use replace OR assign; but don't pushState afterwards.
+    html.window.location.replace(finalUrl);
   } catch (_) {}
 }
+
+String _stripTrailingSlash(String url) {
+  final uri = Uri.parse(url);
+
+  // Don’t touch bare host (/, /?query, /#hash); browsers expect a slash there.
+  if (uri.path.isEmpty || uri.path == '/') return url;
+
+  final newPath = uri.path.replaceFirst(RegExp(r'/+$'), '');
+  return uri.replace(path: newPath).toString();
+}
+
 
 void updatePathWeb(String path) {
   try {
