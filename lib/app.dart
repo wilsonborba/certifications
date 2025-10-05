@@ -2,6 +2,7 @@
 
 import 'package:accredit/core/settings.dart';
 import 'package:accredit/core/utils/my_router_parser.dart';
+import 'package:accredit/presentation/components/auth/session_gate.dart';
 import 'package:accredit/presentation/widgets/auth/on_sync_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:accredit/core/utils/my_logs.dart';
@@ -47,9 +48,9 @@ class _AppState extends State<App> {
           );
         }
         
-          else {
+         else {
           return MaterialPageRoute(
-            builder: (_) => OnBoardingScreen(),
+            builder: (_) => const SessionGate(),
           );
         }
       }

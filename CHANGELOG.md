@@ -41,6 +41,7 @@ All notable changes to this project will be documented in this file.
 - *(sync)* Initial communication with righ api routes
 - *(sync)* Redirecting to auth initially implemented
 - *(sync)* Removed the /sync segment for urlbar afte complete sync process
+- *(session)* Implemented sessions sync verifiers
 
 ### 🐛 Bug Fixes
 
