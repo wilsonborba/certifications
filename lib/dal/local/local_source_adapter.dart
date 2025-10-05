@@ -5,6 +5,50 @@ import 'dart:convert';
 import 'package:web/web.dart' as web; 
 
 
+/// Delete a cookie by name. Tries a specific [path] and optional [domain].
+void deleteCookie(String name, {String path = '/', String? domain}) {
+  try {
+    final expired = 'Thu, 01 Jan 1970 00:00:00 GMT';
+    final domainPart = (domain != null && domain.isNotEmpty) ? '; domain=$domain' : '';
+    web.document.cookie = '$name=; expires=$expired; path=$path$domainPart';
+  } catch (e) {
+    debug('deleteCookie($name) failed: $e');
+  }
+}
+
+/// Best-effort delete for multiple cookies across common domain/path variants.
+void deleteCookies(Iterable<String> names) {
+  try {
+    final host = web.window.location.hostname;
+    final pathNow = web.window.location.pathname;
+
+    // Try several domain candidates (covers host, .host, and removing www.)
+    final domains = <String?>{
+      null,
+      host,
+      host.isNotEmpty ? '.$host' : null,
+      (host.startsWith('www.') ? host.substring(4) : null),
+      (host.startsWith('www.') ? '.${host.substring(4)}' : null),
+    }.whereType<String?>().toList();
+
+    // Try both root and the current path
+    final paths = <String>{'/', pathNow};
+
+    for (final n in names) {
+      for (final p in paths) {
+        // no domain param first (most common)
+        deleteCookie(n, path: p);
+        // and with domain variants
+        for (final d in domains) {
+          deleteCookie(n, path: p, domain: d);
+        }
+      }
+    }
+  } catch (e) {
+    debug('deleteCookies failed: $e');
+  }
+}
+
 
   String? readCookie(String name) {
     final cookies = web.document.cookie; // e.g. "foo=bar; baz=qux"

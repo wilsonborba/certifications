@@ -1,3 +1,4 @@
+import 'package:accredit/presentation/components/attachment/app_bar.dart';
 import 'package:accredit/presentation/widgets/topics/on_topics.dart';
 import 'package:flutter/material.dart';
 
@@ -32,6 +33,19 @@ class _DesktopAttachmentState extends BaseAttachmentState<DesktopAttachment> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AttachmentAppBar(
+    onCertificates: () { /* navigate */ },
+    onTokens: () { /* navigate */ },
+    onSupport: () { /* navigate */ },
+    onAbout:   () { /* navigate */ },
+    // onLogout: () async { await clearSessionArtifacts(); /* custom redirect */ },
+  ),
+  endDrawer: AttachmentSideMenu(
+    onCertificates: () { /* navigate */ },
+    onTokens: () { /* navigate */ },
+    onSupport: () { /* navigate */ },
+    onAbout:   () { /* navigate */ },
+  ),
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,
         child: Column(

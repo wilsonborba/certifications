@@ -5,7 +5,7 @@ import 'package:accredit/core/utils/my_logs.dart';
 
 MyEncryption encryptor = MyEncryption();
 
-Future<String> urlRedirectionToLogin() async {
+Future<String> urlRedirectionToAuth({bool isToLogin = true}) async {
   debug('Redirecting to login...');
 
   // 1) Prepare payload as JSON string
@@ -16,7 +16,11 @@ Future<String> urlRedirectionToLogin() async {
   final encrypted = await encryptor.encryptPayload(payloadJson);
 
   // 3) Build URL safely (this encodes +,/,… as %2B,%2F,…)
-  final base = Uri.parse(app_settings.ASODYA_AUTH_LOGIN_URL); // e.g. http://localhost:7000/log_in
+
+  // login is default and ovirridable
+
+  final base = Uri.parse(isToLogin ? app_settings.ASODYA_AUTH_LOGIN_URL : app_settings.ASODYA_AUTH_SIGNUP_URL);
+
   final url = base.replace(queryParameters: {
     ...base.queryParameters,
     app_settings.AUTH_PARAM_KEY_NAME: encrypted,

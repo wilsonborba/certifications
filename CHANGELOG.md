@@ -42,6 +42,7 @@ All notable changes to this project will be documented in this file.
 - *(sync)* Redirecting to auth initially implemented
 - *(sync)* Removed the /sync segment for urlbar afte complete sync process
 - *(session)* Implemented sessions sync verifiers
+- *(ui)* Added a app bar for main screen
 
 ### 🐛 Bug Fixes
 

@@ -31,6 +31,7 @@ class Settings {
   String get ASODYA_AUTH_URL => 'https://auth.$ASODYA_MAIN_DOMAIN';
 
   String get ASODYA_AUTH_LOGIN_URL => '$ASODYA_AUTH_URL/log_in?tokenized=';
+  String get ASODYA_AUTH_SIGNUP_URL => '$ASODYA_AUTH_URL/sign_up?tokenized=';
 
   final String imgsPath = "lib/presentation/assets/img/";
 

@@ -89,7 +89,7 @@ abstract class BaseSyncAuthState<T extends BaseSyncAuth> extends State<T> {
   void _toLogin() async {
     _navOnce(() async {
       // External redirect (web-safe)
-      redirectToUrl(await urlRedirectionToLogin(), replace: true, removeSlash: true);
+      redirectToUrl(await urlRedirectionToAuth(), replace: true, removeSlash: true);
     });
   }
 
