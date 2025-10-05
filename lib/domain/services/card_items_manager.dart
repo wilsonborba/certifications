@@ -3,6 +3,7 @@ import 'package:accredit/core/utils/my_encryption.dart';
 import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/dal/local/local_source_adapter.dart';
 import 'package:accredit/dal/remote/api_adapter.dart';
+import 'package:accredit/presentation/components/auth/verify_session.dart';
 
 import 'package:http/http.dart';
 
@@ -28,13 +29,7 @@ class CardItemsManager {
     'Accept': 'application/json',
   };
 
-  Future<String?> readNextAuthNounce() async {
-    final LocalSourceAdapter localSourceAdapter = LocalSourceAdapter(namespace: 'ath');
-    final encryptedNounce = await localSourceAdapter.read('n-a-n');
-    // decrypt nounce here 
-    final encryption = MyEncryption();
-    return encryption.decryptPayload(encryptedNounce);
-  }
+
 
   Future<Response> getCards() async {
     // update the headers with auth nounce
@@ -81,11 +76,7 @@ class CardItemsManager {
 
   }
 
-  saveNextAuthNounce(String nan) async {
-    final LocalSourceAdapter localSourceAdapter = LocalSourceAdapter(namespace: 'ath');
-    await localSourceAdapter.upsert('n-a-n', nan);
-    debug('next auth nounce saved: $nan');
-  }
+
 
 
   Future<Response> getTopicsFromCard(String itemName, int page, int perPage) async {

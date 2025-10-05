@@ -2,13 +2,25 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:accredit/core/settings.dart';
+import 'package:accredit/core/utils/my_logs.dart';
+import 'package:accredit/dal/local/local_source_adapter.dart';
 import 'package:accredit/dal/remote/api_adapter.dart';
+import 'package:accredit/presentation/components/auth/verify_session.dart';
 import 'package:http/http.dart';
 
 import 'package:http/http.dart' show Response;
 import 'package:http_parser/http_parser.dart';
 
-String baseUrl = 'http://127.0.0.1:8001';
+final String baseApi = app_settings.ASODYA_API_URL;
+
+final String apiEntity = '/apps';
+
+final String appName = '/certifications';
+
+final String appVersion = '/v1';
+
+final String baseUrl = "$baseApi$apiEntity$appName$appVersion";
 
 /// Result of the quick client-side scan.
 class FrontendScanResult {
@@ -59,7 +71,7 @@ const Set<String> _deniedSha256 = {
   // 'aaaaaaaa...'
 };
 
-Map<String, String> defaultHeadersPdfApi = const {
+Map<String, String> defaultHeadersPdfApi = {
   'Accept': 'application/json',
 };
 
@@ -74,7 +86,29 @@ Future<Response> loadPdftoApi({
   int maxChars = 8000,
   int overlapChars = 400,
   Map<String, String>? extraHeaders,
-}) {
+}) async {
+
+  try {
+      debug('Reading next auth nounce from local storage...');
+      final nounce = await readNextAuthNounce();
+      final hintCookies = readCookie('hint');      
+
+      if (nounce != null) {
+        defaultHeadersPdfApi['T-A-N'] = nounce;
+        
+      }
+
+      if (hintCookies != null) {
+        defaultHeadersPdfApi['A-A-N'] = hintCookies;
+      }
+
+    } catch (e) {
+      debug('Error reading next auth nounce: $e');
+    }
+
+   
+
+
   final adapter = ApiAdapter(
     defaultHeaders: {
       ...defaultHeadersPdfApi,
@@ -94,7 +128,7 @@ Future<Response> loadPdftoApi({
   final url = Uri.parse('$baseUrl/pdf/topic');
 
   // Uses the multipart extension on ApiAdapter (postMultipart)
-  return adapter.postMultipart(
+  final response = await adapter.postMultipart(
     url: url,
     queryParams: query,
     // Optional extra form fields if you ever need them:
@@ -109,6 +143,23 @@ Future<Response> loadPdftoApi({
     ],
   );
 
+  if (response.statusCode == 200) {
+      final headers = response.headers;
+      // get next auth nounce key = 'n-a-n'
+      final nan = headers['n-a-n'];
+      if (nan != null) {
+        await saveNextAuthNounce(nan);
+        debug('Next auth nounce updated: $nan from getCards response headers.');
+      } else {
+        warning('No next auth nounce found in response headers.');
+
+      }
+    }
+
+    return response;
+
+
+
 
 
 }
@@ -118,7 +169,28 @@ Future<Response> loadPdftoApi({
       required String documentId,
   
       String selectedPages = '1-2',
-    }) {
+    }) async {
+      
+       try {
+      debug('Reading next auth nounce from local storage...');
+      final nounce = await readNextAuthNounce();
+      final hintCookies = readCookie('hint');      
+
+      if (nounce != null) {
+        defaultHeadersPdfApi['T-A-N'] = nounce;
+        
+      }
+
+      if (hintCookies != null) {
+        defaultHeadersPdfApi['A-A-N'] = hintCookies;
+      }
+
+    } catch (e) {
+      debug('Error reading next auth nounce: $e');
+    }
+
+
+
       final adapter = ApiAdapter(
         defaultHeaders: {
           ...defaultHeadersPdfApi,
@@ -127,14 +199,50 @@ Future<Response> loadPdftoApi({
       );
       final url = Uri.parse('$baseUrl/pdf/input/$documentId?selected_pages=$selectedPages');
 
-      return adapter.get(url);
+      final response = await adapter.get(url);
+
+      if (response.statusCode == 200) {
+      final headers = response.headers;
+      // get next auth nounce key = 'n-a-n'
+      final nan = headers['n-a-n'];
+      if (nan != null) {
+        await saveNextAuthNounce(nan);
+        debug('Next auth nounce updated: $nan from getCards response headers.');
+      } else {
+        warning('No next auth nounce found in response headers.');
+
+      }
+    }
+
+    return response;
+
       
     }
 
     Future<Response> getPdfContextFromApi({
       required String documentId,
   
-    }) {
+    }) async {
+
+       try {
+      debug('Reading next auth nounce from local storage...');
+      final nounce = await readNextAuthNounce();
+      final hintCookies = readCookie('hint');      
+
+      if (nounce != null) {
+        defaultHeadersPdfApi['T-A-N'] = nounce;
+        
+      }
+
+      if (hintCookies != null) {
+        defaultHeadersPdfApi['A-A-N'] = hintCookies;
+      }
+
+    } catch (e) {
+      debug('Error reading next auth nounce: $e');
+    }
+
+
       final adapter = ApiAdapter(
         defaultHeaders: {
           ...defaultHeadersPdfApi,
@@ -143,7 +251,22 @@ Future<Response> loadPdftoApi({
       );
       final url = Uri.parse('$baseUrl/pdf/context/$documentId');
 
-      return adapter.get(url);
+      final response = await adapter.get(url);
+
+      if (response.statusCode == 200) {
+      final headers = response.headers;
+      // get next auth nounce key = 'n-a-n'
+      final nan = headers['n-a-n'];
+      if (nan != null) {
+        await saveNextAuthNounce(nan);
+        debug('Next auth nounce updated: $nan from getCards response headers.');
+      } else {
+        warning('No next auth nounce found in response headers.');
+
+      }
+    }
+
+    return response;
       
     }
 

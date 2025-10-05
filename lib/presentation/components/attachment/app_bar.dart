@@ -185,7 +185,7 @@ class _AttachmentDesktopActions extends StatelessWidget {
       children: [
         _item('Certificates', onCertificates),
         _item('Tokens', onTokens),
-        _item('Profile', null), // disabled for now (not implemented)
+        _item('Plans', null), // disabled for now (not implemented)
         _item('Support', onSupport),
         _item('About', onAbout),
         const SizedBox(width: 8),

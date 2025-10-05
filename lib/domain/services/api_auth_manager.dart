@@ -7,6 +7,7 @@ import 'package:accredit/core/settings.dart';
 import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/dal/local/local_source_adapter.dart';
 import 'package:accredit/dal/remote/api_adapter.dart';
+import 'package:accredit/presentation/components/auth/verify_session.dart';
 import 'package:http/http.dart';
 
 
@@ -45,10 +46,5 @@ class ApiAuthManager {
 
   }
 
-  saveNextAuthNounce(String nan) async {
-    final LocalSourceAdapter localSourceAdapter = LocalSourceAdapter(namespace: 'ath');
-    await localSourceAdapter.upsert('n-a-n', nan);
-    debug('next auth nounce saved: $nan');
-  }
 
 }

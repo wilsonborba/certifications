@@ -45,6 +45,7 @@ All notable changes to this project will be documented in this file.
 - *(ui)* Added a app bar for main screen
 - *(ui)* Updated img
 - *(sync)* Added some sync process with api
+- *(sync)* Added some sync process with api for pdf
 
 ### 🐛 Bug Fixes
 
