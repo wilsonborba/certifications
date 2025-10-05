@@ -1,24 +1,13 @@
 import 'package:accredit/core/settings.dart';
 import 'package:accredit/core/utils/my_logs.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
-import 'package:web/web.dart' as web;
+
 
 
 
 class MyEncryption {
 
-  String? readCookie(String name) {
-    final cookies = web.document.cookie; // e.g. "foo=bar; baz=qux"
-    if (cookies == null || cookies.isEmpty) return null;
 
-    for (final cookie in cookies.split(';')) {
-      final parts = cookie.trim().split('=');
-      if (parts.length == 2 && parts[0] == name) {
-        return parts[1];
-      }
-    }
-    return null;
-  }
 
 
   Future<String?> getSaltKey() async {

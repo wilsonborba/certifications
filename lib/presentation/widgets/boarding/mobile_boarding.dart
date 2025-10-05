@@ -1,4 +1,7 @@
 // mobile_boarding.dart
+import 'package:accredit/core/utils/my_logs.dart';
+import 'package:accredit/presentation/components/auth/login_redirect.dart';
+import 'package:accredit/presentation/components/auth/verify_session.dart';
 import 'package:accredit/presentation/components/boarding/app_bar.dart';
 import 'package:accredit/presentation/widgets/attachment/on_attachment.dart';
 import 'package:flutter/material.dart';
@@ -72,9 +75,28 @@ class MobileBoarding extends StatelessWidget {
                   fontSize: 18,
                   minimumSize: const Size(150, 50),
                   iconSize: 22,
-                  onPressed: () {
-                    NavigationService.push(OnAttachmentScreen());
-                  },
+                  onPressed: () async {
+                    try {
+                      final hasSession = await isThereSession(
+                        cookieName: 'hint',
+                        storageNamespace: 'ath',
+                        storageKey: 'n-a-n',
+                      );
+
+                      if (hasSession) {
+                        NavigationService.push(OnAttachmentScreen());
+                      } else {
+                        final url = await urlRedirectionToLogin();
+                        redirectToUrl(url, replace: true); // same-tab redirect
+                        // Or: NavigationService.push(MyRedirectingWidget(redirectUrl: url));
+                      }
+                    } catch (e) {
+                      debug('Session check/redirect error: $e');
+                      final url = await urlRedirectionToLogin();
+                      redirectToUrl(url, replace: true);
+                    }
+                  }
+
                 ),
                   ),
                 ),

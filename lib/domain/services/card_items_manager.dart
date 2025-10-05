@@ -3,6 +3,7 @@ import 'package:accredit/core/utils/my_encryption.dart';
 import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/dal/local/local_source_adapter.dart';
 import 'package:accredit/dal/remote/api_adapter.dart';
+
 import 'package:http/http.dart';
 
 class CardItemsManager {
@@ -41,7 +42,7 @@ class CardItemsManager {
     try {
       debug('Reading next auth nounce from local storage...');
       final nounce = await readNextAuthNounce();
-      final hintCookies = MyEncryption().readCookie('hint');      
+      final hintCookies = readCookie('hint');      
 
       if (nounce != null) {
         defaultHeaders['T-A-N'] = nounce;

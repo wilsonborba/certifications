@@ -40,6 +40,7 @@ All notable changes to this project will be documented in this file.
 - *(sync)* Created initial widgets for auth apps
 - *(sync)* Initial communication with righ api routes
 - *(sync)* Redirecting to auth initially implemented
+- *(sync)* Removed the /sync segment for urlbar afte complete sync process
 
 ### 🐛 Bug Fixes
 
