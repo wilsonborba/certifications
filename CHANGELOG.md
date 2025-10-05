@@ -44,6 +44,7 @@ All notable changes to this project will be documented in this file.
 - *(session)* Implemented sessions sync verifiers
 - *(ui)* Added a app bar for main screen
 - *(ui)* Updated img
+- *(sync)* Added some sync process with api
 
 ### 🐛 Bug Fixes
 

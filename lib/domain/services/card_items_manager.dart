@@ -88,10 +88,48 @@ class CardItemsManager {
   }
 
 
-  Future<Response> getTopicsFromCard(String itemName, int page, int perPage) {
-    return ApiAdapter(defaultHeaders: defaultHeaders).get(
+  Future<Response> getTopicsFromCard(String itemName, int page, int perPage) async {
+
+    try {
+      debug('Reading next auth nounce from local storage...');
+      final nounce = await readNextAuthNounce();
+      final hintCookies = readCookie('hint');      
+
+      if (nounce != null) {
+        defaultHeaders['T-A-N'] = nounce;
+        
+      }
+
+      if (hintCookies != null) {
+        defaultHeaders['A-A-N'] = hintCookies;
+      }
+
+    } catch (e) {
+      debug('Error reading next auth nounce: $e');
+    }
+
+    debug('Fetching cards from $baseUrl/topics/$itemName?page=$page&per_page=$perPage with headers: $defaultHeaders');
+
+     // continue with the request
+
+    final response = await ApiAdapter(defaultHeaders: defaultHeaders).get(
       Uri.parse('$baseUrl/topics/$itemName?page=$page&per_page=$perPage'),
     );
+
+    if (response.statusCode == 200) {
+      final headers = response.headers;
+      // get next auth nounce key = 'n-a-n'
+      final nan = headers['n-a-n'];
+      if (nan != null) {
+        await saveNextAuthNounce(nan);
+        debug('Next auth nounce updated: $nan from getCards response headers.');
+      } else {
+        warning('No next auth nounce found in response headers.');
+
+      }
+    }
+
+    return response;
   }
 
   // example 
@@ -99,10 +137,49 @@ class CardItemsManager {
   // 'http://127.0.0.1:8001/search/wikipedia?q=santos&page=1&per_page=20&mode=fulltext&fill_page=true&max_extra_pages=2' \
   // -H 'accept: application/json'//
 
-  Future<Response> searchTopics(String itemName, String query, int page, int perPage, String mode, bool fillPage, int maxExtraPages) {
-    return ApiAdapter(defaultHeaders: defaultHeaders).get(
+  Future<Response> searchTopics(String itemName, String query, int page, int perPage, String mode, bool fillPage, int maxExtraPages) async {
+
+    try {
+      debug('Reading next auth nounce from local storage...');
+      final nounce = await readNextAuthNounce();
+      final hintCookies = readCookie('hint');      
+
+      if (nounce != null) {
+        defaultHeaders['T-A-N'] = nounce;
+        
+      }
+
+      if (hintCookies != null) {
+        defaultHeaders['A-A-N'] = hintCookies;
+      }
+
+    } catch (e) {
+      debug('Error reading next auth nounce: $e');
+    }
+
+    debug('Fetching cards from $baseUrl/search/$itemName?q=$query&page=$page&per_page=$perPage&mode=$mode&fill_page=$fillPage&max_extra_pages=$maxExtraPages with headers: $defaultHeaders');
+
+     // continue with the request
+
+
+    final response = await ApiAdapter(defaultHeaders: defaultHeaders).get(
       Uri.parse('$baseUrl/search/$itemName?q=$query&page=$page&per_page=$perPage&mode=$mode&fill_page=$fillPage&max_extra_pages=$maxExtraPages'),
     );
+
+    if (response.statusCode == 200) {
+      final headers = response.headers;
+      // get next auth nounce key = 'n-a-n'
+      final nan = headers['n-a-n'];
+      if (nan != null) {
+        await saveNextAuthNounce(nan);
+        debug('Next auth nounce updated: $nan from getCards response headers.');
+      } else {
+        warning('No next auth nounce found in response headers.');
+
+      }
+    }
+
+    return response;
   }
 
   
