@@ -17,7 +17,7 @@ class DesktopTopics extends BaseTopics {
 class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
   // Desktop default page size
   @override
-  int get initialPerPage => 8;
+  int get initialPerPage => 15;
 
   // ----------------------- UI: Header -----------------------
   Widget _buildHeaderBar() {
@@ -105,7 +105,7 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
       builder: (context, constraints) {
         final maxW = constraints.maxWidth;
         final bool isNarrow = maxW < 1100; // tweak if needed
-        final int columns = isNarrow ? 1 : 2;
+        final int columns = isNarrow ? 1 : 4;
         final items = visibleItems;
 
         return Padding(

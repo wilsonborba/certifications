@@ -1,5 +1,5 @@
 import 'package:accredit/core/settings.dart';
-import 'package:accredit/core/utils/my_encryption.dart';
+
 import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/dal/local/local_source_adapter.dart';
 import 'package:accredit/dal/remote/api_adapter.dart';

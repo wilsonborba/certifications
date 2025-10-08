@@ -25,7 +25,7 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
   const AttachmentAppBar({
     super.key,
     this.title = 'Certifications',
-    this.maxActionLayoutWidth = 720,
+    this.maxActionLayoutWidth = 800,
     this.onCertificates,
     this.onTokens,
     this.onSupport,

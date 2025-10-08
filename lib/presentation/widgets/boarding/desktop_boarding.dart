@@ -41,7 +41,7 @@ class _DesktopBoardingState extends State<DesktopBoarding> {
         },
         onLogin: () async {
            final url = await urlRedirectionToAuth();
-                      redirectToUrl(url, replace: true);
+           redirectToUrl(url, replace: true);
 
         },
         onSignUp: () async {

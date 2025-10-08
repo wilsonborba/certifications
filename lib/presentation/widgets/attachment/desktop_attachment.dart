@@ -1,3 +1,4 @@
+import 'package:accredit/domain/services/quiz_context_manager.dart';
 import 'package:accredit/presentation/components/attachment/app_bar.dart';
 import 'package:accredit/presentation/widgets/topics/on_topics.dart';
 import 'package:flutter/material.dart';
@@ -37,7 +38,7 @@ class _DesktopAttachmentState extends BaseAttachmentState<DesktopAttachment> {
     onCertificates: () { /* navigate */ },
     onTokens: () { /* navigate */ },
     onSupport: () { /* navigate */ },
-    onAbout:   () { /* navigate */ },
+    onAbout:   () { QuizContextManager().getContext("from", "Flutter", forceNewGeneration: true, amountQuestion: 5); },
     // onLogout: () async { await clearSessionArtifacts(); /* custom redirect */ },
   ),
   endDrawer: AttachmentSideMenu(
