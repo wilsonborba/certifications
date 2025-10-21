@@ -45,7 +45,7 @@ class BoxExplaning extends StatelessWidget {
     this.imageSource = BadgeImageSource.asset,
     this.titleSize = 20,
     this.bodySize = 14,
-    this.cardColor = const Color(0xFF2B2B2B), // near-black
+    this.cardColor = Colors.transparent, // near-black
     this.borderRadius = 20,
     this.padding = const EdgeInsets.fromLTRB(16, 16, 16, 16),
     this.margin = const EdgeInsets.all(0),
@@ -53,13 +53,13 @@ class BoxExplaning extends StatelessWidget {
       BoxShadow(
         blurRadius: 12,
         offset: Offset(0, 6),
-        color: Colors.black26,
+        color: Colors.transparent,
       ),
     ],
     this.imageSize = 52,
     this.imageOffset = 6,
     this.imageInset = 8,
-    this.accentThickness = 6,
+    this.accentThickness = 2,
   });
 
   Widget _buildImage() {
@@ -102,6 +102,10 @@ class BoxExplaning extends StatelessWidget {
             decoration: BoxDecoration(
               color: accentColor,
               borderRadius: BorderRadius.circular(borderRadius),
+              border: Border.all(
+                color: Colors.black,
+                width: accentThickness,
+              ),
               boxShadow: boxShadow,
               
             ),
@@ -138,7 +142,7 @@ class BoxExplaning extends StatelessWidget {
                         style: TextStyle(
                           fontSize: titleSize,
                           fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                          color: Colors.black,
                           height: 1.15,
                         ),
                       ),
@@ -166,7 +170,7 @@ class BoxExplaning extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: bodySize,
                                   fontWeight: FontWeight.w400,
-                                  color: Colors.white.withValues(alpha: 100), // or .withOpacity(0.9)
+                                  color: Colors.black, // or .withOpacity(0.9)
                                   height: 1.35,
                                 ),
                               ),

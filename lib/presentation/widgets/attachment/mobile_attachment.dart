@@ -50,7 +50,8 @@ class _MobileAttachmentState extends BaseAttachmentState<MobileAttachment> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const TopHeaders(isDesktop: false),
+              //const TopHeaders(isDesktop: false),
+               const SizedBox(height: 200),
               const SizedBox(height: 40),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),

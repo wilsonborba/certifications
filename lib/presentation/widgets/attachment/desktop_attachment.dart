@@ -1,5 +1,6 @@
 import 'package:accredit/domain/services/quiz_context_manager.dart';
 import 'package:accredit/presentation/components/attachment/app_bar.dart';
+import 'package:accredit/presentation/components/attachment/want_app.dart';
 import 'package:accredit/presentation/widgets/topics/on_topics.dart';
 import 'package:flutter/material.dart';
 
@@ -38,7 +39,7 @@ class _DesktopAttachmentState extends BaseAttachmentState<DesktopAttachment> {
     onCertificates: () { /* navigate */ },
     onTokens: () { /* navigate */ },
     onSupport: () { /* navigate */ },
-    onAbout:   () { QuizContextManager().getContext("from", "Flutter", forceNewGeneration: true, amountQuestion: 5); },
+    onAbout:   () { } //QuizContextManager().getContext("from", "Flutter", forceNewGeneration: true, amountQuestion: 5); },
     // onLogout: () async { await clearSessionArtifacts(); /* custom redirect */ },
   ),
   endDrawer: AttachmentSideMenu(
@@ -51,15 +52,22 @@ class _DesktopAttachmentState extends BaseAttachmentState<DesktopAttachment> {
         scrollDirection: Axis.vertical,
         child: Column(
           children: [
-            const TopHeaders(isDesktop: true),
+            //const TopHeaders(isDesktop: true),
+            const SizedBox(height: 200),
             Row(
               children: [
                 Expanded(
-                  child: Center(
-                    child: FutureBuilder<List<SourceItem>>(
+                  child: Column(
+                    children: [
+                     FutureBuilder<List<SourceItem>>(
                       future: widget.items,
                       builder: (context, snap) => buildBody(context, snap),
                     ),
+                    const SizedBox(height: 10),
+                    WantText(
+                      onRequest: (url) {},
+                    )
+                    ],
                   ),
                 ),
                 const Expanded(child: CardPdfPicker()),
