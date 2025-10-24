@@ -48,6 +48,7 @@ All notable changes to this project will be documented in this file.
 - *(sync)* Added some sync process with api for pdf
 - *(unkown)* I forgot but is good to save
 - *(ui)* Improved cards design at boarding screen
+- *(cards)* Added a request btn for user request new cards
 
 ### 🐛 Bug Fixes
 

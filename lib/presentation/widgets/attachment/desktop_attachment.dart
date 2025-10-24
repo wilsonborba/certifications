@@ -1,4 +1,5 @@
-import 'package:accredit/domain/services/quiz_context_manager.dart';
+
+import 'package:accredit/domain/services/card_items_manager.dart';
 import 'package:accredit/presentation/components/attachment/app_bar.dart';
 import 'package:accredit/presentation/components/attachment/want_app.dart';
 import 'package:accredit/presentation/widgets/topics/on_topics.dart';
@@ -9,7 +10,7 @@ import 'package:accredit/core/utils/my_nagivation.dart';
 import 'package:accredit/domain/models/source_item.dart';
 import 'package:accredit/domain/models/mode_buckets.dart';
 
-import 'package:accredit/presentation/components/attachment/top_headers.dart';
+
 import 'package:accredit/presentation/components/attachment/tab_card_sources.dart';
 import 'package:accredit/presentation/components/attachment/source_groups_list.dart';
 import 'package:accredit/presentation/components/attachment/card_pdf_picker.dart';
@@ -59,16 +60,35 @@ class _DesktopAttachmentState extends BaseAttachmentState<DesktopAttachment> {
                 Expanded(
                   child: Column(
                     children: [
-                     FutureBuilder<List<SourceItem>>(
-                      future: widget.items,
-                      builder: (context, snap) => buildBody(context, snap),
-                    ),
-                    const SizedBox(height: 10),
-                    WantText(
-                      onRequest: (url) {},
-                    )
+                      FutureBuilder<List<SourceItem>>(
+                        future: widget.items,
+                        builder: (context, snapshot) {
+                          final body = buildBody(context, snapshot);
+
+                          // Only show WantText if the future completed successfully
+                          if (snapshot.connectionState == ConnectionState.done &&
+                              snapshot.hasData) {
+                            return Column(
+                              children: [
+                                body,
+                                const SizedBox(height: 10),
+                                WantText(onRequest: (url) async {
+                                  final manager = CardItemsManager();
+                                  final response =
+                                      await manager.requestNewCards(url);
+                                      if (response.statusCode == 201) {}
+      // Optionally, you can refresh the list of cards here
+                                }),
+                              ],
+                            );
+                          }
+
+                          // Otherwise, just return the body (loading/error states, etc.)
+                          return body;
+                        },
+                      ),
                     ],
-                  ),
+                  )
                 ),
                 const Expanded(child: CardPdfPicker()),
               ],

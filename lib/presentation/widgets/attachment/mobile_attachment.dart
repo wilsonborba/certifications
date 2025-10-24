@@ -7,7 +7,6 @@ import 'package:accredit/core/utils/my_nagivation.dart';
 import 'package:accredit/domain/models/source_item.dart';
 import 'package:accredit/domain/models/mode_buckets.dart';
 
-import 'package:accredit/presentation/components/attachment/top_headers.dart';
 import 'package:accredit/presentation/components/attachment/tab_card_sources.dart';
 import 'package:accredit/presentation/components/attachment/source_groups_list.dart';
 import 'package:accredit/presentation/components/attachment/card_pdf_picker.dart';

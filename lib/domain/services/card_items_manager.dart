@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:accredit/core/settings.dart';
 
 import 'package:accredit/core/utils/my_logs.dart';
@@ -171,6 +173,64 @@ class CardItemsManager {
     }
 
     return response;
+  }
+
+
+  Future<Response> requestNewCards(String url) async {
+    // update the headers with auth nounce
+
+    try {
+      debug('Reading next auth nounce from local storage...');
+      final nounce = await readNextAuthNounce();
+      final hintCookies = readCookie('hint');      
+
+      if (nounce != null) {
+        defaultHeaders['T-A-N'] = nounce;
+        
+      }
+
+      if (hintCookies != null) {
+        defaultHeaders['A-A-N'] = hintCookies;
+      }
+
+    } catch (e) {
+      debug('Error reading next auth nounce: $e');
+    }
+
+    debug('Requesting new cards from $baseUrl/request_new with headers: $defaultHeaders');
+
+    // create the request body
+    final body = {
+      'url': url,
+    };
+
+    // parse to json
+
+    final jsonBody = jsonEncode(body);
+
+
+
+      // continue with the request
+      final response = await ApiAdapter(defaultHeaders: defaultHeaders).post(
+        Uri.parse('$baseUrl/topics/solicitate_new'),
+        body: jsonBody,
+      );
+
+      if (response.statusCode == 200) {
+      final headers = response.headers;
+      // get next auth nounce key = 'n-a-n'
+      final nan = headers['n-a-n'];
+      if (nan != null) {
+        await saveNextAuthNounce(nan);
+        debug('Next auth nounce updated: $nan from getCards response headers.');
+      } else {
+        warning('No next auth nounce found in response headers.');
+
+      }
+    }
+
+    return response;
+
   }
 
   
