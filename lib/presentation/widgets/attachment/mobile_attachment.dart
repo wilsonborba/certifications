@@ -1,4 +1,6 @@
+import 'package:accredit/domain/services/card_items_manager.dart';
 import 'package:accredit/presentation/components/attachment/app_bar.dart';
+import 'package:accredit/presentation/components/attachment/want_app.dart';
 import 'package:accredit/presentation/widgets/topics/on_topics.dart';
 import 'package:flutter/material.dart';
 
@@ -54,12 +56,35 @@ class _MobileAttachmentState extends BaseAttachmentState<MobileAttachment> {
               const SizedBox(height: 40),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: FutureBuilder<List<SourceItem>>(
-                  future: widget.items,
-                  builder: (context, snap) => buildBody(context, snap),
-                ),
+                child:  FutureBuilder<List<SourceItem>>(
+                        future: widget.items,
+                        builder: (context, snapshot) {
+                          final body = buildBody(context, snapshot);
+
+                          // Only show WantText if the future completed successfully
+                          if (snapshot.connectionState == ConnectionState.done &&
+                              snapshot.hasData) {
+                            return Column(
+                              children: [
+                                body,
+                                const SizedBox(height: 10),
+                                WantText(onRequest: (url) async {
+                                  final manager = CardItemsManager();
+                                  final response =
+                                      await manager.requestNewCards(url);
+                                      if (response.statusCode == 201) {}
+      // Optionally, you can refresh the list of cards here
+                                }),
+                              ],
+                            );
+                          }
+
+                          // Otherwise, just return the body (loading/error states, etc.)
+                          return body;
+                        },
+                      ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 40),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0),
                 child: CardPdfPicker(),

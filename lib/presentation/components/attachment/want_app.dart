@@ -27,7 +27,7 @@ class _WantTextState extends State<WantText> {
   Future<void> _openDialog() async {
     final result = await showDialog<String>(
       context: context,
-      barrierDismissible: true, // clicking outside closes the popup
+      barrierDismissible: false, // prevent closing while success box visible
       builder: (ctx) => _LinkRequestDialog(purple: widget.purple),
     );
 
@@ -38,12 +38,12 @@ class _WantTextState extends State<WantText> {
 
   @override
   Widget build(BuildContext context) {
-    final baseStyle = Theme.of(context).textTheme.titleMedium ??
-        const TextStyle(fontSize: 18);
+    final baseStyle =
+        Theme.of(context).textTheme.titleMedium ?? const TextStyle(fontSize: 18);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovering = true),
-      onExit:  (_) => setState(() => _hovering = false),
+      onExit: (_) => setState(() => _hovering = false),
       child: GestureDetector(
         onTap: _openDialog,
         child: AnimatedScale(
@@ -53,10 +53,9 @@ class _WantTextState extends State<WantText> {
             duration: const Duration(milliseconds: 150),
             style: baseStyle.copyWith(
               color: _hovering ? Colors.grey : Colors.black,
-              // decoration: _hovering ? TextDecoration.underline : TextDecoration.none,
               fontWeight: _hovering ? FontWeight.w700 : FontWeight.w600,
             ),
-            child: const Text('What i want is not here!'),
+            child: const Text('Want another app? Click here!'),
           ),
         ),
       ),
@@ -81,6 +80,9 @@ class _LinkRequestDialogState extends State<_LinkRequestDialog> {
   final _controller = TextEditingController();
   bool _isValid = false;
 
+  bool _success = false;
+  String? _finalUrl;
+
   @override
   void initState() {
     super.initState();
@@ -97,39 +99,36 @@ class _LinkRequestDialogState extends State<_LinkRequestDialog> {
   void _onChanged() {
     final ok = _validateUrl(_controller.text);
     if (ok != _isValid) {
-      setState(() {
-        _isValid = ok;
-      });
+      setState(() => _isValid = ok);
     }
   }
 
   bool _validateUrl(String input) {
-  final trimmed = input.trim();
-
-  // Basic sanity check
-  if (trimmed.isEmpty) return false;
-
-  // Regex pattern for a valid website URL
-  final pattern = r'^(https?:\/\/)' // must start with http:// or https://
-      r'(([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,})' // domain name (example.com)
-      r'(:\d+)?' // optional port
-      r'(\/[^\s]*)?$'; // optional path/query/etc.
-
-  final regex = RegExp(pattern);
-
-  return regex.hasMatch(trimmed);
-}
-
+    final trimmed = input.trim();
+    if (trimmed.isEmpty) return false;
+    final pattern = r'^(https?:\/\/)'
+        r'(([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,})'
+        r'(:\d+)?'
+        r'(\/[^\s]*)?$';
+    return RegExp(pattern).hasMatch(trimmed);
+  }
 
   void _submit() {
-    if (_isValid) {
-      Navigator.of(context).pop(_controller.text.trim());
-    }
+    if (!_isValid) return;
+
+    setState(() {
+      _success = true;
+      _finalUrl = _controller.text.trim();
+    });
+
+    // Show success box for 3 seconds, then close
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) Navigator.of(context).pop(_finalUrl);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // White theme surface with purple main color
     final base = Theme.of(context);
     final dialogTheme = base.copyWith(
       colorScheme: base.colorScheme.copyWith(
@@ -149,100 +148,44 @@ class _LinkRequestDialogState extends State<_LinkRequestDialog> {
       data: dialogTheme,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // Responsive width: up to 480 on desktop, ~90% on small screens
           final screenWidth = MediaQuery.of(context).size.width;
           final maxWidth = screenWidth < 520 ? screenWidth * 0.9 : 480.0;
 
           return Dialog(
-            insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            insetPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: maxWidth,
-                // Height will wrap content naturally
-              ),
+              constraints: BoxConstraints(maxWidth: maxWidth),
               child: Stack(
                 children: [
-                  // Close button in the top-right corner
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: IconButton(
-                      tooltip: 'Close',
-                      onPressed: () => Navigator.of(context).maybePop(),
-                      icon: const Icon(Icons.close),
-                      color: Colors.black54,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 20 + 36, 20, 20),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            'Request a link',
-                            style: base.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          TextFormField(
-                            controller: _controller,
-                            autofocus: true,
-                            keyboardType: TextInputType.url,
-                            decoration: const InputDecoration(
-                              labelText: 'Website URL',
-                              hintText: 'https://example.com',
-                            ),
-                            autovalidateMode: AutovalidateMode.onUserInteraction,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Please enter a URL';
-                              }
-                              return _validateUrl(value)
-                                  ? null
-                                  : 'Enter a valid http:// or https:// URL';
-                            },
-                            onFieldSubmitted: (_) => _submit(),
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: _isValid
-                                        ? widget.purple
-                                        : Colors.grey.shade300,
-                                    foregroundColor:
-                                        _isValid ? Colors.white : Colors.black45,
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    elevation: _isValid ? 2 : 0,
-                                  ),
-                                  onPressed: _isValid ? _submit : null,
-                                  child: const Text('Request'),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Only links starting with http:// or https:// are accepted.',
-                            style: base.textTheme.bodySmall?.copyWith(
-                              color: Colors.black54,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
+                  if (!_success)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: IconButton(
+                        tooltip: 'Close',
+                        onPressed: () => Navigator.of(context).maybePop(),
+                        icon: const Icon(Icons.close),
+                        color: Colors.black54,
                       ),
+                    ),
+                  Padding(
+                    padding:
+                        EdgeInsets.fromLTRB(20, 20 + (_success ? 0 : 36), 20, 20),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: _success
+                          ? _SuccessBox(url: _finalUrl ?? '', purple: widget.purple)
+                          : _FormContent(
+                              formKey: _formKey,
+                              controller: _controller,
+                              isValid: _isValid,
+                              purple: widget.purple,
+                              onSubmit: _submit,
+                            ),
                     ),
                   ),
                 ],
@@ -252,5 +195,128 @@ class _LinkRequestDialogState extends State<_LinkRequestDialog> {
         },
       ),
     );
+  }
+}
+
+class _FormContent extends StatelessWidget {
+  const _FormContent({
+    required this.formKey,
+    required this.controller,
+    required this.isValid,
+    required this.purple,
+    required this.onSubmit,
+  });
+
+  final GlobalKey<FormState> formKey;
+  final TextEditingController controller;
+  final bool isValid;
+  final Color purple;
+  final VoidCallback onSubmit;
+
+  @override
+  Widget build(BuildContext context) {
+    final base = Theme.of(context);
+
+    return Form(
+      key: formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Request a link',
+            style: base.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: TextInputType.url,
+            decoration: const InputDecoration(
+              labelText: 'Website URL',
+              hintText: 'https://example.com',
+            ),
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            validator: (value) {
+              final v = value?.trim() ?? '';
+              if (v.isEmpty) return 'Please enter a URL';
+              final ok = RegExp(r'^(https?:\/\/)(([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,})(:\d+)?(\/[^\s]*)?$').hasMatch(v);
+              return ok ? null : 'Enter a valid http:// or https:// URL';
+            },
+            onFieldSubmitted: (_) => onSubmit(),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isValid ? purple : Colors.grey.shade300,
+                    foregroundColor: isValid ? Colors.white : Colors.black45,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    elevation: isValid ? 2 : 0,
+                  ),
+                  onPressed: isValid ? onSubmit : null,
+                  child: const Text('Request'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Only links starting with http:// or https:// are accepted.',
+            style: base.textTheme.bodySmall?.copyWith(color: Colors.black54),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SuccessBox extends StatelessWidget {
+  const _SuccessBox({required this.url, required this.purple});
+
+  final String url;
+  final Color purple;
+
+  @override
+  Widget build(BuildContext context) {
+    return  Container(
+      height: 300,
+      key: const ValueKey('success'),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.green.withAlpha((0.08 * 255).toInt()),
+        border: Border.all(color: Colors.green.withAlpha((0.35 * 255).toInt())),
+      ),
+      child: Center( child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.check_circle, color: Colors.green, size: 40),
+          const SizedBox(height: 8),
+          Text(
+            // solicitation received
+            'Solicitation received!',
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          Text(url,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 10),
+          
+        ],
+      ),
+    ));
   }
 }

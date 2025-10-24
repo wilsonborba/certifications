@@ -49,6 +49,7 @@ All notable changes to this project will be documented in this file.
 - *(unkown)* I forgot but is good to save
 - *(ui)* Improved cards design at boarding screen
 - *(cards)* Added a request btn for user request new cards
+- *(cards)* Added a success msg after new app solicitation
 
 ### 🐛 Bug Fixes
 
