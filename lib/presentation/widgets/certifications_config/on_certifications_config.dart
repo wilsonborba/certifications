@@ -102,6 +102,8 @@ class _OnCertificationConfigScreenState extends State<OnCertificationConfigScree
         return "Not found, please contact $supportEmail";
       case 409:
         return "Blocked, suspicious activity detected...";
+      case 412:
+        return "Minimal content context not met, please contact $supportEmail";
       case 415:
         return "Unsupported file, please contact $supportEmail";
       case 422:

@@ -86,6 +86,7 @@ flutter:
     - lib/presentation/assets/img/attach_line_purple.png
     - lib/presentation/assets/img/book.png
     - lib/presentation/assets/img/temp_logo.png
+    - lib/presentation/assets/img/her.png
     
 
   #   - images/a_dot_burr.jpeg
