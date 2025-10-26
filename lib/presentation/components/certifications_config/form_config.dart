@@ -130,10 +130,18 @@ class _CertificationFormState extends State<CertificationForm> {
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
+        
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       suffixIcon: suffix,
       counterText: '', // hide built-in counter when using maxLength
+      focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(
+        color: Color(0xFF7C4DFF), // your purple when clicked
+        width: 2,
+      ),
+    ),
     );
   }
 

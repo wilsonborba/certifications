@@ -1,9 +1,13 @@
+
+import 'package:accredit/presentation/widgets/certifications_config/on_certifications_config.dart';
 import 'package:flutter/material.dart';
 import 'package:accredit/core/utils/my_nagivation.dart';
 
 /// Reusable Topic card for both Desktop & Mobile.
 /// Adds hover + press affordances to action buttons.
 class TopicsCard extends StatefulWidget {
+  final String itemName;
+  final String identification;
   final String title;
   final String about;      // e.g., "About"
   final String link;       // open in new tab / replace: false
@@ -23,6 +27,8 @@ class TopicsCard extends StatefulWidget {
 
   const TopicsCard({
     super.key,
+    required this.itemName,
+    required this.identification,
     required this.title,
     required this.about,
     required this.link,
@@ -158,7 +164,11 @@ class _TopicsCardState extends State<TopicsCard> {
                         baseColor: baseColor,
                         hoverColor: hoverColor,
                         onTap: () {
-                          // TODO: implement your selection behavior
+                          NavigationService.push(OnCertificationConfigScreen(
+                            itemName: widget.itemName,
+                            contextId:  widget.identification, 
+                          isForPDF: false
+                          ));
                         },
                       ),
                     ],

@@ -60,18 +60,18 @@ class PdfInputInfo {
 }
 
 
-class   PdfContextInfo {
+class   ContextInfo {
   final String message;
   final Map<String, dynamic> data;
   final int statusCode;
-  const PdfContextInfo({
+  const ContextInfo({
     required this.message,
     required this.data,
     required this.statusCode,
   });
 
-  factory PdfContextInfo.fromJson(Map<String, dynamic> json) {
-    return PdfContextInfo(
+  factory ContextInfo.fromJson(Map<String, dynamic> json) {
+    return ContextInfo(
       message: json['message'] as String,
       data: json['data'] as Map<String, dynamic>,
       statusCode: json['status_code'] as int,

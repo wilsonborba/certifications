@@ -10,15 +10,26 @@ import 'package:http/http.dart' as http;
 import 'package:accredit/domain/services/pdf_frontend_prescan_manager.dart' as pre;
 
 class OnCertificationConfigScreen extends StatefulWidget {
-  final String documentId;
-  const OnCertificationConfigScreen({super.key, required this.documentId});
+  final String? itemName;
+  final String contextId;
+  final bool isForPDF;
 
-  Future<PdfContextInfo> _fetch(String docId) async {
-    final http.Response resp = await pre.getPdfContextFromApi(documentId: docId);
-    return parsePdfContextInfo(resp);
+  const OnCertificationConfigScreen({super.key, required this.contextId, this.isForPDF = true, this.itemName});
+
+  Future<ContextInfo> _fetch(String ctxId) async {
+
+    http.Response resp;
+
+   if (isForPDF) {
+    resp = await pre.getPdfContextFromApi(documentId: ctxId);
+    }
+    else {
+      resp = await pre.getTopicContextFromApi(inputIdentification: ctxId, itemName: itemName!);
+    }
+    return parseContextInfo(resp);
   }
 
-  PdfContextInfo parsePdfContextInfo(http.Response resp) {
+  ContextInfo parseContextInfo(http.Response resp) {
     final jsonMap = json.decode(resp.body) as Map<String, dynamic>;
     final msg = jsonMap['message'] as String;
     Map<String, dynamic> data;
@@ -30,7 +41,7 @@ class OnCertificationConfigScreen extends StatefulWidget {
     }
     
     final statusCode = resp.statusCode;
-    return PdfContextInfo(
+    return ContextInfo(
       message: msg,
       data: data,
       statusCode: statusCode,
@@ -60,10 +71,17 @@ class _OnCertificationConfigScreenState extends State<OnCertificationConfigScree
 
     try {
       // Optional small delays to make animated text more visible
-      await Future.delayed(const Duration(milliseconds: 800));
+      // create a while loop for loading messages
+      await Future.delayed(const Duration(seconds: 5));
       setState(() => _loadingMessage = "Loading...");
+      await Future.delayed(const Duration(seconds: 10));
+      setState(() => _loadingMessage = "We're setting things up for you...");
+      await Future.delayed(const Duration(seconds: 15));
+      setState(() => _loadingMessage = "Go take a coffee break ☕...");
+      await Future.delayed(const Duration(seconds: 20));
+      setState(() => _loadingMessage = "It might take some time...");
 
-      final resp = await widget._fetch(widget.documentId);
+      final resp = await widget._fetch(widget.contextId);
       final code = resp.statusCode;
       final msg = resp.message;
 
@@ -203,8 +221,8 @@ class _OnCertificationConfigScreenState extends State<OnCertificationConfigScree
 
     // ✅ If no error and no loading → show your main config UI
     return ScreenAdjuster(
-      mobileWidget: MobileCertificationConfig(documentId: widget.documentId),
-      desktopWidget: DesktopCertificationConfig(documentId: widget.documentId),
+      mobileWidget: MobileCertificationConfig(documentId: widget.contextId),
+      desktopWidget: DesktopCertificationConfig(documentId: widget.contextId),
     ).adjust(context); // ✅ assuming .adjust(context) returns a Widget
   }
 }

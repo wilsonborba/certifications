@@ -41,7 +41,7 @@ class MobilePageFilter extends StatelessWidget {
                 message: 'You can select up to 30 pages only. You selected ${selected.length} pages.');
                 
           } else {
-            NavigationService.push(OnCertificationConfigScreen(documentId:  documentId));
+            NavigationService.push(OnCertificationConfigScreen(contextId:  documentId));
           }
         }
       },

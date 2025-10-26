@@ -43,7 +43,7 @@ Widget build(BuildContext context) {
                   Text(
                     'Certification Configuration',
                     style: TextStyle(
-                      fontSize: 32,
+                      fontSize: 40,
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
                     ),

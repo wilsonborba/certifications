@@ -43,7 +43,7 @@ class DesktopPageFilter extends StatelessWidget {
                 
           } else {
             // NavigationService.push(MultiPagePreviewScreen(selectedPages: selected));
-           NavigationService.push(OnCertificationConfigScreen(documentId:  documentId));
+           NavigationService.push(OnCertificationConfigScreen(contextId:  documentId, isForPDF: true));
           }
         }
       },

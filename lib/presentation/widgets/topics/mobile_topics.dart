@@ -108,6 +108,8 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
         itemBuilder: (ctx, i) {
           final ident = getTopicIdentifications(items[i])!; // validated upstream
           return TopicsCard(
+            itemName: widget.itemName,
+            identification: ident.inputIdentification,
             title: ident.titleIdentification!,
             about: 'About',
             link: ident.linkIdentification!,

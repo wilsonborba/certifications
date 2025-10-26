@@ -125,6 +125,8 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
             itemBuilder: (ctx, i) {
               final ident = getTopicIdentifications(items[i])!; // already validated upstream
               return TopicsCard(
+                itemName: widget.itemName,
+                identification: ident.inputIdentification,
                 title: ident.titleIdentification!,
                 about: 'About',
                 link: ident.linkIdentification!,
