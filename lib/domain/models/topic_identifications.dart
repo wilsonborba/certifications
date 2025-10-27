@@ -87,3 +87,22 @@ class   ContextInfo {
   }
 
 }
+
+/// Model returned on successful submit.
+class CertificationFormData {
+  final String fullName;
+  final String certificationTitle;
+  final String? phoneE164;
+  final int pages;
+  final int minutes;
+  //final String language;
+
+  CertificationFormData({
+    required this.fullName,
+    required this.certificationTitle,
+    required this.phoneE164,
+    required this.pages,
+    required this.minutes,
+    //required this.language,
+  });
+}

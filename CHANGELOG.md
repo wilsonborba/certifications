@@ -53,6 +53,7 @@ All notable changes to this project will be documented in this file.
 - *(app)* Added desktop configuration screen
 - *(topics)* Added redirection and loading data from context for topic
 - *(quiz)* Created a initial widget for the quiz questions
+- *(quiz)* First quiz widget implemented for adjustements
 
 ### 🐛 Bug Fixes
 

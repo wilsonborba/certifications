@@ -1,23 +1,7 @@
+import 'package:accredit/domain/models/topic_identifications.dart';
 import 'package:flutter/material.dart';
 
-/// Model returned on successful submit.
-class CertificationFormData {
-  final String fullName;
-  final String certificationTitle;
-  final String? phoneE164;
-  final int pages;
-  final int minutes;
-  //final String language;
 
-  CertificationFormData({
-    required this.fullName,
-    required this.certificationTitle,
-    required this.phoneE164,
-    required this.pages,
-    required this.minutes,
-    //required this.language,
-  });
-}
 
 /// A complete, reusable form widget.
 /// Place it anywhere (e.g., inside a Column). Call [onSubmit] to receive data.
