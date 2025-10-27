@@ -1,6 +1,6 @@
 import 'dart:convert';
-
 import 'package:accredit/core/utils/my_logs.dart';
+import 'package:accredit/core/utils/my_nagivation.dart';
 import 'package:accredit/domain/models/topic_identifications.dart';
 import 'package:accredit/presentation/screen_adjuster.dart';
 import 'package:accredit/presentation/widgets/certifications_config/desktop_certifications_config.dart';
@@ -14,37 +14,40 @@ class OnCertificationConfigScreen extends StatefulWidget {
   final String contextId;
   final bool isForPDF;
 
-  const OnCertificationConfigScreen({super.key, required this.contextId, this.isForPDF = true, this.itemName});
+  const OnCertificationConfigScreen({
+    super.key,
+    required this.contextId,
+    this.isForPDF = true,
+    this.itemName,
+  });
 
   Future<ContextInfo> _fetch(String ctxId) async {
-
     http.Response resp;
-
-   if (isForPDF) {
-    resp = await pre.getPdfContextFromApi(documentId: ctxId);
-    }
-    else {
-      resp = await pre.getTopicContextFromApi(inputIdentification: ctxId, itemName: itemName!);
+    if (isForPDF) {
+      resp = await pre.getPdfContextFromApi(documentId: ctxId);
+    } else {
+      resp = await pre.getTopicContextFromApi(
+        inputIdentification: ctxId,
+        itemName: itemName!,
+      );
     }
     return parseContextInfo(resp);
   }
 
   ContextInfo parseContextInfo(http.Response resp) {
     final jsonMap = json.decode(resp.body) as Map<String, dynamic>;
-    final msg = jsonMap['message'] as String;
-    Map<String, dynamic> data;
-    if (jsonMap["data"] is Map<String, dynamic>) {
-      data = jsonMap['data'] as Map<String, dynamic>;
+    final msg = (jsonMap['message'] ?? '') as String;
+    List<dynamic> data;
+    if (jsonMap["data"] is List<dynamic>) {
+      data = jsonMap['data'] as List<dynamic>;
     } else {
-      data = <String, dynamic>{};
-      debug('Warning: "data" field is not a Map<String, dynamic>. Using empty map.');
+      data = <dynamic>[];
+      debug('Warning: "data" is not a List<dynamic>. It is ${jsonMap["data"].runtimeType}');
     }
-    
-    final statusCode = resp.statusCode;
     return ContextInfo(
       message: msg,
       data: data,
-      statusCode: statusCode,
+      statusCode: resp.statusCode,
     );
   }
 
@@ -56,54 +59,64 @@ class _OnCertificationConfigScreenState extends State<OnCertificationConfigScree
   bool _loading = true;
   String? _error;
   String _loadingMessage = "Contacting server...";
+  ContextInfo? _resp;
 
   @override
   void initState() {
     super.initState();
+    // Don't await here; just start the async bootstrap.
     _bootstrap();
   }
 
   Future<void> _bootstrap() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _error = null;
+        _loadingMessage = "Contacting server...";
+      });
+    }
 
     try {
-      // Optional small delays to make animated text more visible
-      // create a while loop for loading messages
+      // Staged loading messages (optional eye-candy)
       await Future.delayed(const Duration(seconds: 5));
+      if (!mounted) return;
       setState(() => _loadingMessage = "Loading...");
+
       await Future.delayed(const Duration(seconds: 10));
+      if (!mounted) return;
       setState(() => _loadingMessage = "We're setting things up for you...");
+
       await Future.delayed(const Duration(seconds: 15));
+      if (!mounted) return;
       setState(() => _loadingMessage = "Go take a coffee break ☕...");
+
       await Future.delayed(const Duration(seconds: 20));
+      if (!mounted) return;
       setState(() => _loadingMessage = "It might take some time...");
 
-      final resp = await widget._fetch(widget.contextId);
-      final code = resp.statusCode;
-      final msg = resp.message;
+      final got = await widget._fetch(widget.contextId);
 
-      if (code != 200) {
+      if (!mounted) return;
+
+      if (got.statusCode != 200) {
         setState(() {
-          _error = _mapStatusCodeToMessage(code, msg);
+          _error = _mapStatusCodeToMessage(got.statusCode, got.message);
           _loading = false;
         });
         return;
       }
 
-      await Future.delayed(const Duration(milliseconds: 800));
+      // Success
       setState(() {
         _loadingMessage = "Almost done...";
-      });
-
-      await Future.delayed(const Duration(milliseconds: 500));
-      setState(() {
+        _resp = got;
+        debug('Fetched ContextInfo: ${got.data}');
         _loading = false;
       });
     } catch (e) {
       debug('Error in OnCertificationConfigScreen: $e');
+      if (!mounted) return;
       setState(() {
         _error = "Could not continue. Please contact support@asodya.com.";
         _loading = false;
@@ -112,7 +125,7 @@ class _OnCertificationConfigScreenState extends State<OnCertificationConfigScree
   }
 
   String _mapStatusCodeToMessage(int code, String msg) {
-    String supportEmail = "support@asodya.com";
+    const supportEmail = "support@asodya.com";
     switch (code) {
       case 400:
         return "Bad request, please contact $supportEmail";
@@ -206,11 +219,10 @@ class _OnCertificationConfigScreenState extends State<OnCertificationConfigScree
                     ),
                   ),
                   icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-                  label: const Text(
-                    "Go Back",
-                    style: TextStyle(color: Colors.white, fontSize: 18),
-                  ),
-                  onPressed: () => Navigator.of(context).pop(),
+                  label: const Text("Go Back", style: TextStyle(color: Colors.white, fontSize: 18)),
+                  onPressed: () async {
+                      await defaultLogout();
+                    },
                 ),
               ],
             ),
@@ -219,10 +231,16 @@ class _OnCertificationConfigScreenState extends State<OnCertificationConfigScree
       );
     }
 
-    // ✅ If no error and no loading → show your main config UI
+    // Success: show your main config UI with the fetched payload
     return ScreenAdjuster(
-      mobileWidget: MobileCertificationConfig(documentId: widget.contextId),
-      desktopWidget: DesktopCertificationConfig(documentId: widget.contextId),
-    ).adjust(context); // ✅ assuming .adjust(context) returns a Widget
+      mobileWidget: MobileCertificationConfig(
+        documentId: widget.contextId,
+        questionPayload: _resp,
+      ),
+      desktopWidget: DesktopCertificationConfig(
+        documentId: widget.contextId,
+        questionPayload: _resp,
+      ),
+    ).adjust(context);
   }
 }

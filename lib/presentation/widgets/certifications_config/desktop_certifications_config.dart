@@ -1,12 +1,14 @@
 
 
 
+import 'package:accredit/core/utils/my_nagivation.dart';
 import 'package:accredit/presentation/components/certifications_config/form_config.dart';
 import 'package:accredit/presentation/widgets/certifications_config/base_certification_config.dart';
+import 'package:accredit/presentation/widgets/quiz/on_quiz.dart';
 import 'package:flutter/material.dart';
 
 class DesktopCertificationConfig extends BaseCertificationConfig {
-  DesktopCertificationConfig({super.key, required super.documentId});
+  DesktopCertificationConfig({super.key, required super.documentId, super.questionPayload});
 
   @override
   State<DesktopCertificationConfig> createState() => _DesktopCertificationConfigState();
@@ -77,11 +79,10 @@ Widget build(BuildContext context) {
                           padding: const EdgeInsets.all(24.0),
                           child: Center(
                             child: CertificationForm(
-                              onSubmit: (data) {
-                                debugPrint(
-                                    'Submitted: ${data.fullName}, ${data.certificationTitle}, '
-                                    'phone=${data.phoneE164}, pages=${data.pages}, '
-                                    'minutes=${data.minutes}, lang=${data.language}');
+                              onSubmit: (formData) {
+                                 NavigationService.push(OnQuizScreen(
+                                  questionPayload: widget.questionPayload!,
+                                  formData: formData));
                               },
                             ),
                           ),

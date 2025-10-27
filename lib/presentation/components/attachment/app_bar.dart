@@ -4,18 +4,7 @@ import 'package:accredit/dal/local/local_source_adapter.dart';
 import 'package:accredit/presentation/components/auth/login_redirect.dart';
 import 'package:flutter/material.dart';
 
-/// Clears cookies + local storage. Call this for Logout.
-Future<void> clearSessionArtifacts() async {
-  // cookies
-  deleteCookies(const ['hint', 'sid']);
-  // local storage: ath::n-a-n
-  try {
-    await LocalSourceAdapter(namespace: 'ath').delete('n-a-n');
-  } catch (e) {
-    // ignore missing; just log
-    debug('localStorage delete ath::n-a-n failed (maybe missing): $e');
-  }
-}
+
 
 const double _appBarHeight = 80;
 
@@ -47,16 +36,6 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   Color _accentOf(BuildContext context) => Theme.of(context).colorScheme.primary;
 
-  Future<void> _defaultLogout() async {
-    await clearSessionArtifacts();
-    // send to auth login screen (same flow you already use elsewhere)
-    try {
-      final url = await urlRedirectionToAuth();
-      redirectToUrl(url, replace: true, removeSlash: true);
-    } catch (e) {
-      debug('default logout redirect failed: $e');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +74,7 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
                   onTokens: onTokens,
                   onSupport: onSupport,
                   onAbout: onAbout,
-                  onLogout: onLogout ?? _defaultLogout,
+                  onLogout: onLogout ?? defaultLogout,
                 )
               else
                 Builder(

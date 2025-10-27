@@ -1,13 +1,15 @@
 
 
+import 'package:accredit/domain/models/topic_identifications.dart';
 import 'package:flutter/material.dart';
 
 
 
 /// BaseTopics is a StatefulWidget holding shared logic for Mobile/Desktop
 abstract class BaseCertificationConfig extends StatefulWidget {
+  final ContextInfo? questionPayload;
   final String documentId;
-  BaseCertificationConfig({super.key, required this.documentId});
+  BaseCertificationConfig({super.key, required this.documentId, this.questionPayload});
   
 }
 

@@ -62,7 +62,7 @@ class PdfInputInfo {
 
 class   ContextInfo {
   final String message;
-  final Map<String, dynamic> data;
+  final List<dynamic> data;
   final int statusCode;
   const ContextInfo({
     required this.message,
@@ -73,7 +73,7 @@ class   ContextInfo {
   factory ContextInfo.fromJson(Map<String, dynamic> json) {
     return ContextInfo(
       message: json['message'] as String,
-      data: json['data'] as Map<String, dynamic>,
+      data: json['data'] as List<dynamic>,
       statusCode: json['status_code'] as int,
     );
   }

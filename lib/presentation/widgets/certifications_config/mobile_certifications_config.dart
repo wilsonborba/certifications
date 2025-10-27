@@ -1,12 +1,15 @@
 
 
 
+import 'package:accredit/core/utils/my_nagivation.dart';
 import 'package:accredit/presentation/components/certifications_config/form_config.dart';
 import 'package:accredit/presentation/widgets/certifications_config/base_certification_config.dart';
+import 'package:accredit/presentation/widgets/quiz/on_quiz.dart';
 import 'package:flutter/material.dart';
 
 class MobileCertificationConfig extends BaseCertificationConfig {
-  MobileCertificationConfig({super.key, required super.documentId});
+  
+  MobileCertificationConfig({super.key, required super.documentId, required super.questionPayload});
 
   @override
   State<MobileCertificationConfig> createState() => _MobileCertificationConfigState();
@@ -65,11 +68,10 @@ class _MobileCertificationConfigState extends BaseCertificationConfigState<Mobil
                           padding: const EdgeInsets.all(24.0),
                           child: Center(
                             child: CertificationForm(
-                              onSubmit: (data) {
-                                debugPrint(
-                                    'Submitted: ${data.fullName}, ${data.certificationTitle}, '
-                                    'phone=${data.phoneE164}, pages=${data.pages}, '
-                                    'minutes=${data.minutes}, lang=${data.language}');
+                              onSubmit: (formData) {
+                                 NavigationService.push(OnQuizScreen(
+                                  questionPayload: widget.questionPayload!,
+                                  formData: formData));
                               },
                             ),
                           ),

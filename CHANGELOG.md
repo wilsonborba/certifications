@@ -52,6 +52,7 @@ All notable changes to this project will be documented in this file.
 - *(cards)* Added a success msg after new app solicitation
 - *(app)* Added desktop configuration screen
 - *(topics)* Added redirection and loading data from context for topic
+- *(quiz)* Created a initial widget for the quiz questions
 
 ### 🐛 Bug Fixes
 

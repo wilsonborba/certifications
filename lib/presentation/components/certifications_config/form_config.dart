@@ -7,7 +7,7 @@ class CertificationFormData {
   final String? phoneE164;
   final int pages;
   final int minutes;
-  final String language;
+  //final String language;
 
   CertificationFormData({
     required this.fullName,
@@ -15,7 +15,7 @@ class CertificationFormData {
     required this.phoneE164,
     required this.pages,
     required this.minutes,
-    required this.language,
+    //required this.language,
   });
 }
 
@@ -68,7 +68,7 @@ class _CertificationFormState extends State<CertificationForm> {
   final _titleCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
 
-  String? _selectedLanguage;
+  //String? _selectedLanguage;
 
   @override
   void initState() {
@@ -109,12 +109,12 @@ class _CertificationFormState extends State<CertificationForm> {
 
     final nameOk = name.isNotEmpty && name.length <= widget.fullNameMaxLen;
     final titleOk = title.isNotEmpty && title.length <= widget.titleMaxLen;
-    final langOk = _selectedLanguage != null && _selectedLanguage!.isNotEmpty;
+    // final langOk = _selectedLanguage != null && _selectedLanguage!.isNotEmpty;
 
     // phone is optional; if present, must be valid E.164
     final phoneOk = phone.isEmpty || _isValidE164(phone);
 
-    return nameOk && titleOk && phoneOk && langOk;
+    return nameOk && titleOk && phoneOk;
   }
 
   InputDecoration _filledDecoration({
@@ -342,7 +342,7 @@ class _CertificationFormState extends State<CertificationForm> {
                                     : _phoneCtrl.text.trim(),
                                 pages: widget.pages,
                                 minutes: _minutes,
-                                language: _selectedLanguage!,
+                                //language: _selectedLanguage!,
                               ),
                             );
                           }
