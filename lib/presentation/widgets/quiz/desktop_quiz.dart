@@ -77,10 +77,6 @@ class _DesktopQuizState extends BaseQuizState<DesktopQuiz> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Continue'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
           ElevatedButton(

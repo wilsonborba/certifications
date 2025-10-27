@@ -26,6 +26,7 @@ class QuizAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
+      automaticallyImplyLeading: false, // no back arrow
       toolbarHeight: height,
       backgroundColor: background,
       elevation: 0,

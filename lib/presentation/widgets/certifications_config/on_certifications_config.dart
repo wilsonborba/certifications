@@ -40,7 +40,10 @@ class OnCertificationConfigScreen extends StatefulWidget {
     List<dynamic> data;
     if (jsonMap["data"] is List<dynamic>) {
       data = jsonMap['data'] as List<dynamic>;
-    } else {
+    } 
+    
+    
+    else {
       data = <dynamic>[];
       debug('Warning: "data" is not a List<dynamic>. It is ${jsonMap["data"].runtimeType}');
     }

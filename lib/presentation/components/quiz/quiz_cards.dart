@@ -1,38 +1,46 @@
 // widgets/quiz/question_card.dart
+import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/domain/models/quiz.dart';
 import 'package:flutter/material.dart';
 
-
 class Kebab extends StatelessWidget {
   final VoidCallback onComplain;
-  const Kebab({required this.onComplain});
+  const Kebab({super.key, required this.onComplain});
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkResponse(
-        radius: 22,
-        onTap: () async {
-          final action = await showMenu<String>(
-            context: context,
-            position: const RelativeRect.fromLTRB(1000, 100, 10, 10),
-            items: const [
-              PopupMenuItem(value: 'complain', child: Text('Report this question…')),
+    return PopupMenuButton<String>(
+      onSelected: (v) {
+        if (v == 'complain') onComplain();
+      },
+      // small nudge so the menu drops just below the button (tweak if desired)
+      offset: const Offset(0, 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 6,
+      color: Colors.white,
+      itemBuilder: (ctx) => const [
+        PopupMenuItem<String>(
+          value: 'complain',
+          child: Row(
+            children: [
+              Icon(Icons.report_problem_outlined, size: 20),
+              SizedBox(width: 10),
+              Text('Report this question…'),
             ],
-          );
-          if (action == 'complain') onComplain();
-        },
-        child: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.black87, width: 2),
-            shape: BoxShape.circle,
           ),
-          child: const Center(
-            child: Icon(Icons.more_horiz, size: 20, color: Colors.black87),
-          ),
+        ),
+      ],
+
+      // Keep your circular “...” visual as the trigger
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.black87, width: 2),
+          shape: BoxShape.circle,
+        ),
+        child: const Center(
+          child: Icon(Icons.more_horiz, size: 20, color: Colors.black87),
         ),
       ),
     );
@@ -244,8 +252,16 @@ Future<void> showComplaintDialog(
                         hintText: 'Type your report here…',
                         filled: true,
                         fillColor: const Color(0xFFF3F3F3),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF7C4DFF), // your purple when clicked
+                            width: 2,
+                          ),
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
+                          
                         ),
                       ),
                     ),
@@ -263,7 +279,7 @@ Future<void> showComplaintDialog(
                           ),
                           onPressed: canSend
                               ? () {
-                                  debugPrint('[QUIZ] Complaint for Q$questionIndex: ${ctrl.text}');
+                                  debug('Complaint for Q$questionIndex: ${ctrl.text}');
                                   Navigator.pop(ctx);
                                 }
                               : null,

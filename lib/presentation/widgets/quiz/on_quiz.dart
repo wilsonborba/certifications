@@ -1,5 +1,5 @@
 import 'package:accredit/domain/models/topic_identifications.dart';
-import 'package:accredit/presentation/components/certifications_config/form_config.dart';
+
 import 'package:accredit/presentation/widgets/quiz/desktop_quiz.dart';
 import 'package:accredit/presentation/widgets/quiz/mobile_quiz.dart';
 import 'package:flutter/material.dart';

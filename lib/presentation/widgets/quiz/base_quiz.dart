@@ -1,5 +1,6 @@
 // widgets/quiz/base_quiz.dart
 import 'dart:async';
+import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/domain/models/quiz.dart';
 import 'package:accredit/domain/models/topic_identifications.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +17,7 @@ abstract class BaseQuizState<T extends BaseQuiz> extends State<T> {
   late final List<QuestionItem> questions = _parseQuestions(widget.questionPayload.data);
 
   // Timer
-  late final int totalMinutes = questions.length * 2;
+  late final int totalMinutes = questions.length * 1;
   late final int totalSeconds = totalMinutes * 60;
   late final ValueNotifier<int> remainingSeconds = ValueNotifier<int>(totalSeconds);
   Timer? _ticker;
@@ -54,7 +55,7 @@ abstract class BaseQuizState<T extends BaseQuiz> extends State<T> {
 
   void onTimeUp() {
     // For now: act as finish
-    debugPrint('[QUIZ] Time finished — auto-submitting.');
+    debug('Time finished — auto-submitting.');
     onFinishPressed();
   }
 
@@ -62,7 +63,7 @@ abstract class BaseQuizState<T extends BaseQuiz> extends State<T> {
     final timeSpent = DateTime.now().difference(_startAt);
     final result = QuizResult(selectedOptionIndexes: selections, timeSpent: timeSpent);
     // For now, just print
-    debugPrint('[QUIZ] Finished. Selections: $selections | spent: $timeSpent');
+    debug('Finished. Selections: $selections | spent: $timeSpent');
     // TODO: plug your submit here
   }
 
@@ -71,7 +72,7 @@ abstract class BaseQuizState<T extends BaseQuiz> extends State<T> {
     final out = <QuestionItem>[];
     for (final e in raw) {
       if (e is Map<String, dynamic>) {
-        final q = (e['question'] ?? '').toString().trim();
+         final q = (e['question'] ?? e['question_text'] ?? '').toString().trim();
         final optsAny = e['options'];
         final diffAny = e['difficulty'];
         final opts = (optsAny is List)

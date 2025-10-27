@@ -56,7 +56,7 @@ class _MobileQuizState extends BaseQuizState<MobileQuiz> {
                       title: const Text('Finish quiz?'),
                       content: const Text('Are you sure you want to submit your answers?'),
                       actions: [
-                        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Continue')),
+                        
                         TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7C4DFF)),
@@ -71,7 +71,7 @@ class _MobileQuizState extends BaseQuizState<MobileQuiz> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF7C4DFF),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
                 ),
               ),
             ),

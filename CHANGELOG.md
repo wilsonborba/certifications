@@ -58,6 +58,7 @@ All notable changes to this project will be documented in this file.
 ### 🐛 Bug Fixes
 
 - *(cards)* Adjusted the layout break on desktop
+- *(quiz)* Catching the right keys dict questions
 
 ### ⚙️ Miscellaneous Tasks
 
