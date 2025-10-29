@@ -129,7 +129,7 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxW = constraints.maxWidth;
-        final bool isNarrow = maxW < 1100;
+        final bool isNarrow = maxW < 1200;
         final int columns = isNarrow ? 2 : 4;
         final items = visibleItems;
 

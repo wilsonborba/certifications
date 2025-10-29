@@ -56,6 +56,7 @@ All notable changes to this project will be documented in this file.
 - *(quiz)* First quiz widget implemented for adjustements
 - *(quiz)* Add the id to request to back end verification of exam test
 - *(topics)* Improved the design a lil bit
+- *(topics)* Improved the adjustment grind size
 
 ### 🐛 Bug Fixes
 
