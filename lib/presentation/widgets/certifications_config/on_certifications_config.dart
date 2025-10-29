@@ -1,13 +1,36 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
 import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/core/utils/my_nagivation.dart';
 import 'package:accredit/domain/models/topic_identifications.dart';
 import 'package:accredit/presentation/screen_adjuster.dart';
 import 'package:accredit/presentation/widgets/certifications_config/desktop_certifications_config.dart';
 import 'package:accredit/presentation/widgets/certifications_config/mobile_certifications_config.dart';
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:accredit/domain/services/pdf_frontend_prescan_manager.dart' as pre;
+
+/// --- Background JSON parse (runs in an isolate via `compute`) ---
+ContextInfo _parseContextInfoBody(Map<String, dynamic> args) {
+  final body = args['body'] as String;
+  final statusCode = args['statusCode'] as int;
+
+  final jsonMap = json.decode(body) as Map<String, dynamic>;
+  final msg = (jsonMap['message'] ?? '') as String;
+
+  List<dynamic> data;
+  if (jsonMap['data'] is List<dynamic>) {
+    data = jsonMap['data'] as List<dynamic>;
+  } else {
+    data = <dynamic>[];
+    // can't call debug() here (no binding), just keep empty list
+  }
+
+  return ContextInfo(message: msg, data: data, statusCode: statusCode);
+}
 
 class OnCertificationConfigScreen extends StatefulWidget {
   final String? itemName;
@@ -31,27 +54,11 @@ class OnCertificationConfigScreen extends StatefulWidget {
         itemName: itemName!,
       );
     }
-    return parseContextInfo(resp);
-  }
-
-  ContextInfo parseContextInfo(http.Response resp) {
-    final jsonMap = json.decode(resp.body) as Map<String, dynamic>;
-    final msg = (jsonMap['message'] ?? '') as String;
-    List<dynamic> data;
-    if (jsonMap["data"] is List<dynamic>) {
-      data = jsonMap['data'] as List<dynamic>;
-    } 
-    
-    
-    else {
-      data = <dynamic>[];
-      debug('Warning: "data" is not a List<dynamic>. It is ${jsonMap["data"].runtimeType}');
-    }
-    return ContextInfo(
-      message: msg,
-      data: data,
-      statusCode: resp.statusCode,
-    );
+    // Parse off the main thread
+    return compute(_parseContextInfoBody, {
+      'body': resp.body,
+      'statusCode': resp.statusCode,
+    });
   }
 
   @override
@@ -64,41 +71,57 @@ class _OnCertificationConfigScreenState extends State<OnCertificationConfigScree
   String _loadingMessage = "Contacting server...";
   ContextInfo? _resp;
 
+  // Non-blocking message rotator
+  final List<String> _messages = const [
+    "Contacting server...",
+    "Loading…",
+    "Preparing your questions...",
+    "Almost there…",
+  ];
+  int _msgIndex = 0;
+  Timer? _msgTicker;
+
   @override
   void initState() {
     super.initState();
-    // Don't await here; just start the async bootstrap.
-    _bootstrap();
+    _startMessageTicker(); // optional: rotates messages every few seconds
+    _bootstrap();          // starts fetching immediately
+  }
+
+  @override
+  void dispose() {
+    _msgTicker?.cancel();
+    super.dispose();
+  }
+
+  void _startMessageTicker() {
+    _loadingMessage = _messages.first;
+    _msgTicker?.cancel();
+    _msgTicker = Timer.periodic(const Duration(seconds: 4), (t) {
+      if (!_loading || !mounted) {
+        t.cancel();
+        return;
+      }
+      _msgIndex = (_msgIndex + 1) % _messages.length;
+      setState(() {
+        _loadingMessage = _messages[_msgIndex];
+      });
+    });
   }
 
   Future<void> _bootstrap() async {
-    if (mounted) {
-      setState(() {
-        _loading = true;
-        _error = null;
-        _loadingMessage = "Contacting server...";
-      });
-    }
+    setState(() {
+      _loading = true;
+      _error = null;
+      _loadingMessage = _messages.first;
+      _msgIndex = 0;
+    });
 
     try {
-      // Staged loading messages (optional eye-candy)
-      await Future.delayed(const Duration(seconds: 5));
-      if (!mounted) return;
-      setState(() => _loadingMessage = "Loading...");
-
-      await Future.delayed(const Duration(seconds: 10));
-      if (!mounted) return;
-      setState(() => _loadingMessage = "We're setting things up for you...");
-
-      await Future.delayed(const Duration(seconds: 15));
-      if (!mounted) return;
-      setState(() => _loadingMessage = "Go take a coffee break ☕...");
-
-      await Future.delayed(const Duration(seconds: 20));
-      if (!mounted) return;
-      setState(() => _loadingMessage = "It might take some time...");
-
-      final got = await widget._fetch(widget.contextId);
+      // Start fetch immediately; add a real timeout
+      final got = await widget
+          ._fetch(widget.contextId)
+          .timeout(const Duration(seconds: 300));
 
       if (!mounted) return;
 
@@ -106,17 +129,31 @@ class _OnCertificationConfigScreenState extends State<OnCertificationConfigScree
         setState(() {
           _error = _mapStatusCodeToMessage(got.statusCode, got.message);
           _loading = false;
+           _resp = got;
         });
         return;
       }
 
-      // Success
       setState(() {
-        _loadingMessage = "Almost done...";
         _resp = got;
-        debug('Fetched ContextInfo: ${got.data}');
         _loading = false;
       });
+      _msgTicker?.cancel();
+      debug('Fetched ContextInfo: ${got.data}');
+    } on TimeoutException {
+      if (!mounted) return;
+      setState(() {
+        _error = "Request timed out. Please try again in a moment.";
+        _loading = false;
+      });
+      _msgTicker?.cancel();
+    } on SocketException catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _error = "Network error. Check your connection and try again.";
+        _loading = false;
+      });
+      _msgTicker?.cancel();
     } catch (e) {
       debug('Error in OnCertificationConfigScreen: $e');
       if (!mounted) return;
@@ -124,6 +161,7 @@ class _OnCertificationConfigScreenState extends State<OnCertificationConfigScree
         _error = "Could not continue. Please contact support@asodya.com.";
         _loading = false;
       });
+      _msgTicker?.cancel();
     }
   }
 
@@ -145,7 +183,7 @@ class _OnCertificationConfigScreenState extends State<OnCertificationConfigScree
       case 503:
         return "Service unavailable, please contact $supportEmail";
       default:
-        return "Please contact $supportEmail (code $code)";
+        return msg.isNotEmpty ? msg : "Please contact $supportEmail (code $code)";
     }
   }
 
@@ -161,7 +199,7 @@ class _OnCertificationConfigScreenState extends State<OnCertificationConfigScree
               const CircularProgressIndicator(strokeWidth: 4),
               const SizedBox(height: 24),
               AnimatedSwitcher(
-                duration: const Duration(milliseconds: 600),
+                duration: const Duration(milliseconds: 300),
                 child: Text(
                   _loadingMessage,
                   key: ValueKey(_loadingMessage),
@@ -213,19 +251,29 @@ class _OnCertificationConfigScreenState extends State<OnCertificationConfigScree
                   softWrap: true,
                 ),
                 const SizedBox(height: 32),
+                if (_resp!.statusCode != 409)
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple.shade400,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    ),
+                  icon: const Icon(Icons.refresh, color: Colors.white),
+                  label: const Text("Try Again", style: TextStyle(color: Colors.white, fontSize: 18)),
+                  onPressed: _bootstrap,
+                ),
+                const SizedBox(height: 12),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple.shade400,
                     padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                   ),
                   icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
                   label: const Text("Go Back", style: TextStyle(color: Colors.white, fontSize: 18)),
                   onPressed: () async {
-                      await defaultLogout();
-                    },
+                    await defaultLogout();
+                  },
                 ),
               ],
             ),
@@ -234,7 +282,7 @@ class _OnCertificationConfigScreenState extends State<OnCertificationConfigScree
       );
     }
 
-    // Success: show your main config UI with the fetched payload
+    // Success
     return ScreenAdjuster(
       mobileWidget: MobileCertificationConfig(
         documentId: widget.contextId,

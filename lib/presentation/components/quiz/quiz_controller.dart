@@ -5,14 +5,16 @@ import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/domain/models/quiz.dart';
 import 'package:accredit/domain/models/topic_identifications.dart';
 
+
+
 class QuizController extends ChangeNotifier {
   final CertificationFormData formData;
   final ContextInfo payload;
 
-  // Parsed questions
+  // Parsed questions (must include 'id')
   late final List<QuestionItem> questions = _parseQuestions(payload.data);
 
-  // Selections
+  // UI selections: still index-based for simplicity in the views
   late final List<int?> selections = List<int?>.filled(questions.length, null);
 
   // Timer
@@ -45,12 +47,31 @@ class QuizController extends ChangeNotifier {
     finish();
   }
 
+  /// Builds a backend-friendly payload: [{questionId, selectedIndex, selectedText}, ...]
+  List<AnswerSelection> buildSelectionsPayload() {
+    final out = <AnswerSelection>[];
+    for (var i = 0; i < questions.length; i++) {
+      final q = questions[i];
+      final idx = selections[i];
+      final txt = (idx != null && idx >= 0 && idx < q.options.length) ? q.options[idx] : null;
+      out.add(AnswerSelection(questionId: q.id, selectedIndex: idx, selectedText: txt));
+    }
+    return out;
+  }
+
   /// Call when user taps Finish
   QuizResult finish() {
     final spent = timeSpent;
     final result = QuizResult(selectedOptionIndexes: selections, timeSpent: spent);
-    debug('Finished. Selections: $selections | spent: $spent');
-    // TODO: submit result here
+
+    final payload = buildSelectionsPayload();
+    debug('Finished. Spent: $spent');
+    debug('Selections (by index): $selections');
+    debug('Submission payload: ${payload.map((e) => e.toJson()).toList()}');
+
+    // TODO: submit `payload.map((e) => e.toJson()).toList()` to your backend.
+    // You can include `formData`, `timeSpent`, etc., alongside.
+
     return result;
   }
 
@@ -61,7 +82,7 @@ class QuizController extends ChangeNotifier {
 
   void setSelection(int index, int? value) {
     selections[index] = value;
-    notifyListeners(); // Let views rebuild if they listen to the controller
+    notifyListeners();
   }
 
   // Helpers
@@ -71,17 +92,30 @@ class QuizController extends ChangeNotifier {
     return '$m:$s';
   }
 
+  /// Robust parser that extracts an `id` for each question.
+  /// If your API doesn't send an id, we generate a stable fallback.
   static List<QuestionItem> _parseQuestions(List<dynamic> raw) {
     final out = <QuestionItem>[];
-    for (final e in raw) {
+    for (var i = 0; i < raw.length; i++) {
+      final e = raw[i];
       if (e is Map<String, dynamic>) {
+        // Try common id fields; fallback to index-based id if missing
+        final idRaw = (e['id'] ?? e['_id'] ?? e['question_id'] ?? '').toString().trim();
+        final id = idRaw.isNotEmpty ? idRaw : 'q_$i';
+
         final q = (e['question'] ?? e['question_text'] ?? '').toString().trim();
         final optsAny = e['options'];
         final diffAny = e['difficulty'];
-        final opts = (optsAny is List) ? optsAny.map((o) => o.toString()).toList() : <String>[];
+
+        final opts = (optsAny is List)
+            ? optsAny.map((o) => o.toString()).toList()
+            : <String>[];
+
         final diff = diffAny == null ? null : int.tryParse(diffAny.toString());
+
         if (q.isNotEmpty && opts.isNotEmpty) {
-          out.add(QuestionItem(question: q, options: opts, difficulty: diff));
+          // Ensure your QuestionItem has an `id` field in your model.
+          out.add(QuestionItem(id: id, question: q, options: opts, difficulty: diff));
         }
       }
     }

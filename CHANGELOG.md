@@ -54,6 +54,7 @@ All notable changes to this project will be documented in this file.
 - *(topics)* Added redirection and loading data from context for topic
 - *(quiz)* Created a initial widget for the quiz questions
 - *(quiz)* First quiz widget implemented for adjustements
+- *(quiz)* Add the id to request to back end verification of exam test
 
 ### 🐛 Bug Fixes
 
