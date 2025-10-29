@@ -59,6 +59,7 @@ All notable changes to this project will be documented in this file.
 
 - *(cards)* Adjusted the layout break on desktop
 - *(quiz)* Catching the right keys dict questions
+- *(quiz)* Added a controller to keep state after adjust size screen
 
 ### ⚙️ Miscellaneous Tasks
 

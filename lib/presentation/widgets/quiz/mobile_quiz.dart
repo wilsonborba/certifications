@@ -1,27 +1,47 @@
 // widgets/quiz/mobile_quiz.dart
+import 'package:accredit/presentation/components/quiz/quiz_controller.dart';
+import 'package:flutter/material.dart';
+
 import 'package:accredit/presentation/components/quiz/big_appbar.dart';
 import 'package:accredit/presentation/components/quiz/quiz_cards.dart';
-import 'package:flutter/material.dart';
-import 'base_quiz.dart';
 
+class MobileQuiz extends StatefulWidget {
+  final QuizController controller;
+  const MobileQuiz({super.key, required this.controller});
 
-class MobileQuiz extends BaseQuiz {
-  MobileQuiz({super.key, required super.questionPayload, required super.formData});
   @override
   State<MobileQuiz> createState() => _MobileQuizState();
 }
 
-class _MobileQuizState extends BaseQuizState<MobileQuiz> {
+class _MobileQuizState extends State<MobileQuiz> {
+  QuizController get c => widget.controller;
+
+  Future<bool?> _confirmFinish(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Finish quiz?'),
+        content: const Text('Are you sure you want to submit your answers?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7C4DFF)),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Finish'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F8),
       appBar: QuizAppBar(
-        title: widget.formData.certificationTitle,
-        subtitle: "Quiz made for ${widget.formData.fullName}",
-        remainingSecondsListenable: remainingSeconds,
+        title: c.formData.certificationTitle,
+        subtitle: "Quiz made for ${c.formData.fullName}",
+        remainingSecondsListenable: c.remainingSeconds,
         height: 90,
       ),
       body: Column(
@@ -29,14 +49,17 @@ class _MobileQuizState extends BaseQuizState<MobileQuiz> {
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.only(bottom: 12),
-              itemCount: questions.length,
+              itemCount: c.questions.length,
               itemBuilder: (_, i) {
-                final q = questions[i];
+                final q = c.questions[i];
                 return QuestionCard(
                   index: i + 1,
                   item: q,
-                  selectedIndex: selections[i],
-                  onChanged: (val) => setState(() => selections[i] = val),
+                  selectedIndex: c.selections[i],
+                  onChanged: (val) {
+                    c.setSelection(i, val);
+                    setState(() {});
+                  },
                   onComplain: () => showComplaintDialog(context, questionIndex: i + 1),
                 );
               },
@@ -50,23 +73,8 @@ class _MobileQuizState extends BaseQuizState<MobileQuiz> {
                 icon: const Icon(Icons.flag_circle_rounded),
                 label: const Text('Finish', style: TextStyle(fontWeight: FontWeight.w800)),
                 onPressed: () async {
-                  final ok = await showDialog<bool>(
-                    context: context,
-                    builder: (_) => AlertDialog(
-                      title: const Text('Finish quiz?'),
-                      content: const Text('Are you sure you want to submit your answers?'),
-                      actions: [
-                        
-                        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7C4DFF)),
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text('Finish'),
-                        ),
-                      ],
-                    ),
-                  );
-                  if (ok == true) onFinishPressed();
+                  final ok = await _confirmFinish(context);
+                  if (ok == true) c.finish();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF7C4DFF),
