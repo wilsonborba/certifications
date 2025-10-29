@@ -55,6 +55,7 @@ All notable changes to this project will be documented in this file.
 - *(quiz)* Created a initial widget for the quiz questions
 - *(quiz)* First quiz widget implemented for adjustements
 - *(quiz)* Add the id to request to back end verification of exam test
+- *(topics)* Improved the design a lil bit
 
 ### 🐛 Bug Fixes
 

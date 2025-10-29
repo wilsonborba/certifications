@@ -1,23 +1,18 @@
-
 import 'package:accredit/presentation/widgets/certifications_config/on_certifications_config.dart';
 import 'package:flutter/material.dart';
 import 'package:accredit/core/utils/my_nagivation.dart';
 
-/// Reusable Topic card for both Desktop & Mobile.
-/// Adds hover + press affordances to action buttons.
 class TopicsCard extends StatefulWidget {
   final String itemName;
   final String identification;
   final String title;
-  final String about;      // e.g., "About"
-  final String link;       // open in new tab / replace: false
+  final String about;
+  final String link;
   final String? imageUrl;
 
-  // Layout knobs so Desktop/Mobile can look slightly different without forking:
   final EdgeInsets padding;
   final double titleFontSize;
-  /// 600 -> FontWeight.w600 (we map 100..900 to FontWeight.values[1..9])
-  final double titleFontWeight;
+  final double titleFontWeight; // 100..900 mapped to FontWeight
   final double buttonMinHeight;
   final double buttonMinWidth;
   final double imageWidth;
@@ -51,6 +46,7 @@ class TopicsCard extends StatefulWidget {
 class _TopicsCardState extends State<TopicsCard> {
   bool _imageOk = false;
   ImageProvider? _provider;
+  bool _hovered = false;
 
   @override
   void initState() {
@@ -81,8 +77,6 @@ class _TopicsCardState extends State<TopicsCard> {
     _provider = NetworkImage(url);
   }
 
-  /// Invisible, non-interactive preloader that lets us detect when the
-  /// first frame is available (so we avoid layout jank).
   Widget _preloadImage() {
     if (_provider == null) return const SizedBox.shrink();
     return IgnorePointer(
@@ -111,99 +105,128 @@ class _TopicsCardState extends State<TopicsCard> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     final titleStyle = TextStyle(
       fontSize: widget.titleFontSize,
-      fontWeight: FontWeight.values[
-        (widget.titleFontWeight / 100).clamp(0, 9).round()
-      ],
+      color: cs.onSurface,
+      fontWeight: FontWeight.values[(widget.titleFontWeight / 100).clamp(0, 9).round()],
     );
-    final baseColor = Theme.of(context).colorScheme.onSurface;
-    final hoverColor = Theme.of(context).colorScheme.primary;
 
-    return Card(
-      elevation: 2,
-      color: const Color.fromARGB(255, 250, 253, 255),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      child: Padding(
-        padding: widget.padding,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            _preloadImage(),
+    // soft, tactile card
+    final borderColor = cs.primary.withAlpha((.14 * 255).toInt());
 
-            // LEFT: title + actions
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(widget.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: titleStyle),
-                  const Spacer(),
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: SystemMouseCursors.basic,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        curve: Curves.easeOut,
+        transform: Matrix4.identity()
+        ..translateByDouble(0.0, _hovered ? -1.0 : 0.0, 0.0, 1.0)
+        ..scaleByDouble(
+          _hovered ? 1.005 : 1.0,
+          _hovered ? 1.005 : 1.0,
+          1.0,
+          1.0,
+        ),
+        decoration: BoxDecoration(
+          color: cs.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: borderColor),
+          boxShadow: [
+            // soft drop shadow for tactile feel
+            BoxShadow(color: Colors.black.withAlpha((.05 * 255).toInt()), blurRadius: 18, offset: const Offset(0, 10)),
+            // subtle highlight (neumorphic feel)
+            BoxShadow(color: Colors.white.withAlpha((.7 * 255).toInt()), blurRadius: 6, offset: const Offset(-1, -1), spreadRadius: -2),
+          ],
+        ),
+        child: Padding(
+          padding: widget.padding,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _preloadImage(),
 
-                  Row(
-                    children: [
-                      // See more -> opens link
-                      _HoverableAction(
-                        label: 'See more',
-                        icon: Icons.remove_red_eye_outlined,
-                        minSize: Size(widget.buttonMinWidth, widget.buttonMinHeight),
-                        baseColor: baseColor,
-                        hoverColor: hoverColor,
-                        onTap: () => redirectToUrl(widget.link, replace: false),
+              // LEFT: title + actions
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Accent capsule
+                    Container(
+                      height: 4,
+                      width: 40,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [cs.primary, cs.primary.withAlpha((.6 * 255).toInt())],
+                        ),
+                        borderRadius: BorderRadius.circular(999),
                       ),
-
-                      const Spacer(),
-
-                      // Select -> hook up when you have a handler
-                      _HoverableAction(
-                        label: 'Select',
-                        icon: Icons.check_circle_outline,
-                        minSize: Size(widget.buttonMinWidth, widget.buttonMinHeight),
-                        baseColor: baseColor,
-                        hoverColor: hoverColor,
-                        onTap: () {
-                          NavigationService.push(OnCertificationConfigScreen(
-                            itemName: widget.itemName,
-                            contextId:  widget.identification, 
-                          isForPDF: false
-                          ));
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // RIGHT: divider + image after first frame renders
-            if (_imageOk && _provider != null) ...[
-              SizedBox(width: widget.gap),
-              if (widget.showDivider) const VerticalDivider(width: 1, thickness: 1),
-              SizedBox(width: widget.gap),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: Image(
-                  image: _provider!,
-                  width: widget.imageWidth,
-                  height: widget.imageHeight,
-                  fit: BoxFit.cover,
-                  excludeFromSemantics: true,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(widget.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: titleStyle),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        _HoverableAction(
+                          label: 'See more',
+                          icon: Icons.remove_red_eye_outlined,
+                          minSize: Size(widget.buttonMinWidth, widget.buttonMinHeight),
+                          baseColor: cs.onSurface,
+                          hoverColor: cs.primary,
+                          onTap: () => redirectToUrl(widget.link, replace: false),
+                        ),
+                        const Spacer(),
+                        _HoverableAction(
+                          label: 'Select',
+                          icon: Icons.check_circle_outline,
+                          minSize: Size(widget.buttonMinWidth, widget.buttonMinHeight),
+                          baseColor: cs.onSurface,
+                          hoverColor: cs.primary,
+                          onTap: () {
+                            NavigationService.push(
+                              OnCertificationConfigScreen(
+                                itemName: widget.itemName,
+                                contextId: widget.identification,
+                                isForPDF: false,
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
+
+              // RIGHT: divider + image
+              if (_imageOk && _provider != null) ...[
+                SizedBox(width: widget.gap),
+                if (widget.showDivider)
+                  VerticalDivider(width: 1, thickness: 1, color: cs.outlineVariant),
+                SizedBox(width: widget.gap),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image(
+                    image: _provider!,
+                    width: widget.imageWidth,
+                    height: widget.imageHeight,
+                    fit: BoxFit.cover,
+                    excludeFromSemantics: true,
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// A tiny reusable button-like control with **hover + press** affordances:
-/// - Hover: tint to hoverColor and slide by a couple pixels
-/// - Press: slight scale-down
-/// - Ripple: InkWell splash, with click cursor on desktop/web
+/// Hoverable pill action with subtle gradient tint and tactile feedback
 class _HoverableAction extends StatefulWidget {
   final String label;
   final IconData icon;
@@ -225,62 +248,59 @@ class _HoverableAction extends StatefulWidget {
   State<_HoverableAction> createState() => _HoverableActionState();
 }
 
-
 class _HoverableActionState extends State<_HoverableAction> {
   bool _hovered = false;
   bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
-    final color = _hovered ? widget.hoverColor : widget.baseColor;
+    final cs = Theme.of(context).colorScheme;
+    final fg = _hovered ? cs.primary : widget.baseColor;
 
-    // Slight translation on hover; slight scale on press
-    final dx = _hovered ? 2.0 : 0.0;     // move right 2px on hover
-    final dy = _hovered ? -1.0 : 0.0;    // and up 1px
-    final scale = _pressed ? 0.98 : 1.0; // tiny press feedback
-
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => setState(() => _pressed = true),
-        onTapCancel: () => setState(() => _pressed = false),
-        onTapUp: (_) => setState(() => _pressed = false),
-        onTap: widget.onTap,
-        child: Material(
-          type: MaterialType.transparency,
-          child: InkWell(
-            splashColor: widget.hoverColor.withAlpha((.12 * 255).toInt()),
-            highlightColor: Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-            onTap: widget.onTap,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 140),
-              curve: Curves.easeOut,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              constraints: BoxConstraints(
-                minWidth: widget.minSize.width,
-                minHeight: widget.minSize.height,
-              ),
-              transform: Matrix4.identity()
-                ..translateByDouble(dx, dy, 0, 1.0)           // add w = 1.0
-                ..scaleByDouble(scale, scale, scale, 1.0),    // scale across all axes
-
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 140),
+      curve: Curves.easeOut,
+            transform: Matrix4.identity()
+        ..translateByDouble(_hovered ? 2.0 : 0.0, _hovered ? -1.0 : 0.0, 0.0, 1.0)
+        ..scaleByDouble(
+          _pressed ? 0.98 : 1.0,
+          _pressed ? 0.98 : 1.0,
+          1.0,
+          1.0,
+        ),
+      decoration: BoxDecoration(
+        color: _hovered ? cs.primary.withAlpha((.08 * 255).toInt()) : cs.surface,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: cs.primary.withAlpha((.22 * 255).toInt())),
+        boxShadow: [
+          if (_hovered) BoxShadow(color: cs.primary.withAlpha((.18 * 255).toInt()), blurRadius: 14, offset: const Offset(0, 8)),
+        ],
+      ),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(999),
+          splashColor: cs.primary.withAlpha((.14 * 255).toInt()),
+          highlightColor: Colors.transparent,
+          onHover: (v) => setState(() => _hovered = v),
+          onTapDown: (_) => setState(() => _pressed = true),
+          onTapCancel: () => setState(() => _pressed = false),
+          onTap: () {
+            setState(() => _pressed = false);
+            widget.onTap();
+          },
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: widget.minSize.width, minHeight: widget.minSize.height),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(widget.icon, size: 18, color: color),
+                  Icon(widget.icon, size: 18, color: fg),
                   const SizedBox(width: 8),
-                  AnimatedDefaultTextStyle(
-                    duration: const Duration(milliseconds: 140),
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    child: Text(widget.label),
+                  Text(
+                    widget.label,
+                    style: TextStyle(color: fg, fontSize: 14, fontWeight: FontWeight.w700),
                   ),
                 ],
               ),

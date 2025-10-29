@@ -1,8 +1,6 @@
 import 'package:accredit/presentation/components/topics/topics_card.dart';
 import 'package:flutter/material.dart';
-
 import 'package:accredit/presentation/widgets/topics/base_topics.dart';
-
 
 class MobileTopics extends BaseTopics {
   const MobileTopics({super.key, required String itemName})
@@ -13,71 +11,117 @@ class MobileTopics extends BaseTopics {
 }
 
 class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
-  // Mobile page size
   @override
   int get initialPerPage => 4;
 
   // ----------------------- UI: Header (mobile) -----------------------
   Widget _buildHeaderBar() {
+    final cs = Theme.of(context).colorScheme;
+    final subtle = cs.onSurface.withAlpha((0.65 * 255).toInt());
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Label bar with accent line
           Row(
-            children: const [
-              Expanded(child: Divider(height: 1, thickness: 1)),
-              SizedBox(width: 12),
-              Text('Topics', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              SizedBox(width: 12),
-              Expanded(child: Divider(height: 1, thickness: 1)),
+            children: [
+              Expanded(child: Divider(height: 1, thickness: 1, color: cs.outlineVariant)),
+              const SizedBox(width: 12),
+              Row(
+                children: [
+                  Container(
+                    height: 8,
+                    width: 8,
+                    decoration: BoxDecoration(
+                      color: cs.primary,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Topics',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: cs.onSurface),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 12),
+              Expanded(child: Divider(height: 1, thickness: 1, color: cs.outlineVariant)),
             ],
           ),
           const SizedBox(height: 12),
+
+          // Search row (pill + action)
           Row(
             children: [
               Expanded(
-                child: SizedBox(
-                  height: 44,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: cs.surface,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: cs.primary.withAlpha((0.15 * 255).toInt())),
+                    boxShadow: [
+                      // soft neumorphic lift
+                      BoxShadow(
+                        color: Colors.black.withAlpha((0.04 * 255).toInt()),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                      BoxShadow(
+                        color: Colors.white.withAlpha((0.8 * 255).toInt()),
+                        blurRadius: 6,
+                        offset: const Offset(-1, -1),
+                        spreadRadius: -2,
+                      ),
+                    ],
+                  ),
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: TextField(
                     controller: qCtrl,
                     textInputAction: TextInputAction.search,
                     onSubmitted: (_) => startSearch(),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
                       hintText: 'Search topics…',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFFCCCCCC), width: 1),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF888888), width: 1)),
-                      errorBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.red, width: 1)),
-                      focusedErrorBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.red, width: 1)),
-                      
-                      
+                      hintStyle: TextStyle(color: subtle),
+                      prefixIcon: Icon(Icons.search, color: subtle),
+                      contentPadding: const EdgeInsets.only(top: 10),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               SizedBox(
-                height: 44,
+                height: 46,
                 child: ElevatedButton.icon(
                   onPressed: startSearch,
-                  icon: const Icon(Icons.search, size: 18),
+                  icon: const Icon(Icons.tune, size: 18),
                   label: const Text('Search'),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 0,
+                    backgroundColor: cs.primary,
+                    foregroundColor: cs.onPrimary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                  ),
                 ),
               ),
               if (searchMode) ...[
                 const SizedBox(width: 8),
-                IconButton(
-                  tooltip: 'Clear search',
-                  onPressed: clearSearch,
-                  icon: const Icon(Icons.close),
+                Tooltip(
+                  message: 'Clear search',
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: clearSearch,
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Icon(Icons.close, color: cs.onSurface),
+                    ),
+                  ),
                 ),
               ],
             ],
@@ -96,17 +140,17 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: GridView.builder(
         shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(), // outer scroll drives
+        physics: const NeverScrollableScrollPhysics(),
         itemCount: items.length,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 1,
           childAspectRatio: 1.0,
           crossAxisSpacing: 0.0,
           mainAxisSpacing: 12,
-          mainAxisExtent: 180, // same height as desktop cards
+          mainAxisExtent: 190,
         ),
         itemBuilder: (ctx, i) {
-          final ident = getTopicIdentifications(items[i])!; // validated upstream
+          final ident = getTopicIdentifications(items[i])!;
           return TopicsCard(
             itemName: widget.itemName,
             identification: ident.inputIdentification,
@@ -116,14 +160,14 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
             imageUrl: safeImageFromIdent(ident),
 
             // mobile sizing
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             titleFontSize: 16,
             titleFontWeight: 600,
             buttonMinHeight: 44,
-            buttonMinWidth: 80,
-            imageWidth: 96,
-            imageHeight: 64,
-            gap: 10,
+            buttonMinWidth: 88,
+            imageWidth: 104,
+            imageHeight: 68,
+            gap: 12,
             showDivider: true,
           );
         },
@@ -133,52 +177,64 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
 
   // ----------------------- UI: Footer -----------------------
   Widget _buildFooter() {
+    final cs = Theme.of(context).colorScheme;
     final (startIndex, endIndex, curPage, curHasMore) = windowInfo;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
       child: Column(
         children: [
-          const Divider(height: 1, thickness: 1),
+          Divider(height: 1, thickness: 1, color: cs.outlineVariant),
           const SizedBox(height: 12),
           Row(
             children: [
-              // Prev
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: (isBusy || curPage <= 1) ? null : loadPrev,
                   icon: const Icon(Icons.arrow_upward, size: 16),
                   label: const Text('Previous', style: TextStyle(fontSize: 14)),
                   style: ElevatedButton.styleFrom(
+                    elevation: 0,
                     minimumSize: const Size.fromHeight(44),
+                    backgroundColor: cs.primary,
+                    foregroundColor: cs.onPrimary,
+                    disabledBackgroundColor: cs.surfaceContainerHighest ,
+                    disabledForegroundColor: cs.onSurface.withAlpha((0.4 * 255).toInt()),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              // Center info chip
+              const SizedBox(width: 10),
+              // Glassy page chip
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: const Color(0xFFF7F7F7),
+                  color: cs.surfaceContainerHighest.withAlpha((0.7 * 255).toInt()),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: cs.primary.withAlpha((0.18 * 255).toInt())),
                 ),
                 child: Text(
                   visibleItems.isEmpty
                       ? 'Page $curPage'
                       : 'Page $curPage | $startIndex–$endIndex',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: cs.onSurface),
                 ),
               ),
-              const SizedBox(width: 8),
-              // Next
+              const SizedBox(width: 10),
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: (isBusy || !curHasMore) ? null : loadNext,
                   icon: const Icon(Icons.arrow_downward, size: 16),
                   label: const Text('Next', style: TextStyle(fontSize: 14)),
                   style: ElevatedButton.styleFrom(
+                    elevation: 0,
                     minimumSize: const Size.fromHeight(44),
+                    backgroundColor: cs.primary,
+                    foregroundColor: cs.onPrimary,
+                    disabledBackgroundColor: cs.surfaceContainerHighest,
+                    disabledForegroundColor: cs.onSurface.withAlpha((0.4 * 255).toInt()),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
@@ -193,102 +249,91 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
   // ----------------------- Scaffold -----------------------
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final hasAny = visibleItems.isNotEmpty;
 
     final initialLoading = Column(
-      children: const [
-        Padding(
-          padding: EdgeInsets.only(top: 24),
-          child: Text('Loading topics, please wait...', style: TextStyle(fontSize: 14)),
-        ),
-        SizedBox(height: 16),
-        SizedBox(height: 28, width: 28, child: CircularProgressIndicator()),
-        SizedBox(height: 16),
+      children: [
+        const SizedBox(height: 24),
+        Text('Loading topics, please wait…', style: TextStyle(fontSize: 14, color: cs.onSurface)),
+        const SizedBox(height: 16),
+        const SizedBox(height: 28, width: 28, child: CircularProgressIndicator()),
+        const SizedBox(height: 16),
       ],
     );
 
-    final emptyState = const Padding(
-      padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+    final emptyState = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       child: Text(
-        'No topics available right now, please check back later,\n'
-        'or contact support@asodya.com',
+        'No topics available right now,\nplease check back later or contact support@asodya.com',
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 14),
+        style: TextStyle(fontSize: 14, color: cs.onSurface),
       ),
     );
 
     return Scaffold(
-        backgroundColor: const Color.fromARGB(255, 248, 248, 248),
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          backgroundColor: const Color(0xFF242424),
+      backgroundColor: cs.surface,
+      appBar: AppBar(
+        backgroundColor: cs.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: cs.onSurface),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                _buildHeaderBar(),
-
-                // 1) First-ever initial load
-                if (!initialDone && !hasAny) initialLoading
-
-                // 2) Any ongoing load (topics OR search) => spinner even when empty
-                else if (isBusy)
-                  SizedBox(
-                    height: lastGridHeight > 0 ? lastGridHeight : 180,
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const SizedBox(height: 28, width: 28, child: CircularProgressIndicator()),
-                            const SizedBox(height: 12),
-                            AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 300),
-                              transitionBuilder: (child, anim) => FadeTransition(
-                                opacity: anim,
-                                child: SlideTransition(
-                                  position: Tween<Offset>(
-                                    begin: const Offset(0, .25),
-                                    end: Offset.zero,
-                                  ).animate(anim),
-                                  child: child,
-                                ),
-                              ),
-                              child: Text(
-                                loadingPhrases[loadingIndex],
-                                key: ValueKey<int>(loadingIndex),
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
-                                ),
+        title: Text('Choose a topic', style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w800)),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              _buildHeaderBar(),
+              if (!initialDone && !hasAny) initialLoading
+              else if (isBusy)
+                SizedBox(
+                  height: lastGridHeight > 0 ? lastGridHeight : 180,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 28, width: 28, child: CircularProgressIndicator()),
+                          const SizedBox(height: 12),
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 300),
+                            transitionBuilder: (child, anim) => FadeTransition(
+                              opacity: anim,
+                              child: SlideTransition(
+                                position: Tween<Offset>(begin: const Offset(0, .25), end: Offset.zero).animate(anim),
+                                child: child,
                               ),
                             ),
-                          ],
-                        ),
+                            child: Text(
+                              loadingPhrases[loadingIndex],
+                              key: ValueKey<int>(loadingIndex),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: cs.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  )
-
-                // 3) Loaded but empty
-                else if (!hasAny)
-                  emptyState
-
-                // 4) Normal grid
-                else
-                  _buildGrid(context),
-
-                _buildFooter(),
-              ],
-            ),
+                  ),
+                )
+              else if (!hasAny)
+                emptyState
+              else
+                _buildGrid(context),
+              _buildFooter(),
+            ],
           ),
         ),
-      );
+      ),
+    );
   }
 }
