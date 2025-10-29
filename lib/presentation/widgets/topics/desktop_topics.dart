@@ -130,7 +130,7 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
       builder: (context, constraints) {
         final maxW = constraints.maxWidth;
         final bool isNarrow = maxW < 1200;
-        final int columns = isNarrow ? 2 : 4;
+        final int columns = isNarrow ? 1 : 3;
         final items = visibleItems;
 
         return Padding(
@@ -145,7 +145,7 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
               childAspectRatio: 1.0,
               crossAxisSpacing: 18,
               mainAxisSpacing: 18,
-              mainAxisExtent: 196,
+              mainAxisExtent: 230,
             ),
             itemBuilder: (ctx, i) {
               final ident = getTopicIdentifications(items[i])!;

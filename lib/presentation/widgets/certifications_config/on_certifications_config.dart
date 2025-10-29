@@ -121,7 +121,7 @@ class _OnCertificationConfigScreenState extends State<OnCertificationConfigScree
       // Start fetch immediately; add a real timeout
       final got = await widget
           ._fetch(widget.contextId)
-          .timeout(const Duration(seconds: 300));
+          .timeout(const Duration(seconds: 3000));
 
       if (!mounted) return;
 

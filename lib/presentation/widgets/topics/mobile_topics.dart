@@ -28,25 +28,25 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
           Row(
             children: [
               Expanded(child: Divider(height: 1, thickness: 1, color: cs.outlineVariant)),
-              const SizedBox(width: 12),
-              Row(
-                children: [
-                  Container(
-                    height: 8,
-                    width: 8,
-                    decoration: BoxDecoration(
-                      color: cs.primary,
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Topics',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: cs.onSurface),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 12),
+              // const SizedBox(width: 12),
+              // Row(
+              //   children: [
+              //     Container(
+              //       height: 8,
+              //       width: 8,
+              //       decoration: BoxDecoration(
+              //         color: cs.primary,
+              //         borderRadius: BorderRadius.circular(99),
+              //       ),
+              //     ),
+              //     const SizedBox(width: 8),
+              //     Text(
+              //       'Topics',
+              //       style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: cs.onSurface),
+              //     ),
+              //   ],
+              // ),
+              // const SizedBox(width: 12),
               Expanded(child: Divider(height: 1, thickness: 1, color: cs.outlineVariant)),
             ],
           ),
@@ -90,6 +90,13 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
                       hintStyle: TextStyle(color: subtle),
                       prefixIcon: Icon(Icons.search, color: subtle),
                       contentPadding: const EdgeInsets.only(top: 10),
+                      focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(999),
+                      borderSide: const BorderSide(
+                        color: Colors.transparent, // your purple when clicked
+                        width: 2,
+                      ),
+                    ),
                     ),
                   ),
                 ),
@@ -99,7 +106,7 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
                 height: 46,
                 child: ElevatedButton.icon(
                   onPressed: startSearch,
-                  icon: const Icon(Icons.tune, size: 18),
+                  icon: const Icon(Icons.search, size: 18),
                   label: const Text('Search'),
                   style: ElevatedButton.styleFrom(
                     elevation: 0,

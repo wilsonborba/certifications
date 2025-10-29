@@ -58,7 +58,7 @@ abstract class BaseSyncAuthState<T extends BaseSyncAuth> extends State<T> {
     }
 
     try {
-      final resp = await ApiAuthManager().exchange(token);
+      final resp = await ApiAsodyaManager().exchange(token);
 
       if (!mounted) return;
 

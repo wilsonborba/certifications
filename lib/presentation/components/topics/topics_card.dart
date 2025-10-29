@@ -168,7 +168,9 @@ class _TopicsCardState extends State<TopicsCard> {
                     const SizedBox(height: 10),
                     Text(widget.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: titleStyle),
                     const Spacer(),
-                    Row(
+                   Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
                         _HoverableAction(
                           label: 'See more',

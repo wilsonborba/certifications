@@ -1,11 +1,10 @@
 // controllers/quiz_controller.dart
 import 'dart:async';
+import 'package:accredit/domain/services/api_auth_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/domain/models/quiz.dart';
 import 'package:accredit/domain/models/topic_identifications.dart';
-
-
 
 class QuizController extends ChangeNotifier {
   final CertificationFormData formData;
@@ -18,10 +17,14 @@ class QuizController extends ChangeNotifier {
   late final List<int?> selections = List<int?>.filled(questions.length, null);
 
   // Timer
-  late final int totalSeconds = (questions.length * 1) * 60; // 1 min per Q
+  late final int totalSeconds = (questions.isEmpty ? 1 : questions.length) * 60; // 1 min per Q, min 60s
   final ValueNotifier<int> remainingSeconds = ValueNotifier<int>(0);
   Timer? _ticker;
   DateTime? _startAt;
+
+  // Submit guards
+  bool _submitting = false;
+  Completer<QuizResult>? _finishCompleter;
 
   QuizController({required this.formData, required this.payload}) {
     _start();
@@ -30,11 +33,14 @@ class QuizController extends ChangeNotifier {
   void _start() {
     _startAt = DateTime.now();
     remainingSeconds.value = totalSeconds;
+    _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(seconds: 1), (t) {
-      final s = totalSeconds - t.tick;
+      final elapsed = t.tick;
+      final s = totalSeconds - elapsed;
       if (s <= 0) {
         remainingSeconds.value = 0;
         t.cancel();
+        // Avoid re-entrancy; let finish() handle guard
         onTimeUp();
       } else {
         remainingSeconds.value = s;
@@ -42,12 +48,12 @@ class QuizController extends ChangeNotifier {
     });
   }
 
-  void onTimeUp() {
+  Future<void> onTimeUp() async {
     debug('Time finished — auto-submitting.');
-    finish();
+    await finish();
   }
 
-  /// Builds a backend-friendly payload: [{questionId, selectedIndex, selectedText}, ...]
+  /// Backend-friendly payload: [{questionId, selectedIndex, selectedText}, ...]
   List<AnswerSelection> buildSelectionsPayload() {
     final out = <AnswerSelection>[];
     for (var i = 0; i < questions.length; i++) {
@@ -59,20 +65,48 @@ class QuizController extends ChangeNotifier {
     return out;
   }
 
-  /// Call when user taps Finish
-  QuizResult finish() {
+  /// Idempotent submission. If called twice, returns the same Future.
+  Future<QuizResult> finish() async {
+    if (_finishCompleter != null) {
+      // Already running or finished; return the same Future.
+      return _finishCompleter!.future;
+    }
+    _finishCompleter = Completer<QuizResult>();
+
+    if (_submitting) {
+      return _finishCompleter!.future; // extra safety
+    }
+    _submitting = true;
+
+    // Stop timer first so UI freezes countdown during submit
+    _ticker?.cancel();
+    _ticker = null;
+
     final spent = timeSpent;
-    final result = QuizResult(selectedOptionIndexes: selections, timeSpent: spent);
+    final result = QuizResult(selectedOptionIndexes: List<int?>.from(selections), timeSpent: spent);
 
     final payload = buildSelectionsPayload();
     debug('Finished. Spent: $spent');
     debug('Selections (by index): $selections');
     debug('Submission payload: ${payload.map((e) => e.toJson()).toList()}');
 
-    // TODO: submit `payload.map((e) => e.toJson()).toList()` to your backend.
-    // You can include `formData`, `timeSpent`, etc., alongside.
+    try {
+      // Example side-effect call
+      final resp = await ApiAsodyaManager().updateUserInfo(formData.fullName, formData.phoneE164);
+      debug('updateUserInfo => ${resp.statusCode}');
 
-    return result;
+      // TODO: await your quiz submit here with `payload` (+ formData, timeSpent, etc.)
+
+      _finishCompleter!.complete(result);
+      return result;
+    } catch (e, st) {
+      debug('Submit failed: $e\n$st');
+      // You could also rethrow and let UI show an error.
+      _finishCompleter!.complete(result); // still complete with local result
+      return result;
+    } finally {
+      _submitting = false;
+    }
   }
 
   Duration get timeSpent {
@@ -81,11 +115,11 @@ class QuizController extends ChangeNotifier {
   }
 
   void setSelection(int index, int? value) {
+    if (index < 0 || index >= selections.length) return;
     selections[index] = value;
     notifyListeners();
   }
 
-  // Helpers
   String formatMMSS(int secs) {
     final m = (secs ~/ 60).toString().padLeft(2, '0');
     final s = (secs % 60).toString().padLeft(2, '0');
@@ -99,7 +133,6 @@ class QuizController extends ChangeNotifier {
     for (var i = 0; i < raw.length; i++) {
       final e = raw[i];
       if (e is Map<String, dynamic>) {
-        // Try common id fields; fallback to index-based id if missing
         final idRaw = (e['id'] ?? e['_id'] ?? e['question_id'] ?? '').toString().trim();
         final id = idRaw.isNotEmpty ? idRaw : 'q_$i';
 
@@ -114,7 +147,6 @@ class QuizController extends ChangeNotifier {
         final diff = diffAny == null ? null : int.tryParse(diffAny.toString());
 
         if (q.isNotEmpty && opts.isNotEmpty) {
-          // Ensure your QuestionItem has an `id` field in your model.
           out.add(QuestionItem(id: id, question: q, options: opts, difficulty: diff));
         }
       }
