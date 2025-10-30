@@ -57,6 +57,8 @@ All notable changes to this project will be documented in this file.
 - *(quiz)* Add the id to request to back end verification of exam test
 - *(topics)* Improved the design a lil bit
 - *(topics)* Improved the adjustment grind size
+- *(user)* Patch some info about the user
+- *(ui)* Small ui improvements on boarding
 
 ### 🐛 Bug Fixes
 

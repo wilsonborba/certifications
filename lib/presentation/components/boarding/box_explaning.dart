@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -45,7 +46,7 @@ class BoxExplaning extends StatelessWidget {
     this.imageSource = BadgeImageSource.asset,
     this.titleSize = 20,
     this.bodySize = 14,
-    this.cardColor = Colors.transparent, // near-black
+    this.cardColor = Colors.transparent,
     this.borderRadius = 20,
     this.padding = const EdgeInsets.fromLTRB(16, 16, 16, 16),
     this.margin = const EdgeInsets.all(0),
@@ -73,127 +74,259 @@ class BoxExplaning extends StatelessWidget {
           ? Image.asset(image, width: imageSize, height: imageSize)
           : Image.network(image, width: imageSize, height: imageSize);
     }
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: img,
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        // boxShadow: [
+        //   // soft halo behind image
+        //   BoxShadow(
+        //     color: Colors.black.withAlpha((0.08 * 255).toInt()),
+        //     blurRadius: 14,
+        //     offset: const Offset(0, 6),
+        //   ),
+        // ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: img,
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Make sure text never goes under the image by padding the right side.
-    final EdgeInsets resolvedPadding = padding.resolve(Directionality.of(context));
-    final contentRightPadding = resolvedPadding.right + imageSize * 0.6;
+    final cs = Theme.of(context).colorScheme;
 
-    
+    // Resolve incoming padding (so we can add image-aware padding on the right)
+    final EdgeInsets resolvedPadding = padding.resolve(Directionality.of(context));
+
+    // Make sure text never collides under the image:
+    // reserve space on the right approximately proportional to image width.
+    final double reservedRight =
+        (imageSize * 0.70) + resolvedPadding.right + imageInset;
+
+    // Colors (youthful + tactile)
+    final Color glassFill = cs.surface.withAlpha((0.75 * 255).toInt()); // soft white
+    final Color hairlineA = cs.primary.withAlpha((0.70 * 255).toInt());
+    final Color hairlineB = cs.primary.withAlpha((0.35 * 255).toInt());
+    final Color innerStroke = Colors.white.withAlpha((0.65 * 255).toInt());
+    final Color titleColor = cs.onSurface;  // black-ish
+    final Color bodyColor = cs.onSurface.withAlpha((0.82 * 255).toInt());
+
+    // We fake a gradient border by nesting containers:
+    // [Gradient shell] -> padding(1) -> [Glass card]
+    final double shellRadius = borderRadius;
 
     return Container(
       margin: margin,
       width: width,
       height: height,
- 
-      child: Center( child: Stack(
+      // keep parent transparent to preserve your “transparent vibe”
+      child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Base card with accent "shadow" border
-          Container(
-            width: width - 100,
-            height: height - 200,
-            decoration: BoxDecoration(
-              color: accentColor,
-              borderRadius: BorderRadius.circular(borderRadius),
-              border: Border.all(
-                color: Colors.black,
-                width: accentThickness,
+          // Accent underglow (your "linear border" vibe) — thin, blurred, and subtle.
+          Positioned(
+            left: 14,
+            right: 14,
+            bottom: -8,
+            child: IgnorePointer(
+              child: Container(
+                height: 18,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      accentColor.withAlpha((0.0 * 255).toInt()),
+                      (accentColor == Colors.transparent
+                              ? cs.primary
+                              : accentColor)
+                          .withAlpha((0.35 * 255).toInt()),
+                      accentColor.withAlpha((0.0 * 255).toInt()),
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (accentColor == Colors.transparent
+                              ? cs.primary
+                              : accentColor)
+                          .withAlpha((0.25 * 255).toInt()),
+                      blurRadius: 20,
+                      spreadRadius: -2,
+                    ),
+                  ],
+                ),
               ),
-              boxShadow: boxShadow,
-              
             ),
+          ),
+
+          // Gradient shell (1px) → inner glass card
+          ClipRRect(
+            borderRadius: BorderRadius.circular(shellRadius),
             child: Stack(
               children: [
-                // Accent strip (like the green underglow)
-                Positioned(
-                  right: 0,
-                  bottom: 8,
-                  left: 8,
-                  child: Container(
-                    height: height - 200,
-                    width: width - 300,
-                    decoration: BoxDecoration(
-                      color: cardColor,
-                      borderRadius: BorderRadius.circular(borderRadius),
+                // Gradient shell (acts like a 1–1.5px border)
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [hairlineA, hairlineB],
                     ),
                   ),
                 ),
-                // Card content
+
+                // Inner "glass" card with blur and subtle inner stroke
                 Padding(
-                  padding: EdgeInsets.only(
-                    left: resolvedPadding.left,
-                    top: resolvedPadding.top,
-                    right: contentRightPadding,
-                    bottom: resolvedPadding.bottom,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Title
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: titleSize,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black,
-                          height: 1.15,
+                  padding: const EdgeInsets.all(1.2), // shell thickness
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(borderRadius),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: glassFill,
+                          borderRadius: BorderRadius.circular(borderRadius),
+                          border: Border.all(
+                            color: innerStroke, // hairline inner stroke
+                            width: 0.8,
+                          ),
+                          boxShadow: [
+                            // soft elevation
+                            BoxShadow(
+                              color: Colors.black.withAlpha((0.06 * 255).toInt()),
+                              blurRadius: 18,
+                              offset: const Offset(0, 10),
+                            ),
+                            // gentle highlight to feel tactile
+                            BoxShadow(
+                              color: Colors.white.withAlpha((0.65 * 255).toInt()),
+                              blurRadius: 6,
+                              spreadRadius: -2,
+                              offset: const Offset(-1, -1),
+                            ),
+                          ],
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            left: resolvedPadding.left,
+                            top: resolvedPadding.top,
+                            right: reservedRight,
+                            bottom: resolvedPadding.bottom,
+                          ),
+                          child: _CardContent(
+                            title: title,
+                            body: body,
+                            titleSize: titleSize,
+                            bodySize: bodySize,
+                            titleColor: titleColor,
+                            bodyColor: bodyColor,
+                            primary: cs.primary,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      // Body
-                      Padding(
-                        padding: EdgeInsets.only(left: 20, top: 10),
-                        child:  LayoutBuilder(
-                          builder: (context, constraints) {
-                            // If parent is unconstrained (e.g. inside a horizontal scroller),
-                            // fall back to the screen width so Text gets a finite max width.
-                            final maxW = constraints.maxWidth.isFinite
-                                ? constraints.maxWidth
-                                : MediaQuery.of(context).size.width;
-
-                            return ConstrainedBox(
-                              constraints: BoxConstraints(maxWidth: maxW),
-                              child: Text(
-                                body,
-                                softWrap: true,
-                                maxLines: null,                // allow multiple lines
-                                overflow: TextOverflow.visible,
-                                textAlign: TextAlign.left,
-                                textWidthBasis: TextWidthBasis.parent,
-                                style: TextStyle(
-                                  fontSize: bodySize,
-                                  fontWeight: FontWeight.w400,
-                                  color: Colors.black, // or .withOpacity(0.9)
-                                  height: 1.35,
-                                ),
-                              ),
-                            );
-                          },
-                      )),
-                    ],
+                    ),
                   ),
                 ),
-                
               ],
             ),
           ),
 
+          // Top-right image — exact position using your offsets
           Positioned(
             top: imageOffset,
             right: imageOffset,
             child:  _buildImage(),
             
           ),
-          
         ],
-      )),
+      ),
+    );
+  }
+}
+
+/// The inner column: accent bar + title + body
+class _CardContent extends StatelessWidget {
+  final String title;
+  final String body;
+  final double titleSize;
+  final double bodySize;
+  final Color titleColor;
+  final Color bodyColor;
+  final Color primary;
+
+  const _CardContent({
+    required this.title,
+    required this.body,
+    required this.titleSize,
+    required this.bodySize,
+    required this.titleColor,
+    required this.bodyColor,
+    required this.primary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, cons) {
+        // Extra guard: inside horizontal scrollers, width can be unconstrained.
+        final maxW = cons.maxWidth.isFinite ? cons.maxWidth : MediaQuery.of(context).size.width;
+
+        return ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxW),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // tiny accent bar
+              Container(
+                height: 4,
+                width: 44,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  gradient: LinearGradient(
+                    colors: [
+                      primary.withAlpha((0.95 * 255).toInt()),
+                      primary.withAlpha((0.55 * 255).toInt()),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              Text(
+                title,
+                textAlign: TextAlign.left,
+                style: TextStyle(
+                  fontSize: titleSize,
+                  fontWeight: FontWeight.w800,
+                  height: 1.15,
+                  color: titleColor,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              Text(
+                body,
+                softWrap: true,
+                maxLines: null,
+                overflow: TextOverflow.visible,
+                textAlign: TextAlign.left,
+                textWidthBasis: TextWidthBasis.parent,
+                style: TextStyle(
+                  fontSize: bodySize,
+                  fontWeight: FontWeight.w500,
+                  height: 1.38,
+                  color: bodyColor,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

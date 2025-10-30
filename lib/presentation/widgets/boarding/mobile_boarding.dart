@@ -135,6 +135,7 @@ class MobileBoarding extends StatelessWidget {
         )),
       )
       ]),
+      
 // 2) SECTION: background fills the area, content centered, scrolls if needed
 SizedBox(
   height: 1800,                  // pick a static section height for your design
@@ -176,7 +177,7 @@ SizedBox(
                   accentColor: Colors.transparent,
                   margin: const EdgeInsets.all(12),
                 ),
-                const SizedBox(width: 24),
+                const SizedBox(width: 24, height: 80,),
                 BoxExplaning(
                   title: 'Serious Mode',
                   body:

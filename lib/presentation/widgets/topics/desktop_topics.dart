@@ -71,12 +71,12 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
                           prefixIcon: Icon(Icons.search, color: subtle),
                           contentPadding: const EdgeInsets.only(top: 14),
                           focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(999),
-      borderSide: const BorderSide(
-        color: Colors.transparent, // your purple when clicked
-        width: 2,
-      ),
-    ),
+                          borderRadius: BorderRadius.circular(999),
+                          borderSide: const BorderSide(
+                            color: Colors.transparent, // your purple when clicked
+                            width: 2,
+                          ),
+                        ),
                         ),
                       ),
                     ),

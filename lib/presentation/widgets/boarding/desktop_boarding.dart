@@ -164,7 +164,7 @@ SizedBox(
           scrollDirection: Axis.horizontal,
           child: Padding(
             // gutters so cards never touch the screen edges
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 60),
             child: Row(
               mainAxisSize: MainAxisSize.min,        // shrink to content width
               children: [
