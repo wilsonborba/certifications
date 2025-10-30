@@ -304,7 +304,7 @@ Future<Response> loadPdftoApi({
 
       // /context/{item_name}/{input_identification}
 
-      final url = Uri.parse('$baseUrl/context/$itemName/$inputIdentification}');
+      final url = Uri.parse('$baseUrl/context/$itemName/$inputIdentification');
 
       final response = await adapter.get(url);
 

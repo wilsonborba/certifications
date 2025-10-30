@@ -179,7 +179,7 @@ class _OnCertificationConfigScreenState extends State<OnCertificationConfigScree
       case 415:
         return "Unsupported file, please contact $supportEmail";
       case 422:
-        return "Invalid pages, please contact $supportEmail";
+        return "We couldn't process your request, please contact $supportEmail";
       case 503:
         return "Service unavailable, please contact $supportEmail";
       default:
