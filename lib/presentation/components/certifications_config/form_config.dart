@@ -52,7 +52,7 @@ class _CertificationFormState extends State<CertificationForm> {
   final _titleCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
 
-  //String? _selectedLanguage;
+  String? _selectedLanguage;
 
   @override
   void initState() {
@@ -76,7 +76,7 @@ class _CertificationFormState extends State<CertificationForm> {
 
   void _onAnyChange() => setState(() {});
 
-  int get _minutes => widget.pages * 2;
+  int get _minutes => widget.pages * 1;
 
   // E.164 global phone validator: + followed by 7–15 digits
   bool _isValidE164(String input) {
@@ -93,12 +93,12 @@ class _CertificationFormState extends State<CertificationForm> {
 
     final nameOk = name.isNotEmpty && name.length <= widget.fullNameMaxLen;
     final titleOk = title.isNotEmpty && title.length <= widget.titleMaxLen;
-    // final langOk = _selectedLanguage != null && _selectedLanguage!.isNotEmpty;
+    final langOk = _selectedLanguage != null && _selectedLanguage!.isNotEmpty;
 
     // phone is optional; if present, must be valid E.164
     final phoneOk = phone.isEmpty || _isValidE164(phone);
 
-    return nameOk && titleOk && phoneOk;
+    return nameOk && titleOk && phoneOk && langOk;
   }
 
   InputDecoration _filledDecoration({
@@ -256,28 +256,28 @@ class _CertificationFormState extends State<CertificationForm> {
                   ),
                    SizedBox(height: gapHeightSpace),
 
-                  // Language (mandatory) - dropdown
-                  // DropdownButtonFormField<String>(
-                  //   value: _selectedLanguage,
-                  //   items: widget.languages
-                  //       .map(
-                  //         (lang) => DropdownMenuItem<String>(
-                  //           value: lang,
-                  //           child: Text(lang),
-                  //         ),
-                  //       )
-                  //       .toList(),
-                  //   decoration: _filledDecoration(
-                  //     labelText: 'Language',
-                  //     hintText: 'Select a language',
-                  //   ),
-                  //   onChanged: (v) {
-                  //     setState(() => _selectedLanguage = v);
-                  //   },
-                  //   validator: (v) =>
-                  //       (v == null || v.isEmpty) ? 'Please select a language' : null,
-                  // ),
-                  //  SizedBox(height: gapHeightSpace),
+                  //Language (mandatory) - dropdown
+                  DropdownButtonFormField<String>(
+                    initialValue: _selectedLanguage,
+                    items: widget.languages
+                        .map(
+                          (lang) => DropdownMenuItem<String>(
+                            value: lang,
+                            child: Text(lang),
+                          ),
+                        )
+                        .toList(),
+                    decoration: _filledDecoration(
+                      labelText: 'Language',
+                      hintText: 'Select a language',
+                    ),
+                    onChanged: (v) {
+                      setState(() => _selectedLanguage = v);
+                    },
+                    validator: (v) =>
+                        (v == null || v.isEmpty) ? 'Please select a language' : null,
+                  ),
+                   SizedBox(height: gapHeightSpace),
 
                   // Amount of Page (disabled, fixed)
                   TextFormField(
@@ -326,7 +326,7 @@ class _CertificationFormState extends State<CertificationForm> {
                                     : _phoneCtrl.text.trim(),
                                 pages: widget.pages,
                                 minutes: _minutes,
-                                //language: _selectedLanguage!,
+                                language: _selectedLanguage!,
                               ),
                             );
                           }

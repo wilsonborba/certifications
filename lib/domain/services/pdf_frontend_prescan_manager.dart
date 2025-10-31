@@ -75,6 +75,8 @@ Map<String, String> defaultHeadersPdfApi = {
   'Accept': 'application/json',
 };
 
+
+
 /// SAME NAME, refactored to use ApiAdapter (multipart POST)
 /// Calls: POST {baseUrl}/pdf/topic?ocr_force=...&ocr_lang=...&ocr_dpi=...&max_chars=...&overlap_chars=...
 Future<Response> loadPdftoApi({
@@ -220,113 +222,111 @@ Future<Response> loadPdftoApi({
     }
 
     Future<Response> getPdfContextFromApi({
-      required String documentId,
-  
-    }) async {
-
-       try {
+  required String documentId,
+  required String selectedLanguage,
+  }) async {
+    try {
       debug('Reading next auth nounce from local storage...');
       final nounce = await readNextAuthNounce();
-      final hintCookies = readCookie('hint');      
+      final hintCookies = readCookie('hint');
 
       if (nounce != null) {
         defaultHeadersPdfApi['T-A-N'] = nounce;
-        
       }
-
       if (hintCookies != null) {
         defaultHeadersPdfApi['A-A-N'] = hintCookies;
       }
-
     } catch (e) {
       debug('Error reading next auth nounce: $e');
     }
 
+    final adapter = ApiAdapter(defaultHeaders: {...defaultHeadersPdfApi});
 
-      final adapter = ApiAdapter(
-        defaultHeaders: {
-          ...defaultHeadersPdfApi,
-        
-        },
-      );
-      final url = Uri.parse('$baseUrl/pdf/context/$documentId');
+    final url = _buildApiUri(
+      baseUrl: baseUrl,
+      pathSegments: ['pdf', 'context', documentId], // <- encoded as path
+      queryParameters: {'selected_language': selectedLanguage}, // <- encoded
+    );
 
-      final response = await adapter.get(url);
+    final response = await adapter.get(url);
 
-      if (response.statusCode == 200) {
-      final headers = response.headers;
-      // get next auth nounce key = 'n-a-n'
-      final nan = headers['n-a-n'];
+    if (response.statusCode == 200) {
+      final nan = response.headers['n-a-n'];
       if (nan != null) {
         await saveNextAuthNounce(nan);
         debug('Next auth nounce updated: $nan from getCards response headers.');
       } else {
         warning('No next auth nounce found in response headers.');
-
       }
     }
 
     return response;
-      
-    }
+  }
+
 
     Future<Response> getTopicContextFromApi({
-      required String itemName,
-      required String inputIdentification,
-  
-    }) async {
-
-       try {
+  required String itemName,
+  required String inputIdentification,
+  required String selectedLanguage,
+  }) async {
+    try {
       debug('Reading next auth nounce from local storage...');
       final nounce = await readNextAuthNounce();
-      final hintCookies = readCookie('hint');      
+      final hintCookies = readCookie('hint');
 
       if (nounce != null) {
         defaultHeadersPdfApi['T-A-N'] = nounce;
-        
       }
-
       if (hintCookies != null) {
         defaultHeadersPdfApi['A-A-N'] = hintCookies;
       }
-
     } catch (e) {
       debug('Error reading next auth nounce: $e');
     }
 
+    final adapter = ApiAdapter(defaultHeaders: {...defaultHeadersPdfApi});
 
-      final adapter = ApiAdapter(
-        defaultHeaders: {
-          ...defaultHeadersPdfApi,
-        
-        },
-      );
+    final url = _buildApiUri(
+      baseUrl: baseUrl,
+      pathSegments: ['context', itemName, inputIdentification], // both encoded
+      queryParameters: {'selected_language': selectedLanguage},   // encoded
+    );
 
-      // /context/{item_name}/{input_identification}
+    final response = await adapter.get(url);
 
-      final url = Uri.parse('$baseUrl/context/$itemName/$inputIdentification');
-
-      final response = await adapter.get(url);
-
-      if (response.statusCode == 200) {
-      final headers = response.headers;
-      // get next auth nounce key = 'n-a-n'
-      final nan = headers['n-a-n'];
+    if (response.statusCode == 200) {
+      final nan = response.headers['n-a-n'];
       if (nan != null) {
         await saveNextAuthNounce(nan);
         debug('Next auth nounce updated: $nan from getCards response headers.');
       } else {
         warning('No next auth nounce found in response headers.');
-
       }
     }
 
     return response;
-      
-    }
+  }
 
 
 
+
+Uri _buildApiUri({
+  required String baseUrl,
+  required List<String> pathSegments,        // each segment gets encoded
+  Map<String, String>? queryParameters,      // each value gets encoded
+}) {
+  final base = Uri.parse(baseUrl);
+
+  // Keep the base’s scheme/host/port, replace path & query safely
+  return base.replace(
+    pathSegments: [
+      // preserve any base path already present
+      ...base.pathSegments.where((s) => s.isNotEmpty),
+      ...pathSegments,
+    ],
+    queryParameters: queryParameters,
+  );
+}
 
 
 

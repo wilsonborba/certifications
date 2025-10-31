@@ -95,7 +95,7 @@ class CertificationFormData {
   final String? phoneE164;
   final int pages;
   final int minutes;
-  //final String language;
+  final String language;
 
   CertificationFormData({
     required this.fullName,
@@ -103,6 +103,6 @@ class CertificationFormData {
     required this.phoneE164,
     required this.pages,
     required this.minutes,
-    //required this.language,
+    required this.language,
   });
 }

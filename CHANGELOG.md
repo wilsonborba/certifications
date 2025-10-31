@@ -66,6 +66,7 @@ All notable changes to this project will be documented in this file.
 - *(quiz)* Catching the right keys dict questions
 - *(quiz)* Added a controller to keep state after adjust size screen
 - *(quiz)* Fixed a name of item that had a wrong char together
+- *(quiz)* Fixed query request params for quiz
 
 ### ⚙️ Miscellaneous Tasks
 
