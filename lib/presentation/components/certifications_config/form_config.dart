@@ -279,14 +279,14 @@ class _CertificationFormState extends State<CertificationForm> {
                   ),
                    SizedBox(height: gapHeightSpace),
 
-                  // Amount of Page (disabled, fixed)
+                  // Amount of Questions (disabled, fixed)
                   TextFormField(
                     enabled: false,
                     controller: TextEditingController(
-                      text: widget.pages.toString(),
+                      text: "Randomized around 0-15 questions",
                     ),
                     decoration: _filledDecoration(
-                      labelText: 'Amount of Pages',
+                      labelText: 'Amount of Questions',
                     ),
                   ),
                    SizedBox(height: gapHeightSpace),

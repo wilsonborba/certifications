@@ -1,6 +1,7 @@
 // on_quiz_screen.dart
 import 'dart:async';
 import 'dart:convert';
+import 'package:accredit/presentation/components/quiz/futuristic_loading.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -214,24 +215,23 @@ class _OnQuizScreenState extends State<OnQuizScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Scaffold(
-        backgroundColor: Colors.grey.shade100,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const CircularProgressIndicator(strokeWidth: 4),
-              const SizedBox(height: 24),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: Text(
-                  _loadingMessage,
-                  key: ValueKey(_loadingMessage),
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.black87),
-                ),
-              ),
-            ],
-          ),
+  return Scaffold(
+        body: FuturisticLoading(
+          messages: const [
+            "Contacting server...",
+            "Go take a short break… It takes time!",
+            "Preparing your quiz…",
+            "Almost ready, we are generating questions…",
+            "Tip: You have 10 minutes for 1 up to 15 questions.",
+            "Tip: Normally in English more questions are generated.",
+            "Rule: You can only set your certification title once.",
+            "Rule: You can only set your full name once.",
+            "Security: AI injection attempts are automatically blocked.",
+            "Need help? Contact support@asodya.com",
+            "Sorry for the delay, it's our first time doing this at scale!",
+          ],
+          isActive: _loading,
+          //imageAsset: "lib/presentation/assets/img/temp_logo.png", // optional, remove if not used
         ),
       );
     }

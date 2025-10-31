@@ -91,7 +91,7 @@ class _DesktopQuizState extends State<DesktopQuiz> {
                 top: false,
                 child: Row(
                   children: [
-                    const Spacer(),
+                    const SafeSpacer(),
                     ElevatedButton.icon(
                       icon: const Icon(Icons.flag_circle_rounded),
                       label: const Text('Finish', style: TextStyle(fontWeight: FontWeight.w800)),

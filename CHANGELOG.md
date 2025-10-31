@@ -59,6 +59,7 @@ All notable changes to this project will be documented in this file.
 - *(topics)* Improved the adjustment grind size
 - *(user)* Patch some info about the user
 - *(ui)* Small ui improvements on boarding
+- *(ui)* Improved some dialogs design
 
 ### 🐛 Bug Fixes
 
