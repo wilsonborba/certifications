@@ -60,6 +60,7 @@ All notable changes to this project will be documented in this file.
 - *(user)* Patch some info about the user
 - *(ui)* Small ui improvements on boarding
 - *(ui)* Improved some dialogs design
+- *(topics)* Added a new solicitation adjustment
 
 ### 🐛 Bug Fixes
 

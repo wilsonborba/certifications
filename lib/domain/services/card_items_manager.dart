@@ -216,7 +216,7 @@ class CardItemsManager {
         body: jsonBody,
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 201) {
       final headers = response.headers;
       // get next auth nounce key = 'n-a-n'
       final nan = headers['n-a-n'];

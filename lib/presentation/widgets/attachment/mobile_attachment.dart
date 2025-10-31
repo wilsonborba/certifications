@@ -1,3 +1,4 @@
+import 'package:accredit/core/settings.dart';
 import 'package:accredit/domain/services/card_items_manager.dart';
 import 'package:accredit/presentation/components/attachment/app_bar.dart';
 import 'package:accredit/presentation/components/attachment/want_app.dart';
@@ -36,15 +37,21 @@ class _MobileAttachmentState extends BaseAttachmentState<MobileAttachment> {
       appBar: AttachmentAppBar(
     onCertificates: () { /* navigate */ },
     onTokens: () { /* navigate */ },
-    onSupport: () { /* navigate */ },
-    onAbout:   () { /* navigate */ },
+    onSupport: () => redirectToUrl('mailto:support@asodya.com'),
+    onAbout:   (){
+          final url = 'https://${app_settings.ASODYA_MAIN_DOMAIN}';
+          redirectToUrl(url, replace: true);
+        },
     // onLogout: () async { await clearSessionArtifacts(); /* custom redirect */ },
   ),
   endDrawer: AttachmentSideMenu(
     onCertificates: () { /* navigate */ },
     onTokens: () { /* navigate */ },
-    onSupport: () { /* navigate */ },
-    onAbout:   () { /* navigate */ },
+    onSupport: () => redirectToUrl('mailto:support@asodya.com'),
+    onAbout:   (){
+          final url = 'https://${app_settings.ASODYA_MAIN_DOMAIN}';
+          redirectToUrl(url, replace: true);
+        },
   ),
       body: SafeArea(
         child: SingleChildScrollView(

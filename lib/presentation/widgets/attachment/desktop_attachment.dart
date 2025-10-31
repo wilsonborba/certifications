@@ -1,4 +1,5 @@
 
+import 'package:accredit/core/settings.dart';
 import 'package:accredit/domain/services/card_items_manager.dart';
 import 'package:accredit/presentation/components/attachment/app_bar.dart';
 import 'package:accredit/presentation/components/attachment/want_app.dart';
@@ -39,15 +40,21 @@ class _DesktopAttachmentState extends BaseAttachmentState<DesktopAttachment> {
       appBar: AttachmentAppBar(
     onCertificates: () { /* navigate */ },
     onTokens: () { /* navigate */ },
-    onSupport: () { /* navigate */ },
-    onAbout:   () { } //QuizContextManager().getContext("from", "Flutter", forceNewGeneration: true, amountQuestion: 5); },
+    onSupport: () => redirectToUrl('mailto:support@asodya.com'),
+    onAbout:  (){
+          final url = 'https://${app_settings.ASODYA_MAIN_DOMAIN}';
+          redirectToUrl(url, replace: true);
+        }, //QuizContextManager().getContext("from", "Flutter", forceNewGeneration: true, amountQuestion: 5); },
     // onLogout: () async { await clearSessionArtifacts(); /* custom redirect */ },
   ),
   endDrawer: AttachmentSideMenu(
     onCertificates: () { /* navigate */ },
     onTokens: () { /* navigate */ },
-    onSupport: () { /* navigate */ },
-    onAbout:   () { /* navigate */ },
+    onSupport: () => redirectToUrl('mailto:support@asodya.com'),
+    onAbout:   (){
+          final url = 'https://${app_settings.ASODYA_MAIN_DOMAIN}';
+          redirectToUrl(url, replace: true);
+        },
   ),
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,

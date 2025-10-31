@@ -1,6 +1,6 @@
 import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/core/utils/my_nagivation.dart';
-import 'package:accredit/dal/local/local_source_adapter.dart';
+
 import 'package:accredit/presentation/components/auth/login_redirect.dart';
 import 'package:flutter/material.dart';
 
@@ -39,7 +39,7 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    
     final accent = _accentOf(context);
 
     return LayoutBuilder(

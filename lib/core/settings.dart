@@ -38,7 +38,7 @@ class Settings {
   final  applicationInfo = ApplicationInfo(
     name: "Certifications",
     description: "Certifications is a secure and user-friendly platform for getting certifications.",
-    logoImageUrl: "https://dict-to-json.vercel.app/assets/logo-png-8fe051d1.png",
+    logoImageUrl: "https://res.cloudinary.com/dhncdmb2t/image/upload/v1761907623/temp_logo_tw3grt.png",
     urlApp: "http://localhost:1165",
     twoFaAuth: false,
     primaryColor: "#3498db",
