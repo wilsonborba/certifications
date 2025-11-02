@@ -7,6 +7,7 @@ class FuturisticLoading extends StatefulWidget {
   final bool isActive;
   final Duration switchInterval;
   final String? imageAsset; // optional logo
+  final bool transparentBackground;
 
   const FuturisticLoading({
     super.key,
@@ -14,6 +15,7 @@ class FuturisticLoading extends StatefulWidget {
     this.isActive = true,
     this.switchInterval = const Duration(seconds: 4),
     this.imageAsset,
+    this.transparentBackground = false,
   });
 
   @override
@@ -59,10 +61,9 @@ class _FuturisticLoadingState extends State<FuturisticLoading>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    //final theme = Theme.of(context);
 
-    return Container(
-      decoration: const BoxDecoration(
+    BoxDecoration? decoration = const BoxDecoration(
         gradient: LinearGradient(
           colors: [
             Color(0xFFEDF1F7),
@@ -71,7 +72,10 @@ class _FuturisticLoadingState extends State<FuturisticLoading>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-      ),
+      );
+
+    return Container(
+      decoration: widget.transparentBackground ? null : decoration,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

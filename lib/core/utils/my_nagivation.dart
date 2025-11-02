@@ -5,6 +5,7 @@
 import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/dal/local/local_source_adapter.dart';
 import 'package:accredit/presentation/components/auth/login_redirect.dart';
+import 'package:accredit/presentation/components/quiz/futuristic_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:accredit/core/utils/my_router_parser.dart';
 
@@ -64,17 +65,14 @@ class MyRedirectingWidget extends StatelessWidget {
 
     return const Scaffold(
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 20),
-            Text(
-              'Redirecting...',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+        child: FuturisticLoading(
+          messages:  [
+            'Redirecting...',
+            'Please wait while we take you there.',
+            'Tip: If you encounter any issues, please contact support@asodya.com for assistance.',
           ],
+          isActive: true,
+          transparentBackground: true,
         ),
       ),
     );

@@ -145,7 +145,7 @@ class _OnQuizScreenState extends State<OnQuizScreen> {
       return;
     }
 
-    final controller = QuizController(formData: widget.formData, payload: got);
+    final controller = QuizController(formData: widget.formData, payload: got, isForPDF: widget.isForPDF, contextId: widget.contextId);
 
     setState(() {
       _resp = got;

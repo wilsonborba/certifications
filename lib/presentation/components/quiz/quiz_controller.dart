@@ -1,6 +1,6 @@
 // controllers/quiz_controller.dart
 import 'dart:async';
-import 'package:accredit/domain/services/api_auth_manager.dart';
+import 'package:accredit/domain/services/api_asodya_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/domain/models/quiz.dart';
@@ -9,6 +9,8 @@ import 'package:accredit/domain/models/topic_identifications.dart';
 class QuizController extends ChangeNotifier {
   final CertificationFormData formData;
   final ContextInfo payload;
+  final bool isForPDF;
+  final String contextId;
 
   // Parsed questions (must include 'id')
   late final List<QuestionItem> questions = _parseQuestions(payload.data);
@@ -26,7 +28,7 @@ class QuizController extends ChangeNotifier {
   bool _submitting = false;
   Completer<QuizResult>? _finishCompleter;
 
-  QuizController({required this.formData, required this.payload}) {
+  QuizController({required this.formData, required this.payload, required this.isForPDF, required this.contextId}) {
     _start();
   }
 

@@ -15,7 +15,7 @@ class DesktopQuiz extends StatefulWidget {
 }
 
 class _DesktopQuizState extends State<DesktopQuiz> {
-  QuizController get c => widget.controller;
+  QuizController get ctrl => widget.controller;
 
   // Use one ScrollController for both ListView and Scrollbar.
   final ScrollController _scrollCtrl = ScrollController();
@@ -50,9 +50,9 @@ class _DesktopQuizState extends State<DesktopQuiz> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F8),
       appBar: QuizAppBar(
-        title: c.formData.certificationTitle,
-        subtitle: "Quiz made for ${c.formData.fullName}",
-        remainingSecondsListenable: c.remainingSeconds,
+        title: ctrl.formData.certificationTitle,
+        subtitle: "Quiz made for ${ctrl.formData.fullName}",
+        remainingSecondsListenable: ctrl.remainingSeconds,
         height: 110,
       ),
       body: Center(
@@ -69,18 +69,24 @@ class _DesktopQuizState extends State<DesktopQuiz> {
                     controller: _scrollCtrl, // <-- same controller
                     primary: false,          // <-- since a controller is provided
                     padding: const EdgeInsets.only(bottom: 20),
-                    itemCount: c.questions.length,
+                    itemCount: ctrl.questions.length,
                     itemBuilder: (_, i) {
-                      final q = c.questions[i];
+                      final q = ctrl.questions[i];
                       return QuestionCard(
                         index: i + 1,
                         item: q,
-                        selectedIndex: c.selections[i],
+                        selectedIndex: ctrl.selections[i],
                         onChanged: (val) {
-                          c.setSelection(i, val);
+                          ctrl.setSelection(i, val);
                           setState(() {}); // local rebuild for selection change
                         },
-                        onComplain: () => showComplaintDialog(context, questionIndex: i + 1),
+                        onComplain: () => showComplaintDialog(
+                          context, 
+                          questionIndex: i + 1, 
+                          questionId: q.id, 
+                          isForPDF: widget.controller.isForPDF,
+                          contextId: widget.controller.contextId
+                          ),
                       );
                     },
                   ),
@@ -97,7 +103,7 @@ class _DesktopQuizState extends State<DesktopQuiz> {
                       label: const Text('Finish', style: TextStyle(fontWeight: FontWeight.w800)),
                       onPressed: () async {
                         final ok = await _confirmFinish(context);
-                        if (ok == true) c.finish();
+                        if (ok == true) ctrl.finish();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF7C4DFF),

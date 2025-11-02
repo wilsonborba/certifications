@@ -1,4 +1,5 @@
 
+import 'package:accredit/presentation/components/quiz/futuristic_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:accredit/domain/models/source_item.dart';
 import 'package:accredit/domain/models/mode_buckets.dart';
@@ -14,7 +15,7 @@ abstract class BaseAttachment extends StatefulWidget {
 /// - buildTabs(ModeBuckets buckets)
 abstract class BaseAttachmentState<T extends BaseAttachment> extends State<T> {
   // ---- Business Logic (shared) ----
-  String normalizedMode(SourceItem s) => (s.mode ?? '').toLowerCase().trim();
+  String normalizedMode(SourceItem s) => (s.mode).toLowerCase().trim();
 
   ModeBuckets partitionByMode(List<SourceItem> items) {
     final playful = <SourceItem>[];
@@ -37,7 +38,7 @@ abstract class BaseAttachmentState<T extends BaseAttachment> extends State<T> {
     AsyncSnapshot<List<SourceItem>> snap,
   ) {
     if (snap.connectionState == ConnectionState.waiting) {
-      return buildLoading();
+      return buildLoading(snap.connectionState == ConnectionState.waiting);
     }
     if (snap.hasError) {
       return buildError(snap.error);
@@ -53,10 +54,23 @@ abstract class BaseAttachmentState<T extends BaseAttachment> extends State<T> {
   }
 
   // ---- UI pieces (mostly shared) ----
-  Widget buildLoading() {
-    return const Padding(
+  Widget buildLoading(bool loading) {
+    return  Padding(
       padding: EdgeInsets.all(16),
-      child: CircularProgressIndicator(),
+      child: FuturisticLoading(
+          messages:  [
+            "We are loading your sources…",
+            "Just a moment, fetching data…",
+            "Preparing your cards…",
+            "Almost there, hang tight…",
+            "Tip: You have 1 minute per question!",
+            "Tip: You can answer between 1 up to 15 questions.",
+
+          ],
+          isActive: loading,
+          transparentBackground: true,
+          //imageAsset: "lib/presentation/assets/img/temp_logo.png", // optional, remove if not used
+        ),
     );
   }
 

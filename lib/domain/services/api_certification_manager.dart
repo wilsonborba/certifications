@@ -31,7 +31,72 @@ class CardItemsManager {
     'Accept': 'application/json',
   };
 
+  Future<Response> applyComplain(String text, dynamic questionId, bool isForPDF, dynamic contextId) async {
+     try {
+      debug('Reading next auth nounce from local storage...');
+      final nounce = await readNextAuthNounce();
+      final hintCookies = readCookie('hint');      
 
+      if (nounce != null) {
+        defaultHeaders['T-A-N'] = nounce;
+        
+      }
+
+      if (hintCookies != null) {
+        defaultHeaders['A-A-N'] = hintCookies;
+      }
+
+    } catch (e) {
+      debug('Error reading next auth nounce: $e');
+    }
+
+    debug('Applying complaint to $baseUrl/complaints with headers: $defaultHeaders');
+
+    Map<String, dynamic> body;
+
+
+    Uri uriPath;
+
+    if (!isForPDF) {
+      // it will be on DB Postgres
+      uriPath = Uri.parse('$baseUrl/context/complaints');
+      body = {
+        'question_id': questionId,
+        'complaint_text': text,
+      };
+    } else {
+      // is temp on Redis/Valkey
+      uriPath = Uri.parse('$baseUrl/pdf/context/complaints');
+      body = {
+        'document_id': contextId,
+        'complaint_text': text
+      };
+    }
+
+
+    final jsonBody = jsonEncode(body);
+      // continue with the request
+      final response = await ApiAdapter(defaultHeaders: defaultHeaders).post(
+        uriPath,
+        body: jsonBody,
+      );
+
+      if (response.statusCode == 201) {
+      final headers = response.headers;
+      // get next auth nounce key = 'n-a-n'
+      final nan = headers['n-a-n'];
+      if (nan != null) {
+        await saveNextAuthNounce(nan);
+        debug('Next auth nounce updated: $nan from applyQuiz response headers.');
+      } else {
+        warning('No next auth nounce found in response headers.');
+
+      }
+    }
+
+    return response;
+    
+  }
 
   Future<Response> getCards() async {
     // update the headers with auth nounce

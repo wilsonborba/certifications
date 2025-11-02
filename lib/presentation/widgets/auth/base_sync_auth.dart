@@ -1,8 +1,9 @@
 import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/core/utils/my_nagivation.dart';
-import 'package:accredit/domain/services/api_auth_manager.dart';
+import 'package:accredit/domain/services/api_asodya_manager.dart';
 import 'package:accredit/presentation/components/auth/login_redirect.dart';
 import 'package:accredit/presentation/components/auth/verify_session.dart';
+import 'package:accredit/presentation/components/quiz/futuristic_loading.dart';
 import 'package:accredit/presentation/widgets/attachment/on_attachment.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -130,13 +131,14 @@ abstract class BaseSyncAuthState<T extends BaseSyncAuth> extends State<T> {
   Widget buildLoadingScaffold({String title = 'Syncing…'}) {
     return Scaffold(
       body: const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Please wait…'),
+        child: FuturisticLoading(
+          messages:  [
+            'Redirecting...',
+            'Please wait while we take you there.',
+            'Tip: If you encounter any issues, please contact support@asodya.com for assistance.',
           ],
+          isActive: true,
+          transparentBackground: true,
         ),
       ),
     );

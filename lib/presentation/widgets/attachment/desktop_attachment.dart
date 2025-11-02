@@ -1,6 +1,6 @@
 
 import 'package:accredit/core/settings.dart';
-import 'package:accredit/domain/services/card_items_manager.dart';
+import 'package:accredit/domain/services/api_certification_manager.dart';
 import 'package:accredit/presentation/components/attachment/app_bar.dart';
 import 'package:accredit/presentation/components/attachment/want_app.dart';
 import 'package:accredit/presentation/widgets/topics/on_topics.dart';

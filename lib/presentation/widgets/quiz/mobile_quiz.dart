@@ -60,7 +60,13 @@ class _MobileQuizState extends State<MobileQuiz> {
                     c.setSelection(i, val);
                     setState(() {});
                   },
-                  onComplain: () => showComplaintDialog(context, questionIndex: i + 1),
+                  onComplain: () => showComplaintDialog(
+                          context, 
+                          questionIndex: i + 1, 
+                          questionId: q.id, 
+                          isForPDF: widget.controller.isForPDF,
+                          contextId: widget.controller.contextId
+                          ),
                 );
               },
             ),
