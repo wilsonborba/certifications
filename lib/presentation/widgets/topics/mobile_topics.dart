@@ -1,3 +1,4 @@
+import 'package:accredit/presentation/components/quiz/futuristic_loading.dart';
 import 'package:accredit/presentation/components/topics/topics_card.dart';
 import 'package:flutter/material.dart';
 import 'package:accredit/presentation/widgets/topics/base_topics.dart';
@@ -259,14 +260,20 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
     final cs = Theme.of(context).colorScheme;
     final hasAny = visibleItems.isNotEmpty;
 
-    final initialLoading = Column(
-      children: [
-        const SizedBox(height: 24),
-        Text('Loading topics, please wait…', style: TextStyle(fontSize: 14, color: cs.onSurface)),
-        const SizedBox(height: 16),
-        const SizedBox(height: 28, width: 28, child: CircularProgressIndicator()),
-        const SizedBox(height: 16),
-      ],
+    final initialLoading = Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: FuturisticLoading(
+            messages:  [
+                  'Loading topics…',
+                  'Preparing your topics…',
+                  'Just a moment longer…',
+                  'Almost there…',
+                ],
+            isActive: hasAny ? false : true,
+            transparentBackground: true,
+          ),
+      ),
     );
 
     final emptyState = Padding(
@@ -302,33 +309,17 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
                   child: Center(
                     child: Padding(
                       padding: const EdgeInsets.all(12),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const SizedBox(height: 28, width: 28, child: CircularProgressIndicator()),
-                          const SizedBox(height: 12),
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 300),
-                            transitionBuilder: (child, anim) => FadeTransition(
-                              opacity: anim,
-                              child: SlideTransition(
-                                position: Tween<Offset>(begin: const Offset(0, .25), end: Offset.zero).animate(anim),
-                                child: child,
-                              ),
-                            ),
-                            child: Text(
-                              loadingPhrases[loadingIndex],
-                              key: ValueKey<int>(loadingIndex),
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: cs.onSurface,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                      child: FuturisticLoading(
+                          messages:  [
+                                'Fetching topics…',
+                                'Some topics take longer to load…',
+                                'Checking availability…',
+                                'Still working on it…',
+                                'Almost there…',
+                              ],
+                          isActive: isBusy,
+                          transparentBackground: true,
+                        ),
                     ),
                   ),
                 )
