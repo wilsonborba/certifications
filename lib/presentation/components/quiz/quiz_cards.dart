@@ -218,6 +218,7 @@ Future<void> showComplaintDialog(
   required int questionIndex,
   required dynamic questionId,
   required bool isForPDF,
+  required dynamic pdfQuestionId,
   required String contextId,
   int maxChars = 600,
   void Function(String text)? onSubmit,
@@ -250,7 +251,7 @@ Future<void> showComplaintDialog(
                   if (onSubmit != null) onSubmit(text);
                   Navigator.of(ctx).pop();
                   final manager = CardItemsManager();
-                  final _ = await manager.applyComplain(text, questionId, isForPDF, contextId);
+                  final _ = await manager.applyComplain(text, questionId, isForPDF, contextId, pdfQuestionId);
 
                 },
               ),

@@ -283,7 +283,7 @@ class _CertificationFormState extends State<CertificationForm> {
                   TextFormField(
                     enabled: false,
                     controller: TextEditingController(
-                      text: "Randomized around 0-15 questions",
+                      text: "Randomized around 1-15 questions",
                     ),
                     decoration: _filledDecoration(
                       labelText: 'Amount of Questions',
@@ -294,7 +294,7 @@ class _CertificationFormState extends State<CertificationForm> {
                   // Minutes (disabled, computed)
                   TextFormField(
                     enabled: false,
-                    controller: TextEditingController(text: minutesStr),
+                    controller: TextEditingController(text: "1 minute per question!"),
                     decoration: _filledDecoration(
                       labelText: 'Minutes',
                       hintText: 'Computed as 2 × pages',

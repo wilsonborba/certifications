@@ -31,7 +31,7 @@ class CardItemsManager {
     'Accept': 'application/json',
   };
 
-  Future<Response> applyComplain(String text, dynamic questionId, bool isForPDF, dynamic contextId) async {
+  Future<Response> applyComplain(String text, dynamic questionId, bool isForPDF, dynamic contextId, dynamic pdfQuestionId) async {
      try {
       debug('Reading next auth nounce from local storage...');
       final nounce = await readNextAuthNounce();
@@ -69,7 +69,8 @@ class CardItemsManager {
       uriPath = Uri.parse('$baseUrl/pdf/context/complaints');
       body = {
         'document_id': contextId,
-        'complaint_text': text
+        'complaint_text': text,
+        'pdf_question_id': pdfQuestionId,
       };
     }
 

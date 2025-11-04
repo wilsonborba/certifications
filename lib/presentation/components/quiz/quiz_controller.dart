@@ -60,9 +60,12 @@ class QuizController extends ChangeNotifier {
     final out = <AnswerSelection>[];
     for (var i = 0; i < questions.length; i++) {
       final q = questions[i];
+      
+      final questionId = isForPDF ? q.pdfQuestionId : q.id;
+
       final idx = selections[i];
       final txt = (idx != null && idx >= 0 && idx < q.options.length) ? q.options[idx] : null;
-      out.add(AnswerSelection(questionId: q.id, selectedIndex: idx, selectedText: txt));
+      out.add(AnswerSelection(questionId: questionId, selectedIndex: idx, selectedText: txt));
     }
     return out;
   }
@@ -148,8 +151,11 @@ class QuizController extends ChangeNotifier {
 
         final diff = diffAny == null ? null : int.tryParse(diffAny.toString());
 
+        final pdfQuestionId = e['pdf_question_id'];
+
+
         if (q.isNotEmpty && opts.isNotEmpty) {
-          out.add(QuestionItem(id: id, question: q, options: opts, difficulty: diff));
+          out.add(QuestionItem(id: id, question: q, options: opts, difficulty: diff, pdfQuestionId: pdfQuestionId));
         }
       }
     }

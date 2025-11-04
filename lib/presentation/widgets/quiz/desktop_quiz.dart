@@ -83,7 +83,8 @@ class _DesktopQuizState extends State<DesktopQuiz> {
                         onComplain: () => showComplaintDialog(
                           context, 
                           questionIndex: i + 1, 
-                          questionId: q.id, 
+                          questionId: q.id,
+                          pdfQuestionId: q.pdfQuestionId,
                           isForPDF: widget.controller.isForPDF,
                           contextId: widget.controller.contextId
                           ),

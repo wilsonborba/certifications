@@ -65,7 +65,8 @@ class _MobileQuizState extends State<MobileQuiz> {
                           questionIndex: i + 1, 
                           questionId: q.id, 
                           isForPDF: widget.controller.isForPDF,
-                          contextId: widget.controller.contextId
+                          contextId: widget.controller.contextId,
+                          pdfQuestionId: q.pdfQuestionId
                           ),
                 );
               },

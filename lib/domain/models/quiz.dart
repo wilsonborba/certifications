@@ -6,11 +6,13 @@ class QuestionItem {
   final String question;
   final List<String> options;
   final int? difficulty; // 1..3 (nullable if absent)
+  final dynamic pdfQuestionId;
 
   QuestionItem( {
     required this.id,
     required this.question,
     required this.options,
+    this.pdfQuestionId,
     this.difficulty,
   });
 

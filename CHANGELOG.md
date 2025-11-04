@@ -63,6 +63,7 @@ All notable changes to this project will be documented in this file.
 - *(topics)* Added a new solicitation adjustment
 - *(loading)* Adjust loading design for others
 - *(topics)* Added the custom loading for topics cards too
+- *(pdf)* Added the custom loading for pdf too
 
 ### 🐛 Bug Fixes
 

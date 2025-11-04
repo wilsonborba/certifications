@@ -5,6 +5,7 @@ import 'dart:ui' as ui show ImageByteFormat, Image;
 import 'package:accredit/core/utils/my_dialogs.dart';
 import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/core/utils/my_nagivation.dart';
+import 'package:accredit/presentation/components/quiz/futuristic_loading.dart';
 import 'package:accredit/presentation/widgets/page_filter/on_page_filter.dart';
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:file_picker/file_picker.dart';
@@ -75,38 +76,13 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
   String? documentId; // returned from API on success
 
   // --- Loading phrase ticker ---
-  Timer? _loadingTicker;
-  int _loadingIndex = 0;
-  final List<String> _loadingPhrases = const [
-    'Loading PDF…',
-    'Verifying file…',
-    'Scanning PDF…',
-    'Checking safety…',
-    'Preparing preview…',
-    'Uploading to server…',
-    'Caching (30 min)…',
-  ];
+  
 
-  void _startLoadingTicker() {
-    _loadingTicker?.cancel();
-    _loadingIndex = 0;
-    _loadingTicker = Timer.periodic(const Duration(seconds: 6), (_) {
-      if (!mounted) return;
-      setState(() {
-        _loadingIndex = (_loadingIndex + 1) % _loadingPhrases.length;
-      });
-    });
-  }
 
-  void _stopLoadingTicker() {
-    _loadingTicker?.cancel();
-    _loadingTicker = null;
-    _loadingIndex = 0;
-  }
+
 
   @override
   void dispose() {
-    _stopLoadingTicker();
     super.dispose();
   }
 
@@ -140,7 +116,7 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
       _pdfBytes = file.bytes!;
       _previewPng = null;
     });
-    _startLoadingTicker();
+   
 
     // 1) Hash + PreScan (client)
     final sha256 = crypto.sha256.convert(_pdfBytes!).toString();
@@ -159,7 +135,7 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
           _busy = false;
           _error = 'File did not pass safety checks.';
         });
-        _stopLoadingTicker();
+        
         showMyDialog(context,
           title: 'File blocked',
           message: scan.flags.isEmpty
@@ -174,7 +150,7 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
         _busy = false;
         _error = 'PreScan failed.';
       });
-      _stopLoadingTicker();
+      
       showMyDialog(context,title: 'PreScan error', message: 'An error occurred during file checks.');
       return;
     }
@@ -196,17 +172,14 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
         _busy = false;
         _error = 'Failed to render preview: $e';
       });
-      _stopLoadingTicker();
+      
       return;
     }
 
     // 3) Upload to API (no popup on success/200)
     try {
       // Optionally hint the immediate step phrase
-      setState(() {
-        final idx = _loadingPhrases.indexOf('Uploading to server…');
-        if (idx >= 0) _loadingIndex = idx;
-      });
+      
 
       final resp = await pre.loadPdftoApi(
         fileBytes: _pdfBytes!,
@@ -231,7 +204,7 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
           _error = null; // clear any previous error
           documentId = body['data']?['parsed']?['document_id'];
         });
-        _stopLoadingTicker();
+        
         return;
       }
 
@@ -289,7 +262,6 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
         setState(() {
           _busy = false; // Finish overall busy state
         });
-        _stopLoadingTicker();
       }
     }
   }
@@ -386,38 +358,18 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
                 child: _busy
                     ? Padding(
                         padding: const EdgeInsets.all(16),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const CircularProgressIndicator(),
-                            const SizedBox(height: 18),
-                            // Smooth phrase switcher
-                            AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 450),
-                              switchInCurve: Curves.easeOut,
-                              switchOutCurve: Curves.easeIn,
-                              transitionBuilder: (child, anim) => FadeTransition(
-                                opacity: anim,
-                                child: SlideTransition(
-                                  position: Tween<Offset>(
-                                    begin: const Offset(0, 0.25),
-                                    end: Offset.zero,
-                                  ).animate(anim),
-                                  child: child,
-                                ),
-                              ),
-                              child: Text(
-                                _loadingPhrases[_loadingIndex],
-                                key: ValueKey<int>(_loadingIndex),
-                                textAlign: TextAlign.center,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: Colors.black87,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.2,
-                                ),
-                              ),
-                            ),
-                          ],
+                        child: FuturisticLoading(
+                          messages:  [
+                                'Loading PDF…',
+                                  'Verifying file…',
+                                  'Scanning PDF…',
+                                  'Checking safety…',
+                                  'Preparing preview…',
+                                  'Uploading to server…',
+                                  'Caching (30 min)…',
+                              ],
+                          isActive: _busy,
+                          transparentBackground: true,
                         ),
                       )
                     : (_previewPng != null
