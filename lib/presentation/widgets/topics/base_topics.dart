@@ -134,7 +134,7 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
     int page,
     int perPage,
   ) async {
-    final manager = CardItemsManager();
+    final manager = CertificationManager();
     final response = await manager.getTopicsFromCard(itemName, page, perPage);
 
     if (response.statusCode != 200) {
@@ -292,7 +292,7 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
     bool fillPage = true,
     int maxExtraPages = 2,
   ]) async {
-    final manager = CardItemsManager();
+    final manager = CertificationManager();
     final response =
         await manager.searchTopics(itemName, query, page, perPage, mode, fillPage, maxExtraPages);
 

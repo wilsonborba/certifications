@@ -250,7 +250,7 @@ Future<void> showComplaintDialog(
                   HapticFeedback.lightImpact();
                   if (onSubmit != null) onSubmit(text);
                   Navigator.of(ctx).pop();
-                  final manager = CardItemsManager();
+                  final manager = CertificationManager();
                   final _ = await manager.applyComplain(text, questionId, isForPDF, contextId, pdfQuestionId);
 
                 },

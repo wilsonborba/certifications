@@ -80,7 +80,7 @@ class _DesktopAttachmentState extends BaseAttachmentState<DesktopAttachment> {
                                 body,
                                 const SizedBox(height: 10),
                                 WantText(onRequest: (url) async {
-                                  final manager = CardItemsManager();
+                                  final manager = CertificationManager();
                                   final response =
                                       await manager.requestNewCards(url);
                                       if (response.statusCode == 201) {}

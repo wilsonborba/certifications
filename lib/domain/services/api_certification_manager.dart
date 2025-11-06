@@ -5,11 +5,13 @@ import 'package:accredit/core/settings.dart';
 import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/dal/local/local_source_adapter.dart';
 import 'package:accredit/dal/remote/api_adapter.dart';
+import 'package:accredit/domain/models/quiz.dart';
+import 'package:accredit/domain/models/topic_identifications.dart';
 import 'package:accredit/presentation/components/auth/verify_session.dart';
 
 import 'package:http/http.dart';
 
-class CardItemsManager {
+class CertificationManager {
 
   final String baseApi = app_settings.ASODYA_API_URL;
 
@@ -21,7 +23,7 @@ class CardItemsManager {
 
   late final String baseUrl;
 
-  CardItemsManager() {
+  CertificationManager() {
     baseUrl = "$baseApi$apiEntity$appName$appVersion";
   }
 
@@ -97,6 +99,60 @@ class CardItemsManager {
 
     return response;
     
+  }
+
+  Future<Response> submitQuiz(List<AnswerSelection> payload, Duration timeSpent, CertificationFormData formData) async {
+
+    try {
+      debug('Reading next auth nounce from local storage...');
+      final nounce = await readNextAuthNounce();
+      final hintCookies = readCookie('hint'); 
+
+      debug('current hint cookie: $hintCookies');     
+
+      if (nounce != null) {
+        defaultHeaders['T-A-N'] = nounce;
+        
+      }
+
+      if (hintCookies != null) {
+        defaultHeaders['A-A-N'] = hintCookies;
+      }
+
+    } catch (e) {
+      debug('Error reading next auth nounce: $e');
+    }
+
+      
+    
+    final body = {
+      'answers': payload.map((e) => e.toJson()).toList(),
+      'time_spent_seconds': timeSpent.inSeconds,
+      'certification_title': formData.certificationTitle,
+      'full_name': formData.fullName,
+      'language': formData.language,
+    };
+
+    final jsonBody = jsonEncode(body);
+
+    final response = await ApiAdapter(defaultHeaders: defaultHeaders).post(
+      Uri.parse('$baseUrl/quiz/revision'),
+      body: jsonBody,
+    );
+
+    if (response.statusCode == 200) {
+      final headers = response.headers;
+      // get next auth nounce key = 'n-a-n'
+      final nan = headers['n-a-n'];
+      if (nan != null) {
+        await saveNextAuthNounce(nan);
+        debug('Next auth nounce updated: $nan from submitQuiz response headers.');
+      } else {
+        warning('No next auth nounce found in response headers.');
+      }
+    }
+
+    return response;
   }
 
   Future<Response> getCards() async {
@@ -181,7 +237,7 @@ class CardItemsManager {
       final nan = headers['n-a-n'];
       if (nan != null) {
         await saveNextAuthNounce(nan);
-        debug('Next auth nounce updated: $nan from getCards response headers.');
+        debug('Next auth nounce updated: $nan from getTopicsFromCard response headers.');
       } else {
         warning('No next auth nounce found in response headers.');
 
@@ -231,7 +287,7 @@ class CardItemsManager {
       final nan = headers['n-a-n'];
       if (nan != null) {
         await saveNextAuthNounce(nan);
-        debug('Next auth nounce updated: $nan from getCards response headers.');
+        debug('Next auth nounce updated: $nan from searchTopics response headers.');
       } else {
         warning('No next auth nounce found in response headers.');
 
@@ -288,7 +344,7 @@ class CardItemsManager {
       final nan = headers['n-a-n'];
       if (nan != null) {
         await saveNextAuthNounce(nan);
-        debug('Next auth nounce updated: $nan from getCards response headers.');
+        debug('Next auth nounce updated: $nan from requestNewCards response headers.');
       } else {
         warning('No next auth nounce found in response headers.');
 

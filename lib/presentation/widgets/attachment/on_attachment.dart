@@ -39,7 +39,7 @@ class _OnAttachmentScreenState extends State<OnAttachmentScreen> {
     if (cached != null) return cached;
 
     // 2) fetch from API
-    final resp = await CardItemsManager().getCards();
+    final resp = await CertificationManager().getCards();
     if (resp.statusCode != 200) {
       throw Exception('Failed to load cards (status ${resp.statusCode})');
     }

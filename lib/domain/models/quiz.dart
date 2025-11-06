@@ -21,6 +21,14 @@ class QuestionItem {
     return 'QuestionItem(id: $id, question: $question, options: $options, difficulty: $difficulty)';
   }
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'question': question,
+        'options': options,
+        'difficulty': difficulty,
+        'pdf_question_id': pdfQuestionId,
+      };
+
 }
 
 class QuizResult {

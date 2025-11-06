@@ -8,6 +8,7 @@ import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/dal/local/local_source_adapter.dart';
 
 import 'package:accredit/dal/remote/api_adapter.dart';
+
 import 'package:accredit/presentation/components/auth/verify_session.dart';
 import 'package:http/http.dart';
 
@@ -47,6 +48,8 @@ class ApiAsodyaManager {
 
   }
 
+  
+
    Future<Response> updateUserInfo(String fullName, String? phoneE164) async {
 
     try {
@@ -67,7 +70,6 @@ class ApiAsodyaManager {
       debug('Error reading next auth nounce: $e');
     }
 
-    debug('Requesting new cards from $baseUrl/request_new with headers: $defaultHeaders');
 
     // split the full name into first and last name
     // if there is no space, use the full name as first name and empty last name
@@ -96,9 +98,11 @@ class ApiAsodyaManager {
       final headers = response.headers;
       // get next auth nounce key = 'n-a-n'
       final nan = headers['n-a-n'];
+
       if (nan != null) {
         await saveNextAuthNounce(nan);
-        debug('Next auth nounce updated: $nan from getCards response headers.');
+        debug('Next auth nounce updated: $nan from updateUserInfo response headers.');
+        debug('New nan is: $nan');
       } else {
         warning('No next auth nounce found in response headers.');
 
