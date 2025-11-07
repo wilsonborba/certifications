@@ -65,6 +65,7 @@ All notable changes to this project will be documented in this file.
 - *(topics)* Added the custom loading for topics cards too
 - *(pdf)* Added the custom loading for pdf too
 - *(quiz)* Adjusted headers for quiz submit
+- *(quiz)* Added initial change for pdf quiz saving
 
 ### 🐛 Bug Fixes
 

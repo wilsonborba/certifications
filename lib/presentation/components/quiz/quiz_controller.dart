@@ -107,7 +107,7 @@ class QuizController extends ChangeNotifier {
 
       await Future.delayed(const Duration(seconds: 3));
 
-      final _ = await CertificationManager().submitQuiz(payload, timeSpent, formData);
+      final _ = await CertificationManager().submitQuiz(payload, timeSpent, formData, isForPDF, contextId);
 
       _finishCompleter!.complete(result);
       return result;

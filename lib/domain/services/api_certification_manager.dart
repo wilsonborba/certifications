@@ -101,7 +101,7 @@ class CertificationManager {
     
   }
 
-  Future<Response> submitQuiz(List<AnswerSelection> payload, Duration timeSpent, CertificationFormData formData) async {
+  Future<Response> submitQuiz(List<AnswerSelection> payload, Duration timeSpent, CertificationFormData formData, bool isForPDF, String contextId) async {
 
     try {
       debug('Reading next auth nounce from local storage...');
@@ -131,7 +131,12 @@ class CertificationManager {
       'certification_title': formData.certificationTitle,
       'full_name': formData.fullName,
       'language': formData.language,
+      'is_for_pdf': isForPDF,
     };
+
+    if (isForPDF) {
+      body['document_id'] = contextId;
+    }
 
     final jsonBody = jsonEncode(body);
 
