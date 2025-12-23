@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/domain/models/quiz.dart';
 import 'package:accredit/domain/models/topic_identifications.dart';
+import 'package:http/http.dart';
 
 class QuizController extends ChangeNotifier {
   final CertificationFormData formData;
@@ -20,16 +21,23 @@ class QuizController extends ChangeNotifier {
   late final List<int?> selections = List<int?>.filled(questions.length, null);
 
   // Timer
-  late final int totalSeconds = (questions.isEmpty ? 1 : questions.length) * 60; // 1 min per Q, min 60s
+  late final int totalSeconds =
+      (questions.isEmpty ? 1 : questions.length) * 60; // 1 min per Q, min 60s
   final ValueNotifier<int> remainingSeconds = ValueNotifier<int>(0);
   Timer? _ticker;
   DateTime? _startAt;
 
   // Submit guards
   bool _submitting = false;
-  Completer<QuizResult>? _finishCompleter;
+  Completer<Response?>?
+  _finishCompleter; // ✅ Changed from Completer<QuizResult>
 
-  QuizController({required this.formData, required this.payload, required this.isForPDF, required this.contextId}) {
+  QuizController({
+    required this.formData,
+    required this.payload,
+    required this.isForPDF,
+    required this.contextId,
+  }) {
     _start();
   }
 
@@ -61,61 +69,67 @@ class QuizController extends ChangeNotifier {
     final out = <AnswerSelection>[];
     for (var i = 0; i < questions.length; i++) {
       final q = questions[i];
-      
+
       final questionId = isForPDF ? q.pdfQuestionId : q.id;
 
       final idx = selections[i];
-      final txt = (idx != null && idx >= 0 && idx < q.options.length) ? q.options[idx] : null;
-      out.add(AnswerSelection(questionId: questionId, selectedIndex: idx, selectedText: txt));
+      final txt = (idx != null && idx >= 0 && idx < q.options.length)
+          ? q.options[idx]
+          : null;
+      out.add(
+        AnswerSelection(
+          questionId: questionId,
+          selectedIndex: idx,
+          selectedText: txt,
+        ),
+      );
     }
     return out;
   }
 
   /// Idempotent submission. If called twice, returns the same Future.
-  Future<QuizResult> finish() async {
+  Future<Response?> finish() async {
     if (_finishCompleter != null) {
-      // Already running or finished; return the same Future.
       return _finishCompleter!.future;
     }
-    _finishCompleter = Completer<QuizResult>();
+    _finishCompleter = Completer<Response?>(); // ✅ Changed type parameter
 
     if (_submitting) {
-      return _finishCompleter!.future; // extra safety
+      return _finishCompleter!.future;
     }
     _submitting = true;
 
-    // Stop timer first so UI freezes countdown during submit
     _ticker?.cancel();
     _ticker = null;
 
     final spent = timeSpent;
-    final result = QuizResult(selectedOptionIndexes: List<int?>.from(selections), timeSpent: spent);
 
     final payload = buildSelectionsPayload();
-    debug('Finished. Spent: $spent');
-    debug('Selections (by index): $selections');
-    debug('Submission payload: ${payload.map((e) => e.toJson()).toList()}');
+
+    Response? quizSubmissionR;
 
     try {
-      // Example side-effect call
-      
-
-      final resp = await ApiAsodyaManager().updateUserInfo(formData.fullName, formData.phoneE164);
-      
-
-      // set some duration to simulate network delay
+      await ApiAsodyaManager().updateUserInfo(
+        formData.fullName,
+        formData.phoneE164,
+      );
 
       await Future.delayed(const Duration(seconds: 3));
 
-      final _ = await CertificationManager().submitQuiz(payload, timeSpent, formData, isForPDF, contextId);
+      quizSubmissionR = await CertificationManager().submitQuiz(
+        payload,
+        timeSpent,
+        formData,
+        isForPDF,
+        contextId,
+      );
 
-      _finishCompleter!.complete(result);
-      return result;
+      _finishCompleter!.complete(quizSubmissionR); // ✅ Complete with Response
+      return quizSubmissionR;
     } catch (e, st) {
       debug('Submit failed: $e\n$st');
-      // You could also rethrow and let UI show an error.
-      _finishCompleter!.complete(result); // still complete with local result
-      return result;
+      _finishCompleter!.complete(null); // ✅ Complete with null on error
+      return null;
     } finally {
       _submitting = false;
     }
@@ -145,7 +159,9 @@ class QuizController extends ChangeNotifier {
     for (var i = 0; i < raw.length; i++) {
       final e = raw[i];
       if (e is Map<String, dynamic>) {
-        final idRaw = (e['id'] ?? e['_id'] ?? e['question_id'] ?? '').toString().trim();
+        final idRaw = (e['id'] ?? e['_id'] ?? e['question_id'] ?? '')
+            .toString()
+            .trim();
         final id = idRaw.isNotEmpty ? idRaw : 'q_$i';
 
         final q = (e['question'] ?? e['question_text'] ?? '').toString().trim();
@@ -160,9 +176,16 @@ class QuizController extends ChangeNotifier {
 
         final pdfQuestionId = e['pdf_question_id'];
 
-
         if (q.isNotEmpty && opts.isNotEmpty) {
-          out.add(QuestionItem(id: id, question: q, options: opts, difficulty: diff, pdfQuestionId: pdfQuestionId));
+          out.add(
+            QuestionItem(
+              id: id,
+              question: q,
+              options: opts,
+              difficulty: diff,
+              pdfQuestionId: pdfQuestionId,
+            ),
+          );
         }
       }
     }

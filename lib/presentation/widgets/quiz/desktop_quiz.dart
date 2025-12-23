@@ -1,10 +1,16 @@
 // widgets/quiz/desktop_quiz.dart
 
+import 'package:accredit/core/utils/my_nagivation.dart';
+
 import 'package:accredit/presentation/components/quiz/quiz_controller.dart';
+import 'package:accredit/presentation/widgets/accredit/on_accredit.dart';
 import 'package:flutter/material.dart';
 
 import 'package:accredit/presentation/components/quiz/big_appbar.dart';
 import 'package:accredit/presentation/components/quiz/quiz_cards.dart';
+import 'dart:convert';
+
+import 'package:http/http.dart' show Response;
 
 class DesktopQuiz extends StatefulWidget {
   final QuizController controller;
@@ -26,6 +32,50 @@ class _DesktopQuizState extends State<DesktopQuiz> {
     super.dispose();
   }
 
+  String? extractCertificationIdFromResponse(Response res) {
+    try {
+      final decoded = jsonDecode(res.body);
+
+      if (decoded is! Map<String, dynamic>) return null;
+      final data = decoded['data'];
+      if (data is! Map<String, dynamic>) return null;
+
+      final id = data['certification_id']?.toString().trim();
+      if (id == null || id.isEmpty) return null;
+
+      return id;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void showQuizSubmitSnack(
+    BuildContext context, {
+    required String message,
+    bool isError = true,
+  }) {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isError ? Icons.error_outline : Icons.check_circle_outline,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 10),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(12),
+        duration: Duration(seconds: isError ? 4 : 2),
+        backgroundColor: isError ? Colors.red.shade700 : Colors.green.shade700,
+      ),
+    );
+  }
+
   Future<bool?> _confirmFinish(BuildContext context) {
     return showDialog<bool>(
       context: context,
@@ -33,9 +83,14 @@ class _DesktopQuizState extends State<DesktopQuiz> {
         title: const Text('Finish quiz?'),
         content: const Text('Are you sure you want to submit your answers?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7C4DFF)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF7C4DFF),
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Finish'),
           ),
@@ -46,7 +101,6 @@ class _DesktopQuizState extends State<DesktopQuiz> {
 
   @override
   Widget build(BuildContext context) {
-    
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F8),
       appBar: QuizAppBar(
@@ -67,7 +121,7 @@ class _DesktopQuizState extends State<DesktopQuiz> {
                   controller: _scrollCtrl,
                   child: ListView.builder(
                     controller: _scrollCtrl, // <-- same controller
-                    primary: false,          // <-- since a controller is provided
+                    primary: false, // <-- since a controller is provided
                     padding: const EdgeInsets.only(bottom: 20),
                     itemCount: ctrl.questions.length,
                     itemBuilder: (_, i) {
@@ -81,13 +135,13 @@ class _DesktopQuizState extends State<DesktopQuiz> {
                           setState(() {}); // local rebuild for selection change
                         },
                         onComplain: () => showComplaintDialog(
-                          context, 
-                          questionIndex: i + 1, 
+                          context,
+                          questionIndex: i + 1,
                           questionId: q.id,
                           pdfQuestionId: q.pdfQuestionId,
                           isForPDF: widget.controller.isForPDF,
-                          contextId: widget.controller.contextId
-                          ),
+                          contextId: widget.controller.contextId,
+                        ),
                       );
                     },
                   ),
@@ -101,16 +155,76 @@ class _DesktopQuizState extends State<DesktopQuiz> {
                     const SafeSpacer(),
                     ElevatedButton.icon(
                       icon: const Icon(Icons.flag_circle_rounded),
-                      label: const Text('Finish', style: TextStyle(fontWeight: FontWeight.w800)),
+                      label: const Text(
+                        'Finish',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
                       onPressed: () async {
                         final ok = await _confirmFinish(context);
-                        if (ok == true) ctrl.finish();
+                        if (ok != true) return;
+
+                        // Optional: immediate UI feedback
+                        showQuizSubmitSnack(
+                          context,
+                          message: 'Submitting your answers…',
+                          isError: false,
+                        );
+
+                        final Response? res = await ctrl.finish();
+
+                        if (!context.mounted) return;
+
+                        if (res == null) {
+                          showQuizSubmitSnack(
+                            context,
+                            message:
+                                'Submission failed. Please check your connection and try again.',
+                          );
+                          return;
+                        }
+
+                        if (res.statusCode < 200 || res.statusCode >= 300) {
+                          showQuizSubmitSnack(
+                            context,
+                            message:
+                                'Submission failed (HTTP ${res.statusCode}). Please try again.',
+                          );
+                          return;
+                        }
+
+                        final certificationId =
+                            extractCertificationIdFromResponse(res);
+                        if (certificationId == null) {
+                          showQuizSubmitSnack(
+                            context,
+                            message:
+                                'Submission succeeded, but the server did not return a certification ID. Please contact support.',
+                          );
+                          return;
+                        }
+
+                        // Optional: success message
+                        showQuizSubmitSnack(
+                          context,
+                          message: 'Submitted successfully. Redirecting…',
+                          isError: false,
+                        );
+
+                        NavigationService.push(
+                          OnAccreditScreen(certificationId: certificationId),
+                        );
                       },
+
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF7C4DFF),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 14,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
                   ],

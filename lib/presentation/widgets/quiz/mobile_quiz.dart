@@ -1,5 +1,7 @@
 // widgets/quiz/mobile_quiz.dart
+import 'package:accredit/core/utils/my_nagivation.dart';
 import 'package:accredit/presentation/components/quiz/quiz_controller.dart';
+import 'package:accredit/presentation/widgets/accredit/on_accredit.dart';
 import 'package:flutter/material.dart';
 
 import 'package:accredit/presentation/components/quiz/big_appbar.dart';
@@ -23,9 +25,14 @@ class _MobileQuizState extends State<MobileQuiz> {
         title: const Text('Finish quiz?'),
         content: const Text('Are you sure you want to submit your answers?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7C4DFF)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF7C4DFF),
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Finish'),
           ),
@@ -61,13 +68,13 @@ class _MobileQuizState extends State<MobileQuiz> {
                     setState(() {});
                   },
                   onComplain: () => showComplaintDialog(
-                          context, 
-                          questionIndex: i + 1, 
-                          questionId: q.id, 
-                          isForPDF: widget.controller.isForPDF,
-                          contextId: widget.controller.contextId,
-                          pdfQuestionId: q.pdfQuestionId
-                          ),
+                    context,
+                    questionIndex: i + 1,
+                    questionId: q.id,
+                    isForPDF: widget.controller.isForPDF,
+                    contextId: widget.controller.contextId,
+                    pdfQuestionId: q.pdfQuestionId,
+                  ),
                 );
               },
             ),
@@ -78,15 +85,35 @@ class _MobileQuizState extends State<MobileQuiz> {
               padding: const EdgeInsets.all(12.0),
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.flag_circle_rounded),
-                label: const Text('Finish', style: TextStyle(fontWeight: FontWeight.w800)),
+                label: const Text(
+                  'Finish',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
                 onPressed: () async {
                   final ok = await _confirmFinish(context);
-                  if (ok == true) c.finish();
+
+                  var quiz_result;
+
+                  if (ok == true) {
+                    quiz_result = await c.finish();
+
+                    // get certification_id from result payload
+                    final certification_id = quiz_result['certification_id'];
+
+                    if (mounted) {
+                      NavigationService.push(
+                        OnAccreditScreen(certificationId: certification_id),
+                      );
+                    }
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF7C4DFF),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: 24,
+                  ),
                 ),
               ),
             ),
