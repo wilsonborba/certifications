@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:accredit/core/utils/my_background.dart';
 import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/domain/models/certification.dart';
 import 'package:accredit/domain/services/api_certification_manager.dart';
@@ -122,16 +123,30 @@ class _DesktopAccreditScreenState extends State<DesktopAccreditScreen> {
             }
 
             final cert = snapshot.data!;
-            return Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: CertificateBody(
-                  cert: cert,
-                  captureKey: _captureKey,
-                  maxWidth: 1000,
-                  verticalDensity: 1.2,
+            return Stack(
+              children: [
+                // BACKGROUND (under everything)
+                Positioned.fill(
+                  child: LiquidMetalBackground(
+                    blobCount: 5,
+                    blurSigma: 22, // ≈ “70% blur” feel
+                    centerFocusRadius:
+                        .002, // crisper center (0..1 of shortest side)
+                    speed: 28, // px/sec nominal speed
+                  ),
                 ),
-              ),
+                Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: CertificateBody(
+                      cert: cert,
+                      captureKey: _captureKey,
+                      maxWidth: 1000,
+                      verticalDensity: 1.2,
+                    ),
+                  ),
+                ),
+              ],
             );
           },
         ),

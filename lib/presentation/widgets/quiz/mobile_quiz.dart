@@ -1,4 +1,6 @@
 // widgets/quiz/mobile_quiz.dart
+import 'dart:convert';
+
 import 'package:accredit/core/utils/my_nagivation.dart';
 import 'package:accredit/presentation/components/quiz/quiz_controller.dart';
 import 'package:accredit/presentation/widgets/accredit/on_accredit.dart';
@@ -6,6 +8,8 @@ import 'package:flutter/material.dart';
 
 import 'package:accredit/presentation/components/quiz/big_appbar.dart';
 import 'package:accredit/presentation/components/quiz/quiz_cards.dart';
+
+import 'package:http/http.dart' show Response;
 
 class MobileQuiz extends StatefulWidget {
   final QuizController controller;
@@ -17,6 +21,58 @@ class MobileQuiz extends StatefulWidget {
 
 class _MobileQuizState extends State<MobileQuiz> {
   QuizController get c => widget.controller;
+
+  final ScrollController _scrollCtrl = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  String? extractCertificationIdFromResponse(Response res) {
+    try {
+      final decoded = jsonDecode(res.body);
+
+      if (decoded is! Map<String, dynamic>) return null;
+      final data = decoded['data'];
+      if (data is! Map<String, dynamic>) return null;
+
+      final id = data['certification_id']?.toString().trim();
+      if (id == null || id.isEmpty) return null;
+
+      return id;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void showQuizSubmitSnack(
+    BuildContext context, {
+    required String message,
+    bool isError = true,
+  }) {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isError ? Icons.error_outline : Icons.check_circle_outline,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 10),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(12),
+        duration: Duration(seconds: isError ? 4 : 2),
+        backgroundColor: isError ? Colors.red.shade700 : Colors.green.shade700,
+      ),
+    );
+  }
 
   Future<bool?> _confirmFinish(BuildContext context) {
     return showDialog<bool>(
@@ -91,28 +147,70 @@ class _MobileQuizState extends State<MobileQuiz> {
                 ),
                 onPressed: () async {
                   final ok = await _confirmFinish(context);
+                  if (ok != true) return;
 
-                  var quiz_result;
+                  // Optional: immediate UI feedback
+                  showQuizSubmitSnack(
+                    context,
+                    message: 'Submitting your answers…',
+                    isError: false,
+                  );
 
-                  if (ok == true) {
-                    quiz_result = await c.finish();
+                  final Response? res = await c.finish();
 
-                    // get certification_id from result payload
-                    final certification_id = quiz_result['certification_id'];
+                  if (!context.mounted) return;
 
-                    if (mounted) {
-                      NavigationService.push(
-                        OnAccreditScreen(certificationId: certification_id),
-                      );
-                    }
+                  if (res == null) {
+                    showQuizSubmitSnack(
+                      context,
+                      message:
+                          'Submission failed. Please check your connection and try again.',
+                    );
+                    return;
                   }
+
+                  if (res.statusCode < 200 || res.statusCode >= 300) {
+                    showQuizSubmitSnack(
+                      context,
+                      message:
+                          'Submission failed (HTTP ${res.statusCode}). Please try again.',
+                    );
+                    return;
+                  }
+
+                  final certificationId = extractCertificationIdFromResponse(
+                    res,
+                  );
+                  if (certificationId == null) {
+                    showQuizSubmitSnack(
+                      context,
+                      message:
+                          'Submission succeeded, but the server did not return a certification ID. Please contact support.',
+                    );
+                    return;
+                  }
+
+                  // Optional: success message
+                  showQuizSubmitSnack(
+                    context,
+                    message: 'Submitted successfully. Redirecting…',
+                    isError: false,
+                  );
+
+                  NavigationService.push(
+                    OnAccreditScreen(certificationId: certificationId),
+                  );
                 },
+
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF7C4DFF),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
-                    vertical: 14,
                     horizontal: 24,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
               ),

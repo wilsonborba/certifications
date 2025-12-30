@@ -170,6 +170,11 @@ class CertificateBody extends StatelessWidget {
                       /// SIGNATURE
                       Column(
                         children: [
+                          Image.asset(
+                            'lib/presentation/assets/img/signature.png',
+                            width: isTight ? 180 : 220,
+                            fit: BoxFit.contain,
+                          ),
                           SizedBox(
                             width: 240,
                             child: Divider(

@@ -89,6 +89,7 @@ flutter:
     - lib/presentation/assets/img/book.png
     - lib/presentation/assets/img/temp_logo.png
     - lib/presentation/assets/img/her.png
+    - lib/presentation/assets/img/signature.png
 
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
