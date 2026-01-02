@@ -1,5 +1,3 @@
-
-
 import 'package:accredit/core/settings.dart';
 import 'package:accredit/core/utils/my_router_parser.dart';
 import 'package:accredit/presentation/components/auth/session_gate.dart';
@@ -10,9 +8,6 @@ import 'package:accredit/core/utils/my_nagivation.dart';
 import 'package:accredit/core/utils/my_theme.dart';
 import 'package:accredit/presentation/widgets/boarding/on_boarding.dart';
 
-
-
-
 class App extends StatefulWidget {
   const App({super.key});
 
@@ -21,12 +16,8 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-
-
-
   @override
   Widget build(BuildContext context) {
-
     debug('Building App widget');
 
     return MaterialApp(
@@ -38,22 +29,19 @@ class _AppState extends State<App> {
       onGenerateRoute: (settings) {
         final parser = MyRouteParser(settings: settings);
         final routePath = parser.path;
-        final tokenizedParam =
-            parser.parsedParams(app_settings.AUTH_PARAM_KEY_NAME);
+        final tokenizedParam = parser.parsedParams(
+          app_settings.AUTH_PARAM_KEY_NAME,
+        );
 
         if (routePath == 'sync') {
           return MaterialPageRoute(
             settings: const RouteSettings(name: OnSyncAuthScreen.route),
             builder: (_) => OnSyncAuthScreen(tokenizedParam: tokenizedParam),
           );
+        } else {
+          return MaterialPageRoute(builder: (_) => const SessionGate());
         }
-        
-         else {
-          return MaterialPageRoute(
-            builder: (_) => const SessionGate(),
-          );
-        }
-      }
+      },
     );
   }
 }

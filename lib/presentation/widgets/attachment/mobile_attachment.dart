@@ -2,6 +2,7 @@ import 'package:accredit/core/settings.dart';
 import 'package:accredit/domain/services/api_certification_manager.dart';
 import 'package:accredit/presentation/components/attachment/app_bar.dart';
 import 'package:accredit/presentation/components/attachment/want_app.dart';
+import 'package:accredit/presentation/widgets/tokens/on_tokens.dart';
 import 'package:accredit/presentation/widgets/topics/on_topics.dart';
 import 'package:flutter/material.dart';
 
@@ -18,7 +19,7 @@ import 'base_attachment.dart';
 
 class MobileAttachment extends BaseAttachment {
   const MobileAttachment({super.key, required Future<List<SourceItem>> items})
-      : super(items: items);
+    : super(items: items);
 
   @override
   State<MobileAttachment> createState() => _MobileAttachmentState();
@@ -35,61 +36,72 @@ class _MobileAttachmentState extends BaseAttachmentState<MobileAttachment> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AttachmentAppBar(
-    onCertificates: () { /* navigate */ },
-    onTokens: () { /* navigate */ },
-    onSupport: () => redirectToUrl('mailto:support@asodya.com'),
-    onAbout:   (){
+        onCertificates: () {
+          /* navigate */
+        },
+        onTokens: () {
+          NavigationService.push(OnTokensScreen());
+        },
+        onSupport: () => redirectToUrl('mailto:support@asodya.com'),
+        onAbout: () {
           final url = 'https://${app_settings.ASODYA_MAIN_DOMAIN}';
           redirectToUrl(url, replace: true);
         },
-    // onLogout: () async { await clearSessionArtifacts(); /* custom redirect */ },
-  ),
-  endDrawer: AttachmentSideMenu(
-    onCertificates: () { /* navigate */ },
-    onTokens: () { /* navigate */ },
-    onSupport: () => redirectToUrl('mailto:support@asodya.com'),
-    onAbout:   (){
+        // onLogout: () async { await clearSessionArtifacts(); /* custom redirect */ },
+      ),
+      endDrawer: AttachmentSideMenu(
+        onCertificates: () {
+          /* navigate */
+        },
+        onTokens: () {
+          NavigationService.push(OnTokensScreen());
+        },
+        onSupport: () => redirectToUrl('mailto:support@asodya.com'),
+        onAbout: () {
           final url = 'https://${app_settings.ASODYA_MAIN_DOMAIN}';
           redirectToUrl(url, replace: true);
         },
-  ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               //const TopHeaders(isDesktop: false),
-               const SizedBox(height: 200),
+              const SizedBox(height: 200),
               const SizedBox(height: 40),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child:  FutureBuilder<List<SourceItem>>(
-                        future: widget.items,
-                        builder: (context, snapshot) {
-                          final body = buildBody(context, snapshot);
+                child: FutureBuilder<List<SourceItem>>(
+                  future: widget.items,
+                  builder: (context, snapshot) {
+                    final body = buildBody(context, snapshot);
 
-                          // Only show WantText if the future completed successfully
-                          if (snapshot.connectionState == ConnectionState.done &&
-                              snapshot.hasData) {
-                            return Column(
-                              children: [
-                                body,
-                                const SizedBox(height: 10),
-                                WantText(onRequest: (url) async {
-                                  final manager = CertificationManager();
-                                  final response =
-                                      await manager.requestNewCards(url);
-                                      if (response.statusCode == 201) {}
-      // Optionally, you can refresh the list of cards here
-                                }),
-                              ],
-                            );
-                          }
+                    // Only show WantText if the future completed successfully
+                    if (snapshot.connectionState == ConnectionState.done &&
+                        snapshot.hasData) {
+                      return Column(
+                        children: [
+                          body,
+                          const SizedBox(height: 10),
+                          WantText(
+                            onRequest: (url) async {
+                              final manager = CertificationManager();
+                              final response = await manager.requestNewCards(
+                                url,
+                              );
+                              if (response.statusCode == 201) {}
+                              // Optionally, you can refresh the list of cards here
+                            },
+                          ),
+                        ],
+                      );
+                    }
 
-                          // Otherwise, just return the body (loading/error states, etc.)
-                          return body;
-                        },
-                      ),
+                    // Otherwise, just return the body (loading/error states, etc.)
+                    return body;
+                  },
+                ),
               ),
               const SizedBox(height: 40),
               const Padding(
@@ -141,21 +153,21 @@ class _MobileAttachmentState extends BaseAttachmentState<MobileAttachment> {
         items: buckets.playful,
         tileSize: 60,
         onTapWithTopic: (item) => {
-          NavigationService.push(OnTopicsScreen(itemName: item.itemName))
+          NavigationService.push(OnTopicsScreen(itemName: item.itemName)),
         },
         onTapWithoutTopic: (item) => {
-          NavigationService.push(OnTopicsScreen(itemName: item.itemName))
+          NavigationService.push(OnTopicsScreen(itemName: item.itemName)),
         },
         onSeeMore: (sourceName) => {},
       ),
       rightChild: SourceGroupsList(
         items: buckets.serious,
         tileSize: 60,
-       onTapWithTopic: (item) => {
-          NavigationService.push(OnTopicsScreen(itemName: item.itemName))
+        onTapWithTopic: (item) => {
+          NavigationService.push(OnTopicsScreen(itemName: item.itemName)),
         },
         onTapWithoutTopic: (item) => {
-          NavigationService.push(OnTopicsScreen(itemName: item.itemName))
+          NavigationService.push(OnTopicsScreen(itemName: item.itemName)),
         },
         onSeeMore: (sourceName) => {},
       ),

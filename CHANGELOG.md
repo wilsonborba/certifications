@@ -64,6 +64,7 @@
 - *(quiz)* Added initial change for pdf quiz saving
 - *(cert)* Fixed communication after finish the test
 - *(cert)* Implemented the pdf cert generation
+- *(tokens)* Create token route implemented
 
 ### 🐛 Bug Fixes
 
