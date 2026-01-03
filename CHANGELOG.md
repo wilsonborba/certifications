@@ -65,6 +65,7 @@
 - *(cert)* Fixed communication after finish the test
 - *(cert)* Implemented the pdf cert generation
 - *(tokens)* Create token route implemented
+- *(tokens)* Create/delete tokens implemented
 
 ### 🐛 Bug Fixes
 

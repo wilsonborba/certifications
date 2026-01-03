@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:math' as math;
+import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/domain/services/api_certification_manager.dart';
 import 'package:flutter/material.dart';
 
@@ -79,6 +81,95 @@ class TokensController extends ChangeNotifier {
     selectedTokenId = tokens.first.id;
   }
 
+  Future<void> loadTokensFromBackend() async {
+    final res = await certificationManager.getAllUserTokens();
+
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      // Optional: handle error UI/state
+      debug('getAllUserTokens failed: ${res.statusCode} ${res.body}');
+      return;
+    }
+
+    final decoded = jsonDecode(res.body);
+
+    // Accept either:
+    // 1) a List directly
+    // 2) { "data": [ ... ] }
+    final List<dynamic> list = decoded is List
+        ? decoded
+        : (decoded is Map<String, dynamic> && decoded['data'] is List
+              ? decoded['data'] as List
+              : const []);
+
+    final loaded = list
+        .whereType<Map<String, dynamic>>()
+        .map(_tokenEntryFromJson)
+        .toList();
+
+    tokens = loaded;
+
+    // Keep selection valid
+    if (tokens.isEmpty) {
+      selectedTokenId = null;
+    } else {
+      final stillExists =
+          selectedTokenId != null && tokens.any((t) => t.id == selectedTokenId);
+
+      // Prefer backend default token if present
+      final defaultToken = tokens.where((t) => t.isDefault).toList();
+      final defaultId = defaultToken.isNotEmpty ? defaultToken.first.id : null;
+
+      selectedTokenId = stillExists
+          ? selectedTokenId
+          : (defaultId ?? tokens.first.id);
+    }
+
+    notifyListeners();
+  }
+
+  TokenEntry _tokenEntryFromJson(Map<String, dynamic> j) {
+    // Adjust keys to match your backend response.
+    final id = (j['id'] as num).toInt();
+
+    final providerRaw = (j['provider'] ?? j['provider_name'] ?? '').toString();
+    final provider = _parseProvider(providerRaw);
+
+    final name = (j['token_name'] ?? j['name'] ?? provider.label).toString();
+
+    // Prefer masked preview from backend. If backend returns only full key, mask it client-side.
+    final keyPreview =
+        (j['key_preview'] ?? j['masked'] ?? j['token_preview'])?.toString() ??
+        '••••••••';
+
+    final createdAtStr = (j['created_at'] ?? j['createdAt'])?.toString();
+    final createdAt = createdAtStr == null
+        ? DateTime.now()
+        : DateTime.tryParse(createdAtStr) ?? DateTime.now();
+
+    final isDefault = (j['is_default'] ?? j['isDefault']) == true;
+
+    return TokenEntry(
+      id: id,
+      provider: provider,
+      name: name,
+      keyPreview: keyPreview,
+      createdAt: createdAt,
+      isDefault: isDefault,
+    );
+  }
+
+  TokenProvider _parseProvider(String raw) {
+    final s = raw.toLowerCase().trim();
+
+    // Map backend strings to your enum
+    if (s.contains('gemini') || s.contains('google'))
+      return TokenProvider.gemini;
+    if (s.contains('groq') || s.contains('grok')) return TokenProvider.groq;
+
+    // fallback
+    return TokenProvider.gemini;
+  }
+
   late List<TokenEntry> tokens;
   int? selectedTokenId;
 
@@ -87,11 +178,13 @@ class TokensController extends ChangeNotifier {
   UsageSnapshot usage = UsageSnapshot(loaded: false, series: const []);
 
   TokenEntry? get selectedToken {
-    if (selectedTokenId == null) return null;
-    return tokens
-        .where((t) => t.id == selectedTokenId)
-        .cast<TokenEntry?>()
-        .first;
+    final id = selectedTokenId;
+    if (id == null) return null;
+
+    for (final t in tokens) {
+      if (t.id == id) return t;
+    }
+    return null;
   }
 
   void selectToken(int id) {
@@ -108,11 +201,41 @@ class TokensController extends ChangeNotifier {
   }
 
   /// Stub: call backend to delete token.
-  Future<void> deleteToken(int id) async {
-    tokens.removeWhere((t) => t.id == id);
-    if (selectedTokenId == id) {
-      selectedTokenId = tokens.isEmpty ? null : tokens.first.id;
+  Future<void> deleteToken(String name) async {
+    final res = await certificationManager.deleteUserToken(name);
+
+    // If backend failed, do not mutate UI state (optional but recommended)
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      debug('deleteToken failed: ${res.statusCode} ${res.body}');
+      return;
     }
+
+    // Capture whether we are deleting the selected token
+    final selected = selectedToken;
+
+    // Remove all tokens with that name (name may not be unique; this matches your current design)
+    tokens.removeWhere((t) => t.name == name);
+
+    // If the selected token was deleted, select a new one safely
+    final selectedWasDeleted = selected != null && selected.name == name;
+
+    if (tokens.isEmpty) {
+      selectedTokenId = null;
+    } else if (selectedWasDeleted) {
+      // Prefer default token, otherwise first token
+      final defaultToken = tokens.where((t) => t.isDefault).toList();
+      selectedTokenId = defaultToken.isNotEmpty
+          ? defaultToken.first.id
+          : tokens.first.id;
+    } else {
+      // Ensure current selectedTokenId still exists (defensive)
+      final stillExists =
+          selectedTokenId != null && tokens.any((t) => t.id == selectedTokenId);
+      if (!stillExists) {
+        selectedTokenId = tokens.first.id;
+      }
+    }
+
     notifyListeners();
   }
 
@@ -231,6 +354,7 @@ class _TokensViewState extends State<TokensView> {
   void initState() {
     super.initState();
     controller = TokensController();
+    controller.loadTokensFromBackend();
   }
 
   @override
@@ -521,7 +645,7 @@ class _TokensListPanel extends StatelessWidget {
                   selected: selected,
                   onSelect: () => controller.selectToken(t.id),
                   onSetDefault: () => controller.setDefault(t.id),
-                  onDelete: () => controller.deleteToken(t.id),
+                  onDelete: () => controller.deleteToken(t.name),
                   onCopy: () {
                     // Placeholder: wire to clipboard later.
                     ScaffoldMessenger.of(context).showSnackBar(

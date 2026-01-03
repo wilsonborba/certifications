@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/core/utils/my_nagivation.dart';
 import 'package:accredit/core/utils/my_theme.dart';
-import 'package:accredit/presentation/widgets/boarding/on_boarding.dart';
 
 class App extends StatefulWidget {
   const App({super.key});
