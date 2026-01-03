@@ -12,6 +12,12 @@ enum TokenProvider {
 
   const TokenProvider(this.label);
   final String label;
+
+  get labelSnakeCase => label == 'Google Gemini'
+      ? 'gemini'
+      : label == 'Groq (groq.com)'
+      ? 'groq'
+      : 'unknown';
 }
 
 /// UI model for a stored token.
@@ -61,24 +67,9 @@ class UsageSnapshot {
 class TokensController extends ChangeNotifier {
   TokensController() {
     // Demo data (safe placeholders). Replace with backend load.
-    tokens = [
-      TokenEntry(
-        id: 126,
-        provider: TokenProvider.gemini,
-        name: 'Gemini test',
-        keyPreview: 'gm-•••••••••••••••••••3Qp',
-        createdAt: DateTime.now().subtract(const Duration(days: 10)),
-      ),
-      TokenEntry(
-        id: 127,
-        provider: TokenProvider.groq,
-        name: 'Grok staging',
-        keyPreview: 'xai-•••••••••••••••••••A1m',
-        createdAt: DateTime.now().subtract(const Duration(days: 18)),
-      ),
-    ];
+    tokens = [];
 
-    selectedTokenId = tokens.first.id;
+    selectedTokenId = null;
   }
 
   Future<void> loadTokensFromBackend() async {
@@ -193,10 +184,25 @@ class TokensController extends ChangeNotifier {
   }
 
   /// Stub: call backend to set default token, then update local state.
-  Future<void> setDefault(int id) async {
+  Future<void> setDefaultById(int id) async {
+    final token = tokens.where((t) => t.id == id).toList();
+    if (token.isEmpty) return;
+
+    final tokenName = token.first.name;
+
+    final res = await certificationManager.setDefaultUserToken(tokenName);
+
+    // Your API returns 202 on success
+    if (res.statusCode != 202) {
+      debug('setDefaultUserToken failed: ${res.statusCode} ${res.body}');
+      return;
+    }
+
+    // Update local state
     for (final t in tokens) {
       t.isDefault = (t.id == id);
     }
+
     notifyListeners();
   }
 
@@ -249,32 +255,63 @@ class TokensController extends ChangeNotifier {
     required bool isDefault,
   }) async {
     final response = await certificationManager.createUserToken(
-      provider.label,
+      provider.labelSnakeCase,
       name,
       apiKey,
       isDefault,
     );
 
-    final newId = (tokens.isEmpty
-        ? 100
-        : tokens.map((e) => e.id).reduce(math.max) + 1);
-
-    final preview = _maskKey(apiKey);
-    final entry = TokenEntry(
-      id: newId,
-      provider: provider,
-      name: name.trim().isEmpty ? provider.label : name.trim(),
-      keyPreview: preview,
-      createdAt: DateTime.now(),
-      isDefault: isDefault,
-    );
-
-    if (entry.isDefault) {
-      for (final t in tokens) t.isDefault = false;
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      // Optional: show error snackbar
+      return;
     }
 
-    tokens.insert(0, entry);
-    selectedTokenId = entry.id;
+    final resolvedName = name.trim().isEmpty ? provider.label : name.trim();
+
+    final preview = _maskKey(apiKey);
+
+    final existingIndex = tokens.indexWhere((t) => t.name == resolvedName);
+
+    if (existingIndex != -1) {
+      // 🔁 UPDATE EXISTING TOKEN (no duplication)
+      final existing = tokens[existingIndex];
+
+      tokens[existingIndex] = TokenEntry(
+        id: existing.id, // keep backend ID
+        provider: provider,
+        name: resolvedName,
+        keyPreview: preview,
+        createdAt: existing.createdAt, // or DateTime.now() if you prefer
+        isDefault: isDefault,
+      );
+
+      selectedTokenId = existing.id;
+    } else {
+      // ➕ CREATE NEW TOKEN (only when it truly does not exist)
+      final newId = (tokens.isEmpty
+          ? 100
+          : tokens.map((e) => e.id).reduce(math.max) + 1);
+
+      final entry = TokenEntry(
+        id: newId,
+        provider: provider,
+        name: resolvedName,
+        keyPreview: preview,
+        createdAt: DateTime.now(),
+        isDefault: isDefault,
+      );
+
+      tokens.insert(0, entry);
+      selectedTokenId = entry.id;
+    }
+
+    // Enforce single default locally
+    if (isDefault) {
+      for (final t in tokens) {
+        t.isDefault = (t.id == selectedTokenId);
+      }
+    }
+
     notifyListeners();
   }
 
@@ -367,7 +404,7 @@ class _TokensViewState extends State<TokensView> {
           builder: (context, _) {
             final header = _HeaderBar(
               isDesktop: widget.isDesktop,
-              onCreate: () => _showCreateTokenDialog(context),
+              onCreate: () => _showCreateTokenDialog(context, controller),
               onRefreshUsage: () => controller.refreshUsage(),
               usagePeriodLabel: controller.usage.periodLabel,
             );
@@ -421,131 +458,132 @@ class _TokensViewState extends State<TokensView> {
       ),
     );
   }
+}
 
-  Future<void> _showCreateTokenDialog(BuildContext context) async {
-    final nameCtrl = TextEditingController();
-    final keyCtrl = TextEditingController();
-    TokenProvider selected = TokenProvider.gemini;
+Future<void> _showCreateTokenDialog(
+  BuildContext context,
+  TokensController controller,
+) async {
+  final nameCtrl = TextEditingController();
+  final keyCtrl = TextEditingController();
+  TokenProvider selected = TokenProvider.gemini;
 
-    bool isDefaultLocal = false;
+  bool isDefaultLocal = false;
 
-    final cs = Theme.of(context).colorScheme;
+  final cs = Theme.of(context).colorScheme;
 
-    await showDialog<void>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setLocalState) {
-            return Dialog(
-              insetPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 18,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(TokensUI.radius),
-              ),
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 520),
-                padding: const EdgeInsets.all(18),
-                decoration: TokensUI.subtlePanelDecoration(context),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const _DialogTitle(
-                      title: 'Add API Key',
-                      subtitle:
-                          'Save a provider key to use for requests. The full key should be visible only once.',
+  await showDialog<void>(
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setLocalState) {
+          return Dialog(
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 18,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(TokensUI.radius),
+            ),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 520),
+              padding: const EdgeInsets.all(18),
+              decoration: TokensUI.subtlePanelDecoration(context),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _DialogTitle(
+                    title: 'Add API Key',
+                    subtitle:
+                        'Save a provider key to use for requests. The full key should be visible only once.',
+                  ),
+                  const SizedBox(height: 14),
+
+                  DropdownButtonFormField<TokenProvider>(
+                    value: selected,
+                    items: TokenProvider.values.map((p) {
+                      return DropdownMenuItem(value: p, child: Text(p.label));
+                    }).toList(),
+                    onChanged: (v) {
+                      if (v != null) {
+                        setLocalState(() => selected = v);
+                      }
+                    },
+                    decoration: const InputDecoration(labelText: 'Provider'),
+                  ),
+
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: nameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Name (optional)',
+                      hintText: 'e.g., Production, Staging, Personal',
                     ),
-                    const SizedBox(height: 14),
+                  ),
 
-                    DropdownButtonFormField<TokenProvider>(
-                      value: selected,
-                      items: TokenProvider.values.map((p) {
-                        return DropdownMenuItem(value: p, child: Text(p.label));
-                      }).toList(),
-                      onChanged: (v) {
-                        if (v != null) {
-                          setLocalState(() => selected = v);
-                        }
-                      },
-                      decoration: const InputDecoration(labelText: 'Provider'),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: keyCtrl,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'API Key',
+                      hintText: 'Paste your key here',
                     ),
+                  ),
 
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: nameCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Name (optional)',
-                        hintText: 'e.g., Production, Staging, Personal',
+                  const SizedBox(height: 12),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Is Default?'),
+                    value: isDefaultLocal,
+                    onChanged: (value) {
+                      setLocalState(() => isDefaultLocal = value);
+                    },
+                  ),
+
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Cancel'),
                       ),
-                    ),
+                      const Spacer(),
+                      ElevatedButton(
+                        onPressed: () async {
+                          if (keyCtrl.text.trim().isEmpty) return;
 
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: keyCtrl,
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'API Key',
-                        hintText: 'Paste your key here',
-                      ),
-                    ),
+                          await controller.createToken(
+                            provider: selected,
+                            name: nameCtrl.text,
+                            apiKey: keyCtrl.text,
+                            isDefault: isDefaultLocal,
+                          );
 
-                    const SizedBox(height: 12),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Is Default?'),
-                      value: isDefaultLocal,
-                      onChanged: (value) {
-                        setLocalState(() => isDefaultLocal = value);
-                      },
-                    ),
-
-                    const SizedBox(height: 18),
-                    Row(
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('Cancel'),
-                        ),
-                        const Spacer(),
-                        ElevatedButton(
-                          onPressed: () async {
-                            if (keyCtrl.text.trim().isEmpty) return;
-
-                            await controller.createToken(
-                              provider: selected,
-                              name: nameCtrl.text,
-                              apiKey: keyCtrl.text,
-                              isDefault: isDefaultLocal,
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('API key saved.'),
+                                behavior: SnackBarBehavior.floating,
+                                backgroundColor: cs.onSurface.withOpacity(0.9),
+                              ),
                             );
-
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text('API key saved.'),
-                                  behavior: SnackBarBehavior.floating,
-                                  backgroundColor: cs.onSurface.withOpacity(
-                                    0.9,
-                                  ),
-                                ),
-                              );
-                              Navigator.of(context).pop();
-                            }
-                          },
-                          child: const Text('Save'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                            Navigator.of(context).pop();
+                          }
+                        },
+                        child: const Text('Save'),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            );
-          },
-        );
-      },
-    );
-  }
+            ),
+          );
+        },
+      );
+    },
+  );
 }
 
 class _HeaderBar extends StatelessWidget {
@@ -634,29 +672,26 @@ class _TokensListPanel extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Expanded(
-            child: ListView.separated(
-              itemCount: controller.tokens.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (context, i) {
-                final t = controller.tokens[i];
-                final selected = controller.selectedTokenId == t.id;
-                return _TokenRow(
-                  token: t,
-                  selected: selected,
-                  onSelect: () => controller.selectToken(t.id),
-                  onSetDefault: () => controller.setDefault(t.id),
-                  onDelete: () => controller.deleteToken(t.name),
-                  onCopy: () {
-                    // Placeholder: wire to clipboard later.
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Copy action (wire to clipboard)'),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+            child: controller.tokens.isEmpty
+                ? _EmptyKeysState(
+                    onCreate: () => _showCreateTokenDialog(context, controller),
+                  )
+                : ListView.separated(
+                    itemCount: controller.tokens.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (context, i) {
+                      final t = controller.tokens[i];
+                      final selected = controller.selectedTokenId == t.id;
+                      return _TokenRow(
+                        token: t,
+                        selected: selected,
+                        onSelect: () => controller.selectToken(t.id),
+                        onSetDefault: () => controller.setDefaultById(t.id),
+                        onDelete: () => controller.deleteToken(t.name),
+                        onCopy: () {},
+                      );
+                    },
+                  ),
           ),
           const SizedBox(height: 10),
           _FootnoteCard(
@@ -1283,6 +1318,109 @@ class _DialogTitle extends StatelessWidget {
         const SizedBox(height: 6),
         Text(subtitle, style: TextStyle(color: cs.onSurface.withOpacity(0.65))),
       ],
+    );
+  }
+}
+
+class _EmptyKeysState extends StatelessWidget {
+  const _EmptyKeysState({required this.onCreate});
+
+  final VoidCallback onCreate;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: cs.onSurface.withOpacity(0.02),
+            borderRadius: BorderRadius.circular(TokensUI.innerRadius),
+            border: Border.all(color: cs.onSurface.withOpacity(0.06)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // “Apple-ish” soft icon badge
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: cs.primary.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: cs.primary.withOpacity(0.18)),
+                ),
+                child: Icon(
+                  Icons.key_rounded,
+                  size: 28,
+                  color: cs.primary.withOpacity(0.90),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              Text(
+                'No API Keys',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: cs.onSurface.withOpacity(0.92),
+                ),
+              ),
+              const SizedBox(height: 6),
+
+              Text(
+                'Create your first key to start using providers and tracking usage.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  height: 1.35,
+                  color: cs.onSurface.withOpacity(0.62),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Primary action
+              SizedBox(
+                height: 40,
+                child: ElevatedButton.icon(
+                  onPressed: onCreate,
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text(
+                    'Create new key',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Secondary hint row (subtle)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.shield_outlined,
+                    size: 16,
+                    color: cs.onSurface.withOpacity(0.45),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      'For security, the full key is shown once and then stored masked.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: cs.onSurface.withOpacity(0.52),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -296,7 +296,7 @@ class CertificationManager {
       'token_value': apiKey,
       'is_default': isDefault,
       // If your backend actually needs provider, add it:
-      // 'provider': provider,
+      'provider_name': provider,
     };
 
     final res = await _authedPost(
@@ -321,6 +321,17 @@ class CertificationManager {
     final res = await _authedGet(Uri.parse('$baseUrl/tokens/user_tokens'));
 
     debug('getAllUserTokens response body: ${res.body}');
+    return res;
+  }
+
+  Future<http.Response> setDefaultUserToken(String tokenName) async {
+    final body = {'token_name': tokenName};
+
+    final res = await _authedPatch(
+      Uri.parse('$baseUrl/tokens/set_default'),
+      body: jsonEncode(body),
+    );
+    debug('setDefaultUserToken response body: ${res.body}');
     return res;
   }
 

@@ -66,6 +66,7 @@
 - *(cert)* Implemented the pdf cert generation
 - *(tokens)* Create token route implemented
 - *(tokens)* Create/delete tokens implemented
+- *(tokens)* Basic tokens operation implemented
 
 ### 🐛 Bug Fixes
 
