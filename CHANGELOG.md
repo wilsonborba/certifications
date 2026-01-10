@@ -76,6 +76,7 @@
 - *(quiz)* Added a controller to keep state after adjust size screen
 - *(quiz)* Fixed a name of item that had a wrong char together
 - *(quiz)* Fixed query request params for quiz
+- *(adapter)* Topics is missing requests on api adapter
 
 ### ⚙️ Miscellaneous Tasks
 

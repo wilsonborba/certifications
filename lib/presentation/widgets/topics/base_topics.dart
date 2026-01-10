@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:accredit/core/utils/my_encryption.dart';
@@ -15,18 +16,39 @@ abstract class BaseTopics extends StatefulWidget {
 }
 
 /// Shared state with common helpers for topics screens.
-/// Subclasses get:
-/// - controller (paging/search/ticker/grid-height)
-/// - data/cache/search helpers
-/// - convenience getters (visibleItems/isBusy/windowInfo)
 abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
   // =========================================================
-  //                 DATA / CACHE HELPERS (yours)
+  //                 DATA / CACHE HELPERS
   // =========================================================
-  final LocalSourceAdapter _topicsStorage = LocalSourceAdapter(namespace: 'topics');
+  final LocalSourceAdapter _topicsStorage = LocalSourceAdapter(
+    namespace: 'topics',
+  );
   final Duration _pageCacheTtl = const Duration(hours: 3);
-  final LocalSourceAdapter _searchStorage = LocalSourceAdapter(namespace: 'search');
+
+  final LocalSourceAdapter _searchStorage = LocalSourceAdapter(
+    namespace: 'search',
+  );
   final Duration _searchTtl = const Duration(minutes: 15);
+
+  // =========================================================
+  //                 DEBUG / DIAGNOSTICS
+  // =========================================================
+
+  /// If true, do not filter topics by identifications (helps isolate backend vs UI).
+  /// Set to true temporarily if you want to confirm topics are coming from API.
+  @protected
+  bool get debugDisableIdentificationFilter => false;
+
+  void _log(String msg) {
+    // debugPrint is safe for Web/Android/iOS and truncates long lines more gracefully.
+    debugPrint('[Topics] ${widget.itemName}: $msg');
+  }
+
+  void _logError(String msg, Object e, StackTrace st) {
+    debugPrint('[Topics][ERROR] ${widget.itemName}: $msg');
+    debugPrint('  $e');
+    debugPrint('$st');
+  }
 
   String _pageKey(String itemName, int page) => 'topics:$itemName:$page';
   String _currentKey(String itemName) => 'topics:$itemName:current';
@@ -55,10 +77,11 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
     if (decoded is! Map) return 1;
 
     final expStr = decoded['expiration_time'] as String?;
-    final page   = decoded['page'] as int?;
-    final exp    = expStr != null ? DateTime.tryParse(expStr) : null;
+    final page = decoded['page'] as int?;
+    final exp = expStr != null ? DateTime.tryParse(expStr) : null;
 
-    if (page != null && exp != null && DateTime.now().isBefore(exp)) return page;
+    if (page != null && exp != null && DateTime.now().isBefore(exp))
+      return page;
     return 1;
   }
 
@@ -98,10 +121,10 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
     if (decoded is! Map) return null;
 
     final expStr = decoded['expiration_time'] as String?;
-    final exp    = expStr != null ? DateTime.tryParse(expStr) : null;
+    final exp = expStr != null ? DateTime.tryParse(expStr) : null;
     if (exp == null || DateTime.now().isAfter(exp)) return null;
 
-    final topics  = (decoded['topics'] as List).cast<Map<String, dynamic>>();
+    final topics = (decoded['topics'] as List).cast<Map<String, dynamic>>();
     final int? pg = decoded['page'] as int?;
     final int? pp = decoded['per_page'] as int?;
     final bool hm = decoded['has_more'] as bool? ?? false;
@@ -114,9 +137,17 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
     required int perPage,
   }) async {
     final cached = await loadTopicsPageCache(itemName, page);
-    if (cached != null) return cached;
+    if (cached != null) {
+      _log('Cache HIT for topics page=$page');
+      return cached;
+    }
+    _log('Cache MISS for topics page=$page; fetching from API');
 
-    final (topics, pg, pp, hm) = await fetchTopicsForCard(itemName, page, perPage);
+    final (topics, pg, pp, hm) = await fetchTopicsForCard(
+      itemName,
+      page,
+      perPage,
+    );
 
     await saveTopicsPageCache(
       itemName: itemName,
@@ -135,56 +166,84 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
     int perPage,
   ) async {
     final manager = CertificationManager();
+
+    _log(
+      'API getTopicsFromCard(item=$itemName page=$page perPage=$perPage) START',
+    );
     final response = await manager.getTopicsFromCard(itemName, page, perPage);
+    _log(
+      'API getTopicsFromCard END status=${response.statusCode} bodyLen=${response.body.length}',
+    );
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to fetch topics for $itemName');
+      throw Exception(
+        'Failed to fetch topics for $itemName (status=${response.statusCode}) body=${_safeBodySnippet(response.body)}',
+      );
     }
 
-    final decoded = response.body.isNotEmpty ? json.decode(response.body) : null;
+    final decoded = response.body.isNotEmpty
+        ? json.decode(response.body)
+        : null;
     if (decoded is! Map || decoded['data'] == null) {
-      throw Exception('Unexpected topics payload shape for $itemName');
+      throw Exception('Unexpected topics payload shape (missing data)');
     }
 
     final data = decoded['data'];
     if (data is! Map || data['topics'] is! List) {
-      throw Exception('Unexpected topics payload shape for $itemName');
+      throw Exception('Unexpected topics payload shape (missing topics list)');
     }
 
     final topics = (data['topics'] as List).cast<Map<String, dynamic>>();
     final int? _page = data['page'] is int ? data['page'] as int : null;
-    final int? _perPage = data['per_page'] is int ? data['per_page'] as int : null;
-    final bool hasMore = (data['has_more'] is bool) ? data['has_more'] as bool : false;
+    final int? _perPage = data['per_page'] is int
+        ? data['per_page'] as int
+        : null;
+    final bool hasMore = (data['has_more'] is bool)
+        ? data['has_more'] as bool
+        : false;
 
     return (topics, _page, _perPage, hasMore);
   }
 
+  String _safeBodySnippet(String body, {int max = 300}) {
+    if (body.isEmpty) return '';
+    if (body.length <= max) return body;
+    return body.substring(0, max);
+  }
+
   Identifications? getTopicIdentifications(Map<String, dynamic> topic) {
-    if (topic['identifications'] is Map) {
-      final idMap = topic['identifications'] as Map<String, dynamic>;
-      return Identifications.fromJson(idMap);
+    final ident = topic['identifications'];
+    if (ident is Map) {
+      return Identifications.fromJson(ident.cast<String, dynamic>());
     }
     return null;
   }
 
-  bool shouldUseIdentifications(Identifications? ident) {
-    if (ident == null) return false;
-
-    final id    = ident.inputIdentification.trim();
+  /// Returns null if acceptable; otherwise a reason string (for diagnostics).
+  String? _whyRejected(Identifications? ident) {
+    if (ident == null) return 'identifications is null or not a map';
+    final id = ident.inputIdentification.trim();
     final title = (ident.titleIdentification ?? '').trim();
-    final link  = (ident.linkIdentification ?? '').trim();
+    final link = (ident.linkIdentification ?? '').trim();
 
-    if (id.isEmpty) return false;
-    if (title.isEmpty) return false;
-    if (link.isEmpty) return false;
+    if (id.isEmpty) return 'inputIdentification empty';
+    if (title.isEmpty) return 'titleIdentification empty';
+    if (link.isEmpty) return 'linkIdentification empty';
+    return null;
+  }
 
-    return true; // image may be null/empty
+  bool shouldUseIdentifications(Identifications? ident) {
+    return _whyRejected(ident) == null;
   }
 
   String? safeImageFromIdent(Identifications ident) {
     final s = ident.imgLinkIdentification?.trim();
     return (s == null || s.isEmpty) ? null : s;
   }
+
+  // =========================================================
+  //                 SEARCH CACHE HELPERS
+  // =========================================================
 
   String _searchPageKey(String itemName, String query, int page) =>
       'search:$itemName:${query.trim().toLowerCase()}:$page';
@@ -213,7 +272,9 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
     int page,
   ) async {
     final enc = MyEncryption();
-    final stored = await _searchStorage.read<dynamic>(_searchPageKey(itemName, query, page));
+    final stored = await _searchStorage.read<dynamic>(
+      _searchPageKey(itemName, query, page),
+    );
     if (stored is! String || stored.isEmpty) return null;
 
     final clear = await enc.decryptPayload(stored);
@@ -223,10 +284,10 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
     if (decoded is! Map) return null;
 
     final expStr = decoded['expiration_time'] as String?;
-    final exp    = expStr != null ? DateTime.tryParse(expStr) : null;
+    final exp = expStr != null ? DateTime.tryParse(expStr) : null;
     if (exp == null || DateTime.now().isAfter(exp)) return null;
 
-    final topics  = (decoded['topics'] as List).cast<Map<String, dynamic>>();
+    final topics = (decoded['topics'] as List).cast<Map<String, dynamic>>();
     final int? pg = decoded['page'] as int?;
     final int? pp = decoded['per_page'] as int?;
     final bool hm = decoded['has_more'] as bool? ?? false;
@@ -252,7 +313,10 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
     });
     final cipher = await enc.encryptPayload(clear);
     if (cipher != null) {
-      await _searchStorage.upsert(_searchPageKey(itemName, query, page), cipher);
+      await _searchStorage.upsert(
+        _searchPageKey(itemName, query, page),
+        cipher,
+      );
     }
   }
 
@@ -266,10 +330,21 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
     int maxExtraPages = 2,
   }) async {
     final cached = await loadSearchPageCache(itemName, query, page);
-    if (cached != null) return cached;
+    if (cached != null) {
+      _log('Cache HIT for search q="$query" page=$page');
+      return cached;
+    }
+    _log('Cache MISS for search q="$query" page=$page; fetching from API');
 
-    final (topics, pg, pp, hm) =
-        await fetchSearchForCard(itemName, query, page, perPage, mode, fillPage, maxExtraPages);
+    final (topics, pg, pp, hm) = await fetchSearchForCard(
+      itemName,
+      query,
+      page,
+      perPage,
+      mode,
+      fillPage,
+      maxExtraPages,
+    );
 
     await saveSearchPageCache(
       itemName: itemName,
@@ -293,27 +368,49 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
     int maxExtraPages = 2,
   ]) async {
     final manager = CertificationManager();
-    final response =
-        await manager.searchTopics(itemName, query, page, perPage, mode, fillPage, maxExtraPages);
+
+    _log(
+      'API searchTopics(item=$itemName q="$query" page=$page perPage=$perPage) START',
+    );
+    final response = await manager.searchTopics(
+      itemName,
+      query,
+      page,
+      perPage,
+      mode,
+      fillPage,
+      maxExtraPages,
+    );
+    _log(
+      'API searchTopics END status=${response.statusCode} bodyLen=${response.body.length}',
+    );
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to search topics for $itemName');
+      throw Exception(
+        'Failed to search topics for $itemName (status=${response.statusCode}) body=${_safeBodySnippet(response.body)}',
+      );
     }
 
-    final decoded = response.body.isNotEmpty ? json.decode(response.body) : null;
+    final decoded = response.body.isNotEmpty
+        ? json.decode(response.body)
+        : null;
     if (decoded is! Map || decoded['data'] == null) {
-      throw Exception('Unexpected search payload shape for $itemName');
+      throw Exception('Unexpected search payload shape (missing data)');
     }
 
     final data = decoded['data'];
     if (data is! Map || data['topics'] is! List) {
-      throw Exception('Unexpected search payload shape for $itemName');
+      throw Exception('Unexpected search payload shape (missing topics list)');
     }
 
     final topics = (data['topics'] as List).cast<Map<String, dynamic>>();
     final int? _page = data['page'] is int ? data['page'] as int : null;
-    final int? _perPage = data['per_page'] is int ? data['per_page'] as int : null;
-    final bool hasMore = (data['has_more'] is bool) ? data['has_more'] as bool : false;
+    final int? _perPage = data['per_page'] is int
+        ? data['per_page'] as int
+        : null;
+    final bool hasMore = (data['has_more'] is bool)
+        ? data['has_more'] as bool
+        : false;
 
     return (topics, _page, _perPage, hasMore);
   }
@@ -322,9 +419,8 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
   //                    SHARED CONTROLLER
   // =========================================================
 
-  // ---------- state ----------
   int page = 1;
-  int perPage = 8; // child overrides via initialPerPage
+  int perPage = 8;
   bool hasMore = true;
   bool loading = false;
   bool initialDone = false;
@@ -355,9 +451,8 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
     'Almost there…',
   ];
 
-  // ---------- lifecycle ----------
   @protected
-  int get initialPerPage => 8; // Desktop overrides to 8, Mobile to 4, etc.
+  int get initialPerPage => 8;
 
   @override
   void initState() {
@@ -374,9 +469,18 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
   }
 
   Future<void> _bootstrap() async {
-    final saved = await loadSavedPageOr1(widget.itemName);
-    page = saved;
-    await loadPage(page);
+    try {
+      final saved = await loadSavedPageOr1(widget.itemName);
+      page = saved;
+      _log(
+        'bootstrap -> starting at page=$page perPage=$perPage (kIsWeb=$kIsWeb)',
+      );
+      await loadPage(page);
+    } catch (e, st) {
+      _logError('bootstrap failed', e, st);
+      if (!mounted) return;
+      setState(() => initialDone = true);
+    }
   }
 
   // ---------- ticker ----------
@@ -398,23 +502,51 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
     loadingIndex = 0;
   }
 
-  // ---------- paging (topics) ----------
+  // =========================================================
+  //                    TOPICS PAGING
+  // =========================================================
+
   @protected
   Future<void> loadPage(int targetPage) async {
     if (loading || searchLoading) return;
 
     setState(() => loading = true);
     _startLoadingTickerIfNeeded();
+
     try {
+      _log('loadPage($targetPage) START');
       final (raw, pg, pp, hm) = await loadOrFetchTopicsPage(
         widget.itemName,
         page: targetPage,
         perPage: perPage,
       );
 
-      final valid = raw
-          .where((t) => shouldUseIdentifications(getTopicIdentifications(t)))
-          .toList();
+      final List<Map<String, dynamic>> valid;
+      if (debugDisableIdentificationFilter) {
+        valid = raw;
+        _log('Filter DISABLED -> using raw topics');
+      } else {
+        valid = raw
+            .where((t) => shouldUseIdentifications(getTopicIdentifications(t)))
+            .toList();
+      }
+
+      _log(
+        'Topics counts: raw=${raw.length}, valid=${valid.length} (hasMore=$hm)',
+      );
+
+      // If everything was filtered out, log one example to see why.
+      if (!debugDisableIdentificationFilter &&
+          raw.isNotEmpty &&
+          valid.isEmpty) {
+        final sample = raw.first;
+        final ident = getTopicIdentifications(sample);
+        final reason = _whyRejected(ident) ?? 'unknown';
+        _log(
+          'All topics filtered out. Sample rejection reason="$reason". Sample topic keys=${sample.keys.toList()}',
+        );
+        _log('Sample identifications raw=${sample['identifications']}');
+      }
 
       if (!mounted) return;
       setState(() {
@@ -430,15 +562,17 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         final h = gridKey.currentContext?.size?.height ?? 0;
-        if (h > 0 && (lastGridHeight - h).abs() > 0.1) {
+        if (h <= 0) return;
+        if ((lastGridHeight - h).abs() > 0.1) {
           setState(() => lastGridHeight = h);
         }
       });
-    } catch (_) {
+
+      _log('loadPage($targetPage) DONE -> page=$page perPage=$perPage');
+    } catch (e, st) {
+      _logError('loadPage($targetPage) failed', e, st);
       if (!mounted) return;
-      setState(() {
-        initialDone = true;
-      });
+      setState(() => initialDone = true);
     } finally {
       if (!mounted) return;
       _stopLoadingTicker();
@@ -466,7 +600,10 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
     loadPage(page + 1);
   }
 
-  // ---------- search ----------
+  // =========================================================
+  //                        SEARCH
+  // =========================================================
+
   @protected
   Future<void> startSearch() async {
     final q = qCtrl.text.trim();
@@ -476,6 +613,8 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
       searchMode = true;
       searchPage = 1;
     });
+
+    await saveSearchCurrent(widget.itemName, query: q, page: 1);
     await loadSearchPage(1);
   }
 
@@ -494,6 +633,7 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
   @protected
   Future<void> loadSearchPage(int targetPage) async {
     if (searchLoading || loading) return;
+
     final q = qCtrl.text.trim();
     if (q.isEmpty) {
       await clearSearch();
@@ -502,7 +642,10 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
 
     setState(() => searchLoading = true);
     _startLoadingTickerIfNeeded();
+
     try {
+      _log('loadSearchPage($targetPage) START q="$q"');
+
       final (topicsRaw, pg, pp, hm) = await loadOrFetchSearchPage(
         widget.itemName,
         query: q,
@@ -510,9 +653,31 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
         perPage: perPage,
       );
 
-      final valid = topicsRaw
-          .where((t) => shouldUseIdentifications(getTopicIdentifications(t)))
-          .toList();
+      final List<Map<String, dynamic>> valid;
+      if (debugDisableIdentificationFilter) {
+        valid = topicsRaw;
+        _log('Filter DISABLED -> using raw search results');
+      } else {
+        valid = topicsRaw
+            .where((t) => shouldUseIdentifications(getTopicIdentifications(t)))
+            .toList();
+      }
+
+      _log(
+        'Search counts: raw=${topicsRaw.length}, valid=${valid.length} (hasMore=$hm)',
+      );
+
+      if (!debugDisableIdentificationFilter &&
+          topicsRaw.isNotEmpty &&
+          valid.isEmpty) {
+        final sample = topicsRaw.first;
+        final ident = getTopicIdentifications(sample);
+        final reason = _whyRejected(ident) ?? 'unknown';
+        _log(
+          'All search results filtered out. Sample rejection reason="$reason". Sample topic keys=${sample.keys.toList()}',
+        );
+        _log('Sample identifications raw=${sample['identifications']}');
+      }
 
       if (!mounted) return;
       setState(() {
@@ -523,18 +688,24 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
         initialDone = true;
       });
 
+      await saveSearchCurrent(widget.itemName, query: q, page: searchPage);
+
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         final h = gridKey.currentContext?.size?.height ?? 0;
-        if (h > 0 && (lastGridHeight - h).abs() > 0.1) {
+        if (h <= 0) return;
+        if ((lastGridHeight - h).abs() > 0.1) {
           setState(() => lastGridHeight = h);
         }
       });
-    } catch (_) {
+
+      _log(
+        'loadSearchPage($targetPage) DONE -> searchPage=$searchPage perPage=$perPage',
+      );
+    } catch (e, st) {
+      _logError('loadSearchPage($targetPage) failed', e, st);
       if (!mounted) return;
-      setState(() {
-        initialDone = true;
-      });
+      setState(() => initialDone = true);
     } finally {
       if (!mounted) return;
       _stopLoadingTicker();
@@ -554,7 +725,10 @@ abstract class BaseTopicsState<T extends BaseTopics> extends State<T> {
     loadSearchPage(searchPage + 1);
   }
 
-  // ---------- convenience getters ----------
+  // =========================================================
+  //                    CONVENIENCE GETTERS
+  // =========================================================
+
   @protected
   bool get isBusy => searchMode ? searchLoading : loading;
 

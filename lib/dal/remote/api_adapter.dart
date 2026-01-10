@@ -9,7 +9,7 @@ class ApiAdapter {
   final http.Client _client;
 
   ApiAdapter({this.defaultHeaders = const {}, http.Client? client})
-      : _client = client ?? _buildClient();
+    : _client = client ?? _buildClient();
 
   static http.Client _buildClient() {
     final c = BrowserClient();
@@ -26,25 +26,42 @@ class ApiAdapter {
     Encoding? encoding,
   }) async {
     final fullHeaders = {...defaultHeaders, if (headers != null) ...headers};
-    final resolvedUrl =
-        queryParams != null ? url.replace(queryParameters: queryParams) : url;
+    final resolvedUrl = queryParams != null
+        ? url.replace(queryParameters: queryParams)
+        : url;
 
     // USE the credentialed client you built above
     switch (method.toUpperCase()) {
       case 'GET':
         return _client.get(resolvedUrl, headers: fullHeaders);
       case 'POST':
-        return _client.post(resolvedUrl,
-            headers: fullHeaders, body: _encodeBody(body), encoding: encoding);
+        return _client.post(
+          resolvedUrl,
+          headers: fullHeaders,
+          body: _encodeBody(body),
+          encoding: encoding,
+        );
       case 'PUT':
-        return _client.put(resolvedUrl,
-            headers: fullHeaders, body: _encodeBody(body), encoding: encoding);
+        return _client.put(
+          resolvedUrl,
+          headers: fullHeaders,
+          body: _encodeBody(body),
+          encoding: encoding,
+        );
       case 'PATCH':
-        return _client.patch(resolvedUrl,
-            headers: fullHeaders, body: _encodeBody(body), encoding: encoding);
+        return _client.patch(
+          resolvedUrl,
+          headers: fullHeaders,
+          body: _encodeBody(body),
+          encoding: encoding,
+        );
       case 'DELETE':
-        return _client.delete(resolvedUrl,
-            headers: fullHeaders, body: _encodeBody(body), encoding: encoding);
+        return _client.delete(
+          resolvedUrl,
+          headers: fullHeaders,
+          body: _encodeBody(body),
+          encoding: encoding,
+        );
       default:
         throw UnsupportedError('Unsupported HTTP method: $method');
     }
@@ -56,25 +73,68 @@ class ApiAdapter {
     return jsonEncode(body);
   }
 
-  Future<http.Response> get(Uri url,
-          {Map<String, String>? headers, Map<String, dynamic>? queryParams}) =>
-      request(method: 'GET', url: url, headers: headers, queryParams: queryParams);
+  Future<http.Response> get(
+    Uri url, {
+    Map<String, String>? headers,
+    Map<String, dynamic>? queryParams,
+  }) => request(
+    method: 'GET',
+    url: url,
+    headers: headers,
+    queryParams: queryParams,
+  );
 
-  Future<http.Response> post(Uri url,
-          {Map<String, String>? headers, dynamic body, Encoding? encoding}) =>
-      request(method: 'POST', url: url, headers: headers, body: body, encoding: encoding);
+  Future<http.Response> post(
+    Uri url, {
+    Map<String, String>? headers,
+    dynamic body,
+    Encoding? encoding,
+  }) => request(
+    method: 'POST',
+    url: url,
+    headers: headers,
+    body: body,
+    encoding: encoding,
+  );
 
-  Future<http.Response> put(Uri url,
-          {Map<String, String>? headers, dynamic body, Encoding? encoding}) =>
-      request(method: 'PUT', url: url, headers: headers, body: body, encoding: encoding);
+  Future<http.Response> put(
+    Uri url, {
+    Map<String, String>? headers,
+    dynamic body,
+    Encoding? encoding,
+  }) => request(
+    method: 'PUT',
+    url: url,
+    headers: headers,
+    body: body,
+    encoding: encoding,
+  );
 
-  Future<http.Response> patch(Uri url,
-          {Map<String, String>? headers, dynamic body, Encoding? encoding}) =>
-      request(method: 'PATCH', url: url, headers: headers, body: body, encoding: encoding);
+  Future<http.Response> patch(
+    Uri url, {
+    Map<String, String>? headers,
+    dynamic body,
+    Encoding? encoding,
+  }) => request(
+    method: 'PATCH',
+    url: url,
+    headers: headers,
+    body: body,
+    encoding: encoding,
+  );
 
-  Future<http.Response> delete(Uri url,
-          {Map<String, String>? headers, dynamic body, Encoding? encoding}) =>
-      request(method: 'DELETE', url: url, headers: headers, body: body, encoding: encoding);
+  Future<http.Response> delete(
+    Uri url, {
+    Map<String, String>? headers,
+    dynamic body,
+    Encoding? encoding,
+  }) => request(
+    method: 'DELETE',
+    url: url,
+    headers: headers,
+    body: body,
+    encoding: encoding,
+  );
 }
 
 class MultipartFileData {
@@ -102,8 +162,9 @@ extension ApiAdapterMultipart on ApiAdapter {
     final fullHeaders = {...defaultHeaders, if (headers != null) ...headers};
     fullHeaders.removeWhere((k, _) => k.toLowerCase() == 'content-type');
 
-    final resolvedUrl =
-        queryParams != null ? url.replace(queryParameters: queryParams) : url;
+    final resolvedUrl = queryParams != null
+        ? url.replace(queryParameters: queryParams)
+        : url;
 
     final req = http.MultipartRequest('POST', resolvedUrl);
     req.headers.addAll(fullHeaders);
@@ -112,12 +173,14 @@ extension ApiAdapterMultipart on ApiAdapter {
 
     if (files != null) {
       for (final f in files) {
-        req.files.add(http.MultipartFile.fromBytes(
-          f.field,
-          f.bytes,
-          filename: f.filename,
-          contentType: f.contentType,
-        ));
+        req.files.add(
+          http.MultipartFile.fromBytes(
+            f.field,
+            f.bytes,
+            filename: f.filename,
+            contentType: f.contentType,
+          ),
+        );
       }
     }
 
