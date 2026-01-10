@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:accredit/core/utils/my_logs.dart';
+import 'package:accredit/core/utils/my_nagivation.dart';
 import 'package:accredit/domain/services/api_certification_manager.dart';
+import 'package:accredit/presentation/components/tokens/glowing_button.dart';
+import 'package:accredit/presentation/widgets/attachment/on_attachment.dart';
 import 'package:flutter/material.dart';
 
 /// Represents a provider option (Grok/Gemini/OpenAI etc.)
@@ -899,6 +902,9 @@ class _UsageDashboardPanel extends StatelessWidget {
   const _UsageDashboardPanel({required this.controller});
   final TokensController controller;
 
+  bool get _showGlowingButton =>
+      controller.tokens.isNotEmpty && controller.tokens.any((t) => t.isDefault);
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -907,87 +913,106 @@ class _UsageDashboardPanel extends StatelessWidget {
     return Container(
       decoration: TokensUI.cardDecoration(context),
       padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          _SectionTitle(
-            title: 'Usage dashboard',
-            subtitle: selected == null
-                ? 'Select a key to view usage.'
-                : 'Provider: ${selected.provider.label} • Key: ${selected.name}',
-          ),
-          const SizedBox(height: 12),
-
-          // Stats row
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
+          // Main content
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _StatCard(
-                title: 'Requests',
-                value: controller.usage.loaded
-                    ? '${controller.usage.totalRequests ?? 0}'
-                    : '—',
-                subtitle: controller.usage.periodLabel,
-                icon: Icons.swap_horiz_rounded,
+              _SectionTitle(
+                title: 'Usage dashboard',
+                subtitle: selected == null
+                    ? 'Select a key to view usage.'
+                    : 'Provider: ${selected.provider.label} • Key: ${selected.name}',
               ),
-              _StatCard(
-                title: 'Tokens',
-                value: controller.usage.loaded
-                    ? '${controller.usage.totalTokens ?? 0}'
-                    : '—',
-                subtitle: controller.usage.periodLabel,
-                icon: Icons.data_usage_rounded,
+              const SizedBox(height: 12),
+
+              // Stats row
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _StatCard(
+                    title: 'Requests',
+                    value: controller.usage.loaded
+                        ? '${controller.usage.totalRequests ?? 0}'
+                        : '—',
+                    subtitle: controller.usage.periodLabel,
+                    icon: Icons.swap_horiz_rounded,
+                  ),
+                  _StatCard(
+                    title: 'Tokens',
+                    value: controller.usage.loaded
+                        ? '${controller.usage.totalTokens ?? 0}'
+                        : '—',
+                    subtitle: controller.usage.periodLabel,
+                    icon: Icons.data_usage_rounded,
+                  ),
+                  _StatCard(
+                    title: 'Cost',
+                    value: controller.usage.loaded
+                        ? '\$${(controller.usage.costUsd ?? 0).toStringAsFixed(2)}'
+                        : '—',
+                    subtitle: controller.usage.periodLabel,
+                    icon: Icons.payments_rounded,
+                  ),
+                ],
               ),
-              _StatCard(
-                title: 'Cost',
-                value: controller.usage.loaded
-                    ? '\$${(controller.usage.costUsd ?? 0).toStringAsFixed(2)}'
-                    : '—',
-                subtitle: controller.usage.periodLabel,
-                icon: Icons.payments_rounded,
+
+              const SizedBox(height: 14),
+
+              // Chart
+              Expanded(
+                child: Container(
+                  // Reserve space so the glow/button doesn't overlap the chart area.
+                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 72),
+                  decoration: BoxDecoration(
+                    color: cs.onSurface.withOpacity(0.02),
+                    borderRadius: BorderRadius.circular(TokensUI.innerRadius),
+                    border: Border.all(color: cs.onSurface.withOpacity(0.06)),
+                  ),
+                  child:
+                      controller.usage.loaded &&
+                          controller.usage.series.isNotEmpty
+                      ? _UsageChart(series: controller.usage.series)
+                      : _EmptyChartPlaceholder(
+                          title: 'Usage chart not loaded',
+                          subtitle:
+                              'Set a default key to enable refresh, then use the button to fetch usage.',
+                        ),
+                ),
               ),
+
+              // Remove the old Row(...) entirely; keep a bit of bottom spacing.
+              const SizedBox(height: 6),
             ],
           ),
 
-          const SizedBox(height: 14),
-
-          // Chart
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: cs.onSurface.withOpacity(0.02),
-                borderRadius: BorderRadius.circular(TokensUI.innerRadius),
-                border: Border.all(color: cs.onSurface.withOpacity(0.06)),
+          // Bottom-right glowing button (only when at least one default token exists)
+          if (_showGlowingButton)
+            Positioned(
+              right: 6,
+              bottom: 6,
+              child: GlowingButton(
+                icon: const Icon(Icons.play_lesson, color: Colors.white),
+                text: Text("Continue"),
+                onPressed: () => NavigationService.push(OnAttachmentScreen()),
               ),
-              child:
-                  controller.usage.loaded && controller.usage.series.isNotEmpty
-                  ? _UsageChart(series: controller.usage.series)
-                  : _EmptyChartPlaceholder(
-                      title: 'Usage chart not loaded',
-                      subtitle:
-                          'Press “Refresh usage” to fetch usage metrics from your backend.',
-                    ),
+            )
+          else
+            // Optional: show a small hint when button is hidden
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  'Add a default token to enable usage refresh.',
+                  style: TextStyle(color: cs.onSurface.withOpacity(0.55)),
+                ),
+              ),
             ),
-          ),
-
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              _SubtleButton(
-                icon: Icons.refresh_rounded,
-                label: 'Refresh usage',
-                onTap: () => controller.refreshUsage(),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                'Backend not connected yet.',
-                style: TextStyle(color: cs.onSurface.withOpacity(0.55)),
-              ),
-            ],
-          ),
         ],
       ),
     );

@@ -67,6 +67,7 @@
 - *(tokens)* Create token route implemented
 - *(tokens)* Create/delete tokens implemented
 - *(tokens)* Basic tokens operation implemented
+- *(token)* Navigation allowed after token set as default
 
 ### 🐛 Bug Fixes
 
