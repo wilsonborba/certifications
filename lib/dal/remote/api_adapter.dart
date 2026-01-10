@@ -17,6 +17,26 @@ class ApiAdapter {
     return c;
   }
 
+  Map<String, String> _stringQueryParams(Map<String, dynamic> qp) {
+    final out = <String, String>{};
+    qp.forEach((k, v) {
+      if (v == null) return;
+
+      // If any code ever passes a list, join (or you can repeat keys; see note below)
+      if (v is Iterable) {
+        // Minimal, predictable behavior: comma-separated
+        out[k] = v
+            .map((e) => e?.toString() ?? '')
+            .where((s) => s.isNotEmpty)
+            .join(',');
+        return;
+      }
+
+      out[k] = v.toString();
+    });
+    return out;
+  }
+
   Future<http.Response> request({
     required String method,
     required Uri url,
@@ -26,9 +46,9 @@ class ApiAdapter {
     Encoding? encoding,
   }) async {
     final fullHeaders = {...defaultHeaders, if (headers != null) ...headers};
-    final resolvedUrl = queryParams != null
-        ? url.replace(queryParameters: queryParams)
-        : url;
+    final resolvedUrl = (queryParams == null || queryParams.isEmpty)
+        ? url
+        : url.replace(queryParameters: _stringQueryParams(queryParams));
 
     // USE the credentialed client you built above
     switch (method.toUpperCase()) {
@@ -162,9 +182,9 @@ extension ApiAdapterMultipart on ApiAdapter {
     final fullHeaders = {...defaultHeaders, if (headers != null) ...headers};
     fullHeaders.removeWhere((k, _) => k.toLowerCase() == 'content-type');
 
-    final resolvedUrl = queryParams != null
-        ? url.replace(queryParameters: queryParams)
-        : url;
+    final resolvedUrl = (queryParams == null || queryParams.isEmpty)
+        ? url
+        : url.replace(queryParameters: _stringQueryParams(queryParams));
 
     final req = http.MultipartRequest('POST', resolvedUrl);
     req.headers.addAll(fullHeaders);
