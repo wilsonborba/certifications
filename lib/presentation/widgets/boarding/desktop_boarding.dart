@@ -11,9 +11,11 @@ import 'package:flutter_svg/svg.dart';
 import 'package:accredit/core/utils/my_background.dart';
 import 'package:accredit/core/utils/my_nagivation.dart';
 import 'package:accredit/presentation/components/boarding/box_explaning.dart';
+import 'package:accredit/presentation/components/boarding/boarding_details.dart';
 import 'package:accredit/presentation/components/boarding/first_phrase.dart';
 import 'package:accredit/presentation/components/boarding/middle_button.dart';
 import 'package:accredit/presentation/components/boarding/second_phrase.dart';
+import 'package:accredit/presentation/components/plans/plans_view.dart';
 
 
 
@@ -210,7 +212,34 @@ SizedBox(
       ),
     ],
   ),
-)
+),
+Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 80),
+  child: PlansView(
+    isDesktop: true,
+    onConfigureKeys: () async {
+      final url = await urlRedirectionToAuth();
+      redirectToUrl(url, replace: true);
+    },
+  ),
+),
+Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40),
+  child: BoardingDetails(
+    title: 'A clear path to certification',
+    body:
+        'Add a website or PDF. We generate a quiz. Finish it to receive a clean, shareable certification with your score.',
+    items: const [
+      'Supports websites and PDFs today.',
+      'Multiple certifications per user.',
+      'Bring your own Gemini or Groq API key to start free.',
+      'YouTube quizzes are coming next if users want it.',
+    ],
+    titleSize: 34,
+    bodySize: 20,
+    itemSize: 18,
+  ),
+),
 
       
       
