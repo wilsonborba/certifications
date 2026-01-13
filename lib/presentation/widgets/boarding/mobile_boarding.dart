@@ -4,6 +4,7 @@ import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/presentation/components/auth/login_redirect.dart';
 import 'package:accredit/presentation/components/auth/verify_session.dart';
 import 'package:accredit/presentation/components/boarding/app_bar.dart';
+import 'package:accredit/presentation/components/boarding/boarding_marketing.dart';
 import 'package:accredit/presentation/widgets/attachment/on_attachment.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -13,6 +14,7 @@ import 'package:accredit/presentation/components/boarding/box_explaning.dart';
 import 'package:accredit/presentation/components/boarding/first_phrase.dart';
 import 'package:accredit/presentation/components/boarding/second_phrase.dart';
 import 'package:accredit/presentation/components/boarding/middle_button.dart';
+import 'package:accredit/presentation/components/plans/plans_view.dart';
 
 
 class MobileBoarding extends StatelessWidget {
@@ -202,7 +204,21 @@ SizedBox(
       ),
     ],
   ),
-)
+),
+Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 60),
+  child: PlansView(
+    isDesktop: false,
+    onConfigureKeys: () async {
+      final url = await urlRedirectionToAuth();
+      redirectToUrl(url, replace: true);
+    },
+  ),
+),
+Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24),
+  child: BoardingMarketing(isDesktop: false),
+),
 
       
       
