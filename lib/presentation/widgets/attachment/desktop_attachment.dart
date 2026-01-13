@@ -40,6 +40,9 @@ class _DesktopAttachmentState extends BaseAttachmentState<DesktopAttachment> {
         onCertificates: () {
           NavigationService.push(const OnCertificationsScreen());
         },
+        onPlans: () {
+          NavigationService.push(const OnPlansScreen());
+        },
         onTokens: () {
           NavigationService.push(OnTokensScreen());
         },
@@ -53,6 +56,9 @@ class _DesktopAttachmentState extends BaseAttachmentState<DesktopAttachment> {
       endDrawer: AttachmentSideMenu(
         onCertificates: () {
           NavigationService.push(const OnCertificationsScreen());
+        },
+        onPlans: () {
+          NavigationService.push(const OnPlansScreen());
         },
         onTokens: () {
           NavigationService.push(OnTokensScreen());

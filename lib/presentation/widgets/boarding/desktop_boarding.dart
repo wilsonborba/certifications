@@ -14,6 +14,7 @@ import 'package:accredit/presentation/components/boarding/box_explaning.dart';
 import 'package:accredit/presentation/components/boarding/first_phrase.dart';
 import 'package:accredit/presentation/components/boarding/middle_button.dart';
 import 'package:accredit/presentation/components/boarding/second_phrase.dart';
+import 'package:accredit/presentation/components/plans/plans_view.dart';
 
 
 
@@ -210,7 +211,17 @@ SizedBox(
       ),
     ],
   ),
-)
+),
+Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 80),
+  child: PlansView(
+    isDesktop: true,
+    onConfigureKeys: () async {
+      final url = await urlRedirectionToAuth();
+      redirectToUrl(url, replace: true);
+    },
+  ),
+),
 
       
       

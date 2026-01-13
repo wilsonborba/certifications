@@ -16,6 +16,7 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.title = 'Certifications',
     this.maxActionLayoutWidth = 800,
     this.onCertificates,
+    this.onPlans,
     this.onTokens,
     this.onSupport,
     this.onAbout,
@@ -26,6 +27,7 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
   final double maxActionLayoutWidth;
 
   final VoidCallback? onCertificates;
+  final VoidCallback? onPlans;
   final VoidCallback? onTokens;
   final VoidCallback? onSupport;
   final VoidCallback? onAbout;
@@ -71,6 +73,7 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
                 _AttachmentDesktopActions(
                   accent: accent,
                   onCertificates: onCertificates,
+                  onPlans: onPlans,
                   onTokens: onTokens,
                   onSupport: onSupport,
                   onAbout: onAbout,
@@ -99,6 +102,7 @@ class _AttachmentDesktopActions extends StatelessWidget {
   const _AttachmentDesktopActions({
     required this.accent,
     this.onCertificates,
+    this.onPlans,
     this.onTokens,
     this.onSupport,
     this.onAbout,
@@ -107,6 +111,7 @@ class _AttachmentDesktopActions extends StatelessWidget {
 
   final Color accent;
   final VoidCallback? onCertificates;
+  final VoidCallback? onPlans;
   final VoidCallback? onTokens;
   final VoidCallback? onSupport;
   final VoidCallback? onAbout;
@@ -164,7 +169,7 @@ class _AttachmentDesktopActions extends StatelessWidget {
       children: [
         _item('Certificates', onCertificates),
         _item('Tokens', onTokens),
-        _item('Plans', null), // disabled for now (not implemented)
+        _item('Plans', onPlans),
         _item('Support', onSupport),
         _item('About', onAbout),
         const SizedBox(width: 8),
@@ -187,6 +192,7 @@ class AttachmentSideMenu extends StatelessWidget {
   const AttachmentSideMenu({
     super.key,
     this.onCertificates,
+    this.onPlans,
     this.onTokens,
     this.onSupport,
     this.onAbout,
@@ -195,6 +201,7 @@ class AttachmentSideMenu extends StatelessWidget {
   });
 
   final VoidCallback? onCertificates;
+  final VoidCallback? onPlans;
   final VoidCallback? onTokens;
   final VoidCallback? onSupport;
   final VoidCallback? onAbout;
@@ -230,6 +237,7 @@ class AttachmentSideMenu extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _tile(context, Icons.workspace_premium_outlined, 'Certificates', onCertificates),
+              _tile(context, Icons.stacked_line_chart_outlined, 'Plans', onPlans),
               _tile(context, Icons.token_outlined, 'Tokens', onTokens),
               _tile(context, Icons.person_outline, 'Profile', null), // disabled
               _tile(context, Icons.support_agent_outlined, 'Support', onSupport),

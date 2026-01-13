@@ -13,6 +13,7 @@ import 'package:accredit/presentation/components/boarding/box_explaning.dart';
 import 'package:accredit/presentation/components/boarding/first_phrase.dart';
 import 'package:accredit/presentation/components/boarding/second_phrase.dart';
 import 'package:accredit/presentation/components/boarding/middle_button.dart';
+import 'package:accredit/presentation/components/plans/plans_view.dart';
 
 
 class MobileBoarding extends StatelessWidget {
@@ -202,7 +203,17 @@ SizedBox(
       ),
     ],
   ),
-)
+),
+Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 60),
+  child: PlansView(
+    isDesktop: false,
+    onConfigureKeys: () async {
+      final url = await urlRedirectionToAuth();
+      redirectToUrl(url, replace: true);
+    },
+  ),
+),
 
       
       
