@@ -237,6 +237,10 @@ class CertificationManager {
     );
   }
 
+  Future<http.Response> getUserCertifications() {
+    return _authedGet(Uri.parse('$baseUrl/quiz/certifications'));
+  }
+
   Future<http.Response> getCards() {
     return _authedGet(Uri.parse('$baseUrl/all_items'));
   }
