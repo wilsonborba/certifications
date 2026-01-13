@@ -68,6 +68,7 @@
 - *(tokens)* Create/delete tokens implemented
 - *(tokens)* Basic tokens operation implemented
 - *(token)* Navigation allowed after token set as default
+- *(token)* User go to main screen only if has token set already
 
 ### 🐛 Bug Fixes
 
@@ -77,6 +78,7 @@
 - *(quiz)* Fixed a name of item that had a wrong char together
 - *(quiz)* Fixed query request params for quiz
 - *(adapter)* Topics is missing requests on api adapter
+- *(adapter)* Fixed the topics that was  missing in requests on api adapter
 
 ### ⚙️ Miscellaneous Tasks
 
