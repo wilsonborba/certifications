@@ -2,6 +2,8 @@ import 'package:accredit/core/settings.dart';
 import 'package:accredit/domain/services/api_certification_manager.dart';
 import 'package:accredit/presentation/components/attachment/app_bar.dart';
 import 'package:accredit/presentation/components/attachment/want_app.dart';
+import 'package:accredit/presentation/widgets/certifications/on_certifications.dart';
+import 'package:accredit/presentation/widgets/plans/on_plans.dart';
 import 'package:accredit/presentation/widgets/tokens/on_tokens.dart';
 import 'package:accredit/presentation/widgets/topics/on_topics.dart';
 import 'package:flutter/material.dart';
@@ -37,7 +39,10 @@ class _DesktopAttachmentState extends BaseAttachmentState<DesktopAttachment> {
     return Scaffold(
       appBar: AttachmentAppBar(
         onCertificates: () {
-          /* navigate */
+          NavigationService.push(const OnCertificationsScreen());
+        },
+        onPlans: () {
+          NavigationService.push(const OnPlansScreen());
         },
         onTokens: () {
           NavigationService.push(OnTokensScreen());
@@ -51,7 +56,10 @@ class _DesktopAttachmentState extends BaseAttachmentState<DesktopAttachment> {
       ),
       endDrawer: AttachmentSideMenu(
         onCertificates: () {
-          /* navigate */
+          NavigationService.push(const OnCertificationsScreen());
+        },
+        onPlans: () {
+          NavigationService.push(const OnPlansScreen());
         },
         onTokens: () {
           NavigationService.push(OnTokensScreen());
