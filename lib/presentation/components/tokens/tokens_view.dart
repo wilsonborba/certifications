@@ -65,6 +65,78 @@ class UsageSnapshot {
   final bool loaded;
 }
 
+class UsageEntry {
+  UsageEntry({
+    required this.providerModelDescription,
+    required this.totalTokens,
+    required this.createdAt,
+    required this.latencyMs,
+    required this.statusCode,
+    required this.isForPdf,
+    required this.attempts,
+  });
+
+  final String providerModelDescription;
+  final int totalTokens;
+  final DateTime createdAt;
+  final int latencyMs;
+  final int statusCode;
+  final bool isForPdf;
+  final int attempts;
+
+  factory UsageEntry.fromJson(Map<String, dynamic> json) {
+    final createdAtRaw = json['created_at']?.toString();
+    final createdAt = createdAtRaw == null
+        ? DateTime.now()
+        : DateTime.tryParse(createdAtRaw) ?? DateTime.now();
+
+    return UsageEntry(
+      providerModelDescription:
+          (json['provider_model_description'] ?? 'Unknown').toString(),
+      totalTokens: (json['total_tokens'] as num?)?.toInt() ?? 0,
+      createdAt: createdAt,
+      latencyMs: (json['latency_ms'] as num?)?.toInt() ?? 0,
+      statusCode: (json['status_code'] as num?)?.toInt() ?? 0,
+      isForPdf: json['is_for_pdf'] == true || json['is_for_pdf'] == 't',
+      attempts: (json['attempts'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+class UsageDashboardData {
+  UsageDashboardData({
+    required this.entries,
+    required this.periodLabel,
+  });
+
+  final List<UsageEntry> entries;
+  final String periodLabel;
+
+  int get totalRequests => entries.length;
+  int get totalTokens =>
+      entries.fold<int>(0, (sum, entry) => sum + entry.totalTokens);
+  double get avgLatencyMs => entries.isEmpty
+      ? 0
+      : entries.fold(0, (sum, entry) => sum + entry.latencyMs) /
+          entries.length;
+  double get avgAttempts => entries.isEmpty
+      ? 0
+      : entries.fold(0, (sum, entry) => sum + entry.attempts) /
+          entries.length;
+  int get pdfRequests =>
+      entries.where((entry) => entry.isForPdf).toList().length;
+  int get nonPdfRequests =>
+      entries.where((entry) => !entry.isForPdf).toList().length;
+
+  Map<int, int> get statusCounts {
+    final counts = <int, int>{};
+    for (final entry in entries) {
+      counts.update(entry.statusCode, (value) => value + 1, ifAbsent: () => 1);
+    }
+    return counts;
+  }
+}
+
 /// Main Token screen state holder.
 /// In production, you can replace this with your state management of choice.
 class TokensController extends ChangeNotifier {
@@ -170,6 +242,9 @@ class TokensController extends ChangeNotifier {
   CertificationManager certificationManager = CertificationManager();
 
   UsageSnapshot usage = UsageSnapshot(loaded: false, series: const []);
+  List<UsageEntry> usageEntries = [];
+  String? selectedUsageModel;
+  DateTimeRange? selectedUsageRange;
 
   TokenEntry? get selectedToken {
     final id = selectedTokenId;
@@ -179,6 +254,25 @@ class TokensController extends ChangeNotifier {
       if (t.id == id) return t;
     }
     return null;
+  }
+
+  List<String> get availableUsageModels {
+    final models = usageEntries
+        .map((entry) => entry.providerModelDescription)
+        .toSet()
+        .toList();
+    models.sort();
+    return models;
+  }
+
+  void setUsageModel(String? model) {
+    selectedUsageModel = model == 'All models' ? null : model;
+    notifyListeners();
+  }
+
+  void setUsageRange(DateTimeRange? range) {
+    selectedUsageRange = range;
+    notifyListeners();
   }
 
   void selectToken(int id) {
@@ -320,20 +414,81 @@ class TokensController extends ChangeNotifier {
 
   /// Stub: refresh usage dashboard from backend.
   Future<void> refreshUsage() async {
-    // Placeholder "loaded" usage with fake series; replace with real data.
+    final res = await certificationManager.getUserUsage(
+      providerModelDescription: selectedUsageModel,
+      startDate: selectedUsageRange?.start,
+      endDate: selectedUsageRange?.end,
+    );
+
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      debug('getUserUsage failed: ${res.statusCode} ${res.body}');
+      usage = UsageSnapshot(loaded: false, series: const []);
+      notifyListeners();
+      return;
+    }
+
+    final decoded = jsonDecode(utf8.decode(res.bodyBytes));
+    final List<dynamic> list = decoded is List
+        ? decoded
+        : (decoded is Map<String, dynamic> && decoded['data'] is List
+              ? decoded['data'] as List
+              : const []);
+
+    usageEntries = list
+        .whereType<Map<String, dynamic>>()
+        .map(UsageEntry.fromJson)
+        .toList();
+
+    usageEntries.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
     usage = UsageSnapshot(
       loaded: true,
-      periodLabel: 'Last 7 days',
-      totalRequests: 104400,
-      totalTokens: 880000,
-      costUsd: 49.00,
-      series: List.generate(24, (i) {
-        final x = i.toDouble();
-        final y = 20 + 15 * math.sin(i / 3) + (i % 7) * 1.2;
-        return Offset(x, y.toDouble());
-      }),
+      periodLabel: _periodLabel(selectedUsageRange),
+      totalRequests: usageEntries.length,
+      totalTokens:
+          usageEntries.fold<int>(0, (sum, entry) => sum + entry.totalTokens),
+      series: _buildTokensSeries(usageEntries),
     );
+
     notifyListeners();
+  }
+
+  String _periodLabel(DateTimeRange? range) {
+    if (range == null) return 'All time';
+    final start = range.start;
+    final end = range.end;
+    return '${start.month}/${start.day}/${start.year} → ${end.month}/${end.day}/${end.year}';
+  }
+
+  List<Offset> _buildTokensSeries(List<UsageEntry> entries) {
+    if (entries.isEmpty) return const [];
+    final grouped = <DateTime, int>{};
+    for (final entry in entries) {
+      final key = DateTime(entry.createdAt.year, entry.createdAt.month, entry.createdAt.day);
+      grouped.update(key, (value) => value + entry.totalTokens, ifAbsent: () => entry.totalTokens);
+    }
+    final days = grouped.keys.toList()..sort();
+    return List.generate(days.length, (index) {
+      final value = grouped[days[index]] ?? 0;
+      return Offset(index.toDouble(), value.toDouble());
+    });
+  }
+
+  List<Offset> buildLatencySeries(List<UsageEntry> entries) {
+    if (entries.isEmpty) return const [];
+    final grouped = <DateTime, List<int>>{};
+    for (final entry in entries) {
+      final key = DateTime(entry.createdAt.year, entry.createdAt.month, entry.createdAt.day);
+      grouped.putIfAbsent(key, () => []).add(entry.latencyMs);
+    }
+    final days = grouped.keys.toList()..sort();
+    return List.generate(days.length, (index) {
+      final values = grouped[days[index]] ?? const [];
+      final avg = values.isEmpty
+          ? 0
+          : values.reduce((a, b) => a + b) / values.length;
+      return Offset(index.toDouble(), avg.toDouble());
+    });
   }
 
   static String _maskKey(String key) {
@@ -909,6 +1064,13 @@ class _UsageDashboardPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final selected = controller.selectedToken;
+    final data = UsageDashboardData(
+      entries: controller.usageEntries,
+      periodLabel: controller.usage.periodLabel,
+    );
+    final latencySeries = controller.buildLatencySeries(data.entries);
+    final statusCounts = data.statusCounts;
+    final statusKeys = statusCounts.keys.toList()..sort();
 
     return Container(
       decoration: TokensUI.cardDecoration(context),
@@ -926,65 +1088,117 @@ class _UsageDashboardPanel extends StatelessWidget {
                     : 'Provider: ${selected.provider.label} • Key: ${selected.name}',
               ),
               const SizedBox(height: 12),
-
-              // Stats row
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: [
-                  _StatCard(
-                    title: 'Requests',
-                    value: controller.usage.loaded
-                        ? '${controller.usage.totalRequests ?? 0}'
-                        : '—',
-                    subtitle: controller.usage.periodLabel,
-                    icon: Icons.swap_horiz_rounded,
-                  ),
-                  _StatCard(
-                    title: 'Tokens',
-                    value: controller.usage.loaded
-                        ? '${controller.usage.totalTokens ?? 0}'
-                        : '—',
-                    subtitle: controller.usage.periodLabel,
-                    icon: Icons.data_usage_rounded,
-                  ),
-                  _StatCard(
-                    title: 'Cost',
-                    value: controller.usage.loaded
-                        ? '\$${(controller.usage.costUsd ?? 0).toStringAsFixed(2)}'
-                        : '—',
-                    subtitle: controller.usage.periodLabel,
-                    icon: Icons.payments_rounded,
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 14),
-
-              // Chart
+              _UsageFilters(controller: controller),
+              const SizedBox(height: 12),
               Expanded(
-                child: Container(
-                  // Reserve space so the glow/button doesn't overlap the chart area.
-                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 72),
-                  decoration: BoxDecoration(
-                    color: cs.onSurface.withOpacity(0.02),
-                    borderRadius: BorderRadius.circular(TokensUI.innerRadius),
-                    border: Border.all(color: cs.onSurface.withOpacity(0.06)),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.only(bottom: 72),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          _StatCard(
+                            title: 'Requests',
+                            value: controller.usage.loaded
+                                ? '${data.totalRequests}'
+                                : '—',
+                            subtitle: data.periodLabel,
+                            icon: Icons.swap_horiz_rounded,
+                          ),
+                          _StatCard(
+                            title: 'Tokens',
+                            value: controller.usage.loaded
+                                ? '${data.totalTokens}'
+                                : '—',
+                            subtitle: data.periodLabel,
+                            icon: Icons.data_usage_rounded,
+                          ),
+                          _StatCard(
+                            title: 'Avg latency',
+                            value: controller.usage.loaded
+                                ? '${data.avgLatencyMs.toStringAsFixed(0)} ms'
+                                : '—',
+                            subtitle: data.periodLabel,
+                            icon: Icons.speed,
+                          ),
+                          _StatCard(
+                            title: 'Avg attempts',
+                            value: controller.usage.loaded
+                                ? data.avgAttempts.toStringAsFixed(1)
+                                : '—',
+                            subtitle: data.periodLabel,
+                            icon: Icons.repeat_rounded,
+                          ),
+                          _StatCard(
+                            title: 'PDF requests',
+                            value: controller.usage.loaded
+                                ? '${data.pdfRequests}'
+                                : '—',
+                            subtitle: data.periodLabel,
+                            icon: Icons.picture_as_pdf,
+                          ),
+                          _StatCard(
+                            title: 'Non-PDF requests',
+                            value: controller.usage.loaded
+                                ? '${data.nonPdfRequests}'
+                                : '—',
+                            subtitle: data.periodLabel,
+                            icon: Icons.public,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _ChartCard(
+                        title: 'Tokens over time',
+                        child: controller.usage.loaded &&
+                                controller.usage.series.isNotEmpty
+                            ? _UsageChart(series: controller.usage.series)
+                            : _EmptyChartPlaceholder(
+                                title: 'No token data yet',
+                                subtitle:
+                                    'Pick a date range and refresh to load usage.',
+                              ),
+                      ),
+                      const SizedBox(height: 16),
+                      _ChartCard(
+                        title: 'Latency over time',
+                        child: controller.usage.loaded && latencySeries.isNotEmpty
+                            ? _UsageChart(series: latencySeries)
+                            : _EmptyChartPlaceholder(
+                                title: 'No latency data yet',
+                                subtitle:
+                                    'Pick a date range and refresh to load usage.',
+                              ),
+                      ),
+                      const SizedBox(height: 16),
+                      _ChartCard(
+                        title: 'Status codes',
+                        child: controller.usage.loaded && statusKeys.isNotEmpty
+                            ? Wrap(
+                                spacing: 12,
+                                runSpacing: 12,
+                                children: statusKeys
+                                    .map(
+                                      (code) => _MiniStatChip(
+                                        label: '$code',
+                                        value: '${statusCounts[code] ?? 0}',
+                                      ),
+                                    )
+                                    .toList(),
+                              )
+                            : _EmptyChartPlaceholder(
+                                title: 'No status data yet',
+                                subtitle:
+                                    'Pick a date range and refresh to load usage.',
+                              ),
+                      ),
+                    ],
                   ),
-                  child:
-                      controller.usage.loaded &&
-                          controller.usage.series.isNotEmpty
-                      ? _UsageChart(series: controller.usage.series)
-                      : _EmptyChartPlaceholder(
-                          title: 'Usage chart not loaded',
-                          subtitle:
-                              'Set a default key to enable refresh, then use the button to fetch usage.',
-                        ),
                 ),
               ),
-
-              // Remove the old Row(...) entirely; keep a bit of bottom spacing.
-              const SizedBox(height: 6),
             ],
           ),
 
@@ -1032,6 +1246,129 @@ class _UsageChart extends StatelessWidget {
         gridColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
       ),
       child: const SizedBox.expand(),
+    );
+  }
+}
+
+class _UsageFilters extends StatelessWidget {
+  const _UsageFilters({required this.controller});
+
+  final TokensController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final models = controller.availableUsageModels;
+    final selected = controller.selectedUsageModel;
+    final range = controller.selectedUsageRange;
+
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        SizedBox(
+          width: 240,
+          child: DropdownButtonFormField<String>(
+            value: selected ?? 'All models',
+            items: [
+              const DropdownMenuItem(
+                value: 'All models',
+                child: Text('All models'),
+              ),
+              ...models.map(
+                (model) => DropdownMenuItem(
+                  value: model,
+                  child: Text(model, overflow: TextOverflow.ellipsis),
+                ),
+              ),
+            ],
+            onChanged: (value) => controller.setUsageModel(value),
+            decoration: const InputDecoration(
+              labelText: 'Provider model',
+              isDense: true,
+            ),
+          ),
+        ),
+        OutlinedButton.icon(
+          onPressed: () async {
+            final picked = await showDateRangePicker(
+              context: context,
+              firstDate: DateTime(2023),
+              lastDate: DateTime.now(),
+              initialDateRange: range,
+            );
+            if (picked != null) {
+              controller.setUsageRange(picked);
+            }
+          },
+          icon: const Icon(Icons.date_range),
+          label: Text(
+            range == null
+                ? 'All time'
+                : '${range.start.month}/${range.start.day} → ${range.end.month}/${range.end.day}',
+          ),
+        ),
+        ElevatedButton.icon(
+          onPressed: controller.refreshUsage,
+          icon: const Icon(Icons.refresh),
+          label: const Text('Refresh'),
+        ),
+      ],
+    );
+  }
+}
+
+class _ChartCard extends StatelessWidget {
+  const _ChartCard({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: cs.onSurface.withOpacity(0.02),
+        borderRadius: BorderRadius.circular(TokensUI.innerRadius),
+        border: Border.all(color: cs.onSurface.withOpacity(0.06)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 10),
+          SizedBox(height: 160, child: child),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniStatChip extends StatelessWidget {
+  const _MiniStatChip({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: cs.surfaceVariant.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cs.surfaceVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TextStyle(color: cs.onSurface.withOpacity(0.7))),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
+        ],
+      ),
     );
   }
 }
