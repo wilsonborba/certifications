@@ -328,6 +328,22 @@ class CertificationManager {
     return res;
   }
 
+  Future<http.Response> getUserUsage({
+    String? providerModelDescription,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) {
+    return _authedGet(
+      Uri.parse('$baseUrl/tokens/usage'),
+      queryParams: {
+        if (providerModelDescription != null && providerModelDescription.isNotEmpty)
+          'provider_model_description': providerModelDescription,
+        if (startDate != null) 'start_date': startDate.toIso8601String(),
+        if (endDate != null) 'end_date': endDate.toIso8601String(),
+      },
+    );
+  }
+
   Future<http.Response> setDefaultUserToken(String tokenName) async {
     final body = {'token_name': tokenName};
 
