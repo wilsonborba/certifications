@@ -58,12 +58,9 @@ class Settings {
     return _instance;
   }
 
-
-
   Future<void> init() async {
     FERNET_KEY_SECRET = 'mEt5jdm9aTbUYnjhQM_tY_CTQL-JvXe0u9VdKEM2KmY=';
   }
-
-
+}
 
 Settings get app_settings => Settings();

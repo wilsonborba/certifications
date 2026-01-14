@@ -8,7 +8,6 @@ void main() async {
 
   setUrlStrategy(PathUrlStrategy());
 
-  await Settings.loadEnv();
   await Settings().init();
 
   runApp(const App());
