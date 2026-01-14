@@ -4,7 +4,7 @@ import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/presentation/components/auth/login_redirect.dart';
 import 'package:accredit/presentation/components/auth/verify_session.dart';
 import 'package:accredit/presentation/components/boarding/app_bar.dart';
-import 'package:accredit/presentation/components/boarding/boarding_marketing.dart';
+import 'package:accredit/presentation/components/boarding/boarding_details.dart';
 import 'package:accredit/presentation/widgets/attachment/on_attachment.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -217,7 +217,20 @@ Padding(
 ),
 Padding(
   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24),
-  child: BoardingMarketing(isDesktop: false),
+  child: BoardingDetails(
+    title: 'A clear path to certification',
+    body:
+        'Add a website or PDF. We generate a quiz. Finish it to receive a clean, shareable certification with your score.',
+    items: const [
+      'Supports websites and PDFs today.',
+      'Multiple certifications per user.',
+      'Bring your own Gemini or Groq API key to start free.',
+      'YouTube quizzes are coming next if users want it.',
+    ],
+    titleSize: 24,
+    bodySize: 16,
+    itemSize: 14,
+  ),
 ),
 
       
