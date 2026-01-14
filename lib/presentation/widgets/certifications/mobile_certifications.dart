@@ -1,0 +1,56 @@
+import 'package:accredit/core/settings.dart';
+import 'package:accredit/core/utils/my_nagivation.dart';
+import 'package:accredit/presentation/components/attachment/app_bar.dart';
+import 'package:accredit/presentation/components/certifications/certifications_view.dart';
+import 'package:accredit/presentation/widgets/certifications/on_certifications.dart';
+import 'package:accredit/presentation/widgets/plans/on_plans.dart';
+import 'package:accredit/presentation/widgets/tokens/on_tokens.dart';
+import 'package:flutter/material.dart';
+
+class MobileCertifications extends StatefulWidget {
+  const MobileCertifications({super.key});
+
+  @override
+  State<MobileCertifications> createState() => _MobileCertificationsState();
+}
+
+class _MobileCertificationsState extends State<MobileCertifications> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AttachmentAppBar(
+        onCertificates: () {
+          NavigationService.push(const OnCertificationsScreen());
+        },
+        onPlans: () {
+          NavigationService.push(const OnPlansScreen());
+        },
+        onTokens: () {
+          NavigationService.push(const OnTokensScreen());
+        },
+        onSupport: () => redirectToUrl('mailto:support@asodya.com'),
+        onAbout: () {
+          final url = 'https://${app_settings.ASODYA_MAIN_DOMAIN}';
+          redirectToUrl(url, replace: true);
+        },
+      ),
+      endDrawer: AttachmentSideMenu(
+        onCertificates: () {
+          NavigationService.push(const OnCertificationsScreen());
+        },
+        onPlans: () {
+          NavigationService.push(const OnPlansScreen());
+        },
+        onTokens: () {
+          NavigationService.push(const OnTokensScreen());
+        },
+        onSupport: () => redirectToUrl('mailto:support@asodya.com'),
+        onAbout: () {
+          final url = 'https://${app_settings.ASODYA_MAIN_DOMAIN}';
+          redirectToUrl(url, replace: true);
+        },
+      ),
+      body: const CertificationsView(isDesktop: false),
+    );
+  }
+}

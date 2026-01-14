@@ -154,7 +154,7 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
                 itemName: widget.itemName,
                 identification: ident.inputIdentification,
                 title: ident.titleIdentification!,
-                about: 'About',
+                about: 'Open this topic to generate a quiz.',
                 link: ident.linkIdentification!,
                 imageUrl: safeImageFromIdent(ident),
 

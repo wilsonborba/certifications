@@ -159,13 +159,13 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
         ),
         itemBuilder: (ctx, i) {
           final ident = getTopicIdentifications(items[i])!;
-          return TopicsCard(
-            itemName: widget.itemName,
-            identification: ident.inputIdentification,
-            title: ident.titleIdentification!,
-            about: 'About',
-            link: ident.linkIdentification!,
-            imageUrl: safeImageFromIdent(ident),
+              return TopicsCard(
+                itemName: widget.itemName,
+                identification: ident.inputIdentification,
+                title: ident.titleIdentification!,
+                about: 'Open this topic to generate a quiz.',
+                link: ident.linkIdentification!,
+                imageUrl: safeImageFromIdent(ident),
 
             // mobile sizing
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),

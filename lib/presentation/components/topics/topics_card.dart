@@ -166,25 +166,48 @@ class _TopicsCardState extends State<TopicsCard> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    Text(widget.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: titleStyle),
+                    Text(
+                      widget.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: titleStyle,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      widget.about,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: cs.onSurface.withAlpha((0.6 * 255).toInt()),
+                        fontSize: 13,
+                      ),
+                    ),
                     const Spacer(),
-                   Wrap(
+                    Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: [
                         _HoverableAction(
                           label: 'See more',
                           icon: Icons.remove_red_eye_outlined,
-                          minSize: Size(widget.buttonMinWidth, widget.buttonMinHeight),
+                          minSize: Size(
+                            widget.buttonMinWidth,
+                            widget.buttonMinHeight,
+                          ),
                           baseColor: cs.onSurface,
                           hoverColor: cs.primary,
-                          onTap: () => redirectToUrl(widget.link, replace: false),
+                          onTap: () => redirectToUrl(
+                            widget.link,
+                            replace: false,
+                          ),
                         ),
-                        const Spacer(),
                         _HoverableAction(
                           label: 'Select',
                           icon: Icons.check_circle_outline,
-                          minSize: Size(widget.buttonMinWidth, widget.buttonMinHeight),
+                          minSize: Size(
+                            widget.buttonMinWidth,
+                            widget.buttonMinHeight,
+                          ),
                           baseColor: cs.onSurface,
                           hoverColor: cs.primary,
                           onTap: () {
