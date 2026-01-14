@@ -55,6 +55,11 @@ class MyRouteParser {
     return uri.pathSegments.isNotEmpty ? uri.pathSegments[0] : '';
   }
 
+  List<String> get segments {
+    final uri = _parsedUri();
+    return uri.pathSegments;
+  }
+
   Uri _parsedUri() {
     try {
       final name = settings.name;
