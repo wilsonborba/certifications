@@ -96,7 +96,7 @@ class Certification {
       shareUrl:
           (m['share_url'] ??
                   m['public_url'] ??
-                  'https://accredit.asodya.com/certifications/$id')
+                  'https://certifications.asodya.com/certifications/$id')
               .toString(),
       badgeUrl: m['badge_url']?.toString(),
       issuerName: m['issuer_name']?.toString(),

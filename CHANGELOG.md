@@ -70,6 +70,8 @@
 - *(token)* Navigation allowed after token set as default
 - *(token)* User go to main screen only if has token set already
 - *(release)* Add last feats
+- *(release)* Add last feats
+- *(link)* Adjusted the name of the link
 
 ### 🐛 Bug Fixes
 
