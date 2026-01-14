@@ -11,9 +11,11 @@ import 'package:flutter_svg/svg.dart';
 import 'package:accredit/core/utils/my_background.dart';
 import 'package:accredit/core/utils/my_nagivation.dart';
 import 'package:accredit/presentation/components/boarding/box_explaning.dart';
+import 'package:accredit/presentation/components/boarding/boarding_marketing.dart';
 import 'package:accredit/presentation/components/boarding/first_phrase.dart';
 import 'package:accredit/presentation/components/boarding/middle_button.dart';
 import 'package:accredit/presentation/components/boarding/second_phrase.dart';
+import 'package:accredit/presentation/components/plans/plans_view.dart';
 
 
 
@@ -210,7 +212,21 @@ SizedBox(
       ),
     ],
   ),
-)
+),
+Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 80),
+  child: PlansView(
+    isDesktop: true,
+    onConfigureKeys: () async {
+      final url = await urlRedirectionToAuth();
+      redirectToUrl(url, replace: true);
+    },
+  ),
+),
+Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40),
+  child: BoardingMarketing(isDesktop: true),
+),
 
       
       
