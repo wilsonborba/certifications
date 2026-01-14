@@ -34,7 +34,7 @@ class Settings {
         "Certifications is a secure and user-friendly platform for getting certifications.",
     logoImageUrl:
         "https://res.cloudinary.com/dhncdmb2t/image/upload/v1761907623/temp_logo_tw3grt.png",
-    urlApp: "http://localhost:1165",
+    urlApp: "https://certifications.asodya.com",
     twoFaAuth: false,
     primaryColor: "#3498db",
     secondaryColor: "#2ecc71",
@@ -58,22 +58,12 @@ class Settings {
     return _instance;
   }
 
-  static Future<void> loadEnv([String path = '.env']) async {
-    await dotenv.load(fileName: path);
-  }
+
 
   Future<void> init() async {
     FERNET_KEY_SECRET = 'mEt5jdm9aTbUYnjhQM_tY_CTQL-JvXe0u9VdKEM2KmY=';
   }
 
-  Future<String> _getEnv(String key) async {
-    try {
-      final value = await _localSourceAdapter.getEnvData(key);
-      return value;
-    } catch (e) {
-      throw Exception("Failed to load environment variable [$key]: $e");
-    }
-  }
-}
+
 
 Settings get app_settings => Settings();
