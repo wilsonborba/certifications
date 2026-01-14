@@ -114,7 +114,7 @@ class UsageDashboardData {
 
   int get totalRequests => entries.length;
   int get totalTokens =>
-      entries.fold(0, (sum, entry) => sum + entry.totalTokens);
+      entries.fold<int>(0, (sum, entry) => sum + entry.totalTokens);
   double get avgLatencyMs => entries.isEmpty
       ? 0
       : entries.fold(0, (sum, entry) => sum + entry.latencyMs) /
@@ -445,10 +445,8 @@ class TokensController extends ChangeNotifier {
       loaded: true,
       periodLabel: _periodLabel(selectedUsageRange),
       totalRequests: usageEntries.length,
-      totalTokens: usageEntries.fold(
-        0,
-        (sum, entry) => sum + entry.totalTokens,
-      ),
+      totalTokens:
+          usageEntries.fold<int>(0, (sum, entry) => sum + entry.totalTokens),
       series: _buildTokensSeries(usageEntries),
     );
 
