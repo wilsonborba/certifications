@@ -14,9 +14,9 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 /// a StatefulWidget holding shared logic for Mobile/Desktop
 abstract class BaseSyncAuth extends StatefulWidget {
-  final String? tokenizedParam;
+  final String? authExchangeToken;
 
-  const BaseSyncAuth({super.key, this.tokenizedParam});
+  const BaseSyncAuth({super.key, this.authExchangeToken});
 }
 
 abstract class BaseSyncAuthState<T extends BaseSyncAuth> extends State<T> {
@@ -29,10 +29,10 @@ abstract class BaseSyncAuthState<T extends BaseSyncAuth> extends State<T> {
   }
 
   Future<void> _exchangeTokenAndRoute() async {
-    final token = widget.tokenizedParam;
+    final authExchangeToken = widget.authExchangeToken;
 
-    if (token == null || token.isEmpty) {
-      debug('No tokenizedParam provided, checking existing session...');
+    if (authExchangeToken == null || authExchangeToken.isEmpty) {
+      debug('No auth exchange token provided, checking existing session...');
       try {
         final hasSession = await isThereSession(
           cookieName: 'hint',
@@ -65,7 +65,9 @@ abstract class BaseSyncAuthState<T extends BaseSyncAuth> extends State<T> {
     }
 
     try {
-      final resp = await ApiAsodyaManager().exchange(token);
+      final resp = await ApiAsodyaManager().exchangeAuthExchangeToken(
+        authExchangeToken,
+      );
 
       if (!mounted) return;
 
@@ -96,13 +98,13 @@ abstract class BaseSyncAuthState<T extends BaseSyncAuth> extends State<T> {
         });
       } else {
         debug(
-          'Token exchange failed with status ${resp.statusCode}. Redirecting to login.',
+          'Auth exchange token exchange failed with status ${resp.statusCode}. Redirecting to login.',
         );
         _toLogin();
       }
     } catch (e) {
       if (!mounted) return;
-      debug('Error during token exchange: $e');
+      debug('Error during auth exchange token exchange: $e');
       _toLogin();
     }
   }

@@ -1,6 +1,7 @@
 import 'package:accredit/core/settings.dart';
 import 'package:accredit/core/utils/my_router_parser.dart';
 import 'package:accredit/presentation/components/auth/session_gate.dart';
+import 'package:accredit/presentation/components/auth/auth_artifact_params.dart';
 import 'package:accredit/presentation/widgets/accredit/on_accredit.dart';
 import 'package:accredit/presentation/widgets/auth/on_sync_auth.dart';
 import 'package:flutter/material.dart';
@@ -30,14 +31,15 @@ class _AppState extends State<App> {
         final parser = MyRouteParser(settings: settings);
         final routePath = parser.path;
         final segments = parser.segments;
-        final tokenizedParam = parser.parsedParams(
-          app_settings.AUTH_PARAM_KEY_NAME,
+        final authExchangeToken = resolveAuthExchangeToken(
+          readParam: parser.parsedParams,
         );
 
         if (routePath == 'sync') {
           return MaterialPageRoute(
             settings: const RouteSettings(name: OnSyncAuthScreen.route),
-            builder: (_) => OnSyncAuthScreen(tokenizedParam: tokenizedParam),
+            builder: (_) =>
+                OnSyncAuthScreen(authExchangeToken: authExchangeToken),
           );
         } else if (routePath == 'certifications' && segments.length > 1) {
           final certificationId = segments[1];

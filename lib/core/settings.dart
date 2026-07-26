@@ -23,8 +23,8 @@ class Settings {
 
   String get ASODYA_AUTH_URL => 'https://auth.$ASODYA_MAIN_DOMAIN';
 
-  String get ASODYA_AUTH_LOGIN_URL => '$ASODYA_AUTH_URL/log_in?tokenized=';
-  String get ASODYA_AUTH_SIGNUP_URL => '$ASODYA_AUTH_URL/sign_up?tokenized=';
+  String get ASODYA_AUTH_LOGIN_URL => '$ASODYA_AUTH_URL/log_in';
+  String get ASODYA_AUTH_SIGNUP_URL => '$ASODYA_AUTH_URL/sign_up';
 
   final String imgsPath = "lib/presentation/assets/img/";
 
@@ -42,8 +42,6 @@ class Settings {
     quartaryColor: null,
     createdAt: DateTime.now().toIso8601String(),
   ).toJson();
-
-  final String AUTH_PARAM_KEY_NAME = "tokenized";
 
   // not accessible from outside
   final LocalSourceAdapter _localSourceAdapter = LocalSourceAdapter(
