@@ -3,25 +3,26 @@
 import 'package:accredit/domain/models/application_info.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:accredit/dal/local/local_source_adapter.dart';
+import 'package:flutter/foundation.dart';
 
 class Settings {
   // accessible from outside
 
   late final String FERNET_KEY_SECRET;
 
-  final bool developmentMode = false;
+  final bool developmentMode = kDebugMode;
 
   // ASODYA URLS
 
   String get ASODYA_MAIN_DOMAIN => 'asodya.com';
 
   String get ASODYA_API_URL => developmentMode
-      ? 'http://localhost:8000'
-      : 'https://api.$ASODYA_MAIN_DOMAIN';
+      ? 'http://192.168.1.103:8101'
+      : 'https://api.$ASODYA_MAIN_DOMAIN:8101';
 
-  // String get ASODYA_AUTH_URL => developmentMode ? 'http://localhost:7000' : 'https://auth.$ASODYA_MAIN_DOMAIN';
-
-  String get ASODYA_AUTH_URL => 'https://auth.$ASODYA_MAIN_DOMAIN';
+  String get ASODYA_AUTH_URL => developmentMode
+      ? 'http://192.168.1.103:8100'
+      : 'https://auth.$ASODYA_MAIN_DOMAIN:8100';
 
   String get ASODYA_AUTH_LOGIN_URL => '$ASODYA_AUTH_URL/log_in';
   String get ASODYA_AUTH_SIGNUP_URL => '$ASODYA_AUTH_URL/sign_up';
@@ -34,7 +35,9 @@ class Settings {
         "Certifications is a secure and user-friendly platform for getting certifications.",
     logoImageUrl:
         "https://res.cloudinary.com/dhncdmb2t/image/upload/v1761907623/temp_logo_tw3grt.png",
-    urlApp: "https://certifications.asodya.com",
+    urlApp: developmentMode
+        ? "http://192.168.1.103:8102"
+        : "https://certifications.asodya.com:8102",
     twoFaAuth: false,
     primaryColor: "#3498db",
     secondaryColor: "#2ecc71",
