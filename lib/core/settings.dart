@@ -37,7 +37,7 @@ class Settings {
         "https://res.cloudinary.com/dhncdmb2t/image/upload/v1761907623/temp_logo_tw3grt.png",
     urlApp: developmentMode
         ? "http://192.168.1.103:8102"
-        : "https://certifications.asodya.com:8102",
+        : "https://certifications.asodya.com",
     twoFaAuth: false,
     primaryColor: "#3498db",
     secondaryColor: "#2ecc71",
