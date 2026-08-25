@@ -9,12 +9,11 @@ import 'package:accredit/presentation/widgets/page_filter/mobile_page_filter.dar
 
 // Use the file where getPdfInputFromApi(...) is defined.
 // If you actually have a manager wrapper, adjust this import accordingly.
-import 'package:accredit/domain/services/pdf_frontend_prescan_manager.dart' as pre;
+import 'package:accredit/domain/services/pdf_frontend_prescan_manager.dart'
+    as pre;
 
 // Your app's navigation helper (you mentioned NavigationService.push)
 import 'package:accredit/core/utils/my_nagivation.dart'; // NavigationService
-
-
 
 class OnPageFilterScreen extends StatefulWidget {
   final String documentId;
@@ -37,8 +36,8 @@ class OnPageFilterScreen extends StatefulWidget {
 }
 
 class _OnPageFilterScreenState extends State<OnPageFilterScreen> {
-  bool _checking = true;     // show spinner until we finish the check
-  bool _verified = false;    // true only when API returns 200
+  bool _checking = true; // show spinner until we finish the check
+  bool _verified = false; // true only when API returns 200
   bool _navigatedAway = false;
 
   @override
@@ -97,14 +96,17 @@ class _OnPageFilterScreenState extends State<OnPageFilterScreen> {
     // While checking: show a simple loader
     if (_checking) {
       return Scaffold(
-      
         body: const Center(
           child: Padding(
             padding: EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SizedBox(width: 32, height: 32, child: CircularProgressIndicator()),
+                SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: CircularProgressIndicator(),
+                ),
                 SizedBox(height: 12),
                 Text('Almost there…'),
               ],
@@ -117,8 +119,16 @@ class _OnPageFilterScreenState extends State<OnPageFilterScreen> {
     // Verified OK → render the real screen
     if (_verified) {
       return ScreenAdjuster(
-        mobileWidget: MobilePageFilter(documentId: widget.documentId, pdfBytes: widget.pdfBytes, fileName: widget.fileName),
-        desktopWidget: DesktopPageFilter(documentId: widget.documentId, pdfBytes: widget.pdfBytes, fileName: widget.fileName),
+        mobileWidget: MobilePageFilter(
+          documentId: widget.documentId,
+          pdfBytes: widget.pdfBytes,
+          fileName: widget.fileName,
+        ),
+        desktopWidget: DesktopPageFilter(
+          documentId: widget.documentId,
+          pdfBytes: widget.pdfBytes,
+          fileName: widget.fileName,
+        ),
       ).adjust(context);
     }
 

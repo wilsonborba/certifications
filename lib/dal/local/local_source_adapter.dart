@@ -1,15 +1,15 @@
-
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:accredit/core/utils/my_logs.dart';
 import 'dart:convert';
-import 'package:web/web.dart' as web; 
-
+import 'package:web/web.dart' as web;
 
 /// Delete a cookie by name. Tries a specific [path] and optional [domain].
 void deleteCookie(String name, {String path = '/', String? domain}) {
   try {
     final expired = 'Thu, 01 Jan 1970 00:00:00 GMT';
-    final domainPart = (domain != null && domain.isNotEmpty) ? '; domain=$domain' : '';
+    final domainPart = (domain != null && domain.isNotEmpty)
+        ? '; domain=$domain'
+        : '';
     web.document.cookie = '$name=; expires=$expired; path=$path$domainPart';
   } catch (e) {
     debug('deleteCookie($name) failed: $e');
@@ -49,29 +49,21 @@ void deleteCookies(Iterable<String> names) {
   }
 }
 
+String? readCookie(String name) {
+  final cookies = web.document.cookie; // e.g. "foo=bar; baz=qux"
+  if (cookies == null || cookies.isEmpty) return null;
 
-  String? readCookie(String name) {
-    final cookies = web.document.cookie; // e.g. "foo=bar; baz=qux"
-    if (cookies == null || cookies.isEmpty) return null;
-
-    for (final cookie in cookies.split(';')) {
-      final parts = cookie.trim().split('=');
-      if (parts.length == 2 && parts[0] == name) {
-        return parts[1];
-      }
+  for (final cookie in cookies.split(';')) {
+    final parts = cookie.trim().split('=');
+    if (parts.length == 2 && parts[0] == name) {
+      return parts[1];
     }
-    return null;
   }
-
-
-
+  return null;
+}
 
 class LocalSourceAdapter {
-
-
-
-
-LocalSourceAdapter({required this.namespace});
+  LocalSourceAdapter({required this.namespace});
 
   final String namespace;
 
@@ -154,7 +146,6 @@ LocalSourceAdapter({required this.namespace});
     return _store.getItem(_ns(key)) != null;
   }
 
-
   Future<String> getEnvData(String key) async {
     try {
       // Retrieve the value from the environment variables
@@ -169,5 +160,4 @@ LocalSourceAdapter({required this.namespace});
       rethrow;
     }
   }
-
 }

@@ -3,10 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // ─── PALETA DE CORES ──────────────────────────────────────────────────────
-  // is 
-  static const Color primary = Color.fromRGBO(131, 0, 192, 1);       // vibrant purple
-  static const Color secondary = Color.fromRGBO(0, 255, 102, 1);     // neon green
-  static const Color surface = Color(0xFFF5F5F5);       // light grey
+  // is
+  static const Color primary = Color.fromRGBO(131, 0, 192, 1); // vibrant purple
+  static const Color secondary = Color.fromRGBO(0, 255, 102, 1); // neon green
+  static const Color surface = Color(0xFFF5F5F5); // light grey
   static const Color onPrimary = Colors.white;
   static const Color onSecondary = Colors.black;
   static const Color onSurface = Colors.black;
@@ -14,27 +14,25 @@ class AppTheme {
   static const Color onError = Colors.white;
 
   // ─── COLOR SCHEME (tema claro) ─────────────────────────────────────────────
-  static final ColorScheme colorScheme = ColorScheme.fromSeed(
-    seedColor: primary,
-    secondary: secondary,
-    brightness: Brightness.light,
-  ).copyWith(
-    surface: surface,
-    onSurface: onSurface,
-    onSecondary: onSecondary,
-    error: error,
-    onError: onError,
-  );
+  static final ColorScheme colorScheme =
+      ColorScheme.fromSeed(
+        seedColor: primary,
+        secondary: secondary,
+        brightness: Brightness.light,
+      ).copyWith(
+        surface: surface,
+        onSurface: onSurface,
+        onSecondary: onSecondary,
+        error: error,
+        onError: onError,
+      );
 
   // ─── COLOR SCHEME (tema escuro) ─────────────────────────────────────────────
   static final ColorScheme darkColorScheme = ColorScheme.fromSeed(
     seedColor: primary,
     secondary: secondary,
     brightness: Brightness.dark,
-  ).copyWith(
-    error: error,
-    onError: onError,
-  );
+  ).copyWith(error: error, onError: onError);
 
   // ─── TEMA CLARO ─────────────────────────────────────────────────────────────
   static ThemeData light() {

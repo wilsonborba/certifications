@@ -8,8 +8,6 @@
 //     link_identification: str | None = field(default=None)
 //     img_link_identification: str | None = field(default=None)
 
-
-
 class Identifications {
   String inputIdentification;
   String? titleIdentification;
@@ -51,16 +49,13 @@ class Identifications {
   }
 }
 
-
-
 class PdfInputInfo {
   final int pages;
   final String? pdfUrl;
   const PdfInputInfo({required this.pages, this.pdfUrl});
 }
 
-
-class   ContextInfo {
+class ContextInfo {
   final String message;
   final dynamic data;
   final int statusCode;
@@ -79,13 +74,8 @@ class   ContextInfo {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'message': message,
-      'data': data,
-      'status_code': statusCode,
-    };
+    return {'message': message, 'data': data, 'status_code': statusCode};
   }
-
 }
 
 /// Model returned on successful submit.

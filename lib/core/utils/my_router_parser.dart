@@ -36,7 +36,6 @@ String _stripTrailingSlash(String url) {
   return uri.replace(path: newPath).toString();
 }
 
-
 void updatePathWeb(String path) {
   try {
     final currentHref = html.window.location.href;

@@ -174,14 +174,15 @@ class _CertificationsViewState extends State<CertificationsView> {
 
   void _openCertification(String certificationId) {
     if (certificationId.isEmpty) return;
-    NavigationService.push(
-      OnAccreditScreen(certificationId: certificationId),
-    );
+    NavigationService.push(OnAccreditScreen(certificationId: certificationId));
   }
 }
 
 class _CertificationsHeader extends StatelessWidget {
-  const _CertificationsHeader({required this.isDesktop, required this.onRefresh});
+  const _CertificationsHeader({
+    required this.isDesktop,
+    required this.onRefresh,
+  });
 
   final bool isDesktop;
   final VoidCallback onRefresh;
@@ -200,16 +201,16 @@ class _CertificationsHeader extends StatelessWidget {
               Text(
                 'Your Certifications',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: scheme.onSurface,
-                    ),
+                  fontWeight: FontWeight.w700,
+                  color: scheme.onSurface,
+                ),
               ),
               const SizedBox(height: 6),
               Text(
                 'Share your achievements or open the full certificate.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurface.withOpacity(0.65),
-                    ),
+                  color: scheme.onSurface.withOpacity(0.65),
+                ),
               ),
             ],
           ),
@@ -259,16 +260,16 @@ class _CertificationsEmpty extends StatelessWidget {
         children: [
           Text(
             'No certifications yet.',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
           Text(
             'Complete a quiz to earn your first certification and it will appear here.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurface.withOpacity(0.65),
-                ),
+              color: scheme.onSurface.withOpacity(0.65),
+            ),
           ),
           const SizedBox(height: 16),
           OutlinedButton.icon(
@@ -305,9 +306,9 @@ class _CertificationsError extends StatelessWidget {
           Text(
             message,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: scheme.error,
-                  fontWeight: FontWeight.w600,
-                ),
+              color: scheme.error,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
@@ -372,8 +373,8 @@ class CertificationCard extends StatelessWidget {
                     Text(
                       certification.title,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        fontWeight: FontWeight.w700,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -381,8 +382,8 @@ class CertificationCard extends StatelessWidget {
                     Text(
                       certification.fullName,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: scheme.onSurface.withOpacity(0.7),
-                          ),
+                        color: scheme.onSurface.withOpacity(0.7),
+                      ),
                     ),
                     if (certification.certificationAs != null &&
                         certification.certificationAs!.isNotEmpty) ...[
@@ -390,17 +391,15 @@ class CertificationCard extends StatelessWidget {
                       Text(
                         certification.certificationAs!,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: scheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          color: scheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ],
                 ),
               ),
-              _BadgePill(
-                label: 'Issued ${certification.issuedAtLabel}',
-              ),
+              _BadgePill(label: 'Issued ${certification.issuedAtLabel}'),
             ],
           ),
           const SizedBox(height: 14),
@@ -482,9 +481,9 @@ class _BadgePill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: scheme.primary,
-              fontWeight: FontWeight.w600,
-            ),
+          color: scheme.primary,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -514,8 +513,8 @@ class _InfoChip extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: scheme.onSurface.withOpacity(0.8),
-                ),
+              color: scheme.onSurface.withOpacity(0.8),
+            ),
           ),
         ],
       ),

@@ -1,15 +1,15 @@
 //ApplicationInfo {
-    //     name: "Asodya Admin".to_string(),
-    //     description: "Access Admin Panel from Asodya.".to_string(),
-    //     logo_image_url: "https://res.cloudinary.com/dhncdmb2t/image/upload/v1751705980/image_ff4hdh.png".to_string(),
-    //     url_app: "https://admin.asodya.com".to_string(),
-    //     two_fa_auth: false,
-    //     primary_color: "#123456".to_string(),
-    //     secondary_color: "#654321".to_string(),
-    //     tertiary_color: "#abcdef".to_string(),
-    //     quartary_color: None,
-    //     created_at: chrono::Utc::now().to_rfc3339(),
-    // }
+//     name: "Asodya Admin".to_string(),
+//     description: "Access Admin Panel from Asodya.".to_string(),
+//     logo_image_url: "https://res.cloudinary.com/dhncdmb2t/image/upload/v1751705980/image_ff4hdh.png".to_string(),
+//     url_app: "https://admin.asodya.com".to_string(),
+//     two_fa_auth: false,
+//     primary_color: "#123456".to_string(),
+//     secondary_color: "#654321".to_string(),
+//     tertiary_color: "#abcdef".to_string(),
+//     quartary_color: None,
+//     created_at: chrono::Utc::now().to_rfc3339(),
+// }
 
 class ApplicationInfo {
   final String name;

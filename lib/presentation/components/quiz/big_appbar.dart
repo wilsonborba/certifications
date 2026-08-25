@@ -68,7 +68,11 @@ class QuizAppBar extends StatelessWidget implements PreferredSizeWidget {
               return Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.timer_outlined, color: Colors.white, size: 28),
+                  const Icon(
+                    Icons.timer_outlined,
+                    color: Colors.white,
+                    size: 28,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     mmss,

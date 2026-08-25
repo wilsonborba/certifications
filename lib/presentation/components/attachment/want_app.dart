@@ -32,9 +32,15 @@ class _WantTextState extends State<WantText> {
       transitionDuration: const Duration(milliseconds: 220),
       pageBuilder: (_, __, ___) => const SizedBox.shrink(),
       transitionBuilder: (ctx, anim, __, ___) {
-        final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+        final curved = CurvedAnimation(
+          parent: anim,
+          curve: Curves.easeOutCubic,
+        );
         return BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16 * anim.value, sigmaY: 16 * anim.value),
+          filter: ImageFilter.blur(
+            sigmaX: 16 * anim.value,
+            sigmaY: 16 * anim.value,
+          ),
           child: Opacity(
             opacity: anim.value,
             child: Center(
@@ -54,7 +60,9 @@ class _WantTextState extends State<WantText> {
 
   @override
   Widget build(BuildContext context) {
-    final base = Theme.of(context).textTheme.titleMedium ?? const TextStyle(fontSize: 16);
+    final base =
+        Theme.of(context).textTheme.titleMedium ??
+        const TextStyle(fontSize: 16);
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
@@ -66,8 +74,8 @@ class _WantTextState extends State<WantText> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(999),
             color: (_hover
-                    ? Colors.black.withAlpha((0.05 * 255).toInt())
-                    : Colors.black.withAlpha((0.03 * 255).toInt())),
+                ? Colors.black.withAlpha((0.05 * 255).toInt())
+                : Colors.black.withAlpha((0.03 * 255).toInt())),
             border: Border.all(
               color: Colors.black.withAlpha((0.08 * 255).toInt()),
             ),
@@ -75,9 +83,13 @@ class _WantTextState extends State<WantText> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.add_circle_outline,
-                  size: 18,
-                  color: _hover ? widget.purple : Colors.black.withAlpha((0.7 * 255).toInt())),
+              Icon(
+                Icons.add_circle_outline,
+                size: 18,
+                color: _hover
+                    ? widget.purple
+                    : Colors.black.withAlpha((0.7 * 255).toInt()),
+              ),
               const SizedBox(width: 8),
               AnimatedDefaultTextStyle(
                 duration: const Duration(milliseconds: 160),
@@ -163,14 +175,22 @@ class _LinkRequestDialogState extends State<_LinkRequestDialog> {
     return AnimatedPadding(
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOut,
-      padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: insets.bottom + 16),
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 16,
+        bottom: insets.bottom + 16,
+      ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 520),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(radius),
             color: Colors.white.withAlpha((0.68 * 255).toInt()),
-            border: Border.all(color: Colors.white.withAlpha((0.75 * 255).toInt()), width: 1),
+            border: Border.all(
+              color: Colors.white.withAlpha((0.75 * 255).toInt()),
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withAlpha((0.08 * 255).toInt()),
@@ -248,7 +268,11 @@ class _FormBox extends StatelessWidget {
           children: [
             const Text(
               'Request a link',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.black87),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Colors.black87,
+              ),
             ),
             IconButton(
               tooltip: 'Close',
@@ -272,10 +296,15 @@ class _FormBox extends StatelessWidget {
             hintText: 'https://example.com',
             filled: true,
             fillColor: Colors.white.withAlpha((0.72 * 255).toInt()),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.black.withAlpha((0.08 * 255).toInt())),
+              borderSide: BorderSide(
+                color: Colors.black.withAlpha((0.08 * 255).toInt()),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -288,7 +317,10 @@ class _FormBox extends StatelessWidget {
                 color: valid ? Colors.green : Colors.black54,
               ),
             ),
-            suffixIconConstraints: const BoxConstraints(minHeight: 40, minWidth: 40),
+            suffixIconConstraints: const BoxConstraints(
+              minHeight: 40,
+              minWidth: 40,
+            ),
           ),
         ),
 
@@ -300,12 +332,19 @@ class _FormBox extends StatelessWidget {
           child: FilledButton(
             onPressed: valid ? onSubmit : null,
             style: FilledButton.styleFrom(
-              backgroundColor: valid ? purple : Colors.grey.withAlpha((0.30 * 255).toInt()),
+              backgroundColor: valid
+                  ? purple
+                  : Colors.grey.withAlpha((0.30 * 255).toInt()),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               elevation: valid ? 1.5 : 0,
             ),
-            child: const Text('Request', style: TextStyle(fontWeight: FontWeight.w700)),
+            child: const Text(
+              'Request',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
           ),
         ),
 
@@ -338,7 +377,10 @@ class _SuccessBox extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(
-              colors: [Colors.green.withAlpha((0.20 * 255).toInt()), Colors.green.withAlpha((0.45 * 255).toInt())],
+              colors: [
+                Colors.green.withAlpha((0.20 * 255).toInt()),
+                Colors.green.withAlpha((0.45 * 255).toInt()),
+              ],
             ),
             boxShadow: [
               BoxShadow(
@@ -353,7 +395,10 @@ class _SuccessBox extends StatelessWidget {
         const SizedBox(height: 12),
         Text(
           'Request received',
-          style: t.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: Colors.black87),
+          style: t.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: Colors.black87,
+          ),
         ),
         const SizedBox(height: 6),
         Text(

@@ -5,7 +5,7 @@ import 'package:accredit/presentation/widgets/topics/base_topics.dart';
 
 class MobileTopics extends BaseTopics {
   const MobileTopics({super.key, required String itemName})
-      : super(itemName: itemName);
+    : super(itemName: itemName);
 
   @override
   State<MobileTopics> createState() => _MobileTopicsState();
@@ -28,7 +28,13 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
           // Label bar with accent line
           Row(
             children: [
-              Expanded(child: Divider(height: 1, thickness: 1, color: cs.outlineVariant)),
+              Expanded(
+                child: Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: cs.outlineVariant,
+                ),
+              ),
               // const SizedBox(width: 12),
               // Row(
               //   children: [
@@ -48,7 +54,13 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
               //   ],
               // ),
               // const SizedBox(width: 12),
-              Expanded(child: Divider(height: 1, thickness: 1, color: cs.outlineVariant)),
+              Expanded(
+                child: Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: cs.outlineVariant,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -63,7 +75,9 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
                   decoration: BoxDecoration(
                     color: cs.surface,
                     borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: cs.primary.withAlpha((0.15 * 255).toInt())),
+                    border: Border.all(
+                      color: cs.primary.withAlpha((0.15 * 255).toInt()),
+                    ),
                     boxShadow: [
                       // soft neumorphic lift
                       BoxShadow(
@@ -92,12 +106,12 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
                       prefixIcon: Icon(Icons.search, color: subtle),
                       contentPadding: const EdgeInsets.only(top: 10),
                       focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(999),
-                      borderSide: const BorderSide(
-                        color: Colors.transparent, // your purple when clicked
-                        width: 2,
+                        borderRadius: BorderRadius.circular(999),
+                        borderSide: const BorderSide(
+                          color: Colors.transparent, // your purple when clicked
+                          width: 2,
+                        ),
                       ),
-                    ),
                     ),
                   ),
                 ),
@@ -113,7 +127,9 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
                     elevation: 0,
                     backgroundColor: cs.primary,
                     foregroundColor: cs.onPrimary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                    ),
                     padding: const EdgeInsets.symmetric(horizontal: 18),
                   ),
                 ),
@@ -159,13 +175,13 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
         ),
         itemBuilder: (ctx, i) {
           final ident = getTopicIdentifications(items[i])!;
-              return TopicsCard(
-                itemName: widget.itemName,
-                identification: ident.inputIdentification,
-                title: ident.titleIdentification!,
-                about: 'Open this topic to generate a quiz.',
-                link: ident.linkIdentification!,
-                imageUrl: safeImageFromIdent(ident),
+          return TopicsCard(
+            itemName: widget.itemName,
+            identification: ident.inputIdentification,
+            title: ident.titleIdentification!,
+            about: 'Open this topic to generate a quiz.',
+            link: ident.linkIdentification!,
+            imageUrl: safeImageFromIdent(ident),
 
             // mobile sizing
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -206,9 +222,13 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
                     minimumSize: const Size.fromHeight(44),
                     backgroundColor: cs.primary,
                     foregroundColor: cs.onPrimary,
-                    disabledBackgroundColor: cs.surfaceContainerHighest ,
-                    disabledForegroundColor: cs.onSurface.withAlpha((0.4 * 255).toInt()),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    disabledBackgroundColor: cs.surfaceContainerHighest,
+                    disabledForegroundColor: cs.onSurface.withAlpha(
+                      (0.4 * 255).toInt(),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
@@ -216,17 +236,28 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
               const SizedBox(width: 10),
               // Glassy page chip
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
-                  color: cs.surfaceContainerHighest.withAlpha((0.7 * 255).toInt()),
+                  color: cs.surfaceContainerHighest.withAlpha(
+                    (0.7 * 255).toInt(),
+                  ),
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: cs.primary.withAlpha((0.18 * 255).toInt())),
+                  border: Border.all(
+                    color: cs.primary.withAlpha((0.18 * 255).toInt()),
+                  ),
                 ),
                 child: Text(
                   visibleItems.isEmpty
                       ? 'Page $curPage'
                       : 'Page $curPage | $startIndex–$endIndex',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: cs.onSurface),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: cs.onSurface,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -241,8 +272,12 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
                     backgroundColor: cs.primary,
                     foregroundColor: cs.onPrimary,
                     disabledBackgroundColor: cs.surfaceContainerHighest,
-                    disabledForegroundColor: cs.onSurface.withAlpha((0.4 * 255).toInt()),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    disabledForegroundColor: cs.onSurface.withAlpha(
+                      (0.4 * 255).toInt(),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
@@ -264,15 +299,15 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: FuturisticLoading(
-            messages:  [
-                  'Loading topics…',
-                  'Preparing your topics…',
-                  'Just a moment longer…',
-                  'Almost there…',
-                ],
-            isActive: hasAny ? false : true,
-            transparentBackground: true,
-          ),
+          messages: [
+            'Loading topics…',
+            'Preparing your topics…',
+            'Just a moment longer…',
+            'Almost there…',
+          ],
+          isActive: hasAny ? false : true,
+          transparentBackground: true,
+        ),
       ),
     );
 
@@ -295,14 +330,18 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
           icon: Icon(Icons.arrow_back, color: cs.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text('Choose a topic', style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w800)),
+        title: Text(
+          'Choose a topic',
+          style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w800),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: [
               _buildHeaderBar(),
-              if (!initialDone && !hasAny) initialLoading
+              if (!initialDone && !hasAny)
+                initialLoading
               else if (isBusy)
                 SizedBox(
                   height: lastGridHeight > 0 ? lastGridHeight : 180,
@@ -310,16 +349,16 @@ class _MobileTopicsState extends BaseTopicsState<MobileTopics> {
                     child: Padding(
                       padding: const EdgeInsets.all(12),
                       child: FuturisticLoading(
-                          messages:  [
-                                'Fetching topics…',
-                                'Some topics take longer to load…',
-                                'Checking availability…',
-                                'Still working on it…',
-                                'Almost there…',
-                              ],
-                          isActive: isBusy,
-                          transparentBackground: true,
-                        ),
+                        messages: [
+                          'Fetching topics…',
+                          'Some topics take longer to load…',
+                          'Checking availability…',
+                          'Still working on it…',
+                          'Almost there…',
+                        ],
+                        isActive: isBusy,
+                        transparentBackground: true,
+                      ),
                     ),
                   ),
                 )

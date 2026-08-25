@@ -1,8 +1,6 @@
 import 'package:accredit/domain/models/topic_identifications.dart';
 import 'package:flutter/material.dart';
 
-
-
 /// A complete, reusable form widget.
 /// Place it anywhere (e.g., inside a Column). Call [onSubmit] to receive data.
 class CertificationForm extends StatefulWidget {
@@ -22,7 +20,7 @@ class CertificationForm extends StatefulWidget {
       '한국어',
       '中文 (简体)',
       '中文 (繁體)',
-      'हिन्दी',  
+      'हिन्दी',
       'العربية',
     ],
     this.fullNameMaxLen = 60,
@@ -114,56 +112,53 @@ class _CertificationFormState extends State<CertificationForm> {
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
-        
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       suffixIcon: suffix,
       counterText: '', // hide built-in counter when using maxLength
       focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(
-        color: Color(0xFF7C4DFF), // your purple when clicked
-        width: 2,
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(
+          color: Color(0xFF7C4DFF), // your purple when clicked
+          width: 2,
+        ),
       ),
-    ),
     );
   }
 
   // Builds a label like: "Full Name (mandatory)" with colored tag.
-    Widget _buildLabel(String labelText) {
-      Color optColor = widget.purple;
+  Widget _buildLabel(String labelText) {
+    Color optColor = widget.purple;
 
-      bool conditionalLabel = labelText.contains('Full Name') ||
-          labelText.contains('Certification Title') ||
-          labelText.contains('Language');
-      return RichText(
-        text: TextSpan(
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.black87,
-            fontWeight: FontWeight.w600,
-            height: 1.25,
-          ),
-          children: [
-            TextSpan(text: labelText),
-            if (conditionalLabel)
-              const TextSpan(
-                text: ' ',
-              ),
-            if (conditionalLabel)
-              const TextSpan(
-                text: '(mandatory)',
-                style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700),
-              ),
-            if (!conditionalLabel)
-              TextSpan(
-                text: ' (Optional)',
-                style: TextStyle(color: optColor, fontWeight: FontWeight.w700),
-              ),
-          ],
+    bool conditionalLabel =
+        labelText.contains('Full Name') ||
+        labelText.contains('Certification Title') ||
+        labelText.contains('Language');
+    return RichText(
+      text: TextSpan(
+        style: const TextStyle(
+          fontSize: 14,
+          color: Colors.black87,
+          fontWeight: FontWeight.w600,
+          height: 1.25,
         ),
-      );
-    }
+        children: [
+          TextSpan(text: labelText),
+          if (conditionalLabel) const TextSpan(text: ' '),
+          if (conditionalLabel)
+            const TextSpan(
+              text: '(mandatory)',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700),
+            ),
+          if (!conditionalLabel)
+            TextSpan(
+              text: ' (Optional)',
+              style: TextStyle(color: optColor, fontWeight: FontWeight.w700),
+            ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -184,8 +179,9 @@ class _CertificationFormState extends State<CertificationForm> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxWidth =
-            constraints.maxWidth < 560 ? constraints.maxWidth : 520.0;
+        final maxWidth = constraints.maxWidth < 560
+            ? constraints.maxWidth
+            : 520.0;
 
         return Center(
           child: ConstrainedBox(
@@ -214,7 +210,7 @@ class _CertificationFormState extends State<CertificationForm> {
                       return null;
                     },
                   ),
-                   SizedBox(height: gapHeightSpace),
+                  SizedBox(height: gapHeightSpace),
 
                   // Certification Title (mandatory)
                   TextFormField(
@@ -234,7 +230,7 @@ class _CertificationFormState extends State<CertificationForm> {
                       return null;
                     },
                   ),
-                   SizedBox(height: gapHeightSpace),
+                  SizedBox(height: gapHeightSpace),
 
                   // Phone (optional, E.164)
                   TextFormField(
@@ -254,7 +250,7 @@ class _CertificationFormState extends State<CertificationForm> {
                       return null;
                     },
                   ),
-                   SizedBox(height: gapHeightSpace),
+                  SizedBox(height: gapHeightSpace),
 
                   //Language (mandatory) - dropdown
                   DropdownButtonFormField<String>(
@@ -274,10 +270,11 @@ class _CertificationFormState extends State<CertificationForm> {
                     onChanged: (v) {
                       setState(() => _selectedLanguage = v);
                     },
-                    validator: (v) =>
-                        (v == null || v.isEmpty) ? 'Please select a language' : null,
+                    validator: (v) => (v == null || v.isEmpty)
+                        ? 'Please select a language'
+                        : null,
                   ),
-                   SizedBox(height: gapHeightSpace),
+                  SizedBox(height: gapHeightSpace),
 
                   // Amount of Questions (disabled, fixed)
                   TextFormField(
@@ -289,12 +286,14 @@ class _CertificationFormState extends State<CertificationForm> {
                       labelText: 'Amount of Questions',
                     ),
                   ),
-                   SizedBox(height: gapHeightSpace),
+                  SizedBox(height: gapHeightSpace),
 
                   // Minutes (disabled, computed)
                   TextFormField(
                     enabled: false,
-                    controller: TextEditingController(text: "1 minute per question!"),
+                    controller: TextEditingController(
+                      text: "1 minute per question!",
+                    ),
                     decoration: _filledDecoration(
                       labelText: 'Minutes',
                       hintText: 'Computed as 2 × pages',
@@ -307,14 +306,17 @@ class _CertificationFormState extends State<CertificationForm> {
                     icon: const Icon(Icons.arrow_forward_rounded),
                     label: const Text(
                       'Continue',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
                     ),
                     style: buttonStyle,
                     onPressed: buttonEnabled
                         ? () {
                             // Also run Flutter validators to show messages if any
-                            final ok = _formKey.currentState?.validate() ?? false;
+                            final ok =
+                                _formKey.currentState?.validate() ?? false;
                             if (!ok) return;
 
                             widget.onSubmit?.call(

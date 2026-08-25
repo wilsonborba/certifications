@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 class MiddleButton extends StatelessWidget {
@@ -27,14 +26,9 @@ class MiddleButton extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         minimumSize: minimumSize,
         backgroundColor: backgroundColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
-      label: Text(
-        label,
-        style: TextStyle(fontSize: fontSize),
-      ),
+      label: Text(label, style: TextStyle(fontSize: fontSize)),
     );
   }
 }

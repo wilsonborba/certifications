@@ -14,17 +14,15 @@ class BoardingMarketing extends StatelessWidget {
       children: [
         _SectionHeader(
           title: 'Certifications',
-          subtitle: 'Turn what you learn into quizzes and shareable certifications.',
+          subtitle:
+              'Turn what you learn into quizzes and shareable certifications.',
           titleSize: isDesktop ? 34 : 24,
           subtitleSize: isDesktop ? 18 : 14,
         ),
         const SizedBox(height: 24),
         _HeroCard(isDesktop: isDesktop),
         const SizedBox(height: 32),
-        _SectionTitle(
-          title: 'How it works',
-          titleSize: isDesktop ? 26 : 20,
-        ),
+        _SectionTitle(title: 'How it works', titleSize: isDesktop ? 26 : 20),
         const SizedBox(height: 12),
         _StepsRow(isDesktop: isDesktop),
         const SizedBox(height: 32),
@@ -61,17 +59,17 @@ class BoardingMarketing extends StatelessWidget {
         Text(
           'Share your certifications anywhere.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurface.withOpacity(0.75),
-                fontSize: isDesktop ? 16 : 13,
-              ),
+            color: scheme.onSurface.withOpacity(0.75),
+            fontSize: isDesktop ? 16 : 13,
+          ),
         ),
         const SizedBox(height: 6),
         Text(
           'Quizzes are AI-generated; verify results before you publish.',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: scheme.onSurface.withOpacity(0.6),
-                fontSize: isDesktop ? 14 : 12,
-              ),
+            color: scheme.onSurface.withOpacity(0.6),
+            fontSize: isDesktop ? 14 : 12,
+          ),
         ),
       ],
     );
@@ -100,17 +98,17 @@ class _SectionHeader extends StatelessWidget {
         Text(
           title,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                fontSize: titleSize,
-              ),
+            fontWeight: FontWeight.w700,
+            fontSize: titleSize,
+          ),
         ),
         const SizedBox(height: 6),
         Text(
           subtitle,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurface.withOpacity(0.7),
-                fontSize: subtitleSize,
-              ),
+            color: scheme.onSurface.withOpacity(0.7),
+            fontSize: subtitleSize,
+          ),
         ),
       ],
     );
@@ -129,10 +127,7 @@ class _HeroCard extends StatelessWidget {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            scheme.primary.withOpacity(0.16),
-            scheme.surface,
-          ],
+          colors: [scheme.primary.withOpacity(0.16), scheme.surface],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -145,17 +140,17 @@ class _HeroCard extends StatelessWidget {
           Text(
             'Learn. Quiz. Get certified.',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: isDesktop ? 28 : 20,
-                ),
+              fontWeight: FontWeight.w700,
+              fontSize: isDesktop ? 28 : 20,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Add a website or PDF. We create a quiz. Finish it and share a certification with your score.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurface.withOpacity(0.7),
-                  fontSize: isDesktop ? 16 : 13,
-                ),
+              color: scheme.onSurface.withOpacity(0.7),
+              fontSize: isDesktop ? 16 : 13,
+            ),
           ),
           const SizedBox(height: 14),
           Wrap(
@@ -183,9 +178,9 @@ class _SectionTitle extends StatelessWidget {
     return Text(
       title,
       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-            fontSize: titleSize,
-          ),
+        fontWeight: FontWeight.w700,
+        fontSize: titleSize,
+      ),
     );
   }
 }
@@ -214,20 +209,23 @@ class _StepsRow extends StatelessWidget {
 
     if (isDesktop) {
       return Row(
-        children: items
-            .map((item) => Expanded(child: _StepCard(content: item)))
-            .expand((widget) => [widget, const SizedBox(width: 16)])
-            .toList()
-          ..removeLast(),
+        children:
+            items
+                .map((item) => Expanded(child: _StepCard(content: item)))
+                .expand((widget) => [widget, const SizedBox(width: 16)])
+                .toList()
+              ..removeLast(),
       );
     }
 
     return Column(
       children: items
-          .map((item) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _StepCard(content: item),
-              ))
+          .map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _StepCard(content: item),
+            ),
+          )
           .toList(),
     );
   }
@@ -260,16 +258,16 @@ class _StepCard extends StatelessWidget {
         children: [
           Text(
             content.title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
           Text(
             content.body,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurface.withOpacity(0.7),
-                ),
+              color: scheme.onSurface.withOpacity(0.7),
+            ),
           ),
         ],
       ),
@@ -296,12 +294,7 @@ class _ExamplesWrap extends StatelessWidget {
       spacing: 10,
       runSpacing: 10,
       children: examples
-          .map(
-            (item) => _TagChip(
-              label: item,
-              fontSize: isDesktop ? 14 : 12,
-            ),
-          )
+          .map((item) => _TagChip(label: item, fontSize: isDesktop ? 14 : 12))
           .toList(),
     );
   }
@@ -341,9 +334,9 @@ class _BulletsList extends StatelessWidget {
                     child: Text(
                       bullet,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontSize: isDesktop ? 15 : 13,
-                            color: scheme.onSurface.withOpacity(0.85),
-                          ),
+                        fontSize: isDesktop ? 15 : 13,
+                        color: scheme.onSurface.withOpacity(0.85),
+                      ),
                     ),
                   ),
                 ],
@@ -375,32 +368,32 @@ class _TrustPanel extends StatelessWidget {
         children: [
           Text(
             'Bring your own API key',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
           Text(
             'Use a Gemini or Groq API key to generate quizzes. That means content generation runs on your own provider account.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurface.withOpacity(0.7),
-                  fontSize: isDesktop ? 14 : 12,
-                ),
+              color: scheme.onSurface.withOpacity(0.7),
+              fontSize: isDesktop ? 14 : 12,
+            ),
           ),
           const SizedBox(height: 12),
           Text(
             'Privacy, simply stated',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
           Text(
             'We use your sources to create your quiz. Share only what you’re comfortable sharing.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurface.withOpacity(0.7),
-                  fontSize: isDesktop ? 14 : 12,
-                ),
+              color: scheme.onSurface.withOpacity(0.7),
+              fontSize: isDesktop ? 14 : 12,
+            ),
           ),
         ],
       ),
@@ -428,32 +421,32 @@ class _MvpPanel extends StatelessWidget {
         children: [
           Text(
             'Available now',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
           Text(
             'Websites and PDFs.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurface.withOpacity(0.7),
-                  fontSize: isDesktop ? 14 : 12,
-                ),
+              color: scheme.onSurface.withOpacity(0.7),
+              fontSize: isDesktop ? 14 : 12,
+            ),
           ),
           const SizedBox(height: 12),
           Text(
             'Coming next (if users want it)',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
           Text(
             'YouTube quiz generation.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurface.withOpacity(0.7),
-                  fontSize: isDesktop ? 14 : 12,
-                ),
+              color: scheme.onSurface.withOpacity(0.7),
+              fontSize: isDesktop ? 14 : 12,
+            ),
           ),
         ],
       ),
@@ -480,9 +473,9 @@ class _CtaChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: filled ? scheme.onPrimary : scheme.primary,
-              fontWeight: FontWeight.w600,
-            ),
+          color: filled ? scheme.onPrimary : scheme.primary,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -507,9 +500,9 @@ class _TagChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: scheme.onSurface.withOpacity(0.85),
-              fontSize: fontSize,
-            ),
+          color: scheme.onSurface.withOpacity(0.85),
+          fontSize: fontSize,
+        ),
       ),
     );
   }

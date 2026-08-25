@@ -110,7 +110,8 @@ class _TopicsCardState extends State<TopicsCard> {
     final titleStyle = TextStyle(
       fontSize: widget.titleFontSize,
       color: cs.onSurface,
-      fontWeight: FontWeight.values[(widget.titleFontWeight / 100).clamp(0, 9).round()],
+      fontWeight:
+          FontWeight.values[(widget.titleFontWeight / 100).clamp(0, 9).round()],
     );
 
     // soft, tactile card
@@ -124,22 +125,31 @@ class _TopicsCardState extends State<TopicsCard> {
         duration: const Duration(milliseconds: 140),
         curve: Curves.easeOut,
         transform: Matrix4.identity()
-        ..translateByDouble(0.0, _hovered ? -1.0 : 0.0, 0.0, 1.0)
-        ..scaleByDouble(
-          _hovered ? 1.005 : 1.0,
-          _hovered ? 1.005 : 1.0,
-          1.0,
-          1.0,
-        ),
+          ..translateByDouble(0.0, _hovered ? -1.0 : 0.0, 0.0, 1.0)
+          ..scaleByDouble(
+            _hovered ? 1.005 : 1.0,
+            _hovered ? 1.005 : 1.0,
+            1.0,
+            1.0,
+          ),
         decoration: BoxDecoration(
           color: cs.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: borderColor),
           boxShadow: [
             // soft drop shadow for tactile feel
-            BoxShadow(color: Colors.black.withAlpha((.05 * 255).toInt()), blurRadius: 18, offset: const Offset(0, 10)),
+            BoxShadow(
+              color: Colors.black.withAlpha((.05 * 255).toInt()),
+              blurRadius: 18,
+              offset: const Offset(0, 10),
+            ),
             // subtle highlight (neumorphic feel)
-            BoxShadow(color: Colors.white.withAlpha((.7 * 255).toInt()), blurRadius: 6, offset: const Offset(-1, -1), spreadRadius: -2),
+            BoxShadow(
+              color: Colors.white.withAlpha((.7 * 255).toInt()),
+              blurRadius: 6,
+              offset: const Offset(-1, -1),
+              spreadRadius: -2,
+            ),
           ],
         ),
         child: Padding(
@@ -160,7 +170,10 @@ class _TopicsCardState extends State<TopicsCard> {
                       width: 40,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [cs.primary, cs.primary.withAlpha((.6 * 255).toInt())],
+                          colors: [
+                            cs.primary,
+                            cs.primary.withAlpha((.6 * 255).toInt()),
+                          ],
                         ),
                         borderRadius: BorderRadius.circular(999),
                       ),
@@ -196,10 +209,8 @@ class _TopicsCardState extends State<TopicsCard> {
                           ),
                           baseColor: cs.onSurface,
                           hoverColor: cs.primary,
-                          onTap: () => redirectToUrl(
-                            widget.link,
-                            replace: false,
-                          ),
+                          onTap: () =>
+                              redirectToUrl(widget.link, replace: false),
                         ),
                         _HoverableAction(
                           label: 'Select',
@@ -230,7 +241,11 @@ class _TopicsCardState extends State<TopicsCard> {
               if (_imageOk && _provider != null) ...[
                 SizedBox(width: widget.gap),
                 if (widget.showDivider)
-                  VerticalDivider(width: 1, thickness: 1, color: cs.outlineVariant),
+                  VerticalDivider(
+                    width: 1,
+                    thickness: 1,
+                    color: cs.outlineVariant,
+                  ),
                 SizedBox(width: widget.gap),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
@@ -285,20 +300,27 @@ class _HoverableActionState extends State<_HoverableAction> {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 140),
       curve: Curves.easeOut,
-            transform: Matrix4.identity()
-        ..translateByDouble(_hovered ? 2.0 : 0.0, _hovered ? -1.0 : 0.0, 0.0, 1.0)
-        ..scaleByDouble(
-          _pressed ? 0.98 : 1.0,
-          _pressed ? 0.98 : 1.0,
+      transform: Matrix4.identity()
+        ..translateByDouble(
+          _hovered ? 2.0 : 0.0,
+          _hovered ? -1.0 : 0.0,
+          0.0,
           1.0,
-          1.0,
-        ),
+        )
+        ..scaleByDouble(_pressed ? 0.98 : 1.0, _pressed ? 0.98 : 1.0, 1.0, 1.0),
       decoration: BoxDecoration(
-        color: _hovered ? cs.primary.withAlpha((.08 * 255).toInt()) : cs.surface,
+        color: _hovered
+            ? cs.primary.withAlpha((.08 * 255).toInt())
+            : cs.surface,
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: cs.primary.withAlpha((.22 * 255).toInt())),
         boxShadow: [
-          if (_hovered) BoxShadow(color: cs.primary.withAlpha((.18 * 255).toInt()), blurRadius: 14, offset: const Offset(0, 8)),
+          if (_hovered)
+            BoxShadow(
+              color: cs.primary.withAlpha((.18 * 255).toInt()),
+              blurRadius: 14,
+              offset: const Offset(0, 8),
+            ),
         ],
       ),
       child: Material(
@@ -315,7 +337,10 @@ class _HoverableActionState extends State<_HoverableAction> {
             widget.onTap();
           },
           child: ConstrainedBox(
-            constraints: BoxConstraints(minWidth: widget.minSize.width, minHeight: widget.minSize.height),
+            constraints: BoxConstraints(
+              minWidth: widget.minSize.width,
+              minHeight: widget.minSize.height,
+            ),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Row(
@@ -325,7 +350,11 @@ class _HoverableActionState extends State<_HoverableAction> {
                   const SizedBox(width: 8),
                   Text(
                     widget.label,
-                    style: TextStyle(color: fg, fontSize: 14, fontWeight: FontWeight.w700),
+                    style: TextStyle(
+                      color: fg,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ],
               ),

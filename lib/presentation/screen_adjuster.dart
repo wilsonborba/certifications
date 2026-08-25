@@ -8,7 +8,8 @@ class ScreenAdjuster<T> {
   ScreenAdjuster({
     required this.mobileWidget,
     required this.desktopWidget,
-    this.threshold = 760, // Default threshold for distinguishing small and wide screens
+    this.threshold =
+        760, // Default threshold for distinguishing small and wide screens
   });
 
   T adjust(BuildContext context) {

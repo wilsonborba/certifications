@@ -13,6 +13,9 @@ Future<String> urlRedirectionToAuth({bool isToLogin = true}) async {
   debug('App context to encrypt: $appContextJson');
 
   final encryptedAppContext = await encryptor.encryptPayload(appContextJson);
+  if (encryptedAppContext == null || encryptedAppContext.isEmpty) {
+    throw Exception('The application context could not be encrypted.');
+  }
 
   final base = Uri.parse(
     isToLogin

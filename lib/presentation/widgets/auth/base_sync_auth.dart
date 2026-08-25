@@ -34,11 +34,7 @@ abstract class BaseSyncAuthState<T extends BaseSyncAuth> extends State<T> {
     if (authExchangeToken == null || authExchangeToken.isEmpty) {
       debug('No auth exchange token provided, checking existing session...');
       try {
-        final hasSession = await isThereSession(
-          cookieName: 'hint',
-          storageNamespace: 'ath',
-          storageKey: 'n-a-n',
-        );
+        final hasSession = await isThereSession(cookieName: 'csrf');
 
         final hasTokens = await isThereTokens();
 

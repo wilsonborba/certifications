@@ -1,4 +1,3 @@
-
 import 'package:accredit/presentation/components/quiz/futuristic_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:accredit/domain/models/source_item.dart';
@@ -33,10 +32,7 @@ abstract class BaseAttachmentState<T extends BaseAttachment> extends State<T> {
   }
 
   // ---- Body dispatcher (shared) ----
-  Widget buildBody(
-    BuildContext context,
-    AsyncSnapshot<List<SourceItem>> snap,
-  ) {
+  Widget buildBody(BuildContext context, AsyncSnapshot<List<SourceItem>> snap) {
     if (snap.connectionState == ConnectionState.waiting) {
       return buildLoading(snap.connectionState == ConnectionState.waiting);
     }
@@ -55,22 +51,21 @@ abstract class BaseAttachmentState<T extends BaseAttachment> extends State<T> {
 
   // ---- UI pieces (mostly shared) ----
   Widget buildLoading(bool loading) {
-    return  Padding(
+    return Padding(
       padding: EdgeInsets.all(16),
       child: FuturisticLoading(
-          messages:  [
-            "We are loading your sources…",
-            "Just a moment, fetching data…",
-            "Preparing your cards…",
-            "Almost there, hang tight…",
-            "Tip: You have 1 minute per question!",
-            "Tip: You can answer between 1 up to 15 questions.",
-
-          ],
-          isActive: loading,
-          transparentBackground: true,
-          //imageAsset: "lib/presentation/assets/img/temp_logo.png", // optional, remove if not used
-        ),
+        messages: [
+          "We are loading your sources…",
+          "Just a moment, fetching data…",
+          "Preparing your cards…",
+          "Almost there, hang tight…",
+          "Tip: You have 1 minute per question!",
+          "Tip: You can answer between 1 up to 15 questions.",
+        ],
+        isActive: loading,
+        transparentBackground: true,
+        //imageAsset: "lib/presentation/assets/img/temp_logo.png", // optional, remove if not used
+      ),
     );
   }
 
@@ -84,7 +79,4 @@ abstract class BaseAttachmentState<T extends BaseAttachment> extends State<T> {
   // Subclasses must provide these to keep their exact behavior/props
   Widget buildError(Object? error);
   Widget buildTabs(ModeBuckets buckets);
-
-  
-
 }

@@ -15,34 +15,22 @@ import 'package:http/http.dart';
 import 'package:http/http.dart' as http;
 
 class SessionHeaderManager {
-  /// Builds headers by reading local nounce + hint cookie (best-effort).
+  /// Builds headers with the current CSRF token when available.
   Future<Map<String, String>> buildAuthedHeaders(
     Map<String, String> base,
   ) async {
     final headers = {...base};
 
     try {
-      debug('Reading next auth nounce from local storage...');
-      final nounce = await readNextAuthNounce();
-      final hintCookies = readCookie('hint');
-
-      if (nounce != null) headers['T-A-N'] = nounce;
-      if (hintCookies != null) headers['A-A-N'] = hintCookies;
+      final csrfToken = readCsrfToken();
+      if (csrfToken != null) {
+        headers['X-CSRF-Token'] = csrfToken;
+      }
     } catch (e) {
-      debug('Error reading next auth nounce: $e');
-      // best-effort: proceed without these headers
+      debug('Error reading CSRF token: $e');
     }
 
     return headers;
-  }
-
-  /// Persists next auth nounce if present.
-  Future<void> captureNanFromResponse(http.Response response) async {
-    final nan = response.headers['n-a-n'];
-    if (nan == null) return;
-
-    await saveNextAuthNounce(nan);
-    debug('Next auth nounce updated: $nan from response headers.');
   }
 }
 
@@ -92,11 +80,6 @@ class CertificationManager {
       queryParams: queryParams,
       encoding: encoding,
     );
-
-    final isSuccess = res.statusCode >= 200 && res.statusCode < 300;
-    if (!updateNanOnSuccessOnly || isSuccess) {
-      await _session.captureNanFromResponse(res);
-    }
 
     return res;
   }
@@ -336,7 +319,8 @@ class CertificationManager {
     return _authedGet(
       Uri.parse('$baseUrl/tokens/usage'),
       queryParams: {
-        if (providerModelDescription != null && providerModelDescription.isNotEmpty)
+        if (providerModelDescription != null &&
+            providerModelDescription.isNotEmpty)
           'provider_model_description': providerModelDescription,
         if (startDate != null) 'start_date': startDate.toIso8601String(),
         if (endDate != null) 'end_date': endDate.toIso8601String(),
@@ -360,8 +344,8 @@ class CertificationManager {
   // -------------------------
   //
   // If you later add endpoints that upload files, prefer to funnel them through
-  // a single authed multipart method so cookies + TAN/AAN + NAN update are
-  // handled consistently.
+  // a single authed multipart method so cookies + csrf handling are applied
+  // consistently.
   Future<http.Response> postMultipart({
     required Uri url,
     Map<String, dynamic>? queryParams,
@@ -384,11 +368,6 @@ class CertificationManager {
       fields: fields,
       files: files,
     );
-
-    final isSuccess = res.statusCode >= 200 && res.statusCode < 300;
-    if (!updateNanOnSuccessOnly || isSuccess) {
-      await _session.captureNanFromResponse(res);
-    }
 
     return res;
   }

@@ -11,7 +11,8 @@ import 'package:accredit/presentation/components/quiz/quiz_controller.dart';
 import 'package:accredit/presentation/screen_adjuster.dart';
 import 'package:accredit/presentation/widgets/quiz/desktop_quiz.dart';
 import 'package:accredit/presentation/widgets/quiz/mobile_quiz.dart';
-import 'package:accredit/domain/services/pdf_frontend_prescan_manager.dart' as pre;
+import 'package:accredit/domain/services/pdf_frontend_prescan_manager.dart'
+    as pre;
 import 'package:accredit/core/utils/my_logs.dart';
 import 'package:accredit/core/utils/my_nagivation.dart';
 
@@ -106,7 +107,10 @@ class _OnQuizScreenState extends State<OnQuizScreen> {
   Future<ContextInfo> _fetch() async {
     http.Response resp;
     if (widget.isForPDF) {
-      resp = await pre.getPdfContextFromApi(documentId: widget.contextId, selectedLanguage: widget.formData.language);
+      resp = await pre.getPdfContextFromApi(
+        documentId: widget.contextId,
+        selectedLanguage: widget.formData.language,
+      );
     } else {
       resp = await pre.getTopicContextFromApi(
         inputIdentification: widget.contextId,
@@ -121,54 +125,58 @@ class _OnQuizScreenState extends State<OnQuizScreen> {
   }
 
   Future<void> _bootstrap() async {
-  setState(() {
-    _loading = true;
-    _error = null;
-    _resp = null;
-    _controller = null;
-    _loadingMessage = _messages.first;
-    _msgIndex = 0;
-  });
+    setState(() {
+      _loading = true;
+      _error = null;
+      _resp = null;
+      _controller = null;
+      _loadingMessage = _messages.first;
+      _msgIndex = 0;
+    });
 
-  try {
-    final got = await _fetch().timeout(const Duration(seconds: 3000));
+    try {
+      final got = await _fetch().timeout(const Duration(seconds: 3000));
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (got.statusCode != 200) {
+      if (got.statusCode != 200) {
+        setState(() {
+          _resp = got; // so UI can check code (e.g. 409)
+          _error = _mapStatusCodeToMessage(got.statusCode, got.message);
+          _loading = false;
+        });
+        _msgTicker?.cancel();
+        return;
+      }
+
+      final controller = QuizController(
+        formData: widget.formData,
+        payload: got,
+        isForPDF: widget.isForPDF,
+        contextId: widget.contextId,
+      );
+
       setState(() {
-        _resp = got; // so UI can check code (e.g. 409)
-        _error = _mapStatusCodeToMessage(got.statusCode, got.message);
+        _resp = got;
+        _controller = controller;
         _loading = false;
       });
       _msgTicker?.cancel();
-      return;
-    }
-
-    final controller = QuizController(formData: widget.formData, payload: got, isForPDF: widget.isForPDF, contextId: widget.contextId);
-
-    setState(() {
-      _resp = got;
-      _controller = controller;
-      _loading = false;
-    });
-    _msgTicker?.cancel();
-    //debug('Fetched ContextInfo: ${got.data}');
+      //debug('Fetched ContextInfo: ${got.data}');
     } on TimeoutException {
-      
       if (!mounted) return;
       setState(() {
         _error = "Request timed out. Please try again in a moment.";
         _loading = false;
       });
       _msgTicker?.cancel();
-
     } on http.ClientException catch (e) {
       // Common on web: "XMLHttpRequest error." / CORS / offline
       final msg = (e.message ?? '').toLowerCase();
-      final looksNetworky = msg.contains('xmlhttprequest') ||
-                            msg.contains('failed host lookup') ||
-                            msg.contains('network');
+      final looksNetworky =
+          msg.contains('xmlhttprequest') ||
+          msg.contains('failed host lookup') ||
+          msg.contains('network');
       if (!mounted) return;
       setState(() {
         _error = looksNetworky
@@ -177,7 +185,6 @@ class _OnQuizScreenState extends State<OnQuizScreen> {
         _loading = false;
       });
       _msgTicker?.cancel();
-
     } catch (e) {
       // Last resort: still keep a friendly message
       if (!mounted) return;
@@ -208,14 +215,16 @@ class _OnQuizScreenState extends State<OnQuizScreen> {
       case 503:
         return "Service unavailable, please contact $supportEmail";
       default:
-        return msg.isNotEmpty ? msg : "Please contact $supportEmail (code $code)";
+        return msg.isNotEmpty
+            ? msg
+            : "Please contact $supportEmail (code $code)";
     }
   }
 
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-  return Scaffold(
+      return Scaffold(
         body: FuturisticLoading(
           messages: const [
             "Contacting server...",
@@ -247,37 +256,74 @@ class _OnQuizScreenState extends State<OnQuizScreen> {
             decoration: BoxDecoration(
               color: Colors.red.shade50,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: Colors.red.shade100.withAlpha((0.4 * 255).toInt()), blurRadius: 20, spreadRadius: 2)],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.red.shade100.withAlpha((0.4 * 255).toInt()),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                ),
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.error_outline, size: 64, color: Colors.deepPurple),
+                const Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: Colors.deepPurple,
+                ),
                 const SizedBox(height: 16),
-                const Text("Oops! Something went wrong.", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+                const Text(
+                  "Oops! Something went wrong.",
+                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 12),
-                Text(_error!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, color: Colors.black87), softWrap: true),
+                Text(
+                  _error!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 18, color: Colors.black87),
+                  softWrap: true,
+                ),
                 const SizedBox(height: 32),
                 if (code != 409)
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.deepPurple.shade400,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
                     ),
                     icon: const Icon(Icons.refresh, color: Colors.white),
-                    label: const Text("Try Again", style: TextStyle(color: Colors.white, fontSize: 18)),
+                    label: const Text(
+                      "Try Again",
+                      style: TextStyle(color: Colors.white, fontSize: 18),
+                    ),
                     onPressed: _bootstrap,
                   ),
                 const SizedBox(height: 12),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple.shade400,
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
                   ),
-                  icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-                  label: const Text("Go Back", style: TextStyle(color: Colors.white, fontSize: 18)),
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new,
+                    color: Colors.white,
+                  ),
+                  label: const Text(
+                    "Go Back",
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
                   onPressed: () async {
                     await defaultLogout();
                   },

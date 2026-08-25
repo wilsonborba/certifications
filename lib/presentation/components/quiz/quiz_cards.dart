@@ -1,7 +1,6 @@
 // widgets/quiz/question_card.dart
 import 'dart:ui';
 
-
 import 'package:accredit/domain/models/quiz.dart';
 import 'package:accredit/domain/services/api_certification_manager.dart';
 import 'package:flutter/material.dart';
@@ -51,9 +50,6 @@ class Kebab extends StatelessWidget {
   }
 }
 
-
-
-
 class QuestionCard extends StatelessWidget {
   final int index; // 1-based for display
   final QuestionItem item;
@@ -99,11 +95,16 @@ class QuestionCard extends StatelessWidget {
               ),
               if (difficultyText != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: difficultyColor.withAlpha((.12 * 255).toInt()),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: difficultyColor.withAlpha((.5 * 255).toInt())),
+                    border: Border.all(
+                      color: difficultyColor.withAlpha((.5 * 255).toInt()),
+                    ),
                   ),
                   child: Text(
                     difficultyText,
@@ -129,32 +130,32 @@ class QuestionCard extends StatelessWidget {
           const SizedBox(height: 10),
           // Options
           Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-           // inside your QuestionCard build:
-
-          RadioGroup<int>(
-            groupValue: selectedIndex,
-            onChanged: onChanged,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (int i = 0; i < item.options.length; i++)
-                  RadioListTile<int>.adaptive(
-                    value: i,
-                    title: Text(
-                      '${String.fromCharCode(65 + i)}) ${item.options[i]}',
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 6),
-                    dense: true,
-                    visualDensity: VisualDensity.compact,
-                  ),
-              ],
-            ),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // inside your QuestionCard build:
+              RadioGroup<int>(
+                groupValue: selectedIndex,
+                onChanged: onChanged,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (int i = 0; i < item.options.length; i++)
+                      RadioListTile<int>.adaptive(
+                        value: i,
+                        title: Text(
+                          '${String.fromCharCode(65 + i)}) ${item.options[i]}',
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                        ),
+                        dense: true,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                  ],
+                ),
+              ),
+            ],
           ),
-
-          ],
-        ),
         ],
       ),
     );
@@ -196,11 +197,15 @@ class QuestionCard extends StatelessWidget {
         return Colors.purple;
     }
     return Colors.grey;
-}
+  }
 }
 
 class SafeSpacer extends StatelessWidget {
-  const SafeSpacer({super.key, this.flex = 1, this.fallback = const SizedBox.shrink()});
+  const SafeSpacer({
+    super.key,
+    this.flex = 1,
+    this.fallback = const SizedBox.shrink(),
+  });
   final int flex;
   final Widget fallback;
 
@@ -208,7 +213,8 @@ class SafeSpacer extends StatelessWidget {
   Widget build(BuildContext context) {
     // Walk up the tree to find a Row/Column (Flex)
     final isInsideFlex = context.findAncestorWidgetOfExactType<Flex>() != null;
-    if (isInsideFlex) return Expanded(flex: flex, child: const SizedBox.shrink());
+    if (isInsideFlex)
+      return Expanded(flex: flex, child: const SizedBox.shrink());
     return fallback; // Not in Flex → return a harmless placeholder (or a SizedBox(width: 8))
   }
 }
@@ -233,7 +239,10 @@ Future<void> showComplaintDialog(
     transitionBuilder: (ctx, anim, __, ___) {
       final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
       return BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18 * anim.value, sigmaY: 18 * anim.value),
+        filter: ImageFilter.blur(
+          sigmaX: 18 * anim.value,
+          sigmaY: 18 * anim.value,
+        ),
         child: Opacity(
           opacity: anim.value,
           child: Center(
@@ -251,8 +260,13 @@ Future<void> showComplaintDialog(
                   if (onSubmit != null) onSubmit(text);
                   Navigator.of(ctx).pop();
                   final manager = CertificationManager();
-                  final _ = await manager.applyComplain(text, questionId, isForPDF, contextId, pdfQuestionId);
-
+                  final _ = await manager.applyComplain(
+                    text,
+                    questionId,
+                    isForPDF,
+                    contextId,
+                    pdfQuestionId,
+                  );
                 },
               ),
             ),
@@ -319,14 +333,22 @@ class _ComplaintGlassDialogState extends State<_ComplaintGlassDialog> {
     return AnimatedPadding(
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOut,
-      padding: EdgeInsets.only(bottom: insets.bottom + 16, left: 16, right: 16, top: 16),
+      padding: EdgeInsets.only(
+        bottom: insets.bottom + 16,
+        left: 16,
+        right: 16,
+        top: 16,
+      ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 640),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(radius),
             color: Colors.white.withAlpha((0.65 * 255).toInt()),
-            border: Border.all(color: Colors.white.withAlpha((0.7 * 255).toInt()), width: 1),
+            border: Border.all(
+              color: Colors.white.withAlpha((0.7 * 255).toInt()),
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withAlpha((0.08 * 255).toInt()),
@@ -373,12 +395,19 @@ class _ComplaintGlassDialogState extends State<_ComplaintGlassDialog> {
                                     ],
                                   ),
                                 ),
-                                child: const Icon(Icons.flag_outlined, size: 20, color: Colors.black87),
+                                child: const Icon(
+                                  Icons.flag_outlined,
+                                  size: 20,
+                                  color: Colors.black87,
+                                ),
                               ),
                               const SizedBox(width: 12),
                               const Text(
                                 'Report question',
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                             ],
                           ),
@@ -392,7 +421,10 @@ class _ComplaintGlassDialogState extends State<_ComplaintGlassDialog> {
                       const SizedBox(height: 4),
                       Text(
                         'Explain the issue with Question ${widget.questionIndex}:',
-                        style: const TextStyle(color: Colors.black87, fontSize: 14.5),
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontSize: 14.5,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       TextField(
@@ -405,15 +437,27 @@ class _ComplaintGlassDialogState extends State<_ComplaintGlassDialog> {
                         decoration: InputDecoration(
                           hintText: 'Type your report here…',
                           filled: true,
-                          fillColor: Colors.white.withAlpha((0.7 * 255).toInt()),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          fillColor: Colors.white.withAlpha(
+                            (0.7 * 255).toInt(),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: Colors.black12.withAlpha((0.08 * 255).toInt())),
+                            borderSide: BorderSide(
+                              color: Colors.black12.withAlpha(
+                                (0.08 * 255).toInt(),
+                              ),
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: purple, width: 2),
+                            borderSide: const BorderSide(
+                              color: purple,
+                              width: 2,
+                            ),
                           ),
                           counterText: '',
                         ),
@@ -422,15 +466,23 @@ class _ComplaintGlassDialogState extends State<_ComplaintGlassDialog> {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
-                              color: Colors.black.withAlpha((0.06 * 255).toInt()),
+                              color: Colors.black.withAlpha(
+                                (0.06 * 255).toInt(),
+                              ),
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: Text(
                               '$_remaining left',
                               style: const TextStyle(
-                                  color: Colors.black87, fontSize: 12.5, fontWeight: FontWeight.w600),
+                                color: Colors.black87,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -439,9 +491,15 @@ class _ComplaintGlassDialogState extends State<_ComplaintGlassDialog> {
                               borderRadius: BorderRadius.circular(999),
                               child: LinearProgressIndicator(
                                 minHeight: 6,
-                                value: (widget.maxChars - _remaining) / widget.maxChars,
-                                backgroundColor: Colors.black.withAlpha((0.05 * 255).toInt()),
-                                valueColor: const AlwaysStoppedAnimation<Color>(purple),
+                                value:
+                                    (widget.maxChars - _remaining) /
+                                    widget.maxChars,
+                                backgroundColor: Colors.black.withAlpha(
+                                  (0.05 * 255).toInt(),
+                                ),
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  purple,
+                                ),
                               ),
                             ),
                           ),
@@ -459,16 +517,24 @@ class _ComplaintGlassDialogState extends State<_ComplaintGlassDialog> {
                             child: const Text('Cancel'),
                           ),
                           FilledButton(
-                            onPressed: _canSend ? () => widget.onSend(_ctrl.text.trim()) : null,
+                            onPressed: _canSend
+                                ? () => widget.onSend(_ctrl.text.trim())
+                                : null,
                             style: FilledButton.styleFrom(
                               backgroundColor: purple,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 12,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: const Text('Send', style: TextStyle(fontWeight: FontWeight.w700)),
+                            child: const Text(
+                              'Send',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
                           ),
                         ],
                       ),

@@ -4,16 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 String _prettyTitle(String raw) {
-    // "movies_and_series" -> "Movies And Series"
-    final s = raw.replaceAll('_', ' ').trim();
-    if (s.isEmpty) return raw;
-    return s.split(' ').map((w) {
-      if (w.isEmpty) return w;
-      final lower = w.toLowerCase();
-      return '${lower[0].toUpperCase()}${lower.substring(1)}';
-    }).join(' ');
-  }
-
+  // "movies_and_series" -> "Movies And Series"
+  final s = raw.replaceAll('_', ' ').trim();
+  if (s.isEmpty) return raw;
+  return s
+      .split(' ')
+      .map((w) {
+        if (w.isEmpty) return w;
+        final lower = w.toLowerCase();
+        return '${lower[0].toUpperCase()}${lower.substring(1)}';
+      })
+      .join(' ');
+}
 
 typedef ItemTap = void Function(SourceItem item);
 typedef SeeMoreTap = void Function(String sourceName);
@@ -32,7 +34,10 @@ class SourceGroupsList extends StatelessWidget {
     this.rowSpacing = 20,
     this.tileSpacing = 12,
     this.titleTextStyle = const TextStyle(
-      fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black87),
+      fontSize: 18,
+      fontWeight: FontWeight.w700,
+      color: Colors.black87,
+    ),
     this.dividerColor = const Color(0x22000000),
     this.dividerThickness = 1,
   });
@@ -69,23 +74,29 @@ class SourceGroupsList extends StatelessWidget {
 
       children.add(Text(_prettyTitle(source), style: titleTextStyle));
       children.add(SizedBox(height: rowSpacing * 0.5));
-      children.add(Divider(
-        height: dividerThickness, thickness: dividerThickness, color: dividerColor,
-      ));
+      children.add(
+        Divider(
+          height: dividerThickness,
+          thickness: dividerThickness,
+          color: dividerColor,
+        ),
+      );
       children.add(SizedBox(height: rowSpacing));
 
       // NEW: stateful, animated, infinite “carousel” row:
-      children.add(_GroupCarouselRow(
-        sourceName: source,
-        items: groupItems,
-        maxPerRow: maxPerRow,
-        tileSpacing: tileSpacing,
-        tileSize: tileSize,
-        tileRadius: tileRadius,
-        onTapWithTopic: onTapWithTopic,
-        onTapWithoutTopic: onTapWithoutTopic,
-        onSeeMore: onSeeMore, // still exposed; we call it after rotating
-      ));
+      children.add(
+        _GroupCarouselRow(
+          sourceName: source,
+          items: groupItems,
+          maxPerRow: maxPerRow,
+          tileSpacing: tileSpacing,
+          tileSize: tileSize,
+          tileRadius: tileRadius,
+          onTapWithTopic: onTapWithTopic,
+          onTapWithoutTopic: onTapWithoutTopic,
+          onSeeMore: onSeeMore, // still exposed; we call it after rotating
+        ),
+      );
     });
 
     return Container(
@@ -159,29 +170,37 @@ class _GroupCarouselRowState extends State<_GroupCarouselRow> {
     final rowTiles = <Widget>[];
     for (var i = 0; i < visible.length; i++) {
       final item = visible[i];
-      rowTiles.add(_SourceTile(
-        item: item,
-        size: widget.tileSize,
-        radius: widget.tileRadius,
-        onTap: () => (item.hasTopic
-            ? widget.onTapWithTopic
-            : widget.onTapWithoutTopic)(item),
-      ));
+      rowTiles.add(
+        _SourceTile(
+          item: item,
+          size: widget.tileSize,
+          radius: widget.tileRadius,
+          onTap: () => (item.hasTopic
+              ? widget.onTapWithTopic
+              : widget.onTapWithoutTopic)(item),
+        ),
+      );
       if (i != visible.length - 1) {
-        rowTiles.add(SizedBox(width: widget.tileSpacing, height: widget.tileSpacing));
+        rowTiles.add(
+          SizedBox(width: widget.tileSpacing, height: widget.tileSpacing),
+        );
       }
     }
 
     final canRotate = widget.items.length > widget.maxPerRow;
     if (canRotate) {
       if (rowTiles.isNotEmpty) {
-        rowTiles.add(SizedBox(width: widget.tileSpacing, height: widget.tileSpacing));
+        rowTiles.add(
+          SizedBox(width: widget.tileSpacing, height: widget.tileSpacing),
+        );
       }
-      rowTiles.add(_SeeMoreTile(
-        size: widget.tileSize,
-        radius: widget.tileRadius,
-        onTap: _advance,
-      ));
+      rowTiles.add(
+        _SeeMoreTile(
+          size: widget.tileSize,
+          radius: widget.tileRadius,
+          onTap: _advance,
+        ),
+      );
     }
 
     // IMPORTANT: add outer padding & fixed height to avoid shadow clipping
@@ -189,8 +208,8 @@ class _GroupCarouselRowState extends State<_GroupCarouselRow> {
     return Padding(
       key: key,
       padding: EdgeInsets.symmetric(
-        horizontal: widget.tileSpacing,     // side gutter
-        vertical: widget.tileSpacing,       // top/bottom gutter
+        horizontal: widget.tileSpacing, // side gutter
+        vertical: widget.tileSpacing, // top/bottom gutter
       ),
       child: SizedBox(
         height: widget.tileSize + widget.tileSpacing * 2, // room for shadows
@@ -202,7 +221,6 @@ class _GroupCarouselRowState extends State<_GroupCarouselRow> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     final visible = _windowed();
@@ -211,31 +229,38 @@ class _GroupCarouselRowState extends State<_GroupCarouselRow> {
     final rowTiles = <Widget>[];
     for (var i = 0; i < visible.length; i++) {
       final item = visible[i];
-      rowTiles.add(_SourceTile(
-        item: item,
-        size: widget.tileSize,
-        radius: widget.tileRadius,
-        onTap: () => (item.hasTopic
-            ? widget.onTapWithTopic
-            : widget.onTapWithoutTopic)(item),
-      ));
+      rowTiles.add(
+        _SourceTile(
+          item: item,
+          size: widget.tileSize,
+          radius: widget.tileRadius,
+          onTap: () => (item.hasTopic
+              ? widget.onTapWithTopic
+              : widget.onTapWithoutTopic)(item),
+        ),
+      );
       if (i != visible.length - 1) {
-        rowTiles.add(SizedBox(width: widget.tileSpacing, height: widget.tileSpacing));
+        rowTiles.add(
+          SizedBox(width: widget.tileSpacing, height: widget.tileSpacing),
+        );
       }
     }
 
     // Append an always-present See More tile only when rotation makes sense
     final canRotate = widget.items.length > widget.maxPerRow;
     if (canRotate) {
-      if (rowTiles.isNotEmpty) rowTiles.add(SizedBox(width: widget.tileSpacing, height: widget.tileSpacing));
-      rowTiles.add(_SeeMoreTile(
-        size: widget.tileSize,
-        radius: widget.tileRadius,
-        onTap: _advance,
-      ));
+      if (rowTiles.isNotEmpty)
+        rowTiles.add(
+          SizedBox(width: widget.tileSpacing, height: widget.tileSpacing),
+        );
+      rowTiles.add(
+        _SeeMoreTile(
+          size: widget.tileSize,
+          radius: widget.tileRadius,
+          onTap: _advance,
+        ),
+      );
     }
-
-
 
     // Animate the “shift left” using AnimatedSwitcher
     return AnimatedSwitcher(
@@ -243,7 +268,10 @@ class _GroupCarouselRowState extends State<_GroupCarouselRow> {
       switchInCurve: Curves.easeInOutCubic,
       switchOutCurve: Curves.easeInOutCubic,
       transitionBuilder: (child, anim) {
-        final curved = CurvedAnimation(parent: anim, curve: Curves.easeInOutCubic);
+        final curved = CurvedAnimation(
+          parent: anim,
+          curve: Curves.easeInOutCubic,
+        );
         return FadeTransition(
           opacity: curved,
           child: SlideTransition(
@@ -269,7 +297,6 @@ class _GroupCarouselRowState extends State<_GroupCarouselRow> {
     );
   }
 }
-
 
 class _SourceTile extends StatefulWidget {
   const _SourceTile({
@@ -297,58 +324,66 @@ class _SourceTileState extends State<_SourceTile> {
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
-      onExit:  (_) => setState(() => _hover = false),
+      onExit: (_) => setState(() => _hover = false),
       cursor: SystemMouseCursors.click,
-      child:  Padding( // NEW: space so the shadow can render fully
-  padding: const EdgeInsets.symmetric(vertical: 2), 
-  child:  Material(
-        color: Colors.white,
-        elevation: _hover ? 6 : 3,
-        borderRadius: BorderRadius.circular(widget.radius),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: widget.onTap,
-          child: SizedBox(
-            width: widget.size,
-            height: widget.size,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                _NetworkImageAuto(url: widget.item.itemImg),
-                // hover overlay with name
-                AnimatedOpacity(
-                  opacity: _hover ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 140),
-                  child: Container(
-                    color: Colors.black.withAlpha(100),
-                    alignment: Alignment.center,
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: Text(
-                      _prettyTitle(widget.item.itemName),
-                      maxLines: 1, softWrap: false, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13,
+      child: Padding(
+        // NEW: space so the shadow can render fully
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Material(
+          color: Colors.white,
+          elevation: _hover ? 6 : 3,
+          borderRadius: BorderRadius.circular(widget.radius),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: widget.onTap,
+            child: SizedBox(
+              width: widget.size,
+              height: widget.size,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _NetworkImageAuto(url: widget.item.itemImg),
+                  // hover overlay with name
+                  AnimatedOpacity(
+                    opacity: _hover ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 140),
+                    child: Container(
+                      color: Colors.black.withAlpha(100),
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Text(
+                        _prettyTitle(widget.item.itemName),
+                        maxLines: 1,
+                        softWrap: false,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                // subtle border to signal interactivity
-                IgnorePointer(
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 140),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: _hover ? scheme.primary : Colors.transparent, width: 2),
-                      borderRadius: BorderRadius.circular(widget.radius),
+                  // subtle border to signal interactivity
+                  IgnorePointer(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 140),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: _hover ? scheme.primary : Colors.transparent,
+                          width: 2,
+                        ),
+                        borderRadius: BorderRadius.circular(widget.radius),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ));
+    );
   }
 }
 
@@ -368,7 +403,7 @@ class _SeeMoreTile extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return Material(
-      color: scheme.surfaceContainerHighest ,
+      color: scheme.surfaceContainerHighest,
       borderRadius: BorderRadius.circular(radius),
       clipBehavior: Clip.antiAlias,
       elevation: 2,
@@ -394,12 +429,8 @@ class _SeeMoreTile extends StatelessWidget {
   }
 }
 
-
 class _NetworkImageAuto extends StatelessWidget {
-  const _NetworkImageAuto({
-    required this.url,
-    this.fit = BoxFit.contain,
-  });
+  const _NetworkImageAuto({required this.url, this.fit = BoxFit.contain});
 
   final String url;
   final BoxFit fit;
@@ -417,8 +448,7 @@ class _NetworkImageAuto extends StatelessWidget {
 
   // Also consider data URIs like: data:image/svg+xml;...
   bool get _isSvgByDataUri =>
-      url.startsWith('data:') &&
-      url.toLowerCase().contains('image/svg+xml');
+      url.startsWith('data:') && url.toLowerCase().contains('image/svg+xml');
 
   bool get _isSvg => _isSvgByExt || _isSvgByDataUri;
 
@@ -435,8 +465,9 @@ class _NetworkImageAuto extends StatelessWidget {
     return Image.network(
       url,
       fit: fit,
-      errorBuilder: (c, e, s) =>
-          const Center(child: Icon(Icons.broken_image, size: 32, color: Colors.black26)),
+      errorBuilder: (c, e, s) => const Center(
+        child: Icon(Icons.broken_image, size: 32, color: Colors.black26),
+      ),
       loadingBuilder: (c, child, progress) {
         if (progress == null) return child;
         return const Center(child: CircularProgressIndicator(strokeWidth: 2));

@@ -1,10 +1,8 @@
-
-
 class SourceItem {
-  final String mode;        // "playful" | "serious"
-  final String sourceName;  // e.g. "apps", "newspapers"
+  final String mode; // "playful" | "serious"
+  final String sourceName; // e.g. "apps", "newspapers"
   final bool hasTopic;
-  final String itemName;    // e.g. "google"
+  final String itemName; // e.g. "google"
   final String itemImg;
   dynamic expirationTime; // expiration time
 
@@ -18,11 +16,11 @@ class SourceItem {
   });
 
   factory SourceItem.fromJson(Map<String, dynamic> j) => SourceItem(
-        mode: (j['mode'] ?? '').toString(),
-        sourceName: (j['source_name'] ?? '').toString(),
-        hasTopic: j['has_topic'] == true,
-        itemName: (j['item_name'] ?? '').toString(),
-        itemImg: (j['item_img'] ?? '').toString(),
-        expirationTime: j['expiration_time'],
-      );
+    mode: (j['mode'] ?? '').toString(),
+    sourceName: (j['source_name'] ?? '').toString(),
+    hasTopic: j['has_topic'] == true,
+    itemName: (j['item_name'] ?? '').toString(),
+    itemImg: (j['item_img'] ?? '').toString(),
+    expirationTime: j['expiration_time'],
+  );
 }

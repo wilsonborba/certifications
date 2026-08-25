@@ -18,10 +18,12 @@ class MobileCertificationConfig extends BaseCertificationConfig {
   });
 
   @override
-  State<MobileCertificationConfig> createState() => _MobileCertificationConfigState();
+  State<MobileCertificationConfig> createState() =>
+      _MobileCertificationConfigState();
 }
 
-class _MobileCertificationConfigState extends BaseCertificationConfigState<MobileCertificationConfig> {
+class _MobileCertificationConfigState
+    extends BaseCertificationConfigState<MobileCertificationConfig> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,13 +40,20 @@ class _MobileCertificationConfigState extends BaseCertificationConfigState<Mobil
           return Center(
             child: SingleChildScrollView(
               child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight, maxWidth: 1200),
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
+                  maxWidth: 1200,
+                ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
                       'Certification Configuration',
-                      style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.black87),
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 100),
