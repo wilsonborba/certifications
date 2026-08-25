@@ -57,14 +57,14 @@
         <style>
             :root {
                 color-scheme: light dark;
-                --brand-bg: #0b0f17;
-                --brand-primary: #4aa7ff;
-                --brand-secondary: #6ee7b7;
-                --brand-accent: #f4b942;
-                --brand-surface: rgba(10, 16, 28, 0.78);
-                --brand-stroke: rgba(255, 255, 255, 0.12);
-                --brand-text: #f4f8ff;
-                --brand-muted: rgba(244, 248, 255, 0.72);
+                --brand-bg: Canvas;
+                --brand-primary: CanvasText;
+                --brand-secondary: CanvasText;
+                --brand-accent: CanvasText;
+                --brand-surface: color-mix(in srgb, Canvas 92%, CanvasText 8%);
+                --brand-stroke: color-mix(in srgb, CanvasText 16%, transparent);
+                --brand-text: CanvasText;
+                --brand-muted: color-mix(in srgb, CanvasText 70%, transparent);
             }
 
             * { box-sizing: border-box; }
@@ -72,10 +72,7 @@
             html, body {
                 margin: 0;
                 min-height: 100%;
-                background:
-                    radial-gradient(circle at 18% 18%, rgba(74, 167, 255, 0.28), transparent 22%),
-                    radial-gradient(circle at 80% 20%, rgba(110, 231, 183, 0.18), transparent 18%),
-                    linear-gradient(145deg, #06090f 0%, #0a1120 52%, #101a2d 100%);
+                background: var(--brand-bg);
                 color: var(--brand-text);
                 font-family: Ubuntu, system-ui, sans-serif;
             }
@@ -93,8 +90,8 @@
                 border: 1px solid var(--brand-stroke);
                 border-radius: 28px;
                 overflow: hidden;
-                background: linear-gradient(180deg, rgba(15, 24, 40, 0.86), rgba(10, 16, 28, 0.82));
-                box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+                background: var(--brand-surface);
+                box-shadow: 0 30px 80px color-mix(in srgb, CanvasText 22%, transparent);
                 backdrop-filter: blur(18px);
             }
 
@@ -111,10 +108,7 @@
                 flex-direction: column;
                 justify-content: flex-end;
                 gap: 18px;
-                background:
-                    radial-gradient(circle at 24% 18%, rgba(74, 167, 255, 0.3), transparent 18%),
-                    radial-gradient(circle at 74% 26%, rgba(110, 231, 183, 0.24), transparent 14%),
-                    linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0));
+                background: var(--brand-bg);
             }
 
             .bootstrap-brand::after {
@@ -125,7 +119,7 @@
                 width: 240px;
                 height: 240px;
                 border-radius: 999px;
-                background: radial-gradient(circle, rgba(244, 185, 66, 0.22), transparent 70%);
+                background: radial-gradient(circle, color-mix(in srgb, CanvasText 18%, transparent), transparent 70%);
                 filter: blur(24px);
                 animation: drift 8s ease-in-out infinite alternate;
             }
@@ -165,7 +159,7 @@
                 flex-direction: column;
                 justify-content: center;
                 gap: 18px;
-                background: rgba(7, 11, 19, 0.52);
+                background: var(--brand-surface);
             }
 
             .bootstrap-loader {
@@ -174,8 +168,8 @@
                 border-radius: 22px;
                 display: grid;
                 place-items: center;
-                background: linear-gradient(145deg, rgba(74, 167, 255, 0.18), rgba(110, 231, 183, 0.18));
-                border: 1px solid rgba(255, 255, 255, 0.12);
+                background: var(--brand-bg);
+                border: 1px solid var(--brand-stroke);
             }
 
             .bootstrap-loader::before {
@@ -183,7 +177,7 @@
                 width: 34px;
                 height: 34px;
                 border-radius: 999px;
-                border: 3px solid rgba(255, 255, 255, 0.12);
+                border: 3px solid var(--brand-stroke);
                 border-top-color: var(--brand-primary);
                 animation: spin 0.85s linear infinite;
             }
@@ -205,7 +199,7 @@
                 height: 10px;
                 border-radius: 999px;
                 overflow: hidden;
-                background: rgba(255, 255, 255, 0.08);
+                background: var(--brand-stroke);
             }
 
             .bootstrap-progress::before {
@@ -213,7 +207,7 @@
                 display: block;
                 width: 40%;
                 height: 100%;
-                background: linear-gradient(90deg, var(--brand-primary), var(--brand-secondary), var(--brand-accent));
+                background: var(--brand-primary);
                 border-radius: inherit;
                 animation: pulse 1.6s ease-in-out infinite;
             }
