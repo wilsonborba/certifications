@@ -1,8 +1,8 @@
-import 'package:accredit/presentation/components/boarding/cookies_check.dart';
+import 'package:certifications/presentation/components/boarding/cookies_check.dart';
 import 'package:flutter/material.dart';
-import 'package:accredit/presentation/screen_adjuster.dart';
-import 'package:accredit/presentation/widgets/boarding/desktop_boarding.dart';
-import 'package:accredit/presentation/widgets/boarding/mobile_boarding.dart';
+import 'package:certifications/presentation/screen_adjuster.dart';
+import 'package:certifications/presentation/widgets/boarding/desktop_boarding.dart';
+import 'package:certifications/presentation/widgets/boarding/mobile_boarding.dart';
 
 class OnBoardingScreen extends StatefulWidget {
   const OnBoardingScreen({super.key});

@@ -1,7 +1,7 @@
-import 'package:accredit/presentation/widgets/auth/desktop_sync_auth.dart';
-import 'package:accredit/presentation/widgets/auth/mobile_sync_auth.dart';
+import 'package:certifications/presentation/widgets/auth/desktop_sync_auth.dart';
+import 'package:certifications/presentation/widgets/auth/mobile_sync_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:accredit/presentation/screen_adjuster.dart';
+import 'package:certifications/presentation/screen_adjuster.dart';
 
 class OnSyncAuthScreen extends StatefulWidget {
   static const String route = '/sync';

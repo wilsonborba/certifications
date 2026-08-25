@@ -1,19 +1,19 @@
 import 'dart:typed_data';
 
-import 'package:accredit/presentation/widgets/attachment/on_attachment.dart';
+import 'package:certifications/presentation/widgets/attachment/on_attachment.dart';
 import 'package:flutter/material.dart';
 
-import 'package:accredit/presentation/screen_adjuster.dart';
-import 'package:accredit/presentation/widgets/page_filter/desktop_page_filter.dart';
-import 'package:accredit/presentation/widgets/page_filter/mobile_page_filter.dart';
+import 'package:certifications/presentation/screen_adjuster.dart';
+import 'package:certifications/presentation/widgets/page_filter/desktop_page_filter.dart';
+import 'package:certifications/presentation/widgets/page_filter/mobile_page_filter.dart';
 
 // Use the file where getPdfInputFromApi(...) is defined.
 // If you actually have a manager wrapper, adjust this import accordingly.
-import 'package:accredit/domain/services/pdf_frontend_prescan_manager.dart'
+import 'package:certifications/domain/services/pdf_frontend_prescan_manager.dart'
     as pre;
 
 // Your app's navigation helper (you mentioned NavigationService.push)
-import 'package:accredit/core/utils/my_nagivation.dart'; // NavigationService
+import 'package:certifications/core/utils/my_nagivation.dart'; // NavigationService
 
 class OnPageFilterScreen extends StatefulWidget {
   final String documentId;

@@ -1,12 +1,12 @@
 // lib/core/utils/my_redirect_widget.dart
 // Minimal redirect widget that uses the safe helper in my_route_parser.dart.
 
-import 'package:accredit/core/utils/my_logs.dart';
-import 'package:accredit/dal/local/local_source_adapter.dart';
-import 'package:accredit/presentation/components/auth/login_redirect.dart';
-import 'package:accredit/presentation/components/quiz/futuristic_loading.dart';
+import 'package:certifications/core/utils/my_logs.dart';
+import 'package:certifications/dal/local/local_source_adapter.dart';
+import 'package:certifications/presentation/components/auth/login_redirect.dart';
+import 'package:certifications/presentation/components/quiz/futuristic_loading.dart';
 import 'package:flutter/material.dart';
-import 'package:accredit/core/utils/my_router_parser.dart';
+import 'package:certifications/core/utils/my_router_parser.dart';
 
 /// Clears cookies + local storage. Call this for Logout.
 Future<void> clearSessionArtifacts() async {

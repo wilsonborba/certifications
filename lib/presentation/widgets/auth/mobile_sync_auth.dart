@@ -1,4 +1,4 @@
-import 'package:accredit/presentation/widgets/auth/base_sync_auth.dart';
+import 'package:certifications/presentation/widgets/auth/base_sync_auth.dart';
 import 'package:flutter/material.dart';
 
 ///  renders the topics grid for mobile layout

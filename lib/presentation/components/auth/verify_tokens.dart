@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:accredit/domain/services/api_certification_manager.dart';
-import 'package:accredit/core/utils/my_logs.dart';
+import 'package:certifications/domain/services/api_certification_manager.dart';
+import 'package:certifications/core/utils/my_logs.dart';
 
 Future<bool> isThereTokens() async {
   final CertificationManager certificationManager = CertificationManager();

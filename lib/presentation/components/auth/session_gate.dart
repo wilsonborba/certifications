@@ -1,7 +1,7 @@
 // ---- 1) Put this widget somewhere in the same file ----
-import 'package:accredit/presentation/components/auth/verify_session.dart';
-import 'package:accredit/presentation/widgets/attachment/on_attachment.dart';
-import 'package:accredit/presentation/widgets/boarding/on_boarding.dart';
+import 'package:certifications/presentation/components/auth/verify_session.dart';
+import 'package:certifications/presentation/widgets/attachment/on_attachment.dart';
+import 'package:certifications/presentation/widgets/boarding/on_boarding.dart';
 import 'package:flutter/material.dart';
 
 class SessionGate extends StatelessWidget {

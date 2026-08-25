@@ -1,7 +1,7 @@
-import 'package:accredit/presentation/widgets/tokens/desktop_tokens.dart';
-import 'package:accredit/presentation/widgets/tokens/mobile_tokens.dart';
+import 'package:certifications/presentation/widgets/tokens/desktop_tokens.dart';
+import 'package:certifications/presentation/widgets/tokens/mobile_tokens.dart';
 import 'package:flutter/material.dart';
-import 'package:accredit/presentation/screen_adjuster.dart';
+import 'package:certifications/presentation/screen_adjuster.dart';
 
 class OnTokensScreen extends StatefulWidget {
   const OnTokensScreen({super.key});

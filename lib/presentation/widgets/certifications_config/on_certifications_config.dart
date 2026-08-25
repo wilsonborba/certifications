@@ -1,8 +1,8 @@
 // on_certification_config_screen.dart
 import 'package:flutter/material.dart';
-import 'package:accredit/presentation/screen_adjuster.dart';
-import 'package:accredit/presentation/widgets/certifications_config/desktop_certifications_config.dart';
-import 'package:accredit/presentation/widgets/certifications_config/mobile_certifications_config.dart';
+import 'package:certifications/presentation/screen_adjuster.dart';
+import 'package:certifications/presentation/widgets/certifications_config/desktop_certifications_config.dart';
+import 'package:certifications/presentation/widgets/certifications_config/mobile_certifications_config.dart';
 
 class OnCertificationConfigScreen extends StatefulWidget {
   final String? itemName; // for topic mode

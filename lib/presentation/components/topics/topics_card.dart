@@ -1,6 +1,6 @@
-import 'package:accredit/presentation/widgets/certifications_config/on_certifications_config.dart';
+import 'package:certifications/presentation/widgets/certifications_config/on_certifications_config.dart';
 import 'package:flutter/material.dart';
-import 'package:accredit/core/utils/my_nagivation.dart';
+import 'package:certifications/core/utils/my_nagivation.dart';
 
 class TopicsCard extends StatefulWidget {
   final String itemName;

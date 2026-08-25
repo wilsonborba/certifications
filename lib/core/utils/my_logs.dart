@@ -1,6 +1,6 @@
 // ignore_for_file: avoid_print
 
-import 'package:accredit/core/settings.dart';
+import 'package:certifications/core/settings.dart';
 import 'package:flutter/material.dart';
 
 import 'package:logging/logging.dart';

@@ -1,20 +1,20 @@
 // on_quiz_screen.dart
 import 'dart:async';
 import 'dart:convert';
-import 'package:accredit/presentation/components/quiz/futuristic_loading.dart';
+import 'package:certifications/presentation/components/quiz/futuristic_loading.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:accredit/domain/models/topic_identifications.dart';
-import 'package:accredit/presentation/components/quiz/quiz_controller.dart';
-import 'package:accredit/presentation/screen_adjuster.dart';
-import 'package:accredit/presentation/widgets/quiz/desktop_quiz.dart';
-import 'package:accredit/presentation/widgets/quiz/mobile_quiz.dart';
-import 'package:accredit/domain/services/pdf_frontend_prescan_manager.dart'
+import 'package:certifications/domain/models/topic_identifications.dart';
+import 'package:certifications/presentation/components/quiz/quiz_controller.dart';
+import 'package:certifications/presentation/screen_adjuster.dart';
+import 'package:certifications/presentation/widgets/quiz/desktop_quiz.dart';
+import 'package:certifications/presentation/widgets/quiz/mobile_quiz.dart';
+import 'package:certifications/domain/services/pdf_frontend_prescan_manager.dart'
     as pre;
-import 'package:accredit/core/utils/my_logs.dart';
-import 'package:accredit/core/utils/my_nagivation.dart';
+import 'package:certifications/core/utils/my_logs.dart';
+import 'package:certifications/core/utils/my_nagivation.dart';
 
 // --------- Background parse (same as before) ----------
 ContextInfo _parseContextInfoBody(Map<String, dynamic> args) {

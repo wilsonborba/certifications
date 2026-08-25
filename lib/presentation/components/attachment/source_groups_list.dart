@@ -1,5 +1,5 @@
 import 'dart:collection';
-import 'package:accredit/domain/models/source_item.dart';
+import 'package:certifications/domain/models/source_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 

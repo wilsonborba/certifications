@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:accredit/core/settings.dart';
+import 'package:certifications/core/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -186,7 +186,7 @@ class _AppErrorViewState extends State<AppErrorView> {
         uri,
         headers: const {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'app_name': 'Accredit',
+          'app_name': 'Certifications',
           'environment': app_settings.developmentMode
               ? 'development'
               : 'production',

@@ -1,8 +1,8 @@
 // ignore_for_file: non_constant_identifier_names
 
-import 'package:accredit/domain/models/application_info.dart';
+import 'package:certifications/domain/models/application_info.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:accredit/dal/local/local_source_adapter.dart';
+import 'package:certifications/dal/local/local_source_adapter.dart';
 import 'package:flutter/foundation.dart';
 
 class Settings {

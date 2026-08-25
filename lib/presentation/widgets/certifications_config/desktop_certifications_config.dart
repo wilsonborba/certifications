@@ -1,8 +1,8 @@
 // desktop_certifications_config.dart
-import 'package:accredit/core/utils/my_nagivation.dart';
-import 'package:accredit/presentation/components/certifications_config/form_config.dart';
-import 'package:accredit/presentation/widgets/certifications_config/base_certification_config.dart';
-import 'package:accredit/presentation/widgets/quiz/on_quiz.dart';
+import 'package:certifications/core/utils/my_nagivation.dart';
+import 'package:certifications/presentation/components/certifications_config/form_config.dart';
+import 'package:certifications/presentation/widgets/certifications_config/base_certification_config.dart';
+import 'package:certifications/presentation/widgets/quiz/on_quiz.dart';
 
 import 'package:flutter/material.dart';
 
