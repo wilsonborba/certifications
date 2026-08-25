@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:math' as math;
-import 'package:accredit/core/utils/my_logs.dart';
-import 'package:accredit/core/utils/my_nagivation.dart';
-import 'package:accredit/domain/services/api_certification_manager.dart';
-import 'package:accredit/presentation/components/tokens/glowing_button.dart';
-import 'package:accredit/presentation/widgets/attachment/on_attachment.dart';
+import 'package:certifications/core/utils/my_logs.dart';
+import 'package:certifications/core/utils/my_nagivation.dart';
+import 'package:certifications/domain/services/api_certification_manager.dart';
+import 'package:certifications/presentation/components/tokens/glowing_button.dart';
+import 'package:certifications/presentation/widgets/attachment/on_attachment.dart';
 import 'package:flutter/material.dart';
 
 /// Represents a provider option (Grok/Gemini/OpenAI etc.)

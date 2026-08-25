@@ -1,7 +1,7 @@
-import 'package:accredit/presentation/components/quiz/futuristic_loading.dart';
-import 'package:accredit/presentation/components/topics/topics_card.dart';
+import 'package:certifications/presentation/components/quiz/futuristic_loading.dart';
+import 'package:certifications/presentation/components/topics/topics_card.dart';
 import 'package:flutter/material.dart';
-import 'package:accredit/presentation/widgets/topics/base_topics.dart';
+import 'package:certifications/presentation/widgets/topics/base_topics.dart';
 
 class DesktopTopics extends BaseTopics {
   const DesktopTopics({super.key, required String itemName})

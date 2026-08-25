@@ -1,6 +1,6 @@
-import 'package:accredit/presentation/screen_adjuster.dart';
-import 'package:accredit/presentation/widgets/plans/desktop_plans.dart';
-import 'package:accredit/presentation/widgets/plans/mobile_plans.dart';
+import 'package:certifications/presentation/screen_adjuster.dart';
+import 'package:certifications/presentation/widgets/plans/desktop_plans.dart';
+import 'package:certifications/presentation/widgets/plans/mobile_plans.dart';
 import 'package:flutter/material.dart';
 
 class OnPlansScreen extends StatelessWidget {

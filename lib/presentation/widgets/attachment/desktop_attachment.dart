@@ -1,21 +1,21 @@
-import 'package:accredit/core/settings.dart';
-import 'package:accredit/domain/services/api_certification_manager.dart';
-import 'package:accredit/presentation/components/attachment/app_bar.dart';
-import 'package:accredit/presentation/components/attachment/want_app.dart';
-import 'package:accredit/presentation/widgets/certifications/on_certifications.dart';
-import 'package:accredit/presentation/widgets/plans/on_plans.dart';
-import 'package:accredit/presentation/widgets/tokens/on_tokens.dart';
-import 'package:accredit/presentation/widgets/topics/on_topics.dart';
+import 'package:certifications/core/settings.dart';
+import 'package:certifications/domain/services/api_certification_manager.dart';
+import 'package:certifications/presentation/components/attachment/app_bar.dart';
+import 'package:certifications/presentation/components/attachment/want_app.dart';
+import 'package:certifications/presentation/widgets/certifications/on_certifications.dart';
+import 'package:certifications/presentation/widgets/plans/on_plans.dart';
+import 'package:certifications/presentation/widgets/tokens/on_tokens.dart';
+import 'package:certifications/presentation/widgets/topics/on_topics.dart';
 import 'package:flutter/material.dart';
 
-import 'package:accredit/core/utils/my_logs.dart';
-import 'package:accredit/core/utils/my_nagivation.dart';
-import 'package:accredit/domain/models/source_item.dart';
-import 'package:accredit/domain/models/mode_buckets.dart';
+import 'package:certifications/core/utils/my_logs.dart';
+import 'package:certifications/core/utils/my_nagivation.dart';
+import 'package:certifications/domain/models/source_item.dart';
+import 'package:certifications/domain/models/mode_buckets.dart';
 
-import 'package:accredit/presentation/components/attachment/tab_card_sources.dart';
-import 'package:accredit/presentation/components/attachment/source_groups_list.dart';
-import 'package:accredit/presentation/components/attachment/card_pdf_picker.dart';
+import 'package:certifications/presentation/components/attachment/tab_card_sources.dart';
+import 'package:certifications/presentation/components/attachment/source_groups_list.dart';
+import 'package:certifications/presentation/components/attachment/card_pdf_picker.dart';
 
 import 'base_attachment.dart';
 

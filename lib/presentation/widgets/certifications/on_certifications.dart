@@ -1,6 +1,6 @@
-import 'package:accredit/presentation/screen_adjuster.dart';
-import 'package:accredit/presentation/widgets/certifications/desktop_certifications.dart';
-import 'package:accredit/presentation/widgets/certifications/mobile_certifications.dart';
+import 'package:certifications/presentation/screen_adjuster.dart';
+import 'package:certifications/presentation/widgets/certifications/desktop_certifications.dart';
+import 'package:certifications/presentation/widgets/certifications/mobile_certifications.dart';
 import 'package:flutter/material.dart';
 
 class OnCertificationsScreen extends StatefulWidget {

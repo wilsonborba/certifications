@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-import 'package:accredit/domain/models/certification.dart';
+import 'package:certifications/domain/models/certification.dart';
 
 class CertificateBody extends StatelessWidget {
   final Certification cert;

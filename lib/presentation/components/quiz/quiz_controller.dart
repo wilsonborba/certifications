@@ -1,11 +1,11 @@
 // controllers/quiz_controller.dart
 import 'dart:async';
-import 'package:accredit/domain/services/api_asodya_manager.dart';
-import 'package:accredit/domain/services/api_certification_manager.dart';
+import 'package:certifications/domain/services/api_asodya_manager.dart';
+import 'package:certifications/domain/services/api_certification_manager.dart';
 import 'package:flutter/foundation.dart';
-import 'package:accredit/core/utils/my_logs.dart';
-import 'package:accredit/domain/models/quiz.dart';
-import 'package:accredit/domain/models/topic_identifications.dart';
+import 'package:certifications/core/utils/my_logs.dart';
+import 'package:certifications/domain/models/quiz.dart';
+import 'package:certifications/domain/models/topic_identifications.dart';
 import 'package:http/http.dart';
 
 class QuizController extends ChangeNotifier {

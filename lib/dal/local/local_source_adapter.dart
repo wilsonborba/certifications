@@ -1,5 +1,5 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:accredit/core/utils/my_logs.dart';
+import 'package:certifications/core/utils/my_logs.dart';
 import 'dart:convert';
 import 'package:web/web.dart' as web;
 

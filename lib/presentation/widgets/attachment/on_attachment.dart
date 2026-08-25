@@ -1,15 +1,15 @@
 import 'dart:convert';
 
-import 'package:accredit/core/utils/my_encryption.dart';
-import 'package:accredit/core/utils/my_logs.dart';
-import 'package:accredit/dal/local/local_source_adapter.dart';
+import 'package:certifications/core/utils/my_encryption.dart';
+import 'package:certifications/core/utils/my_logs.dart';
+import 'package:certifications/dal/local/local_source_adapter.dart';
 
-import 'package:accredit/domain/models/source_item.dart';
-import 'package:accredit/domain/services/api_certification_manager.dart';
+import 'package:certifications/domain/models/source_item.dart';
+import 'package:certifications/domain/services/api_certification_manager.dart';
 import 'package:flutter/material.dart';
-import 'package:accredit/presentation/screen_adjuster.dart';
-import 'package:accredit/presentation/widgets/attachment/desktop_attachment.dart';
-import 'package:accredit/presentation/widgets/attachment/mobile_attachment.dart';
+import 'package:certifications/presentation/screen_adjuster.dart';
+import 'package:certifications/presentation/widgets/attachment/desktop_attachment.dart';
+import 'package:certifications/presentation/widgets/attachment/mobile_attachment.dart';
 
 class OnAttachmentScreen extends StatefulWidget {
   const OnAttachmentScreen({super.key});

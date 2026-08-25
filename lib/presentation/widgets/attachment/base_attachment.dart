@@ -1,7 +1,7 @@
-import 'package:accredit/presentation/components/quiz/futuristic_loading.dart';
+import 'package:certifications/presentation/components/quiz/futuristic_loading.dart';
 import 'package:flutter/material.dart';
-import 'package:accredit/domain/models/source_item.dart';
-import 'package:accredit/domain/models/mode_buckets.dart';
+import 'package:certifications/domain/models/source_item.dart';
+import 'package:certifications/domain/models/mode_buckets.dart';
 
 /// BaseAttachment is a StatefulWidget holding shared logic for Mobile/Desktop
 abstract class BaseAttachment extends StatefulWidget {

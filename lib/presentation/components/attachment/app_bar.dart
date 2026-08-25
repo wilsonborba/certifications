@@ -1,7 +1,7 @@
-import 'package:accredit/core/utils/my_logs.dart';
-import 'package:accredit/core/utils/my_nagivation.dart';
+import 'package:certifications/core/utils/my_logs.dart';
+import 'package:certifications/core/utils/my_nagivation.dart';
 
-import 'package:accredit/presentation/components/auth/login_redirect.dart';
+import 'package:certifications/presentation/components/auth/login_redirect.dart';
 import 'package:flutter/material.dart';
 
 const double _appBarHeight = 80;

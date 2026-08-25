@@ -1,4 +1,4 @@
-import 'package:accredit/domain/models/source_item.dart';
+import 'package:certifications/domain/models/source_item.dart';
 
 class ModeBuckets {
   final List<SourceItem> playful;

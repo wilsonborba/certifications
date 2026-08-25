@@ -2,27 +2,29 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:accredit/core/utils/my_background.dart';
-import 'package:accredit/core/utils/my_logs.dart';
-import 'package:accredit/domain/models/certification.dart';
-import 'package:accredit/domain/services/api_certification_manager.dart';
-import 'package:accredit/presentation/components/accredit/certificate_body.dart';
+import 'package:certifications/core/utils/my_background.dart';
+import 'package:certifications/core/utils/my_logs.dart';
+import 'package:certifications/domain/models/certification.dart';
+import 'package:certifications/domain/services/api_certification_manager.dart';
+import 'package:certifications/presentation/components/certifications/certificate_body.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart' as prt;
 import 'package:share_plus/share_plus.dart';
 
-class DesktopAccreditScreen extends StatefulWidget {
+class DesktopCertificationScreen extends StatefulWidget {
   final String certificationId;
 
-  const DesktopAccreditScreen({super.key, required this.certificationId});
+  const DesktopCertificationScreen({super.key, required this.certificationId});
 
   @override
-  State<DesktopAccreditScreen> createState() => _DesktopAccreditScreenState();
+  State<DesktopCertificationScreen> createState() =>
+      _DesktopCertificationScreenState();
 }
 
-class _DesktopAccreditScreenState extends State<DesktopAccreditScreen> {
+class _DesktopCertificationScreenState
+    extends State<DesktopCertificationScreen> {
   late Future<Certification> _future;
   final _captureKey = GlobalKey();
 

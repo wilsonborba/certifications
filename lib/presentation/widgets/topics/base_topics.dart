@@ -4,10 +4,10 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import 'package:accredit/core/utils/my_encryption.dart';
-import 'package:accredit/dal/local/local_source_adapter.dart';
-import 'package:accredit/domain/models/topic_identifications.dart';
-import 'package:accredit/domain/services/api_certification_manager.dart';
+import 'package:certifications/core/utils/my_encryption.dart';
+import 'package:certifications/dal/local/local_source_adapter.dart';
+import 'package:certifications/domain/models/topic_identifications.dart';
+import 'package:certifications/domain/services/api_certification_manager.dart';
 
 /// BaseTopics is a StatefulWidget holding shared logic for Mobile/Desktop
 abstract class BaseTopics extends StatefulWidget {

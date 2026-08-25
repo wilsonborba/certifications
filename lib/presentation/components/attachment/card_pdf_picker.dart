@@ -2,16 +2,16 @@ import 'dart:convert';
 import 'dart:async';
 import 'dart:ui' as ui show ImageByteFormat, Image;
 
-import 'package:accredit/core/utils/my_dialogs.dart';
-import 'package:accredit/core/utils/my_logs.dart';
-import 'package:accredit/core/utils/my_nagivation.dart';
-import 'package:accredit/presentation/components/quiz/futuristic_loading.dart';
-import 'package:accredit/presentation/widgets/page_filter/on_page_filter.dart';
+import 'package:certifications/core/utils/my_dialogs.dart';
+import 'package:certifications/core/utils/my_logs.dart';
+import 'package:certifications/core/utils/my_nagivation.dart';
+import 'package:certifications/presentation/components/quiz/futuristic_loading.dart';
+import 'package:certifications/presentation/widgets/page_filter/on_page_filter.dart';
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:accredit/domain/services/pdf_frontend_prescan_manager.dart'
+import 'package:certifications/domain/services/pdf_frontend_prescan_manager.dart'
     as pre;
 import 'package:printing/printing.dart';
 

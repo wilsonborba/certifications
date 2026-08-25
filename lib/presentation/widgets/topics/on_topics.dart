@@ -1,7 +1,7 @@
-import 'package:accredit/presentation/widgets/topics/desktop_topics.dart';
-import 'package:accredit/presentation/widgets/topics/mobile_topics.dart';
+import 'package:certifications/presentation/widgets/topics/desktop_topics.dart';
+import 'package:certifications/presentation/widgets/topics/mobile_topics.dart';
 import 'package:flutter/material.dart';
-import 'package:accredit/presentation/screen_adjuster.dart';
+import 'package:certifications/presentation/screen_adjuster.dart';
 
 class OnTopicsScreen extends StatefulWidget {
   final String itemName;

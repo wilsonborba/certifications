@@ -1,4 +1,4 @@
-import 'package:accredit/dal/local/local_source_adapter.dart';
+import 'package:certifications/dal/local/local_source_adapter.dart';
 import 'package:flutter/material.dart';
 
 class CookieConsentSnack {

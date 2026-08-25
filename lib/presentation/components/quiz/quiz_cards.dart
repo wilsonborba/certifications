@@ -1,8 +1,8 @@
 // widgets/quiz/question_card.dart
 import 'dart:ui';
 
-import 'package:accredit/domain/models/quiz.dart';
-import 'package:accredit/domain/services/api_certification_manager.dart';
+import 'package:certifications/domain/models/quiz.dart';
+import 'package:certifications/domain/services/api_certification_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 

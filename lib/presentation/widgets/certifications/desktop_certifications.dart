@@ -1,10 +1,10 @@
-import 'package:accredit/core/settings.dart';
-import 'package:accredit/core/utils/my_nagivation.dart';
-import 'package:accredit/presentation/components/attachment/app_bar.dart';
-import 'package:accredit/presentation/components/certifications/certifications_view.dart';
-import 'package:accredit/presentation/widgets/certifications/on_certifications.dart';
-import 'package:accredit/presentation/widgets/plans/on_plans.dart';
-import 'package:accredit/presentation/widgets/tokens/on_tokens.dart';
+import 'package:certifications/core/settings.dart';
+import 'package:certifications/core/utils/my_nagivation.dart';
+import 'package:certifications/presentation/components/attachment/app_bar.dart';
+import 'package:certifications/presentation/components/certifications/certifications_view.dart';
+import 'package:certifications/presentation/widgets/certifications/on_certifications.dart';
+import 'package:certifications/presentation/widgets/plans/on_plans.dart';
+import 'package:certifications/presentation/widgets/tokens/on_tokens.dart';
 import 'package:flutter/material.dart';
 
 class DesktopCertifications extends StatefulWidget {

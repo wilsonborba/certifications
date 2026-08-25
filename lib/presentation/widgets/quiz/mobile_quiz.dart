@@ -1,13 +1,13 @@
 // widgets/quiz/mobile_quiz.dart
 import 'dart:convert';
 
-import 'package:accredit/core/utils/my_nagivation.dart';
-import 'package:accredit/presentation/components/quiz/quiz_controller.dart';
-import 'package:accredit/presentation/widgets/accredit/on_accredit.dart';
+import 'package:certifications/core/utils/my_nagivation.dart';
+import 'package:certifications/presentation/components/quiz/quiz_controller.dart';
+import 'package:certifications/presentation/widgets/certifications/on_certification.dart';
 import 'package:flutter/material.dart';
 
-import 'package:accredit/presentation/components/quiz/big_appbar.dart';
-import 'package:accredit/presentation/components/quiz/quiz_cards.dart';
+import 'package:certifications/presentation/components/quiz/big_appbar.dart';
+import 'package:certifications/presentation/components/quiz/quiz_cards.dart';
 
 import 'package:http/http.dart' show Response;
 
@@ -198,7 +198,7 @@ class _MobileQuizState extends State<MobileQuiz> {
                   );
 
                   NavigationService.push(
-                    OnAccreditScreen(certificationId: certificationId),
+                    OnCertificationScreen(certificationId: certificationId),
                   );
                 },
 

@@ -1,8 +1,8 @@
 import 'dart:convert';
-import 'package:accredit/core/settings.dart';
-import 'package:accredit/core/utils/my_encryption.dart';
-import 'package:accredit/core/utils/my_logs.dart';
-import 'package:accredit/presentation/components/auth/auth_artifact_params.dart';
+import 'package:certifications/core/settings.dart';
+import 'package:certifications/core/utils/my_encryption.dart';
+import 'package:certifications/core/utils/my_logs.dart';
+import 'package:certifications/presentation/components/auth/auth_artifact_params.dart';
 
 MyEncryption encryptor = MyEncryption();
 

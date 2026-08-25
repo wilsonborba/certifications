@@ -1,10 +1,10 @@
 import 'dart:convert';
 
-import 'package:accredit/core/utils/my_logs.dart';
-import 'package:accredit/core/utils/my_nagivation.dart';
-import 'package:accredit/domain/models/certification.dart';
-import 'package:accredit/domain/services/api_certification_manager.dart';
-import 'package:accredit/presentation/widgets/accredit/on_accredit.dart';
+import 'package:certifications/core/utils/my_logs.dart';
+import 'package:certifications/core/utils/my_nagivation.dart';
+import 'package:certifications/domain/models/certification.dart';
+import 'package:certifications/domain/services/api_certification_manager.dart';
+import 'package:certifications/presentation/widgets/certifications/on_certification.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -174,7 +174,9 @@ class _CertificationsViewState extends State<CertificationsView> {
 
   void _openCertification(String certificationId) {
     if (certificationId.isEmpty) return;
-    NavigationService.push(OnAccreditScreen(certificationId: certificationId));
+    NavigationService.push(
+      OnCertificationScreen(certificationId: certificationId),
+    );
   }
 }
 

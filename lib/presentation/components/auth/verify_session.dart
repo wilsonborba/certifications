@@ -1,5 +1,5 @@
-import 'package:accredit/core/utils/my_logs.dart';
-import 'package:accredit/dal/local/local_source_adapter.dart';
+import 'package:certifications/core/utils/my_logs.dart';
+import 'package:certifications/dal/local/local_source_adapter.dart';
 
 String? readCsrfToken() => readCookie('csrf');
 
