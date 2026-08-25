@@ -2,18 +2,9 @@ import 'package:accredit/core/settings.dart';
 import 'package:accredit/core/utils/my_logs.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 
-
-
-
 class MyEncryption {
-
-
-
-
   Future<String?> getSaltKey() async {
-  
-
-    final sharedKey =  app_settings.FERNET_KEY_SECRET;
+    final sharedKey = app_settings.FERNET_KEY_SECRET;
 
     if (sharedKey.isNotEmpty) {
       // debug("Salt Key found: $sharedKey");
@@ -27,7 +18,7 @@ class MyEncryption {
 
   Future<String?> decryptPayload(String encryptedPayload) async {
     try {
-      final base64Key = await getSaltKey(); 
+      final base64Key = await getSaltKey();
 
       if (base64Key == null) {
         const errorMessage = "Key from decrypt cannot be null";
@@ -74,7 +65,7 @@ class MyEncryption {
 
   Future<String?> encryptPayload(String plainText) async {
     try {
-      final base64Key = await getSaltKey(); 
+      final base64Key = await getSaltKey();
 
       if (base64Key == null) {
         const errorMessage = "Key from encrypt cannot be null";

@@ -11,8 +11,6 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 typedef PdfInputFetcher = Future<PdfInputInfo> Function(String documentId);
 
-
-
 PdfInputInfo parsePdfInputInfo(http.Response resp) {
   final jsonMap = json.decode(resp.body) as Map<String, dynamic>;
   final data = jsonMap['data'] as Map<String, dynamic>;
@@ -193,15 +191,16 @@ class _BasePageFilterState extends State<BasePageFilter> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_error != null || !_ready) {
       return Scaffold(
         body: Center(
-          child: Text(_error ?? 'Unable to load PDF.', style: const TextStyle(color: Colors.red)),
+          child: Text(
+            _error ?? 'Unable to load PDF.',
+            style: const TextStyle(color: Colors.red),
+          ),
         ),
       );
     }
@@ -228,8 +227,8 @@ class _BasePageFilterState extends State<BasePageFilter> {
       // ✅ Here's the actual PDF viewer using memory bytes:
       right: Center(
         child: SizedBox(
-          width: 500, 
-          height: 600, 
+          width: 500,
+          height: 600,
           child: SfPdfViewer.memory(widget.pdfBytes),
         ),
       ),
@@ -257,10 +256,10 @@ class _TitleRow extends StatelessWidget {
   final int selected;
   final bool desktop;
 
-   const _TitleRow({
+  const _TitleRow({
     Key? key,
     required this.total,
-    required this.selected, 
+    required this.selected,
     required this.desktop,
   }) : super(key: key);
 
@@ -278,13 +277,15 @@ class _TitleRow extends StatelessWidget {
         //   height: 200,
         // ),
         const SizedBox(width: 12),
-         desktop ? Text(
-          'Select pages',
-          style: TextStyle(fontSize: 48, fontWeight: FontWeight.w800),
-        ) : Text(
-          'Select pages',
-          style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800),
-        ),
+        desktop
+            ? Text(
+                'Select pages',
+                style: TextStyle(fontSize: 48, fontWeight: FontWeight.w800),
+              )
+            : Text(
+                'Select pages',
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800),
+              ),
         const Spacer(),
 
         // --- Pretty, visible counter badge ---
@@ -296,8 +297,12 @@ class _TitleRow extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Theme.of(context).colorScheme.primary.withAlpha((.90 * 255).toInt()),
-                Theme.of(context).colorScheme.primary.withAlpha((.75 * 255).toInt()),
+                Theme.of(
+                  context,
+                ).colorScheme.primary.withAlpha((.90 * 255).toInt()),
+                Theme.of(
+                  context,
+                ).colorScheme.primary.withAlpha((.75 * 255).toInt()),
               ],
             ),
             boxShadow: const [
@@ -359,7 +364,9 @@ class _TitleRow extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                   child: LinearProgressIndicator(
                     value: ratio,
-                    backgroundColor: Colors.white.withAlpha((.25 * 255).toInt()),
+                    backgroundColor: Colors.white.withAlpha(
+                      (.25 * 255).toInt(),
+                    ),
                     color: Colors.white,
                     minHeight: 6,
                   ),
@@ -372,7 +379,6 @@ class _TitleRow extends StatelessWidget {
     );
   }
 }
-
 
 class _ScaffoldShell extends StatelessWidget {
   final bool desktop;
@@ -393,7 +399,7 @@ class _ScaffoldShell extends StatelessWidget {
   Widget build(BuildContext context) {
     if (desktop) {
       return Scaffold(
-         appBar: AppBar(
+        appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => Navigator.of(context).pop(),
@@ -492,11 +498,10 @@ class _LeftSelectors extends StatelessWidget {
         Opacity(
           opacity: 0.4,
           child: Row(
-            children:  [
+            children: [
               Checkbox(value: false, onChanged: null),
               SizedBox(width: 6),
               Text('Select All', style: TextStyle(fontWeight: FontWeight.w600)),
-              
             ],
           ),
         ),
@@ -504,12 +509,17 @@ class _LeftSelectors extends StatelessWidget {
           children: [
             Text(
               'Ranges',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
             const Spacer(),
             _RoundIconButton(icon: Icons.add, onTap: onAddRange),
             const SizedBox(width: 8),
-            _RoundIconButton(icon: Icons.remove, onTap: ranges.isEmpty ? null : onRemoveRange),
+            _RoundIconButton(
+              icon: Icons.remove,
+              onTap: ranges.isEmpty ? null : onRemoveRange,
+            ),
           ],
         ),
         const SizedBox(height: 8),
@@ -524,7 +534,9 @@ class _LeftSelectors extends StatelessWidget {
         const SizedBox(height: 12),
         Text(
           'Individual pages',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
         _PageBoxes(
@@ -572,10 +584,14 @@ class _RangeTile extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('${range.start}-${range.end}',
-                style: const TextStyle(fontWeight: FontWeight.w600)),
-            Text('1–$totalPages',
-                style: const TextStyle(color: Colors.black54, fontSize: 12)),
+            Text(
+              '${range.start}-${range.end}',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            Text(
+              '1–$totalPages',
+              style: const TextStyle(color: Colors.black54, fontSize: 12),
+            ),
           ],
         ),
       ],
@@ -602,7 +618,10 @@ class _PageBoxes extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 24),
         decoration: _boxDecoration(context),
         alignment: Alignment.center,
-        child: const Text('No remaining pages', style: TextStyle(color: Colors.black54)),
+        child: const Text(
+          'No remaining pages',
+          style: TextStyle(color: Colors.black54),
+        ),
       );
     }
 
@@ -634,18 +653,18 @@ class _PageBoxes extends StatelessWidget {
   }
 
   BoxDecoration _boxDecoration(BuildContext context) => BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
-        boxShadow: const [
-          BoxShadow(
-            blurRadius: 10,
-            spreadRadius: 1,
-            offset: Offset(0, 2),
-            color: Color(0x11000000),
-          )
-        ],
-      );
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(8),
+    border: Border.all(color: const Color(0xFFE0E0E0)),
+    boxShadow: const [
+      BoxShadow(
+        blurRadius: 10,
+        spreadRadius: 1,
+        offset: Offset(0, 2),
+        color: Color(0x11000000),
+      ),
+    ],
+  );
 }
 
 class _RoundIconButton extends StatelessWidget {

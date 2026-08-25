@@ -29,7 +29,7 @@ class Settings {
 
   final String imgsPath = "lib/presentation/assets/img/";
 
-  final applicationInfo = ApplicationInfo(
+  Map<String, dynamic> get applicationInfo => ApplicationInfo(
     name: "Certifications",
     description:
         "Certifications is a secure and user-friendly platform for getting certifications.",

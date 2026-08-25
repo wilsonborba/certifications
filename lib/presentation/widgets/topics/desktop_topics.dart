@@ -5,7 +5,7 @@ import 'package:accredit/presentation/widgets/topics/base_topics.dart';
 
 class DesktopTopics extends BaseTopics {
   const DesktopTopics({super.key, required String itemName})
-      : super(itemName: itemName);
+    : super(itemName: itemName);
 
   @override
   State<DesktopTopics> createState() => _DesktopTopicsState();
@@ -27,16 +27,27 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
         children: [
           Row(
             children: [
-              Expanded(child: Divider(height: 1, thickness: 1, color: cs.outlineVariant)),
-              
+              Expanded(
+                child: Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: cs.outlineVariant,
+                ),
+              ),
+
               // ShaderMask(
               //   shaderCallback: (rect) => LinearGradient(
               //     colors: [cs.primary, cs.primary.withAlpha((.6 * 255).toInt())],
               //   ).createShader(rect),
               //   child: const Text('Topics', style: TextStyle(fontSize: 38, fontWeight: FontWeight.w900, color: Colors.white)),
               // ),
-              
-              Expanded(child: Divider(height: 1, thickness: 1, color: cs.outlineVariant)),
+              Expanded(
+                child: Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: cs.outlineVariant,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 22),
@@ -53,10 +64,21 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
                       decoration: BoxDecoration(
                         color: cs.surface,
                         borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: cs.primary.withAlpha((0.15 * 255).toInt())),
+                        border: Border.all(
+                          color: cs.primary.withAlpha((0.15 * 255).toInt()),
+                        ),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withAlpha((0.05 * 255).toInt()), blurRadius: 18, offset: const Offset(0, 10)),
-                          BoxShadow(color: Colors.white.withAlpha((0.9 * 255).toInt()), blurRadius: 8, offset: const Offset(-1, -1), spreadRadius: -2),
+                          BoxShadow(
+                            color: Colors.black.withAlpha((0.05 * 255).toInt()),
+                            blurRadius: 18,
+                            offset: const Offset(0, 10),
+                          ),
+                          BoxShadow(
+                            color: Colors.white.withAlpha((0.9 * 255).toInt()),
+                            blurRadius: 8,
+                            offset: const Offset(-1, -1),
+                            spreadRadius: -2,
+                          ),
                         ],
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -72,12 +94,13 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
                           prefixIcon: Icon(Icons.search, color: subtle),
                           contentPadding: const EdgeInsets.only(top: 14),
                           focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(999),
-                          borderSide: const BorderSide(
-                            color: Colors.transparent, // your purple when clicked
-                            width: 2,
+                            borderRadius: BorderRadius.circular(999),
+                            borderSide: const BorderSide(
+                              color: Colors
+                                  .transparent, // your purple when clicked
+                              width: 2,
+                            ),
                           ),
-                        ),
                         ),
                       ),
                     ),
@@ -88,11 +111,16 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
                     child: ElevatedButton.icon(
                       onPressed: startSearch,
                       icon: Icon(Icons.search, size: 18, color: cs.onPrimary),
-                      label: Text('Search', style: TextStyle(fontSize: 14, color: cs.onPrimary)),
+                      label: Text(
+                        'Search',
+                        style: TextStyle(fontSize: 14, color: cs.onPrimary),
+                      ),
                       style: ElevatedButton.styleFrom(
                         elevation: 0,
                         backgroundColor: cs.primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                        ),
                         padding: const EdgeInsets.symmetric(horizontal: 22),
                       ),
                     ),
@@ -108,7 +136,9 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: cs.onSurface,
                           side: BorderSide(color: cs.outlineVariant),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
                           padding: const EdgeInsets.symmetric(horizontal: 18),
                         ),
                       ),
@@ -159,7 +189,10 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
                 imageUrl: safeImageFromIdent(ident),
 
                 // desktop sizing
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
                 titleFontSize: 18,
                 titleFontWeight: 700,
                 buttonMinHeight: 52,
@@ -184,7 +217,13 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
     return Column(
       children: [
         const SizedBox(height: 24),
-        Divider(height: 1, thickness: 1, indent: 120, endIndent: 120, color: cs.outlineVariant),
+        Divider(
+          height: 1,
+          thickness: 1,
+          indent: 120,
+          endIndent: 120,
+          color: cs.outlineVariant,
+        ),
         const SizedBox(height: 24),
         Wrap(
           spacing: 16,
@@ -199,23 +238,35 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
                 minimumSize: const Size(160, 56),
                 backgroundColor: cs.primary,
                 foregroundColor: cs.onPrimary,
-                disabledBackgroundColor: cs.surfaceContainerHighest ,
-                disabledForegroundColor: cs.onSurface.withAlpha((0.4 * 255).toInt()),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                disabledBackgroundColor: cs.surfaceContainerHighest,
+                disabledForegroundColor: cs.onSurface.withAlpha(
+                  (0.4 * 255).toInt(),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: cs.surfaceContainerHighest .withAlpha((0.75 * 255).toInt()),
-                border: Border.all(color: cs.primary.withAlpha((0.18 * 255).toInt())),
+                color: cs.surfaceContainerHighest.withAlpha(
+                  (0.75 * 255).toInt(),
+                ),
+                border: Border.all(
+                  color: cs.primary.withAlpha((0.18 * 255).toInt()),
+                ),
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
                 visibleItems.isEmpty
                     ? 'Page $curPage'
                     : 'Page $curPage | Items $startIndex–$endIndex',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: cs.onSurface),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: cs.onSurface,
+                ),
               ),
             ),
             ElevatedButton.icon(
@@ -227,9 +278,13 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
                 minimumSize: const Size(160, 56),
                 backgroundColor: cs.primary,
                 foregroundColor: cs.onPrimary,
-                disabledBackgroundColor: cs.surfaceContainerHighest ,
-                disabledForegroundColor: cs.onSurface.withAlpha((0.4 * 255).toInt()),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                disabledBackgroundColor: cs.surfaceContainerHighest,
+                disabledForegroundColor: cs.onSurface.withAlpha(
+                  (0.4 * 255).toInt(),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
             ),
           ],
@@ -249,15 +304,15 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: FuturisticLoading(
-            messages:  [
-                  'Loading topics…',
-                  'Preparing your topics…',
-                  'Just a moment longer…',
-                  'Almost there…',
-                ],
-            isActive: hasAny ? false : true,
-            transparentBackground: true,
-          ),
+          messages: [
+            'Loading topics…',
+            'Preparing your topics…',
+            'Just a moment longer…',
+            'Almost there…',
+          ],
+          isActive: hasAny ? false : true,
+          transparentBackground: true,
+        ),
       ),
     );
 
@@ -280,14 +335,18 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
           icon: Icon(Icons.arrow_back, color: cs.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text('Choose a topic', style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w900)),
+        title: Text(
+          'Choose a topic',
+          style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w900),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: [
               _buildHeaderBar(),
-              if (!initialDone && !hasAny) initialLoading
+              if (!initialDone && !hasAny)
+                initialLoading
               else if (isBusy)
                 SizedBox(
                   height: lastGridHeight > 0 ? lastGridHeight : 180,
@@ -295,16 +354,16 @@ class _DesktopTopicsState extends BaseTopicsState<DesktopTopics> {
                     child: Padding(
                       padding: const EdgeInsets.all(12),
                       child: FuturisticLoading(
-                          messages:  [
-                                'Fetching topics…',
-                                'Some topics take longer to load…',
-                                'Checking availability…',
-                                'Still working on it…',
-                                'Almost there…',
-                              ],
-                          isActive: isBusy,
-                          transparentBackground: true,
-                        ),
+                        messages: [
+                          'Fetching topics…',
+                          'Some topics take longer to load…',
+                          'Checking availability…',
+                          'Still working on it…',
+                          'Almost there…',
+                        ],
+                        isActive: isBusy,
+                        transparentBackground: true,
+                      ),
                     ),
                   ),
                 )

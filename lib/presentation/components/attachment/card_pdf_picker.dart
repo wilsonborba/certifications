@@ -11,7 +11,8 @@ import 'package:crypto/crypto.dart' as crypto;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:accredit/domain/services/pdf_frontend_prescan_manager.dart' as pre;
+import 'package:accredit/domain/services/pdf_frontend_prescan_manager.dart'
+    as pre;
 import 'package:printing/printing.dart';
 
 class CardPdfPicker extends StatefulWidget {
@@ -76,10 +77,6 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
   String? documentId; // returned from API on success
 
   // --- Loading phrase ticker ---
-  
-
-
-
 
   @override
   void dispose() {
@@ -116,7 +113,6 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
       _pdfBytes = file.bytes!;
       _previewPng = null;
     });
-   
 
     // 1) Hash + PreScan (client)
     final sha256 = crypto.sha256.convert(_pdfBytes!).toString();
@@ -135,8 +131,9 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
           _busy = false;
           _error = 'File did not pass safety checks.';
         });
-        
-        showMyDialog(context,
+
+        showMyDialog(
+          context,
           title: 'File blocked',
           message: scan.flags.isEmpty
               ? 'Blocked by policy.'
@@ -150,16 +147,20 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
         _busy = false;
         _error = 'PreScan failed.';
       });
-      
-      showMyDialog(context,title: 'PreScan error', message: 'An error occurred during file checks.');
+
+      showMyDialog(
+        context,
+        title: 'PreScan error',
+        message: 'An error occurred during file checks.',
+      );
       return;
     }
 
     // 2) Preview (only after prescan passes)
     try {
       final stream = Printing.raster(_pdfBytes!, pages: const [0], dpi: 144);
-      final raster = await stream.first;                // PdfRaster
-      final ui.Image img = await raster.toImage();      // convert to ui.Image
+      final raster = await stream.first; // PdfRaster
+      final ui.Image img = await raster.toImage(); // convert to ui.Image
       final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
       final png = byteData!.buffer.asUint8List();
       if (!mounted) return;
@@ -172,14 +173,13 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
         _busy = false;
         _error = 'Failed to render preview: $e';
       });
-      
+
       return;
     }
 
     // 3) Upload to API (no popup on success/200)
     try {
       // Optionally hint the immediate step phrase
-      
 
       final resp = await pre.loadPdftoApi(
         fileBytes: _pdfBytes!,
@@ -197,14 +197,13 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
       if (code == 200) {
         if (!mounted) return;
         final body = resp.body.isNotEmpty ? json.decode(resp.body) : null;
-        
-        
+
         setState(() {
           _busy = false;
           _error = null; // clear any previous error
           documentId = body['data']?['parsed']?['document_id'];
         });
-        
+
         return;
       }
 
@@ -218,45 +217,49 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
         } catch (_) {}
         switch (code) {
           case 400:
-            showMyDialog(context,title: 'Bad request', message: msg);
+            showMyDialog(context, title: 'Bad request', message: msg);
             _error = msg;
             _previewPng = null; // clear preview on bad upload
             break;
           case 404:
-            showMyDialog(context,title: 'Not found', message: msg);
+            showMyDialog(context, title: 'Not found', message: msg);
             _error = msg;
             _previewPng = null; // clear preview on bad upload
             break;
           case 409:
-            showMyDialog(context,title: 'Blocked', message: msg);
+            showMyDialog(context, title: 'Blocked', message: msg);
             _error = msg;
             _previewPng = null; // clear preview on bad upload
             break;
           case 415:
-            showMyDialog(context,title: 'Unsupported file', message: msg);
+            showMyDialog(context, title: 'Unsupported file', message: msg);
             _error = msg;
             _previewPng = null; // clear preview on bad upload
             break;
           case 422:
-            showMyDialog(context,title: 'Invalid pages', message: msg);
+            showMyDialog(context, title: 'Invalid pages', message: msg);
             _error = msg;
             _previewPng = null; // clear preview on bad upload
             break;
           case 503:
-            showMyDialog(context,title: 'Service unavailable', message: msg);
+            showMyDialog(context, title: 'Service unavailable', message: msg);
             _error = msg;
             _previewPng = null; // clear preview on bad upload
             break;
           default:
             _error = 'Server error...';
             _previewPng = null; // clear preview on bad upload
-            showMyDialog(context,title: 'Server error', message: msg);
+            showMyDialog(context, title: 'Server error', message: msg);
         }
       }
     } catch (e, st) {
       debug('Upload error: $e\n$st');
       if (!mounted) return;
-      showMyDialog(context,title: 'Network error', message: 'Could not reach the server.');
+      showMyDialog(
+        context,
+        title: 'Network error',
+        message: 'Could not reach the server.',
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -265,9 +268,6 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
       }
     }
   }
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -359,35 +359,36 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
                     ? Padding(
                         padding: const EdgeInsets.all(16),
                         child: FuturisticLoading(
-                          messages:  [
-                                'Loading PDF…',
-                                  'Verifying file…',
-                                  'Scanning PDF…',
-                                  'Checking safety…',
-                                  'Preparing preview…',
-                                  'Uploading to server…',
-                                  'Caching (30 min)…',
-                              ],
+                          messages: [
+                            'Loading PDF…',
+                            'Verifying file…',
+                            'Scanning PDF…',
+                            'Checking safety…',
+                            'Preparing preview…',
+                            'Uploading to server…',
+                            'Caching (30 min)…',
+                          ],
                           isActive: _busy,
                           transparentBackground: true,
                         ),
                       )
                     : (_previewPng != null
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: Image.memory(
-                              _previewPng!,
-                              fit: BoxFit.contain,
-                              filterQuality: FilterQuality.medium,
-                              width: double.infinity,
-                              height: double.infinity,
-                            ),
-                          )
-                        : Text(
-                            'PDF preview will appear here',
-                            style: theme.textTheme.bodyMedium!
-                                .copyWith(color: Colors.black54),
-                          )),
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Image.memory(
+                                _previewPng!,
+                                fit: BoxFit.contain,
+                                filterQuality: FilterQuality.medium,
+                                width: double.infinity,
+                                height: double.infinity,
+                              ),
+                            )
+                          : Text(
+                              'PDF preview will appear here',
+                              style: theme.textTheme.bodyMedium!.copyWith(
+                                color: Colors.black54,
+                              ),
+                            )),
               ),
 
               const SizedBox(height: 24),
@@ -444,27 +445,35 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
                         SizedBox(
                           width: 160,
                           child: ElevatedButton.icon(
-                            onPressed:  _busy ? null :  () {
-                              if (documentId != null) {
-                                 NavigationService.push(
-                                  OnPageFilterScreen( 
-                                  documentId: documentId!,     // from your upload response
-                                  pdfBytes: _pdfBytes!,        // from FilePicker
-                                  fileName: _fileName ?? 'document.pdf'
-                                ),  
-                                );
-                              } else {
-                                showMyDialog(context,
-                                  title: 'Invalid PDF',
-                                  message: 'Please attach and upload a valid PDF first.',
-                                );
+                            onPressed: _busy
+                                ? null
+                                : () {
+                                    if (documentId != null) {
+                                      NavigationService.push(
+                                        OnPageFilterScreen(
+                                          documentId:
+                                              documentId!, // from your upload response
+                                          pdfBytes:
+                                              _pdfBytes!, // from FilePicker
+                                          fileName: _fileName ?? 'document.pdf',
+                                        ),
+                                      );
+                                    } else {
+                                      showMyDialog(
+                                        context,
+                                        title: 'Invalid PDF',
+                                        message:
+                                            'Please attach and upload a valid PDF first.',
+                                      );
 
-                                setState(() {
-                                  _error = 'Please attach and upload a valid PDF first.';
-                                  _previewPng = null; // clear preview on bad upload
-                                });
-                              }
-                            },
+                                      setState(() {
+                                        _error =
+                                            'Please attach and upload a valid PDF first.';
+                                        _previewPng =
+                                            null; // clear preview on bad upload
+                                      });
+                                    }
+                                  },
                             icon: const Icon(Icons.arrow_forward, size: 16),
                             label: Text(
                               'Next',
@@ -475,13 +484,15 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
                             ),
                             style: ElevatedButton.styleFrom(
                               minimumSize: widget.buttonMinSize,
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.primary,
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
                               foregroundColor: Colors.white,
                               shape: const StadiumBorder(),
                               elevation: 6,
-                              shadowColor:
-                                  Theme.of(context).colorScheme.primaryContainer,
+                              shadowColor: Theme.of(
+                                context,
+                              ).colorScheme.primaryContainer,
                             ),
                           ),
                         ),
@@ -499,7 +510,7 @@ class _CardPdfPickerState extends State<CardPdfPicker> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-              ]
+              ],
             ],
           ),
         ),

@@ -9,11 +9,7 @@ class SessionGate extends StatelessWidget {
 
   Future<bool> _check() async {
     try {
-      return await isThereSession(
-        cookieName: 'hint',
-        storageNamespace: 'ath',
-        storageKey: 'n-a-n',
-      );
+      return await isThereSession();
     } catch (_) {
       return false; // on error, treat as no session
     }

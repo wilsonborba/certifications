@@ -4,8 +4,6 @@ import 'package:accredit/core/utils/my_nagivation.dart';
 import 'package:accredit/presentation/components/auth/login_redirect.dart';
 import 'package:flutter/material.dart';
 
-
-
 const double _appBarHeight = 80;
 
 /// ===== AppBar ===============================================================
@@ -36,12 +34,11 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => const Size.fromHeight(_appBarHeight);
 
-  Color _accentOf(BuildContext context) => Theme.of(context).colorScheme.primary;
-
+  Color _accentOf(BuildContext context) =>
+      Theme.of(context).colorScheme.primary;
 
   @override
   Widget build(BuildContext context) {
-    
     final accent = _accentOf(context);
 
     return LayoutBuilder(
@@ -63,10 +60,10 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
-                      fontSize: 26,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: Colors.white,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const Spacer(),
               if (wide)
@@ -86,7 +83,10 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
                     icon: const Icon(Icons.menu, color: Colors.white),
                     iconSize: 45,
                     padding: const EdgeInsets.all(12),
-                    constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                    constraints: const BoxConstraints(
+                      minWidth: 48,
+                      minHeight: 48,
+                    ),
                     onPressed: () => Scaffold.maybeOf(context)?.openEndDrawer(),
                   ),
                 ),
@@ -119,11 +119,15 @@ class _AttachmentDesktopActions extends StatelessWidget {
 
   ButtonStyle _textBtnStyle(Color accent) {
     return ButtonStyle(
-      padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 16)),
+      padding: WidgetStateProperty.all(
+        const EdgeInsets.symmetric(horizontal: 16),
+      ),
       minimumSize: WidgetStateProperty.all(const Size(48, 40)),
       animationDuration: const Duration(milliseconds: 140),
       overlayColor: WidgetStateProperty.resolveWith(
-        (s) => s.contains(WidgetState.hovered) ? accent.withValues(alpha: 0.12) : Colors.transparent,
+        (s) => s.contains(WidgetState.hovered)
+            ? accent.withValues(alpha: 0.12)
+            : Colors.transparent,
       ),
       foregroundColor: WidgetStateProperty.resolveWith(
         (s) => s.contains(WidgetState.hovered) ? Colors.white : Colors.white70,
@@ -131,8 +135,12 @@ class _AttachmentDesktopActions extends StatelessWidget {
       textStyle: WidgetStateProperty.resolveWith(
         (s) => TextStyle(
           fontSize: s.contains(WidgetState.hovered) ? 16 : 15,
-          fontWeight: s.contains(WidgetState.hovered) ? FontWeight.w600 : FontWeight.w500,
-          decoration: s.contains(WidgetState.hovered) ? TextDecoration.underline : TextDecoration.none,
+          fontWeight: s.contains(WidgetState.hovered)
+              ? FontWeight.w600
+              : FontWeight.w500,
+          decoration: s.contains(WidgetState.hovered)
+              ? TextDecoration.underline
+              : TextDecoration.none,
         ),
       ),
     );
@@ -153,13 +161,19 @@ class _AttachmentDesktopActions extends StatelessWidget {
     final logoutStyle = _textBtnStyle(accent).copyWith(
       foregroundColor: WidgetStateProperty.all(Colors.redAccent),
       overlayColor: WidgetStateProperty.resolveWith(
-        (s) => s.contains(WidgetState.hovered) ? Colors.redAccent.withValues(alpha: 0.12) : Colors.transparent,
+        (s) => s.contains(WidgetState.hovered)
+            ? Colors.redAccent.withValues(alpha: 0.12)
+            : Colors.transparent,
       ),
       textStyle: WidgetStateProperty.resolveWith(
         (s) => TextStyle(
           fontSize: s.contains(WidgetState.hovered) ? 16 : 15,
-          fontWeight: s.contains(WidgetState.hovered) ? FontWeight.w600 : FontWeight.w500,
-          decoration: s.contains(WidgetState.hovered) ? TextDecoration.underline : TextDecoration.none,
+          fontWeight: s.contains(WidgetState.hovered)
+              ? FontWeight.w600
+              : FontWeight.w500,
+          decoration: s.contains(WidgetState.hovered)
+              ? TextDecoration.underline
+              : TextDecoration.none,
         ),
       ),
     );
@@ -210,15 +224,27 @@ class AttachmentSideMenu extends StatelessWidget {
 
   void _close(BuildContext context) => Navigator.of(context).maybePop();
 
-  ListTile _tile(BuildContext ctx, IconData icon, String label, VoidCallback? onTap) {
+  ListTile _tile(
+    BuildContext ctx,
+    IconData icon,
+    String label,
+    VoidCallback? onTap,
+  ) {
     final scheme = Theme.of(ctx).colorScheme;
     return ListTile(
       leading: Icon(icon, color: scheme.onPrimary),
       title: Text(
         label,
-        style: Theme.of(ctx).textTheme.titleMedium?.copyWith(color: scheme.onPrimary),
+        style: Theme.of(
+          ctx,
+        ).textTheme.titleMedium?.copyWith(color: scheme.onPrimary),
       ),
-      onTap: onTap == null ? null : () { _close(ctx); onTap(); },
+      onTap: onTap == null
+          ? null
+          : () {
+              _close(ctx);
+              onTap();
+            },
     );
   }
 
@@ -236,11 +262,26 @@ class AttachmentSideMenu extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _tile(context, Icons.workspace_premium_outlined, 'Certificates', onCertificates),
-              _tile(context, Icons.stacked_line_chart_outlined, 'Plans', onPlans),
+              _tile(
+                context,
+                Icons.workspace_premium_outlined,
+                'Certificates',
+                onCertificates,
+              ),
+              _tile(
+                context,
+                Icons.stacked_line_chart_outlined,
+                'Plans',
+                onPlans,
+              ),
               _tile(context, Icons.token_outlined, 'Tokens', onTokens),
               _tile(context, Icons.person_outline, 'Profile', null), // disabled
-              _tile(context, Icons.support_agent_outlined, 'Support', onSupport),
+              _tile(
+                context,
+                Icons.support_agent_outlined,
+                'Support',
+                onSupport,
+              ),
               _tile(context, Icons.info_outline, 'About', onAbout),
               const Spacer(),
               const Divider(height: 1),
@@ -248,7 +289,9 @@ class AttachmentSideMenu extends StatelessWidget {
                 leading: Icon(Icons.logout, color: scheme.onPrimary),
                 title: Text(
                   'Logout',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(color: scheme.onPrimary),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleMedium?.copyWith(color: scheme.onPrimary),
                 ),
                 onTap: () async {
                   _close(context);
@@ -289,7 +332,7 @@ class _HoverScaleState extends State<_HoverScale> {
   Widget build(BuildContext context) {
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
-      onExit:  (_) => setState(() => _hover = false),
+      onExit: (_) => setState(() => _hover = false),
       child: AnimatedScale(
         scale: _hover ? 1.04 : 1.0,
         duration: const Duration(milliseconds: 120),

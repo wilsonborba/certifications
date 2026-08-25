@@ -1,6 +1,5 @@
 // models/quiz_models.dart
 
-
 class QuestionItem {
   final String id;
   final String question;
@@ -8,7 +7,7 @@ class QuestionItem {
   final int? difficulty; // 1..3 (nullable if absent)
   final dynamic pdfQuestionId;
 
-  QuestionItem( {
+  QuestionItem({
     required this.id,
     required this.question,
     required this.options,
@@ -22,21 +21,20 @@ class QuestionItem {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'question': question,
-        'options': options,
-        'difficulty': difficulty,
-        'pdf_question_id': pdfQuestionId,
-      };
-
+    'id': id,
+    'question': question,
+    'options': options,
+    'difficulty': difficulty,
+    'pdf_question_id': pdfQuestionId,
+  };
 }
 
 class QuizResult {
-  final List<int?> selectedOptionIndexes; // one per question (null = unanswered)
+  final List<int?>
+  selectedOptionIndexes; // one per question (null = unanswered)
   final Duration timeSpent;
   QuizResult({required this.selectedOptionIndexes, required this.timeSpent});
 }
-
 
 class AnswerSelection {
   final String questionId;
@@ -50,8 +48,8 @@ class AnswerSelection {
   });
 
   Map<String, dynamic> toJson() => {
-        'questionId': questionId,
-        'selectedIndex': selectedIndex,
-        'selectedText': selectedText,
-      };
+    'questionId': questionId,
+    'selectedIndex': selectedIndex,
+    'selectedText': selectedText,
+  };
 }

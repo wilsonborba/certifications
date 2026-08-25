@@ -104,10 +104,7 @@ class UsageEntry {
 }
 
 class UsageDashboardData {
-  UsageDashboardData({
-    required this.entries,
-    required this.periodLabel,
-  });
+  UsageDashboardData({required this.entries, required this.periodLabel});
 
   final List<UsageEntry> entries;
   final String periodLabel;
@@ -117,12 +114,10 @@ class UsageDashboardData {
       entries.fold<int>(0, (sum, entry) => sum + entry.totalTokens);
   double get avgLatencyMs => entries.isEmpty
       ? 0
-      : entries.fold(0, (sum, entry) => sum + entry.latencyMs) /
-          entries.length;
+      : entries.fold(0, (sum, entry) => sum + entry.latencyMs) / entries.length;
   double get avgAttempts => entries.isEmpty
       ? 0
-      : entries.fold(0, (sum, entry) => sum + entry.attempts) /
-          entries.length;
+      : entries.fold(0, (sum, entry) => sum + entry.attempts) / entries.length;
   int get pdfRequests =>
       entries.where((entry) => entry.isForPdf).toList().length;
   int get nonPdfRequests =>
@@ -445,8 +440,10 @@ class TokensController extends ChangeNotifier {
       loaded: true,
       periodLabel: _periodLabel(selectedUsageRange),
       totalRequests: usageEntries.length,
-      totalTokens:
-          usageEntries.fold<int>(0, (sum, entry) => sum + entry.totalTokens),
+      totalTokens: usageEntries.fold<int>(
+        0,
+        (sum, entry) => sum + entry.totalTokens,
+      ),
       series: _buildTokensSeries(usageEntries),
     );
 
@@ -464,8 +461,16 @@ class TokensController extends ChangeNotifier {
     if (entries.isEmpty) return const [];
     final grouped = <DateTime, int>{};
     for (final entry in entries) {
-      final key = DateTime(entry.createdAt.year, entry.createdAt.month, entry.createdAt.day);
-      grouped.update(key, (value) => value + entry.totalTokens, ifAbsent: () => entry.totalTokens);
+      final key = DateTime(
+        entry.createdAt.year,
+        entry.createdAt.month,
+        entry.createdAt.day,
+      );
+      grouped.update(
+        key,
+        (value) => value + entry.totalTokens,
+        ifAbsent: () => entry.totalTokens,
+      );
     }
     final days = grouped.keys.toList()..sort();
     return List.generate(days.length, (index) {
@@ -478,7 +483,11 @@ class TokensController extends ChangeNotifier {
     if (entries.isEmpty) return const [];
     final grouped = <DateTime, List<int>>{};
     for (final entry in entries) {
-      final key = DateTime(entry.createdAt.year, entry.createdAt.month, entry.createdAt.day);
+      final key = DateTime(
+        entry.createdAt.year,
+        entry.createdAt.month,
+        entry.createdAt.day,
+      );
       grouped.putIfAbsent(key, () => []).add(entry.latencyMs);
     }
     final days = grouped.keys.toList()..sort();
@@ -1153,7 +1162,8 @@ class _UsageDashboardPanel extends StatelessWidget {
                       const SizedBox(height: 16),
                       _ChartCard(
                         title: 'Tokens over time',
-                        child: controller.usage.loaded &&
+                        child:
+                            controller.usage.loaded &&
                                 controller.usage.series.isNotEmpty
                             ? _UsageChart(series: controller.usage.series)
                             : _EmptyChartPlaceholder(
@@ -1165,7 +1175,8 @@ class _UsageDashboardPanel extends StatelessWidget {
                       const SizedBox(height: 16),
                       _ChartCard(
                         title: 'Latency over time',
-                        child: controller.usage.loaded && latencySeries.isNotEmpty
+                        child:
+                            controller.usage.loaded && latencySeries.isNotEmpty
                             ? _UsageChart(series: latencySeries)
                             : _EmptyChartPlaceholder(
                                 title: 'No latency data yet',

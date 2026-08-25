@@ -10,8 +10,8 @@ class LiquidMetalBackground extends StatefulWidget {
     this.blobCount = 12,
     this.minRadius = 80,
     this.maxRadius = 180,
-    this.speed = 24,         // pixels/second baseline
-    this.blurSigma = 20,     // Gaussian blur strength
+    this.speed = 24, // pixels/second baseline
+    this.blurSigma = 20, // Gaussian blur strength
     this.centerFocusRadius = .45, // 0..1 of min(width,height)
   });
 
@@ -58,8 +58,10 @@ class _LiquidMetalBackgroundState extends State<LiquidMetalBackground>
   void _onFrame() {
     if (_size == Size.zero) return;
     final now = DateTime.now();
-    final dt =
-        (now.difference(_lastTick).inMicroseconds / 1e6).clamp(0.0, 0.05);
+    final dt = (now.difference(_lastTick).inMicroseconds / 1e6).clamp(
+      0.0,
+      0.05,
+    );
     _lastTick = now;
     _step(dt);
     setState(() {});
@@ -68,9 +70,8 @@ class _LiquidMetalBackgroundState extends State<LiquidMetalBackground>
   void _ensureBlobs(Size size) {
     if (_blobs.isNotEmpty || size.isEmpty) return;
     for (var i = 0; i < widget.blobCount; i++) {
-      final r = _rng
-              .nextDouble() *
-          (widget.maxRadius - widget.minRadius) +
+      final r =
+          _rng.nextDouble() * (widget.maxRadius - widget.minRadius) +
           widget.minRadius;
 
       final pos = Offset(
@@ -81,20 +82,24 @@ class _LiquidMetalBackgroundState extends State<LiquidMetalBackground>
       // Random direction, normalized; speed scaled a bit by radius so big blobs drift slower.
       final theta = _rng.nextDouble() * math.pi * 2;
       final baseSpeed = widget.speed * (0.7 + 0.6 * _rng.nextDouble());
-      final vel = Offset(math.cos(theta), math.sin(theta)) *
+      final vel =
+          Offset(math.cos(theta), math.sin(theta)) *
           (baseSpeed * (120 / (r + 40)));
 
       final hue = _rng.nextDouble() * 360.0;
-      final hueSpeed = (_rng.nextDouble() * 24 + 10) * (_rng.nextBool() ? 1 : -1);
+      final hueSpeed =
+          (_rng.nextDouble() * 24 + 10) * (_rng.nextBool() ? 1 : -1);
 
-      _blobs.add(_Blob(
-        position: pos,
-        velocity: vel,
-        radius: r,
-        baseHue: hue,
-        hueSpeed: hueSpeed,
-        phase: _rng.nextDouble() * 1000,
-      ));
+      _blobs.add(
+        _Blob(
+          position: pos,
+          velocity: vel,
+          radius: r,
+          baseHue: hue,
+          hueSpeed: hueSpeed,
+          phase: _rng.nextDouble() * 1000,
+        ),
+      );
     }
   }
 
@@ -121,10 +126,15 @@ class _LiquidMetalBackgroundState extends State<LiquidMetalBackground>
       b.hueOffset += b.hueSpeed * dt;
 
       // Gentle breathing radius to feel liquid
-      b.radiusPulse = 1.0 + 0.05 * math.sin((b.phase + _ctrl.lastElapsedDuration!.inMilliseconds / 1000.0) * 0.9);
+      b.radiusPulse =
+          1.0 +
+          0.05 *
+              math.sin(
+                (b.phase + _ctrl.lastElapsedDuration!.inMilliseconds / 1000.0) *
+                    0.9,
+              );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -159,10 +169,13 @@ class _LiquidMetalBackgroundState extends State<LiquidMetalBackground>
               // Pass 2: crisp center reveal (keeps foreground readable).
               ShaderMask(
                 shaderCallback: (rect) {
-                  final radius = widget.centerFocusRadius * math.min(rect.width, rect.height);
+                  final radius =
+                      widget.centerFocusRadius *
+                      math.min(rect.width, rect.height);
                   return RadialGradient(
                     center: Alignment.center,
-                    radius: (radius / (math.min(rect.width, rect.height))).clamp(0.0, 0.95),
+                    radius: (radius / (math.min(rect.width, rect.height)))
+                        .clamp(0.0, 0.95),
                     colors: const [Colors.white, Colors.transparent],
                     stops: const [0.0, 1.0],
                   ).createShader(rect);

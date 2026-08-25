@@ -48,17 +48,17 @@ class BoardingDetails extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontSize: titleSize,
-                  fontWeight: FontWeight.w700,
-                ),
+              fontSize: titleSize,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 10),
           Text(
             body,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontSize: bodySize,
-                  color: scheme.onSurface.withOpacity(0.7),
-                ),
+              fontSize: bodySize,
+              color: scheme.onSurface.withOpacity(0.7),
+            ),
           ),
           const SizedBox(height: 16),
           Column(
@@ -79,7 +79,8 @@ class BoardingDetails extends StatelessWidget {
                         Expanded(
                           child: Text(
                             item,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
                                   fontSize: itemSize,
                                   color: scheme.onSurface.withOpacity(0.85),
                                 ),

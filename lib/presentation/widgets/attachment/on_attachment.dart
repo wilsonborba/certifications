@@ -1,6 +1,3 @@
-
-
-
 import 'dart:convert';
 
 import 'package:accredit/core/utils/my_encryption.dart';
@@ -24,16 +21,17 @@ class OnAttachmentScreen extends StatefulWidget {
 class _OnAttachmentScreenState extends State<OnAttachmentScreen> {
   late final Future<List<SourceItem>> _cardsFuture;
 
-  final LocalSourceAdapter _localSourceAdapter = LocalSourceAdapter(namespace: 'attachment');
+  final LocalSourceAdapter _localSourceAdapter = LocalSourceAdapter(
+    namespace: 'attachment',
+  );
 
-
-   @override
+  @override
   void initState() {
     super.initState();
     _cardsFuture = _fetchCards();
   }
 
-    Future<List<SourceItem>> _fetchCards() async {
+  Future<List<SourceItem>> _fetchCards() async {
     // 1) try encrypted cache first
     final cached = await _loadEncryptedCardsIfFresh();
     if (cached != null) return cached;
@@ -62,35 +60,38 @@ class _OnAttachmentScreenState extends State<OnAttachmentScreen> {
     throw Exception('Unexpected cards payload shape');
   }
 
-    List<Map<String, dynamic>> _serializeItems(List<SourceItem> items) {
-    return items.map((e) => {
-          'mode': e.mode,
-          'source_name': e.sourceName,
-          'has_topic': e.hasTopic,
-          'item_name': e.itemName,
-          'item_img': e.itemImg,
-          'expiration_time': e.expirationTime?.toIso8601String(),
-        }).toList();
+  List<Map<String, dynamic>> _serializeItems(List<SourceItem> items) {
+    return items
+        .map(
+          (e) => {
+            'mode': e.mode,
+            'source_name': e.sourceName,
+            'has_topic': e.hasTopic,
+            'item_name': e.itemName,
+            'item_img': e.itemImg,
+            'expiration_time': e.expirationTime?.toIso8601String(),
+          },
+        )
+        .toList();
   }
 
   List<SourceItem> _deserializeItems(dynamic decoded) {
-  if (decoded is List) {
-    return decoded.map((e) {
-      final m = e as Map<String, dynamic>;
-      final item = SourceItem.fromJson(m);
+    if (decoded is List) {
+      return decoded.map((e) {
+        final m = e as Map<String, dynamic>;
+        final item = SourceItem.fromJson(m);
 
-      final expRaw = m['expiration_time'];
-      if (expRaw is String) {
-        item.expirationTime = DateTime.tryParse(expRaw);
-      }
-      return item;
-    }).toList();
+        final expRaw = m['expiration_time'];
+        if (expRaw is String) {
+          item.expirationTime = DateTime.tryParse(expRaw);
+        }
+        return item;
+      }).toList();
+    }
+    throw Exception('Unexpected decrypted payload shape');
   }
-  throw Exception('Unexpected decrypted payload shape');
-}
 
-
-    Future<void> _saveEncryptedCards(List<SourceItem> items) async {
+  Future<void> _saveEncryptedCards(List<SourceItem> items) async {
     final encryption = MyEncryption();
 
     // stamp a shared expiration (3 hours) onto each item like before
@@ -112,64 +113,60 @@ class _OnAttachmentScreenState extends State<OnAttachmentScreen> {
     debug('Cached items (encrypted) with expiration at $expirationTime');
   }
 
-   Future<List<SourceItem>?> _loadEncryptedCardsIfFresh() async {
-  final encryption = MyEncryption();
+  Future<List<SourceItem>?> _loadEncryptedCardsIfFresh() async {
+    final encryption = MyEncryption();
 
-  // Read as dynamic to support both the NEW (String ciphertext) and OLD (List plaintext) cache.
-  final stored = await _localSourceAdapter.read<dynamic>('cards');
-  if (stored == null) return null;
+    // Read as dynamic to support both the NEW (String ciphertext) and OLD (List plaintext) cache.
+    final stored = await _localSourceAdapter.read<dynamic>('cards');
+    if (stored == null) return null;
 
-  List<SourceItem>? items;
+    List<SourceItem>? items;
 
-  if (stored is String) {
-    // New format: encrypted base64 blob
-    final clear = await encryption.decryptPayload(stored);
-    if (clear == null) {
-      debug('Failed to decrypt cached cards; ignoring cache');
+    if (stored is String) {
+      // New format: encrypted base64 blob
+      final clear = await encryption.decryptPayload(stored);
+      if (clear == null) {
+        debug('Failed to decrypt cached cards; ignoring cache');
+        return null;
+      }
+
+      final decoded = json.decode(clear);
+      items = _deserializeItems(decoded['data']);
+    } else if (stored is List) {
+      // Legacy format: plaintext list<map> from old cache
+      try {
+        items = _deserializeItems(stored);
+        debug('Loaded legacy plaintext cache; will migrate to encrypted.');
+        // Opportunistic migration to encrypted format so we don’t see this again.
+        await _saveEncryptedCards(items);
+      } catch (e) {
+        debug('Failed to parse legacy plaintext cache: $e');
+        items = null;
+      }
+    } else {
+      // Unexpected shape
+      debug('Unexpected cached type for key "cards": ${stored.runtimeType}');
       return null;
     }
 
-    final decoded = json.decode(clear);
-    items = _deserializeItems(decoded['data']);
-  } else if (stored is List) {
-    // Legacy format: plaintext list<map> from old cache
-    try {
-      items = _deserializeItems(stored);
-      debug('Loaded legacy plaintext cache; will migrate to encrypted.');
-      // Opportunistic migration to encrypted format so we don’t see this again.
-      await _saveEncryptedCards(items);
-    } catch (e) {
-      debug('Failed to parse legacy plaintext cache: $e');
-      items = null;
+    if (items == null || items.isEmpty) return null;
+
+    // Freshness check via first item’s expiration_time
+    final exp = items.first.expirationTime;
+    if (exp is DateTime && DateTime.now().isBefore(exp)) {
+      debug('Using cached cards (encrypted or migrated, not expired)');
+      return items;
     }
-  } else {
-    // Unexpected shape
-    debug('Unexpected cached type for key "cards": ${stored.runtimeType}');
+
+    debug('Cached cards expired or missing expiration; refetching.');
     return null;
   }
 
-  if (items == null || items.isEmpty) return null;
-
-  // Freshness check via first item’s expiration_time
-  final exp = items.first.expirationTime;
-  if (exp is DateTime && DateTime.now().isBefore(exp)) {
-    debug('Using cached cards (encrypted or migrated, not expired)');
-    return items;
-  }
-
-  debug('Cached cards expired or missing expiration; refetching.');
-  return null;
-}
-
-
-   @override
+  @override
   Widget build(BuildContext context) {
-
-
-       return ScreenAdjuster(
-          mobileWidget: MobileAttachment(items: _cardsFuture),
-          desktopWidget:  DesktopAttachment(items: _cardsFuture),
-       ).adjust(context);
-}
-
+    return ScreenAdjuster(
+      mobileWidget: MobileAttachment(items: _cardsFuture),
+      desktopWidget: DesktopAttachment(items: _cardsFuture),
+    ).adjust(context);
+  }
 }

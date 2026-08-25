@@ -34,29 +34,34 @@ class RectToggle extends StatelessWidget {
   final Duration duration;
 
   // Optional color overrides
-  final Color? trackColor;         // background “rail”
-  final Color? borderColor;        // rail border
-  final Color? leftActiveColor;    // thumb when left selected (defaults to secondary)
-  final Color? rightActiveColor;   // thumb when right selected (defaults to primary)
+  final Color? trackColor; // background “rail”
+  final Color? borderColor; // rail border
+  final Color?
+  leftActiveColor; // thumb when left selected (defaults to secondary)
+  final Color?
+  rightActiveColor; // thumb when right selected (defaults to primary)
   final Color? inactiveLabelColor; // labels for the unselected side
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    final Color leftActive  = leftActiveColor  ?? scheme.primary;
+    final Color leftActive = leftActiveColor ?? scheme.primary;
     final Color rightActive = rightActiveColor ?? scheme.primary;
-    final Color railColor   = trackColor       ?? scheme.surfaceContainerHigh;
-    final Color railBorder  = borderColor      ?? scheme.outlineVariant.withAlpha(230);
+    final Color railColor = trackColor ?? scheme.surfaceContainerHigh;
+    final Color railBorder =
+        borderColor ?? scheme.outlineVariant.withAlpha(230);
     final Color inactiveLbl = inactiveLabelColor ?? scheme.onSurfaceVariant;
 
-    final bool leftSelected  = selectedIndex == 0;
+    final bool leftSelected = selectedIndex == 0;
     final bool rightSelected = selectedIndex == 1;
 
-    final Alignment thumbAlign = leftSelected ? Alignment.centerLeft : Alignment.centerRight;
-    final Color thumbColor      = leftSelected ? leftActive : rightActive;
-    final Color leftTextColor   = leftSelected ? scheme.onPrimary : inactiveLbl;
-    final Color rightTextColor  = rightSelected ? scheme.onPrimary : inactiveLbl;
+    final Alignment thumbAlign = leftSelected
+        ? Alignment.centerLeft
+        : Alignment.centerRight;
+    final Color thumbColor = leftSelected ? leftActive : rightActive;
+    final Color leftTextColor = leftSelected ? scheme.onPrimary : inactiveLbl;
+    final Color rightTextColor = rightSelected ? scheme.onPrimary : inactiveLbl;
 
     return SizedBox(
       width: width,
@@ -82,7 +87,7 @@ class RectToggle extends StatelessWidget {
               widthFactor: 0.5,
               heightFactor: 1.0,
               child: Material(
-                color: thumbColor,                 // <- primary/secondary here
+                color: thumbColor, // <- primary/secondary here
                 elevation: elevation,
                 borderRadius: BorderRadius.circular(radius - 2),
                 child: const SizedBox.expand(),
@@ -100,9 +105,13 @@ class RectToggle extends StatelessWidget {
                   child: Center(
                     child: Text(
                       leftLabel,
-                      maxLines: 1, softWrap: false, overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontWeight: leftSelected ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: leftSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                         color: leftTextColor, // onSecondary or inactive
                       ),
                     ),
@@ -116,9 +125,13 @@ class RectToggle extends StatelessWidget {
                   child: Center(
                     child: Text(
                       rightLabel,
-                      maxLines: 1, softWrap: false, overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontWeight: rightSelected ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: rightSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                         color: rightTextColor, // onPrimary or inactive
                       ),
                     ),
@@ -132,7 +145,6 @@ class RectToggle extends StatelessWidget {
     );
   }
 }
-
 
 /// Column layout: [RectToggle] on top-left, card below with animated swap.
 class TabCardSources extends StatefulWidget {
@@ -183,7 +195,6 @@ class _TabCardSourcesState extends State<TabCardSources> {
 
   @override
   Widget build(BuildContext context) {
-
     // final Color accent = _index == 0 ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.primary;
 
     return Column(
@@ -201,57 +212,65 @@ class _TabCardSourcesState extends State<TabCardSources> {
         SizedBox(height: widget.spacing),
 
         // The card with animated content swap
-          AnimatedContainer(
-                duration: widget.duration,
-                curve: Curves.easeOutCubic,
-                width: widget.cardWidth,
-                constraints: BoxConstraints(minHeight: widget.cardMinHeight),
-                decoration: BoxDecoration(
-                  color: widget.cardColor,
-                  borderRadius: BorderRadius.circular(widget.cardRadius),
-                 
-                  boxShadow: [
-                    // colored “glow” that follows the switcher
-                    // BoxShadow(
-                    //   color: accent.withAlpha(30),
-                    //   blurRadius: 28,
-                    //   spreadRadius: 2,
-                    //   offset: const Offset(0, 14),
-                    // ),
-                    // subtle base shadow to keep depth consistent
-                    // BoxShadow(
-                    //   color: Colors.black.withAlpha(100),
-                    //   blurRadius: 14,
-                    //   offset: const Offset(0, 6),
-                    // ),
-                  ],
-                ),
-                child: Padding(
-                  padding: widget.padding,
-                  child: AnimatedSwitcher(
-                    duration: widget.duration,
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    transitionBuilder: (child, anim) {
-                      final isLeft = child.key == const ValueKey('left');
-                      final begin = Offset(isLeft ? -0.06 : 0.06, 0);
-                      return FadeTransition(
-                        opacity: anim,
-                        child: SlideTransition(
-                          position: anim.drive(
-                            Tween(begin: begin, end: Offset.zero)
-                                .chain(CurveTween(curve: Curves.easeOutCubic)),
-                          ),
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: _index == 0
-                        ? _CardContent(key: const ValueKey('left'), child: widget.leftChild)
-                        : _CardContent(key: const ValueKey('right'), child: widget.rightChild),
+        AnimatedContainer(
+          duration: widget.duration,
+          curve: Curves.easeOutCubic,
+          width: widget.cardWidth,
+          constraints: BoxConstraints(minHeight: widget.cardMinHeight),
+          decoration: BoxDecoration(
+            color: widget.cardColor,
+            borderRadius: BorderRadius.circular(widget.cardRadius),
+
+            boxShadow: [
+              // colored “glow” that follows the switcher
+              // BoxShadow(
+              //   color: accent.withAlpha(30),
+              //   blurRadius: 28,
+              //   spreadRadius: 2,
+              //   offset: const Offset(0, 14),
+              // ),
+              // subtle base shadow to keep depth consistent
+              // BoxShadow(
+              //   color: Colors.black.withAlpha(100),
+              //   blurRadius: 14,
+              //   offset: const Offset(0, 6),
+              // ),
+            ],
+          ),
+          child: Padding(
+            padding: widget.padding,
+            child: AnimatedSwitcher(
+              duration: widget.duration,
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, anim) {
+                final isLeft = child.key == const ValueKey('left');
+                final begin = Offset(isLeft ? -0.06 : 0.06, 0);
+                return FadeTransition(
+                  opacity: anim,
+                  child: SlideTransition(
+                    position: anim.drive(
+                      Tween(
+                        begin: begin,
+                        end: Offset.zero,
+                      ).chain(CurveTween(curve: Curves.easeOutCubic)),
+                    ),
+                    child: child,
                   ),
-                ),
-              ),
+                );
+              },
+              child: _index == 0
+                  ? _CardContent(
+                      key: const ValueKey('left'),
+                      child: widget.leftChild,
+                    )
+                  : _CardContent(
+                      key: const ValueKey('right'),
+                      child: widget.rightChild,
+                    ),
+            ),
+          ),
+        ),
       ],
     );
   }

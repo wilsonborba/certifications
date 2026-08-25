@@ -18,10 +18,12 @@ class DesktopCertificationConfig extends BaseCertificationConfig {
   });
 
   @override
-  State<DesktopCertificationConfig> createState() => _DesktopCertificationConfigState();
+  State<DesktopCertificationConfig> createState() =>
+      _DesktopCertificationConfigState();
 }
 
-class _DesktopCertificationConfigState extends BaseCertificationConfigState<DesktopCertificationConfig> {
+class _DesktopCertificationConfigState
+    extends BaseCertificationConfigState<DesktopCertificationConfig> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,13 +40,20 @@ class _DesktopCertificationConfigState extends BaseCertificationConfigState<Desk
           return Center(
             child: SingleChildScrollView(
               child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight, maxWidth: 1200),
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
+                  maxWidth: 1200,
+                ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
                       'Certification Configuration',
-                      style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.black87),
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 100),

@@ -28,7 +28,7 @@ class BoxExplaning extends StatelessWidget {
   final BadgeImageSource imageSource;
   final double imageSize; // width & height
   final double imageOffset; // how much it hangs outside the card (px)
-  final double imageInset;  // gap from the top-right corner inside the Stack
+  final double imageInset; // gap from the top-right corner inside the Stack
 
   /// Optional little accent border under the card (like your green edge)
   final Color accentColor;
@@ -87,10 +87,7 @@ class BoxExplaning extends StatelessWidget {
         //   ),
         // ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: img,
-      ),
+      child: ClipRRect(borderRadius: BorderRadius.circular(10), child: img),
     );
   }
 
@@ -99,7 +96,9 @@ class BoxExplaning extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
 
     // Resolve incoming padding (so we can add image-aware padding on the right)
-    final EdgeInsets resolvedPadding = padding.resolve(Directionality.of(context));
+    final EdgeInsets resolvedPadding = padding.resolve(
+      Directionality.of(context),
+    );
 
     // Make sure text never collides under the image:
     // reserve space on the right approximately proportional to image width.
@@ -107,11 +106,13 @@ class BoxExplaning extends StatelessWidget {
         (imageSize * 0.70) + resolvedPadding.right + imageInset;
 
     // Colors (youthful + tactile)
-    final Color glassFill = cs.surface.withAlpha((0.75 * 255).toInt()); // soft white
+    final Color glassFill = cs.surface.withAlpha(
+      (0.75 * 255).toInt(),
+    ); // soft white
     final Color hairlineA = cs.primary.withAlpha((0.70 * 255).toInt());
     final Color hairlineB = cs.primary.withAlpha((0.35 * 255).toInt());
     final Color innerStroke = Colors.white.withAlpha((0.65 * 255).toInt());
-    final Color titleColor = cs.onSurface;  // black-ish
+    final Color titleColor = cs.onSurface; // black-ish
     final Color bodyColor = cs.onSurface.withAlpha((0.82 * 255).toInt());
 
     // We fake a gradient border by nesting containers:
@@ -150,10 +151,11 @@ class BoxExplaning extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: (accentColor == Colors.transparent
-                              ? cs.primary
-                              : accentColor)
-                          .withAlpha((0.25 * 255).toInt()),
+                      color:
+                          (accentColor == Colors.transparent
+                                  ? cs.primary
+                                  : accentColor)
+                              .withAlpha((0.25 * 255).toInt()),
                       blurRadius: 20,
                       spreadRadius: -2,
                     ),
@@ -197,13 +199,17 @@ class BoxExplaning extends StatelessWidget {
                           boxShadow: [
                             // soft elevation
                             BoxShadow(
-                              color: Colors.black.withAlpha((0.06 * 255).toInt()),
+                              color: Colors.black.withAlpha(
+                                (0.06 * 255).toInt(),
+                              ),
                               blurRadius: 18,
                               offset: const Offset(0, 10),
                             ),
                             // gentle highlight to feel tactile
                             BoxShadow(
-                              color: Colors.white.withAlpha((0.65 * 255).toInt()),
+                              color: Colors.white.withAlpha(
+                                (0.65 * 255).toInt(),
+                              ),
                               blurRadius: 6,
                               spreadRadius: -2,
                               offset: const Offset(-1, -1),
@@ -239,8 +245,7 @@ class BoxExplaning extends StatelessWidget {
           Positioned(
             top: imageOffset,
             right: imageOffset,
-            child:  _buildImage(),
-            
+            child: _buildImage(),
           ),
         ],
       ),
@@ -273,7 +278,9 @@ class _CardContent extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, cons) {
         // Extra guard: inside horizontal scrollers, width can be unconstrained.
-        final maxW = cons.maxWidth.isFinite ? cons.maxWidth : MediaQuery.of(context).size.width;
+        final maxW = cons.maxWidth.isFinite
+            ? cons.maxWidth
+            : MediaQuery.of(context).size.width;
 
         return ConstrainedBox(
           constraints: BoxConstraints(maxWidth: maxW),

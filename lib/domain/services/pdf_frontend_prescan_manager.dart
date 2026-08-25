@@ -25,7 +25,7 @@ final String baseUrl = "$baseApi$apiEntity$appName$appVersion";
 /// Result of the quick client-side scan.
 class FrontendScanResult {
   final bool isAcceptable;
-  final List<String> flags;    // reasons/warnings
+  final List<String> flags; // reasons/warnings
   final String? sha256;
   final int sizeBytes;
 
@@ -36,8 +36,7 @@ class FrontendScanResult {
     this.sha256,
   });
 
-  String summary() =>
-      isAcceptable ? 'OK' : 'Blocked: ${flags.join("; ")}';
+  String summary() => isAcceptable ? 'OK' : 'Blocked: ${flags.join("; ")}';
 }
 
 /// Tweakable limits/policy.
@@ -59,7 +58,7 @@ class PdfManager {
 
   const PdfManager({
     this.maxBytes = 20 * 1024 * 1024, // 20 MB
-    this.minBytes = 512,              // half a KB
+    this.minBytes = 512, // half a KB
     this.blockOnJavaScript = true,
     this.blockOnAutoActions = true,
     this.expectedMime = 'application/pdf',
@@ -71,11 +70,7 @@ const Set<String> _deniedSha256 = {
   // 'aaaaaaaa...'
 };
 
-Map<String, String> defaultHeadersPdfApi = {
-  'Accept': 'application/json',
-};
-
-
+Map<String, String> defaultHeadersPdfApi = {'Accept': 'application/json'};
 
 /// SAME NAME, refactored to use ApiAdapter (multipart POST)
 /// Calls: POST {baseUrl}/pdf/topic?ocr_force=...&ocr_lang=...&ocr_dpi=...&max_chars=...&overlap_chars=...
@@ -89,27 +84,14 @@ Future<Response> loadPdftoApi({
   int overlapChars = 400,
   Map<String, String>? extraHeaders,
 }) async {
-
   try {
-      debug('Reading next auth nounce from local storage...');
-      final nounce = await readNextAuthNounce();
-      final hintCookies = readCookie('hint');      
-
-      if (nounce != null) {
-        defaultHeadersPdfApi['T-A-N'] = nounce;
-        
-      }
-
-      if (hintCookies != null) {
-        defaultHeadersPdfApi['A-A-N'] = hintCookies;
-      }
-
-    } catch (e) {
-      debug('Error reading next auth nounce: $e');
+    final csrfToken = readCsrfToken();
+    if (csrfToken != null) {
+      defaultHeadersPdfApi['X-CSRF-Token'] = csrfToken;
     }
-
-   
-
+  } catch (e) {
+    debug('Error reading CSRF token: $e');
+  }
 
   final adapter = ApiAdapter(
     defaultHeaders: {
@@ -145,175 +127,90 @@ Future<Response> loadPdftoApi({
     ],
   );
 
-  if (response.statusCode == 200) {
-      final headers = response.headers;
-      // get next auth nounce key = 'n-a-n'
-      final nan = headers['n-a-n'];
-      if (nan != null) {
-        await saveNextAuthNounce(nan);
-        debug('Next auth nounce updated: $nan from getCards response headers.');
-      } else {
-        warning('No next auth nounce found in response headers.');
-
-      }
-    }
-
-    return response;
-
-
-
-
-
+  return response;
 }
 
-
-    Future<Response> getPdfInputFromApi({
-      required String documentId,
-  
-      String selectedPages = '1-2',
-    }) async {
-      
-       try {
-      debug('Reading next auth nounce from local storage...');
-      final nounce = await readNextAuthNounce();
-      final hintCookies = readCookie('hint');      
-
-      if (nounce != null) {
-        defaultHeadersPdfApi['T-A-N'] = nounce;
-        
-      }
-
-      if (hintCookies != null) {
-        defaultHeadersPdfApi['A-A-N'] = hintCookies;
-      }
-
-    } catch (e) {
-      debug('Error reading next auth nounce: $e');
-    }
-
-
-
-      final adapter = ApiAdapter(
-        defaultHeaders: {
-          ...defaultHeadersPdfApi,
-        
-        },
-      );
-      final url = Uri.parse('$baseUrl/pdf/input/$documentId?selected_pages=$selectedPages');
-
-      final response = await adapter.get(url);
-
-      if (response.statusCode == 200) {
-      final headers = response.headers;
-      // get next auth nounce key = 'n-a-n'
-      final nan = headers['n-a-n'];
-      if (nan != null) {
-        await saveNextAuthNounce(nan);
-        debug('Next auth nounce updated: $nan from getCards response headers.');
-      } else {
-        warning('No next auth nounce found in response headers.');
-
-      }
-    }
-
-    return response;
-
-      
-    }
-
-    Future<Response> getPdfContextFromApi({
+Future<Response> getPdfInputFromApi({
   required String documentId,
-  required String selectedLanguage,
-  }) async {
-    try {
-      debug('Reading next auth nounce from local storage...');
-      final nounce = await readNextAuthNounce();
-      final hintCookies = readCookie('hint');
 
-      if (nounce != null) {
-        defaultHeadersPdfApi['T-A-N'] = nounce;
-      }
-      if (hintCookies != null) {
-        defaultHeadersPdfApi['A-A-N'] = hintCookies;
-      }
-    } catch (e) {
-      debug('Error reading next auth nounce: $e');
+  String selectedPages = '1-2',
+}) async {
+  try {
+    final csrfToken = readCsrfToken();
+    if (csrfToken != null) {
+      defaultHeadersPdfApi['X-CSRF-Token'] = csrfToken;
     }
-
-    final adapter = ApiAdapter(defaultHeaders: {...defaultHeadersPdfApi});
-
-    final url = _buildApiUri(
-      baseUrl: baseUrl,
-      pathSegments: ['pdf', 'context', documentId], // <- encoded as path
-      queryParameters: {'selected_language': selectedLanguage}, // <- encoded
-    );
-
-    final response = await adapter.get(url);
-
-    if (response.statusCode == 200) {
-      final nan = response.headers['n-a-n'];
-      if (nan != null) {
-        await saveNextAuthNounce(nan);
-        debug('Next auth nounce updated: $nan from getCards response headers.');
-      } else {
-        warning('No next auth nounce found in response headers.');
-      }
-    }
-
-    return response;
+  } catch (e) {
+    debug('Error reading CSRF token: $e');
   }
 
+  final adapter = ApiAdapter(defaultHeaders: {...defaultHeadersPdfApi});
+  final url = Uri.parse(
+    '$baseUrl/pdf/input/$documentId?selected_pages=$selectedPages',
+  );
 
-    Future<Response> getTopicContextFromApi({
+  final response = await adapter.get(url);
+
+  return response;
+}
+
+Future<Response> getPdfContextFromApi({
+  required String documentId,
+  required String selectedLanguage,
+}) async {
+  try {
+    final csrfToken = readCsrfToken();
+    if (csrfToken != null) {
+      defaultHeadersPdfApi['X-CSRF-Token'] = csrfToken;
+    }
+  } catch (e) {
+    debug('Error reading CSRF token: $e');
+  }
+
+  final adapter = ApiAdapter(defaultHeaders: {...defaultHeadersPdfApi});
+
+  final url = _buildApiUri(
+    baseUrl: baseUrl,
+    pathSegments: ['pdf', 'context', documentId], // <- encoded as path
+    queryParameters: {'selected_language': selectedLanguage}, // <- encoded
+  );
+
+  final response = await adapter.get(url);
+
+  return response;
+}
+
+Future<Response> getTopicContextFromApi({
   required String itemName,
   required String inputIdentification,
   required String selectedLanguage,
-  }) async {
-    try {
-      debug('Reading next auth nounce from local storage...');
-      final nounce = await readNextAuthNounce();
-      final hintCookies = readCookie('hint');
-
-      if (nounce != null) {
-        defaultHeadersPdfApi['T-A-N'] = nounce;
-      }
-      if (hintCookies != null) {
-        defaultHeadersPdfApi['A-A-N'] = hintCookies;
-      }
-    } catch (e) {
-      debug('Error reading next auth nounce: $e');
+}) async {
+  try {
+    final csrfToken = readCsrfToken();
+    if (csrfToken != null) {
+      defaultHeadersPdfApi['X-CSRF-Token'] = csrfToken;
     }
-
-    final adapter = ApiAdapter(defaultHeaders: {...defaultHeadersPdfApi});
-
-    final url = _buildApiUri(
-      baseUrl: baseUrl,
-      pathSegments: ['context', itemName, inputIdentification], // both encoded
-      queryParameters: {'selected_language': selectedLanguage},   // encoded
-    );
-
-    final response = await adapter.get(url);
-
-    if (response.statusCode == 200) {
-      final nan = response.headers['n-a-n'];
-      if (nan != null) {
-        await saveNextAuthNounce(nan);
-        debug('Next auth nounce updated: $nan from getCards response headers.');
-      } else {
-        warning('No next auth nounce found in response headers.');
-      }
-    }
-
-    return response;
+  } catch (e) {
+    debug('Error reading CSRF token: $e');
   }
 
+  final adapter = ApiAdapter(defaultHeaders: {...defaultHeadersPdfApi});
 
+  final url = _buildApiUri(
+    baseUrl: baseUrl,
+    pathSegments: ['context', itemName, inputIdentification], // both encoded
+    queryParameters: {'selected_language': selectedLanguage}, // encoded
+  );
 
+  final response = await adapter.get(url);
+
+  return response;
+}
 
 Uri _buildApiUri({
   required String baseUrl,
-  required List<String> pathSegments,        // each segment gets encoded
-  Map<String, String>? queryParameters,      // each value gets encoded
+  required List<String> pathSegments, // each segment gets encoded
+  Map<String, String>? queryParameters, // each value gets encoded
 }) {
   final base = Uri.parse(baseUrl);
 
@@ -327,8 +224,6 @@ Uri _buildApiUri({
     queryParameters: queryParameters,
   );
 }
-
-
 
 /// Public entry: full pre-scan using bytes + metadata.
 /// Returns details you can log or show.
@@ -346,7 +241,9 @@ Future<FrontendScanResult> frontEndPreScan({
     flags.add('File too small (${bytes.length} B)');
   }
   if (bytes.length > config.maxBytes) {
-    flags.add('File too large (${_fmt(bytes.length)} > ${_fmt(config.maxBytes)})');
+    flags.add(
+      'File too large (${_fmt(bytes.length)} > ${_fmt(config.maxBytes)})',
+    );
   }
 
   // 2) Hash denylist
@@ -379,30 +276,37 @@ Future<FrontendScanResult> frontEndPreScan({
   }
   final autoActions = [
     '/openaction',
-    '/aa',        // additional actions
-    '/launch',    // launch an app
+    '/aa', // additional actions
+    '/launch', // launch an app
   ].where((t) => tokenHits[t] == true).toList();
   if (autoActions.isNotEmpty && config.blockOnAutoActions) {
     flags.add('Auto actions present: ${autoActions.join(", ")}');
   }
   // Other noteworthy features (warn, don’t block):
   final warnTokens = <String>[
-    '/embeddedfile', '/richmedia', '/xfa', '/submitform', '/gotoe', '/uri',
-    '/acroform'
+    '/embeddedfile',
+    '/richmedia',
+    '/xfa',
+    '/submitform',
+    '/gotoe',
+    '/uri',
+    '/acroform',
   ].where((t) => tokenHits[t] == true).toList();
   if (warnTokens.isNotEmpty) {
     flags.add('Contains advanced features: ${warnTokens.join(", ")}');
   }
 
   // Policy: block on "hard" flags only
-  final hardBlocks = flags.any((f) =>
-      f.startsWith('File too small') ||
-      f.startsWith('File too large') ||
-      f.startsWith('Known bad hash') ||
-      f.startsWith('Missing %PDF-') ||
-      f.startsWith('Missing %%EOF') ||
-      f.startsWith('Contains JavaScript') ||
-      f.startsWith('Auto actions present'));
+  final hardBlocks = flags.any(
+    (f) =>
+        f.startsWith('File too small') ||
+        f.startsWith('File too large') ||
+        f.startsWith('Known bad hash') ||
+        f.startsWith('Missing %PDF-') ||
+        f.startsWith('Missing %%EOF') ||
+        f.startsWith('Contains JavaScript') ||
+        f.startsWith('Auto actions present'),
+  );
 
   return FrontendScanResult(
     isAcceptable: !hardBlocks,
@@ -441,15 +345,17 @@ Future<bool> fakeCheckFileHashForThreat(
 bool _hasPdfHeader(Uint8List b) {
   if (b.length < 5) return false;
   return b[0] == 0x25 && // %
-         b[1] == 0x50 && // P
-         b[2] == 0x44 && // D
-         b[3] == 0x46 && // F
-         b[4] == 0x2D;   // -
+      b[1] == 0x50 && // P
+      b[2] == 0x44 && // D
+      b[3] == 0x46 && // F
+      b[4] == 0x2D; // -
 }
 
 bool _hasPdfEof(Uint8List b) {
   final start = b.length > 4096 ? b.length - 4096 : 0;
-  final tail = const Latin1Decoder(allowInvalid: true).convert(b.sublist(start));
+  final tail = const Latin1Decoder(
+    allowInvalid: true,
+  ).convert(b.sublist(start));
   return tail.contains('%%EOF');
 }
 
@@ -461,19 +367,25 @@ Map<String, bool> _scanForTokens(Uint8List b) {
       ? Uint8List(0)
       : b.sublist(b.length - headLimit);
 
-  final hay = (const Latin1Decoder(allowInvalid: true).convert(head) +
+  final hay =
+      (const Latin1Decoder(allowInvalid: true).convert(head) +
               const Latin1Decoder(allowInvalid: true).convert(tail))
           .toLowerCase();
 
   final tokens = <String>[
-    '/js', '/javascript', '/openaction', '/launch',
-    '/embeddedfile', '/richmedia', '/xfa', '/submitform', '/gotoe', 
+    '/js',
+    '/javascript',
+    '/openaction',
+    '/launch',
+    '/embeddedfile',
+    '/richmedia',
+    '/xfa',
+    '/submitform',
+    '/gotoe',
     '/acroform',
   ];
 
-  return {
-    for (final t in tokens) t: hay.contains(t),
-  };
+  return {for (final t in tokens) t: hay.contains(t)};
 }
 
 String _fmt(int bytes) {

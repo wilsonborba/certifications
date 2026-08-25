@@ -50,7 +50,8 @@ class BoardingAppBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(_appBarHeight);
 
   // Picks primary from theme; override at the Theme if needed.
-  Color _purpleOf(BuildContext context) => Theme.of(context).colorScheme.primary;
+  Color _purpleOf(BuildContext context) =>
+      Theme.of(context).colorScheme.primary;
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +67,7 @@ class BoardingAppBar extends StatelessWidget implements PreferredSizeWidget {
           centerTitle: false,
           backgroundColor: Colors.black,
           elevation: 0,
-          surfaceTintColor: Colors.black,   // M3 friendliness
+          surfaceTintColor: Colors.black, // M3 friendliness
           scrolledUnderElevation: 0,
           titleSpacing: 16,
           toolbarHeight: _appBarHeight,
@@ -103,7 +104,10 @@ class BoardingAppBar extends StatelessWidget implements PreferredSizeWidget {
                     icon: const Icon(Icons.menu, color: Colors.white),
                     iconSize: 45, // <— bigger icon
                     padding: const EdgeInsets.all(12), // <— bigger tap target
-                    constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                    constraints: const BoxConstraints(
+                      minWidth: 48,
+                      minHeight: 48,
+                    ),
                     onPressed: () {
                       // Robust open: works even if context hierarchy is tricky
                       final scaffold = Scaffold.maybeOf(context);
@@ -113,7 +117,9 @@ class BoardingAppBar extends StatelessWidget implements PreferredSizeWidget {
                         // Fallback: try the primary Scaffold from root
                         // (works when you use a nested Navigator or unusual tree)
                         WidgetsBinding.instance.addPostFrameCallback((_) {
-                          final rootScaffold = ScaffoldMessenger.maybeOf(context)?.mounted == true
+                          final rootScaffold =
+                              ScaffoldMessenger.maybeOf(context)?.mounted ==
+                                  true
                               ? ScaffoldMessenger.of(context)
                               : null;
                           // If you keep a GlobalKey<ScaffoldState>, prefer that (see section 3).
@@ -157,7 +163,9 @@ class _DesktopActions extends StatelessWidget {
     // Text buttons with smooth hover animations (no deprecated APIs)
     ButtonStyle _textBtnStyle(Color purple) {
       return ButtonStyle(
-        padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 16)),
+        padding: WidgetStateProperty.all(
+          const EdgeInsets.symmetric(horizontal: 16),
+        ),
         minimumSize: WidgetStateProperty.all(const Size(48, 40)),
         animationDuration: const Duration(milliseconds: 140),
         overlayColor: WidgetStateProperty.resolveWith(
@@ -166,13 +174,18 @@ class _DesktopActions extends StatelessWidget {
               : Colors.transparent,
         ),
         foregroundColor: WidgetStateProperty.resolveWith(
-          (s) => s.contains(WidgetState.hovered) ? Colors.white : Colors.white70,
+          (s) =>
+              s.contains(WidgetState.hovered) ? Colors.white : Colors.white70,
         ),
         textStyle: WidgetStateProperty.resolveWith(
           (s) => TextStyle(
             fontSize: s.contains(WidgetState.hovered) ? 23 : 22,
-            fontWeight: s.contains(WidgetState.hovered) ? FontWeight.w600 : FontWeight.w500,
-            decoration: s.contains(WidgetState.hovered) ? TextDecoration.underline : TextDecoration.none,
+            fontWeight: s.contains(WidgetState.hovered)
+                ? FontWeight.w600
+                : FontWeight.w500,
+            decoration: s.contains(WidgetState.hovered)
+                ? TextDecoration.underline
+                : TextDecoration.none,
           ),
         ),
       );
@@ -180,7 +193,9 @@ class _DesktopActions extends StatelessWidget {
 
     // Sign up button with light hover elevation
     final signUpStyle = ButtonStyle(
-      padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 20)),
+      padding: WidgetStateProperty.all(
+        const EdgeInsets.symmetric(horizontal: 20),
+      ),
       minimumSize: WidgetStateProperty.all(const Size(100, 60)),
       animationDuration: const Duration(milliseconds: 140),
       backgroundColor: WidgetStateProperty.resolveWith(
@@ -189,7 +204,9 @@ class _DesktopActions extends StatelessWidget {
             : purple,
       ),
       foregroundColor: WidgetStateProperty.resolveWith((_) => scheme.onPrimary),
-      elevation: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.hovered) ? 4 : 0),
+      elevation: WidgetStateProperty.resolveWith(
+        (s) => s.contains(WidgetState.hovered) ? 4 : 0,
+      ),
       shadowColor: WidgetStateProperty.resolveWith((_) => purple),
     );
 
@@ -282,9 +299,9 @@ class MobileSideMenu extends StatelessWidget {
         leading: Icon(icon, color: scheme.onPrimary),
         title: Text(
           label,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: scheme.onPrimary,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(color: scheme.onPrimary),
         ),
         onTap: () {
           _close();
@@ -308,10 +325,13 @@ class MobileSideMenu extends StatelessWidget {
               //   padding: const EdgeInsets.all(16),
               //   child: Image.asset('assets/logo.png', height: 28),
               // ),
-
               _item(icon: Icons.info_outline, label: 'About', onTap: onAbout),
               _item(icon: Icons.login, label: 'Log in', onTap: onLogin),
-              _item(icon: Icons.person_add_alt_1, label: 'Sign up', onTap: onSignUp),
+              _item(
+                icon: Icons.person_add_alt_1,
+                label: 'Sign up',
+                onTap: onSignUp,
+              ),
 
               const Spacer(),
               const Divider(height: 1),
@@ -319,11 +339,11 @@ class MobileSideMenu extends StatelessWidget {
                 leading: Icon(Icons.close, color: scheme.onPrimary),
                 title: Text(
                   'Close',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: scheme.onPrimary,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleMedium?.copyWith(color: scheme.onPrimary),
                 ),
-                
+
                 onTap: _close, // explicit close
               ),
             ],

@@ -23,36 +23,17 @@ class ApiAsodyaManager {
       body: jsonEncode({'auth_exchange_token': authExchangeToken}),
     );
 
-    if (response.statusCode == 200) {
-      final headers = response.headers;
-      // get next auth nounce key = 'n-a-n'
-      final nan = headers['n-a-n'];
-      if (nan != null) {
-        await saveNextAuthNounce(nan);
-        debug('Next auth nounce updated: $nan from exchange response headers.');
-      } else {
-        warning('No next auth nounce found in response headers.');
-      }
-    }
-
     return response;
   }
 
   Future<Response> updateUserInfo(String fullName, String? phoneE164) async {
     try {
-      debug('Reading next auth nounce from local storage...');
-      final nounce = await readNextAuthNounce();
-      final hintCookies = readCookie('hint');
-
-      if (nounce != null) {
-        defaultHeaders['T-A-N'] = nounce;
-      }
-
-      if (hintCookies != null) {
-        defaultHeaders['A-A-N'] = hintCookies;
+      final csrfToken = readCsrfToken();
+      if (csrfToken != null) {
+        defaultHeaders['X-CSRF-Token'] = csrfToken;
       }
     } catch (e) {
-      debug('Error reading next auth nounce: $e');
+      debug('Error reading CSRF token: $e');
     }
 
     // split the full name into first and last name
@@ -74,22 +55,6 @@ class ApiAsodyaManager {
     final response = await ApiAdapter(
       defaultHeaders: defaultHeaders,
     ).patch(Uri.parse('$baseUrl/user/info/v1'), body: jsonBody);
-
-    if (response.statusCode == 200) {
-      final headers = response.headers;
-      // get next auth nounce key = 'n-a-n'
-      final nan = headers['n-a-n'];
-
-      if (nan != null) {
-        await saveNextAuthNounce(nan);
-        debug(
-          'Next auth nounce updated: $nan from updateUserInfo response headers.',
-        );
-        debug('New nan is: $nan');
-      } else {
-        warning('No next auth nounce found in response headers.');
-      }
-    }
 
     return response;
   }

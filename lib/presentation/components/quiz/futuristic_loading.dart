@@ -64,15 +64,12 @@ class _FuturisticLoadingState extends State<FuturisticLoading>
     //final theme = Theme.of(context);
 
     BoxDecoration? decoration = const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFFEDF1F7),
-            Color(0xFFF9FAFC),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      );
+      gradient: LinearGradient(
+        colors: [Color(0xFFEDF1F7), Color(0xFFF9FAFC)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    );
 
     return Container(
       decoration: widget.transparentBackground ? null : decoration,
@@ -94,10 +91,8 @@ class _FuturisticLoadingState extends State<FuturisticLoading>
             // Animated message switcher
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 600),
-              transitionBuilder: (child, anim) => FadeTransition(
-                opacity: anim,
-                child: child,
-              ),
+              transitionBuilder: (child, anim) =>
+                  FadeTransition(opacity: anim, child: child),
               child: Text(
                 widget.messages[_index],
                 key: ValueKey(widget.messages[_index]),
@@ -156,7 +151,9 @@ class _SoftPulseLoaderState extends State<_SoftPulseLoader>
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.deepPurple.withAlpha(((0.2 + 0.3 * _ctrl.value) * 255).toInt()),
+                color: Colors.deepPurple.withAlpha(
+                  ((0.2 + 0.3 * _ctrl.value) * 255).toInt(),
+                ),
                 blurRadius: 30 + 30 * _ctrl.value,
                 spreadRadius: 4,
               ),

@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 
 class CookieConsentSnack {
   static const String _storageNamespace = 'privacy';
-  static const String _storageKey = 'cookie_consent'; // value: 'all' | 'necessary'
-  static const Duration _keepVisible = Duration(days: 3650); // effectively persistent until user clicks
+  static const String _storageKey =
+      'cookie_consent'; // value: 'all' | 'necessary'
+  static const Duration _keepVisible = Duration(
+    days: 3650,
+  ); // effectively persistent until user clicks
 
   /// Call once after the first frame; will show the SnackBar only if needed.
   static Future<void> showIfNeeded(BuildContext context) async {
@@ -68,25 +71,31 @@ class _CookieConsentContent extends StatelessWidget {
     // Shared purple elevated style with hover polish
     ButtonStyle _purpleElevatedStyle() {
       return ButtonStyle(
-        padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 16, vertical: 12)),
+        padding: WidgetStateProperty.all(
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
         minimumSize: WidgetStateProperty.all(const Size(64, 40)),
         animationDuration: const Duration(milliseconds: 140),
         backgroundColor: WidgetStateProperty.resolveWith((s) {
           // Slight darken on hover/pressed
-          final isHover = s.contains(WidgetState.hovered) || s.contains(WidgetState.pressed);
+          final isHover =
+              s.contains(WidgetState.hovered) ||
+              s.contains(WidgetState.pressed);
           return isHover ? purple.withValues(alpha: 0.92) : purple;
         }),
         foregroundColor: WidgetStateProperty.resolveWith((_) => textColor),
-        elevation: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.hovered) ? 4 : 0),
+        elevation: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.hovered) ? 4 : 0,
+        ),
         shadowColor: WidgetStateProperty.resolveWith((_) => purple),
       );
     }
 
     // Text style: readable on black
     final bodyStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Colors.white.withValues(alpha: 0.90),
-          height: 1.3,
-        );
+      color: Colors.white.withValues(alpha: 0.90),
+      height: 1.3,
+    );
 
     return LayoutBuilder(
       builder: (ctx, c) {

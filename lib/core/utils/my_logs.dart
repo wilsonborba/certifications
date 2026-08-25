@@ -1,11 +1,9 @@
 // ignore_for_file: avoid_print
 
-
 import 'package:accredit/core/settings.dart';
 import 'package:flutter/material.dart';
 
 import 'package:logging/logging.dart';
-
 
 final Level _logLevel = app_settings.developmentMode ? Level.ALL : Level.INFO;
 
@@ -35,20 +33,21 @@ void severe(String message) {
   }
 }
 
+/// Handle authentication failure
+void handleAuthFailure(
+  BuildContext context,
+  String message,
+  void Function(bool) setLoading,
+) async {
+  await Future.delayed(const Duration(seconds: 2));
+  setLoading(false); // Stop loading
 
-  /// Handle authentication failure
-  void handleAuthFailure(BuildContext context, String message, void Function(bool) setLoading) async {
-    await Future.delayed(const Duration(seconds: 2));
-    setLoading(false);  // Stop loading
-
-    if (context.mounted) {
-      showSnackBar(context, message);
-    }
+  if (context.mounted) {
+    showSnackBar(context, message);
   }
+}
 
-  /// Display a snack bar message
-  void showSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
+/// Display a snack bar message
+void showSnackBar(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+}

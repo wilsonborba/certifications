@@ -23,16 +23,16 @@ class PlansView extends StatelessWidget {
           Text(
             'Plans',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: scheme.onSurface,
-                ),
+              fontWeight: FontWeight.w700,
+              color: scheme.onSurface,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             'Free for now — bring your own API key and you are ready to go.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurface.withOpacity(0.65),
-                ),
+              color: scheme.onSurface.withOpacity(0.65),
+            ),
           ),
           const SizedBox(height: 18),
         ],
@@ -40,11 +40,23 @@ class PlansView extends StatelessWidget {
             ? Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(child: _FreePlanCard(onConfigureKeys: onConfigureKeys)),
+                  Expanded(
+                    child: _FreePlanCard(onConfigureKeys: onConfigureKeys),
+                  ),
                   const SizedBox(width: 18),
-                  Expanded(child: _LockedPlanCard(title: 'Plus', badge: 'Not available')),
+                  Expanded(
+                    child: _LockedPlanCard(
+                      title: 'Plus',
+                      badge: 'Not available',
+                    ),
+                  ),
                   const SizedBox(width: 18),
-                  Expanded(child: _LockedPlanCard(title: 'Pro', badge: 'Not available')),
+                  Expanded(
+                    child: _LockedPlanCard(
+                      title: 'Pro',
+                      badge: 'Not available',
+                    ),
+                  ),
                 ],
               )
             : Column(
@@ -61,10 +73,7 @@ class PlansView extends StatelessWidget {
 
     return Material(
       color: scheme.surface,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: content,
-      ),
+      child: Padding(padding: const EdgeInsets.all(16), child: content),
     );
   }
 }
@@ -82,10 +91,7 @@ class _FreePlanCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            scheme.primary.withOpacity(0.15),
-            scheme.surface,
-          ],
+          colors: [scheme.primary.withOpacity(0.15), scheme.surface],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -108,23 +114,20 @@ class _FreePlanCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _PlanBadge(
-            label: 'Free',
-            background: scheme.primary,
-          ),
+          _PlanBadge(label: 'Free', background: scheme.primary),
           const SizedBox(height: 12),
           Text(
             'Bring your own API key',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           Text(
             'Use your free-tier Gemini key or a Groq API key. You control usage and billing.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurface.withOpacity(0.7),
-                ),
+              color: scheme.onSurface.withOpacity(0.7),
+            ),
           ),
           const SizedBox(height: 16),
           Wrap(
@@ -189,16 +192,16 @@ class _LockedPlanCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             title,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           Text(
             'Premium features are coming soon. Stay tuned!',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurface.withOpacity(0.65),
-                ),
+              color: scheme.onSurface.withOpacity(0.65),
+            ),
           ),
           const SizedBox(height: 16),
           Wrap(
@@ -244,9 +247,9 @@ class _PlanBadge extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: foreground,
-              fontWeight: FontWeight.w600,
-            ),
+          color: foreground,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -276,8 +279,8 @@ class _InfoChip extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: scheme.onSurface.withOpacity(0.8),
-                ),
+              color: scheme.onSurface.withOpacity(0.8),
+            ),
           ),
         ],
       ),
