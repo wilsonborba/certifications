@@ -7,7 +7,6 @@ cd "$SCRIPT_DIR/.."
 exec flutter run \
   -d web-server \
   --release \
-  --dart-define=DEVELOPMENT_MODE=true \
   --web-hostname 0.0.0.0 \
   --web-port 8102 \
   --no-web-resources-cdn
