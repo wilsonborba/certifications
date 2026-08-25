@@ -1,23 +1,15 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'package:certifications/domain/models/application_info.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:certifications/dal/local/local_source_adapter.dart';
-import 'package:flutter/foundation.dart';
 
 class Settings {
   // accessible from outside
 
   late final String FERNET_KEY_SECRET;
 
-  /// Runtime environment is independent from Flutter's compilation mode.
-  ///
-  /// The local web runner uses a release build for a stable bootstrap, while
-  /// still needing local API and authentication endpoints.
-  final bool developmentMode = bool.fromEnvironment(
-    'DEVELOPMENT_MODE',
-    defaultValue: kDebugMode,
-  );
+  /// Non-secret frontend behavior belongs in settings, not in an environment
+  /// file or compiler flag. Switch this only when preparing a production build.
+  final bool developmentMode = true;
 
   // ASODYA URLS
 
@@ -52,11 +44,6 @@ class Settings {
     quartaryColor: null,
     createdAt: DateTime.now().toIso8601String(),
   ).toJson();
-
-  // not accessible from outside
-  final LocalSourceAdapter _localSourceAdapter = LocalSourceAdapter(
-    namespace: 'settings',
-  );
 
   static final Settings _instance = Settings._internal();
 

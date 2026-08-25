@@ -1,4 +1,3 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:certifications/core/utils/my_logs.dart';
 import 'dart:convert';
 import 'package:web/web.dart' as web;
@@ -146,18 +145,4 @@ class LocalSourceAdapter {
     return _store.getItem(_ns(key)) != null;
   }
 
-  Future<String> getEnvData(String key) async {
-    try {
-      // Retrieve the value from the environment variables
-      final value = dotenv.env[key.toUpperCase()];
-      if (value == null) {
-        throw Exception("Key [$key] not found in environment!");
-      }
-      return value;
-    } catch (e) {
-      // Handle any errors that occur during retrieval
-      debug("Error retrieving environment variable: $e");
-      rethrow;
-    }
-  }
 }
