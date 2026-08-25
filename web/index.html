@@ -262,18 +262,26 @@
             // now serves local, fresh web resources, so remove those old workers
             // and their caches before Flutter starts. Without this migration a
             // browser can keep serving an obsolete main.dart.js forever.
+            const legacyWebCacheCleanup = [];
+
             if ("serviceWorker" in navigator) {
-                navigator.serviceWorker.getRegistrations().then((registrations) => {
-                    registrations.forEach((registration) => registration.unregister());
-                });
+                legacyWebCacheCleanup.push(
+                    navigator.serviceWorker.getRegistrations().then((registrations) =>
+                        Promise.all(registrations.map((registration) => registration.unregister())),
+                    ),
+                );
             }
 
             if ("caches" in window) {
-                caches.keys().then((cacheNames) => {
-                    cacheNames
-                        .filter((cacheName) => cacheName.startsWith("flutter-"))
-                        .forEach((cacheName) => caches.delete(cacheName));
-                });
+                legacyWebCacheCleanup.push(
+                    caches.keys().then((cacheNames) =>
+                        Promise.all(
+                            cacheNames
+                                .filter((cacheName) => cacheName.startsWith("flutter-"))
+                                .map((cacheName) => caches.delete(cacheName)),
+                        ),
+                    ),
+                );
             }
 
             window.addEventListener("flutter-first-frame", function () {
@@ -282,7 +290,13 @@
                     shell.remove();
                 }
             });
+
+            Promise.allSettled(legacyWebCacheCleanup).finally(() => {
+                const bootstrap = document.createElement("script");
+                bootstrap.src = "flutter_bootstrap.js";
+                bootstrap.async = true;
+                document.body.appendChild(bootstrap);
+            });
         </script>
-        <script src="flutter_bootstrap.js" async></script>
     </body>
 </html>
