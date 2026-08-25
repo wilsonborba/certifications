@@ -10,7 +10,14 @@ class Settings {
 
   late final String FERNET_KEY_SECRET;
 
-  final bool developmentMode = kDebugMode;
+  /// Runtime environment is independent from Flutter's compilation mode.
+  ///
+  /// The local web runner uses a release build for a stable bootstrap, while
+  /// still needing local API and authentication endpoints.
+  final bool developmentMode = bool.fromEnvironment(
+    'DEVELOPMENT_MODE',
+    defaultValue: kDebugMode,
+  );
 
   // ASODYA URLS
 
