@@ -258,6 +258,24 @@
             </div>
         </div>
         <script>
+            // Development previously registered Flutter service workers. This app
+            // now serves local, fresh web resources, so remove those old workers
+            // and their caches before Flutter starts. Without this migration a
+            // browser can keep serving an obsolete main.dart.js forever.
+            if ("serviceWorker" in navigator) {
+                navigator.serviceWorker.getRegistrations().then((registrations) => {
+                    registrations.forEach((registration) => registration.unregister());
+                });
+            }
+
+            if ("caches" in window) {
+                caches.keys().then((cacheNames) => {
+                    cacheNames
+                        .filter((cacheName) => cacheName.startsWith("flutter-"))
+                        .forEach((cacheName) => caches.delete(cacheName));
+                });
+            }
+
             window.addEventListener("flutter-first-frame", function () {
                 const shell = document.getElementById("bootstrap-shell");
                 if (shell) {
