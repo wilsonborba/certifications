@@ -6,6 +6,7 @@ cd "$SCRIPT_DIR/.."
 
 exec flutter run \
   -d web-server \
+  --release \
   --web-hostname 0.0.0.0 \
   --web-port 8102 \
   --no-web-resources-cdn
