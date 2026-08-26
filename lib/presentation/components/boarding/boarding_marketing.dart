@@ -23,19 +23,22 @@ class BoardingMarketing extends StatelessWidget {
         const SizedBox(height: 24),
         _HeroCard(isDesktop: isDesktop),
         const SizedBox(height: 32),
-        _SectionTitle(title: 'How it works', titleSize: isDesktop ? 26 : 20),
+        _SectionTitle(
+          title: context.tr('howItWorks'),
+          titleSize: isDesktop ? 26 : 20,
+        ),
         const SizedBox(height: 12),
         _StepsRow(isDesktop: isDesktop),
         const SizedBox(height: 32),
         _SectionTitle(
-          title: 'What you can create',
+          title: context.tr('whatCreate'),
           titleSize: isDesktop ? 26 : 20,
         ),
         const SizedBox(height: 12),
         _ExamplesWrap(isDesktop: isDesktop),
         const SizedBox(height: 32),
         _SectionTitle(
-          title: 'Why it’s different',
+          title: context.tr('whyDifferent'),
           titleSize: isDesktop ? 26 : 20,
         ),
         const SizedBox(height: 12),
@@ -49,7 +52,7 @@ class BoardingMarketing extends StatelessWidget {
         _TrustPanel(isDesktop: isDesktop),
         const SizedBox(height: 32),
         _SectionTitle(
-          title: 'MVP today, more tomorrow',
+          title: context.tr('mvpToday'),
           titleSize: isDesktop ? 26 : 20,
         ),
         const SizedBox(height: 12),
@@ -58,7 +61,7 @@ class BoardingMarketing extends StatelessWidget {
         Divider(color: scheme.outlineVariant.withOpacity(0.5)),
         const SizedBox(height: 12),
         Text(
-          'Share your certifications anywhere.',
+          context.tr('shareAnywhere'),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: scheme.onSurface.withOpacity(0.75),
             fontSize: isDesktop ? 16 : 13,
@@ -66,7 +69,7 @@ class BoardingMarketing extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          'Quizzes are AI-generated; verify results before you publish.',
+          context.tr('verifyBeforePublish'),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: scheme.onSurface.withOpacity(0.6),
             fontSize: isDesktop ? 14 : 12,
@@ -139,7 +142,7 @@ class _HeroCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Learn. Quiz. Get certified.',
+            context.tr('learnQuizCertified'),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w700,
               fontSize: isDesktop ? 28 : 20,
@@ -158,8 +161,8 @@ class _HeroCard extends StatelessWidget {
             spacing: 10,
             runSpacing: 10,
             children: [
-              _CtaChip(label: 'Start a certification', filled: true),
-              _CtaChip(label: 'See how it works', filled: false),
+              _CtaChip(label: context.tr('createStudy'), filled: true),
+              _CtaChip(label: context.tr('howItWorks'), filled: false),
             ],
           ),
         ],
