@@ -146,7 +146,7 @@ class _HeroCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Add a website or PDF. We create a quiz. Finish it and share a certification with your score.',
+            'Attach a PDF. We create a quiz. Finish it and share a certification with your score.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: scheme.onSurface.withOpacity(0.7),
               fontSize: isDesktop ? 16 : 13,
@@ -194,8 +194,8 @@ class _StepsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = const [
       _StepContent(
-        title: 'Add your source',
-        body: 'Paste a website link or attach a PDF.',
+        title: 'Attach your PDF',
+        body: 'Upload a PDF to create your quiz.',
       ),
       _StepContent(
         title: 'Take the quiz',
@@ -427,7 +427,7 @@ class _MvpPanel extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Websites and PDFs.',
+            'PDF documents.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: scheme.onSurface.withOpacity(0.7),
               fontSize: isDesktop ? 14 : 12,

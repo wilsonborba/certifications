@@ -262,7 +262,6 @@ Future<void> showComplaintDialog(
                   final manager = CertificationManager();
                   final _ = await manager.applyComplain(
                     text,
-                    questionId,
                     isForPDF,
                     contextId,
                     pdfQuestionId,

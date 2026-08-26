@@ -3,13 +3,10 @@ import 'dart:convert';
 import 'package:certifications/core/settings.dart';
 
 import 'package:certifications/core/utils/my_logs.dart';
-import 'package:certifications/dal/local/local_source_adapter.dart';
 import 'package:certifications/dal/remote/api_adapter.dart';
 import 'package:certifications/domain/models/quiz.dart';
 import 'package:certifications/domain/models/topic_identifications.dart';
 import 'package:certifications/presentation/components/auth/verify_session.dart';
-
-import 'package:http/http.dart';
 
 // session_headers.dart
 import 'package:http/http.dart' as http;
@@ -161,7 +158,6 @@ class CertificationManager {
 
   Future<http.Response> applyComplain(
     String text,
-    dynamic questionId,
     bool isForPDF,
     dynamic contextId,
     dynamic pdfQuestionId,
@@ -172,18 +168,19 @@ class CertificationManager {
     final Map<String, dynamic> payload;
 
     if (!isForPDF) {
-      // DB Postgres
-      uriPath = Uri.parse('$baseUrl/context/complaints');
-      payload = {'question_id': questionId, 'complaint_text': text};
-    } else {
-      // temp on Redis/Valkey
-      uriPath = Uri.parse('$baseUrl/pdf/context/complaints');
-      payload = {
-        'document_id': contextId,
-        'complaint_text': text,
-        'pdf_question_id': pdfQuestionId,
-      };
+      throw ArgumentError.value(
+        isForPDF,
+        'isForPDF',
+        'Only PDF quiz complaints are supported.',
+      );
     }
+
+    uriPath = Uri.parse('$baseUrl/pdf/context/complaints');
+    payload = {
+      'document_id': contextId,
+      'complaint_text': text,
+      'pdf_question_id': pdfQuestionId,
+    };
 
     return _authedPost(uriPath, body: jsonEncode(payload));
   }
@@ -195,18 +192,23 @@ class CertificationManager {
     bool isForPDF,
     String contextId,
   ) async {
+    if (!isForPDF) {
+      throw ArgumentError.value(
+        isForPDF,
+        'isForPDF',
+        'Only PDF quizzes are supported.',
+      );
+    }
+
     final Map<String, dynamic> body = {
       'answers': payload.map((e) => e.toJson()).toList(),
       'time_spent_seconds': timeSpent.inSeconds,
       'certification_title': formData.certificationTitle,
       'full_name': formData.fullName,
       'language': formData.language,
-      'is_for_pdf': isForPDF,
+      'is_for_pdf': true,
+      'document_id': contextId,
     };
-
-    if (isForPDF) {
-      body['document_id'] = contextId;
-    }
 
     return _authedPost(
       Uri.parse('$baseUrl/quiz/revision'),
@@ -222,53 +224,6 @@ class CertificationManager {
 
   Future<http.Response> getUserCertifications() {
     return _authedGet(Uri.parse('$baseUrl/quiz/certifications'));
-  }
-
-  Future<http.Response> getCards() {
-    return _authedGet(Uri.parse('$baseUrl/all_items'));
-  }
-
-  Future<http.Response> getTopicsFromCard(
-    String itemName,
-    int page,
-    int perPage,
-  ) {
-    return _authedGet(
-      Uri.parse('$baseUrl/topics/$itemName'),
-      queryParams: {'page': page, 'per_page': perPage},
-    );
-  }
-
-  Future<http.Response> searchTopics(
-    String itemName,
-    String query,
-    int page,
-    int perPage,
-    String mode,
-    bool fillPage,
-    int maxExtraPages,
-  ) {
-    return _authedGet(
-      Uri.parse('$baseUrl/search/$itemName'),
-      queryParams: {
-        'q': query,
-        'page': page,
-        'per_page': perPage,
-        'mode': mode,
-        // If backend expects true/false strings:
-        'fill_page': fillPage.toString(),
-        'max_extra_pages': maxExtraPages,
-      },
-    );
-  }
-
-  Future<http.Response> requestNewCards(String url) {
-    final body = {'url': url};
-
-    return _authedPost(
-      Uri.parse('$baseUrl/topics/solicitate_new'),
-      body: jsonEncode(body),
-    );
   }
 
   Future<http.Response> createUserToken(
