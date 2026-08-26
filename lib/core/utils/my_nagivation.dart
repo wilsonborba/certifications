@@ -2,9 +2,8 @@
 // Minimal redirect widget that uses the safe helper in my_route_parser.dart.
 
 import 'package:certifications/core/utils/my_logs.dart';
+import 'package:certifications/core/settings.dart';
 import 'package:certifications/dal/local/local_source_adapter.dart';
-import 'package:certifications/presentation/components/auth/login_redirect.dart';
-import 'package:certifications/presentation/components/quiz/futuristic_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:certifications/core/utils/my_router_parser.dart';
 
@@ -18,8 +17,11 @@ Future<void> defaultLogout() async {
   await clearSessionArtifacts();
   // send to auth login screen (same flow you already use elsewhere)
   try {
-    final url = await urlRedirectionToAuth();
-    redirectToUrl(url, replace: true, removeSlash: true);
+    redirectToUrl(
+      app_settings.ASODYA_AUTH_LOGIN_URL,
+      replace: true,
+      removeSlash: true,
+    );
   } catch (e) {
     debug('default logout redirect failed: $e');
   }
@@ -52,19 +54,7 @@ class MyRedirectingWidget extends StatelessWidget {
       redirectToUrl(redirectUrl);
     });
 
-    return const Scaffold(
-      body: Center(
-        child: FuturisticLoading(
-          messages: [
-            'Redirecting...',
-            'Please wait while we take you there.',
-            'Tip: If you encounter any issues, please contact support@asodya.com for assistance.',
-          ],
-          isActive: true,
-          transparentBackground: true,
-        ),
-      ),
-    );
+    return Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }
 
