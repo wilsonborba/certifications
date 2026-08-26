@@ -1,7 +1,9 @@
 import 'package:certifications/core/utils/my_logs.dart';
 import 'package:certifications/core/utils/my_nagivation.dart';
+import 'package:certifications/core/utils/app_localizations.dart';
 
 import 'package:certifications/presentation/components/auth/login_redirect.dart';
+import 'package:certifications/presentation/components/preferences/app_preferences_controls.dart';
 import 'package:flutter/material.dart';
 
 const double _appBarHeight = 80;
@@ -46,7 +48,7 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     return LayoutBuilder(
       builder: (ctx, constraints) {
-        final wide = constraints.maxWidth >= maxActionLayoutWidth;
+        final wide = MediaQuery.sizeOf(ctx).width >= maxActionLayoutWidth;
 
         return AppBar(
           automaticallyImplyLeading: false, // no back arrow
@@ -55,6 +57,7 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
           elevation: 0,
           surfaceTintColor: Theme.of(context).colorScheme.surface,
           scrolledUnderElevation: 0,
+          actions: const [],
           toolbarHeight: _appBarHeight,
           titleSpacing: 16,
           title: Row(
@@ -190,16 +193,17 @@ class _AttachmentDesktopActions extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _item(context, 'Certificates', onCertificates),
-        _item(context, 'Plans', onPlans),
-        _item(context, 'Support', onSupport),
-        _item(context, 'About', onAbout),
+        const AppPreferencesButton(),
+        _item(context, context.tr('certificates'), onCertificates),
+        _item(context, context.tr('plans'), onPlans),
+        _item(context, context.tr('support'), onSupport),
+        _item(context, context.tr('about'), onAbout),
         const SizedBox(width: 8),
         _HoverScale(
           child: TextButton(
             style: logoutStyle,
             onPressed: () => onLogout(),
-            child: const Text('Logout'),
+            child: Text(context.tr('logout')),
           ),
         ),
         const SizedBox(width: 8),
@@ -271,29 +275,38 @@ class AttachmentSideMenu extends StatelessWidget {
               _tile(
                 context,
                 Icons.workspace_premium_outlined,
-                'Certificates',
+                context.tr('certificates'),
                 onCertificates,
               ),
               _tile(
                 context,
                 Icons.stacked_line_chart_outlined,
-                'Plans',
+                context.tr('plans'),
                 onPlans,
               ),
-              _tile(context, Icons.person_outline, 'Profile', null), // disabled
+              _tile(
+                context,
+                Icons.person_outline,
+                context.tr('profile'),
+                null,
+              ), // disabled
               _tile(
                 context,
                 Icons.support_agent_outlined,
-                'Support',
+                context.tr('support'),
                 onSupport,
               ),
-              _tile(context, Icons.info_outline, 'About', onAbout),
+              _tile(context, Icons.info_outline, context.tr('about'), onAbout),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: AppPreferencesPanel(),
+              ),
               const Spacer(),
               const Divider(height: 1),
               ListTile(
                 leading: Icon(Icons.logout, color: scheme.onSurface),
                 title: Text(
-                  'Logout',
+                  context.tr('logout'),
                   style: Theme.of(
                     context,
                   ).textTheme.titleMedium?.copyWith(color: scheme.onSurface),
