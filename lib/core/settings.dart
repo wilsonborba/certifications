@@ -5,6 +5,12 @@ import 'package:certifications/domain/models/application_info.dart';
 class Settings {
   // accessible from outside
 
+  /// Authentication consumes the same public app-context contract as the
+  /// other Flutter applications. This is protocol configuration, not a theme
+  /// or runtime environment value.
+  final String FERNET_KEY_SECRET =
+      'mEt5jdm9aTbUYnjhQM_tY_CTQL-JvXe0u9VdKEM2KmY=';
+
   /// Non-secret frontend behavior belongs in settings, not in an environment
   /// file or compiler flag. Switch this only when preparing a production build.
   final bool developmentMode = true;
