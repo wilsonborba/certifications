@@ -122,7 +122,10 @@ class CertificateBody extends StatelessWidget {
                     value: cert.issuedAtLabel,
                   ),
                   if (cert.expiresAtLabel != null)
-                    _MetaChip(label: 'Expires', value: cert.expiresAtLabel!),
+                    _MetaChip(
+                      label: context.tr('remaining'),
+                      value: cert.expiresAtLabel!,
+                    ),
                   _MetaChip(label: context.tr('memory'), value: cert.seriesId),
                   if (cert.language != null)
                     _MetaChip(

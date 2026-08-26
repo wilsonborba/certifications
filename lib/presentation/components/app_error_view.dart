@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:certifications/core/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:http/http.dart' as http;
 
 class AppErrorView extends StatefulWidget {
@@ -132,7 +133,7 @@ class _AppErrorViewState extends State<AppErrorView> {
                           FilledButton.icon(
                             onPressed: _copyDetails,
                             icon: const Icon(Icons.copy_all_rounded),
-                            label: const Text('Copy error context'),
+                            label: Text(context.tr('memory')),
                           ),
                         if (!widget.showDetails)
                           FilledButton.icon(
@@ -146,7 +147,7 @@ class _AppErrorViewState extends State<AppErrorView> {
                                     ),
                                   )
                                 : const Icon(Icons.send_rounded),
-                            label: const Text('Send error report'),
+                            label: Text(context.tr('retry')),
                           ),
                       ],
                     ),

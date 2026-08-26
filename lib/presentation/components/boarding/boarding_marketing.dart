@@ -197,15 +197,15 @@ class _StepsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = const [
       _StepContent(
-        title: 'Attach your PDF',
+        title: context.tr('attachPdf'),
         body: 'Upload a PDF to create your quiz.',
       ),
       _StepContent(
-        title: 'Take the quiz',
+        title: context.tr('takeQuiz'),
         body: 'We generate questions from your content.',
       ),
       _StepContent(
-        title: 'Share your certification',
+        title: context.tr('shareCertification'),
         body: 'Get a clean certificate with your topic and score.',
       ),
     ];

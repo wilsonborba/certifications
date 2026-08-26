@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:certifications/core/utils/my_background.dart';
+import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/certification.dart';
 import 'package:certifications/domain/services/api_certification_manager.dart';
 import 'package:certifications/presentation/components/certifications/certificate_body.dart';
@@ -85,7 +86,7 @@ class _MobileCertificationScreenState extends State<MobileCertificationScreen> {
     return Scaffold(
       backgroundColor: scheme.surface,
       appBar: AppBar(
-        title: const Text('Certificate'),
+        title: Text(context.tr('appName')),
         actions: [
           IconButton(
             icon: const Icon(Icons.print),
