@@ -1,5 +1,6 @@
 // mobile_boarding.dart
 import 'package:certifications/core/settings.dart';
+import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/core/utils/my_logs.dart';
 import 'package:certifications/presentation/components/auth/login_redirect.dart';
 import 'package:certifications/presentation/components/auth/verify_session.dart';
@@ -83,7 +84,7 @@ class MobileBoarding extends StatelessWidget {
                           child: Padding(
                             padding: EdgeInsets.all(1),
                             child: MiddleButton(
-                              label: "New Certification",
+                              label: context.tr('newStudy'),
                               fontSize: 18,
                               minimumSize: const Size(150, 50),
                               iconSize: 22,
@@ -153,7 +154,7 @@ class MobileBoarding extends StatelessWidget {
                               MainAxisSize.min, // shrink to content width
                           children: [
                             BoxExplaning(
-                              title: 'Playful Side',
+                              title: context.tr('landingExample'),
                               body:
                                   'Turn anything into a badge. From memes to random notes, transform everyday texts into funny certificates you can show off. Lighthearted, creative, and perfect for sharing laughs.',
                               height: 620,
@@ -172,7 +173,7 @@ class MobileBoarding extends StatelessWidget {
                             ),
                             const SizedBox(width: 24, height: 80),
                             BoxExplaning(
-                              title: 'Serious Mode',
+                              title: context.tr('welcomeTitle'),
                               body:
                                   'When knowledge really counts. Upload books, study materials, or professional texts, then take AI-generated quizzes to prove your skills. Verified results for those who want recognition that matters.',
                               height: 670,

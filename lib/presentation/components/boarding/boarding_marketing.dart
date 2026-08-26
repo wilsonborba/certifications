@@ -14,9 +14,8 @@ class BoardingMarketing extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(
-          title: 'Certifications',
-          subtitle:
-              'Turn what you learn into quizzes and shareable certifications.',
+          title: context.tr('appName'),
+          subtitle: context.tr('welcomeBody'),
           titleSize: isDesktop ? 34 : 24,
           subtitleSize: isDesktop ? 18 : 14,
         ),

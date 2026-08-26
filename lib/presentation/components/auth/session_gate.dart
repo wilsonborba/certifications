@@ -3,6 +3,7 @@ import 'package:certifications/presentation/components/auth/verify_session.dart'
 import 'package:certifications/presentation/widgets/attachment/on_attachment.dart';
 import 'package:certifications/presentation/widgets/boarding/on_boarding.dart';
 import 'package:flutter/material.dart';
+import 'package:certifications/core/utils/app_localizations.dart';
 
 class SessionGate extends StatelessWidget {
   const SessionGate({super.key});
@@ -28,7 +29,7 @@ class SessionGate extends StatelessWidget {
                 children: [
                   CircularProgressIndicator(),
                   SizedBox(height: 12),
-                  Text('Checking session…'),
+                  Text(context.tr('loading')),
                 ],
               ),
             ),

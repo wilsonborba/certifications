@@ -37,7 +37,7 @@ class BoardingFooter extends StatelessWidget {
                 : CrossAxisAlignment.center,
             children: [
               Text(
-                'Certifications',
+                context.tr('appName'),
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w800,
                   letterSpacing: -.4,
