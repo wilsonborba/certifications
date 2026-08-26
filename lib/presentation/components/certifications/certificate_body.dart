@@ -116,15 +116,21 @@ class CertificateBody extends StatelessWidget {
                 runSpacing: 8,
                 alignment: WrapAlignment.center,
                 children: [
-                  _MetaChip(label: 'Issued', value: cert.issuedAtLabel),
+                  _MetaChip(
+                    label: context.tr('complete'),
+                    value: cert.issuedAtLabel,
+                  ),
                   if (cert.expiresAtLabel != null)
                     _MetaChip(label: 'Expires', value: cert.expiresAtLabel!),
-                  _MetaChip(label: 'Series ID', value: cert.seriesId),
+                  _MetaChip(label: context.tr('memory'), value: cert.seriesId),
                   if (cert.language != null)
-                    _MetaChip(label: 'Language', value: cert.language!),
+                    _MetaChip(
+                      label: context.tr('language'),
+                      value: cert.language!,
+                    ),
                   if (cert.score != null)
                     _MetaChip(
-                      label: 'Score',
+                      label: context.tr('score'),
                       value: '${cert.score!.toStringAsFixed(2)}%',
                     ),
                 ],
@@ -139,15 +145,15 @@ class CertificateBody extends StatelessWidget {
                   alignment: WrapAlignment.center,
                   children: [
                     _MetaChip(
-                      label: 'Total Q',
+                      label: context.tr('question'),
                       value: '${cert.totalQuestions ?? 0}',
                     ),
                     _MetaChip(
-                      label: 'Correct',
+                      label: context.tr('complete'),
                       value: '${cert.correctQuestions ?? 0}',
                     ),
                     _MetaChip(
-                      label: 'Wrong',
+                      label: context.tr('errorGeneric'),
                       value: '${cert.wrongQuestions ?? 0}',
                     ),
                   ],
@@ -220,7 +226,10 @@ class CertificateBody extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          Text('Verify / Share', style: text.bodySmall),
+                          Text(
+                            context.tr('shareCertification'),
+                            style: text.bodySmall,
+                          ),
                         ],
                       ),
                     ],
