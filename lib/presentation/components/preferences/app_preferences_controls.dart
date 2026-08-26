@@ -36,15 +36,12 @@ class AppBarPreferencesControls extends StatelessWidget {
               preferences.setTheme(isDark ? ThemeMode.light : ThemeMode.dark),
         ),
         const SizedBox(width: 2),
-        PopupMenuButton<String>(
-          tooltip: context.tr('language'),
-          color: scheme.surface,
-          elevation: 5,
-          onSelected: (code) => preferences.setLocale(Locale(code)),
-          itemBuilder: (menuContext) => _languages
+        MenuAnchor(
+          alignmentOffset: const Offset(0, 8),
+          menuChildren: _languages
               .map(
-                (language) => PopupMenuItem<String>(
-                  value: language.code,
+                (language) => MenuItemButton(
+                  onPressed: () => preferences.setLocale(Locale(language.code)),
                   child: Row(
                     children: [
                       Icon(
@@ -61,35 +58,47 @@ class AppBarPreferencesControls extends StatelessWidget {
                 ),
               )
               .toList(),
-          child: Semantics(
-            button: true,
-            label: context.tr('language'),
-            child: Container(
-              height: 36,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(
+          builder: (anchorContext, controller, child) => Tooltip(
+            message: context.tr('language'),
+            child: Material(
+              type: MaterialType.transparency,
+              child: InkWell(
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: scheme.outline.withValues(alpha: .55),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.language_rounded,
-                    size: 17,
-                    color: scheme.onSurface,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    currentLanguage.toUpperCase(),
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: scheme.onSurface,
-                      fontWeight: FontWeight.w700,
+                onTap: () =>
+                    controller.isOpen ? controller.close() : controller.open(),
+                child: Semantics(
+                  button: true,
+                  label: context.tr('language'),
+                  child: Container(
+                    height: 36,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: scheme.outline.withValues(alpha: .55),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.language_rounded,
+                          size: 17,
+                          color: scheme.onSurface,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          currentLanguage.toUpperCase(),
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(
+                                color: scheme.onSurface,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
