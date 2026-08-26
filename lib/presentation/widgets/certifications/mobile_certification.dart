@@ -46,15 +46,18 @@ class _MobileCertificationScreenState extends State<MobileCertificationScreen> {
   }
 
   Future<Uint8List> _capturePng() async {
-    final boundary =
-        _captureKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+    final ctx = _captureKey.currentContext;
+    if (ctx == null) return Uint8List(0);
+    final boundary = ctx.findRenderObject() as RenderRepaintBoundary?;
+    if (boundary == null) return Uint8List(0);
     final image = await boundary.toImage(pixelRatio: 3);
     final data = await image.toByteData(format: ui.ImageByteFormat.png);
-    return data!.buffer.asUint8List();
+    return data?.buffer.asUint8List() ?? Uint8List(0);
   }
 
   Future<void> _printCertificate() async {
     final png = await _capturePng();
+    if (png.isEmpty) return;
     final doc = pw.Document();
     final img = pw.MemoryImage(png);
 
@@ -74,6 +77,7 @@ class _MobileCertificationScreenState extends State<MobileCertificationScreen> {
 
   Future<void> _shareCertificate() async {
     final png = await _capturePng();
+    if (png.isEmpty) return;
     await Share.shareXFiles([
       XFile.fromData(png, mimeType: 'image/png', name: 'certificate.png'),
     ]);
@@ -92,7 +96,8 @@ class _MobileCertificationScreenState extends State<MobileCertificationScreen> {
             icon: const Icon(Icons.print),
             onPressed: () async {
               if (!mounted) return;
-              if (!_captureKey.currentContext!.mounted) return;
+              final ctx = _captureKey.currentContext;
+              if (ctx == null || !ctx.mounted) return;
               await _printCertificate();
             },
           ),
@@ -100,7 +105,8 @@ class _MobileCertificationScreenState extends State<MobileCertificationScreen> {
             icon: const Icon(Icons.ios_share),
             onPressed: () async {
               if (!mounted) return;
-              if (!_captureKey.currentContext!.mounted) return;
+              final ctx = _captureKey.currentContext;
+              if (ctx == null || !ctx.mounted) return;
               await _shareCertificate();
             },
           ),

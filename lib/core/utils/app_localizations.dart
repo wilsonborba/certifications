@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 class AppLocalizations {
   const AppLocalizations(this.locale);
@@ -109,6 +109,22 @@ class AppLocalizations {
       'tier12Allowance': 'Tiers 1–2 · small guided allowance',
       'tier35Trial': 'Tiers 3–5 · limited trial capacity',
       'selectPlan': 'Select plan',
+      'usePlan': 'Use',
+      'currentPlan': 'Current Plan',
+      'activePlan': 'Active Plan',
+      'waitlistJoined': 'Waitlist Subscribed',
+      'planFreeTag': 'Available Now · MVP',
+      'planGuidedTag': 'Coming Soon · Guided Phase',
+      'planAdvancedTag': 'Coming Soon · Tiers 3–5',
+      'chipWebSearch': 'Integrated Web Search',
+      'chipPdfSupport': 'Expanded PDF Support',
+      'chipPriorityQueue': 'Priority Processing Queue',
+      'chipYoutubeQuizzes': 'YouTube Quizzes',
+      'chipMultiPdf': 'Multi-PDF Synthesis',
+      'chipCustomPrompts': 'Custom Prompt Tuning',
+      'chipUnlimitedQuizzes': 'Unlimited Quiz Generation',
+      'home': 'Home',
+      'studies': 'Studies',
       'joinWaitlist': 'Join the waitlist',
       'waitlistTitle': 'Join the waitlist',
       'waitlistBody':
@@ -126,8 +142,38 @@ class AppLocalizations {
           'More guided generation and study controls are planned for a future release.',
       'planAdvancedBody':
           'Higher tiers and expanded limits will arrive after the MVP.',
-      'planComingSoon': 'Coming soon',
-      'planUnavailable': 'Selection is not available yet.',
+      'playfulBody':
+          'Turn anything into a badge. From memes to random notes, transform everyday texts into funny certificates you can show off. Lighthearted, creative, and perfect for sharing laughs.',
+      'seriousTitle': 'When knowledge really counts.',
+      'seriousBody':
+          'Upload books, study materials, or professional texts, then take AI-generated quizzes to prove your skills. Verified results for those who want recognition that matters.',
+      'heroSub':
+          'Attach a PDF. We create a quiz. Finish it and share a certification with your score.',
+      'exCloudSec': 'Cloud Security Fundamentals',
+      'exAiBasics': 'AI Basics for Product Teams',
+      'exJazzHist': 'Jazz History Essentials',
+      'exFilmDir': 'Film Directors: A Quiz',
+      'exSpaceExp': 'Space Exploration 101',
+      'bulletMaterial': 'Built from your own material.',
+      'bulletShareable': 'Shareable, score-based certifications.',
+      'bulletMultiple': 'Multiple certifications per user.',
+      'bulletFree': 'Start free with managed capacity.',
+      'comingNextNotice': 'Coming next (if users want it)',
+      'syncing': 'Syncing…',
+      'redirecting': 'Redirecting...',
+      'pleaseWaitRedirect': 'Please wait while we take you there.',
+      'supportTip':
+          'Tip: If you encounter any issues, please contact support@asodya.com for assistance.',
+      'certAcknowledges': 'This acknowledges that',
+      'certCompletedReq':
+          'has successfully completed all the requirements to be recognized as a',
+      'certOfficer': 'Certification Officer',
+      'devErrorTitle': 'Development error',
+      'unexpectedProblem':
+          'The application hit an unexpected problem. You can send a report to help diagnose it.',
+      'contextCopied': 'Error context copied to clipboard.',
+      'reportSentSuccess': 'The error report was sent successfully.',
+      'reportSentFailure': 'The error report could not be sent right now.',
     },
     'pt': {
       'appName': 'Certifications',
@@ -246,12 +292,62 @@ class AppLocalizations {
       'cancel': 'Cancelar',
       'planGuided': 'Guiado',
       'planAdvanced': 'Avançado',
+      'usePlan': 'Usar',
+      'currentPlan': 'Plano Atual',
+      'activePlan': 'Plano Ativo',
+      'waitlistJoined': 'Inscrito na Lista de Espera',
+      'planFreeTag': 'Disponível Agora · MVP',
+      'planGuidedTag': 'Em breve · Fase Guiada',
+      'planAdvancedTag': 'Em breve · Tiers 3–5',
+      'chipWebSearch': 'Pesquisa Web Integrada',
+      'chipPdfSupport': 'Suporte Expandido a PDFs',
+      'chipPriorityQueue': 'Fila Prioritária de Processamento',
+      'chipYoutubeQuizzes': 'Quizzes do YouTube',
+      'chipMultiPdf': 'Síntese de Múltiplos PDFs',
+      'chipCustomPrompts': 'Prompts Customizados',
+      'chipUnlimitedQuizzes': 'Geração Ilimitada de Quizzes',
+      'home': 'Início',
+      'studies': 'Estudos',
       'planGuidedBody':
           'Geração mais guiada e novos controles de estudo estão planejados para uma versão futura.',
       'planAdvancedBody':
           'Tiers mais altos e limites ampliados chegarão depois do MVP.',
       'planComingSoon': 'Em breve',
       'planUnavailable': 'A seleção ainda não está disponível.',
+      'playfulBody':
+          'Transforme qualquer coisa em um selo. De memes a anotações aleatórias, transforme textos do dia a dia em certificados divertidos para exibir. Leve, criativo e perfeito para compartilhar risadas.',
+      'seriousTitle': 'Quando o conhecimento realmente importa.',
+      'seriousBody':
+          'Envie livros, materiais de estudo ou textos profissionais e faça quizzes gerados por IA para comprovar suas habilidades. Resultados verificados para quem busca reconhecimento de valor.',
+      'heroSub':
+          'Anexe um PDF. Nós criamos um quiz. Conclua e compartilhe uma certificação com sua pontuação.',
+      'exCloudSec': 'Fundamentos de Segurança em Nuvem',
+      'exAiBasics': 'Básicos de IA para Equipes de Produto',
+      'exJazzHist': 'História Essencial do Jazz',
+      'exFilmDir': 'Diretores de Cinema: Quiz',
+      'exSpaceExp': 'Exploração Espacial 101',
+      'bulletMaterial': 'Construído a partir do seu próprio material.',
+      'bulletShareable': 'Certificações compartilháveis com pontuação.',
+      'bulletMultiple': 'Múltiplas certificações por usuário.',
+      'bulletFree': 'Comece grátis com capacidade gerenciada.',
+      'comingNextNotice': 'Em breve (conforme demanda dos usuários)',
+      'syncing': 'Sincronizando…',
+      'redirecting': 'Redirecionando...',
+      'pleaseWaitRedirect': 'Aguarde enquanto redirecionamos você.',
+      'supportTip':
+          'Dica: Se encontrar problemas, entre em contato com support@asodya.com para obter ajuda.',
+      'certAcknowledges': 'Certificamos que',
+      'certCompletedReq':
+          'concluiu com êxito todos os requisitos para ser reconhecido(a) como',
+      'certOfficer': 'Oficial de Certificação',
+      'devErrorTitle': 'Erro de desenvolvimento',
+      'unexpectedProblem':
+          'O aplicativo encontrou um problema inesperado. Você pode enviar um relatório para ajudar no diagnóstico.',
+      'contextCopied':
+          'Contexto do erro copiado para a área de transferência.',
+      'reportSentSuccess': 'O relatório de erro foi enviado com sucesso.',
+      'reportSentFailure':
+          'Não foi possível enviar o relatório de erro no momento.',
     },
     'th': {
       'appName': 'Certifications',
@@ -366,15 +462,63 @@ class AppLocalizations {
       'cancel': 'ยกเลิก',
       'planGuided': 'แนะนำ',
       'planAdvanced': 'ขั้นสูง',
+      'usePlan': 'ใช้งาน',
+      'currentPlan': 'แผนปัจจุบัน',
+      'activePlan': 'แผนที่ใช้งานอยู่',
+      'waitlistJoined': 'ลงทะเบียนในรายการรอแล้ว',
+      'planFreeTag': 'เปิดใช้งานแล้ว · MVP',
+      'planGuidedTag': 'เร็ว ๆ นี้ · ระยะแนะนำ',
+      'planAdvancedTag': 'เร็ว ๆ นี้ · Tier 3–5',
+      'chipWebSearch': 'ค้นหาเว็บในตัว',
+      'chipPdfSupport': 'รองรับ PDF เพิ่มเติม',
+      'chipPriorityQueue': 'คิวประมวลผลด่วน',
+      'chipYoutubeQuizzes': 'แบบทดสอบจาก YouTube',
+      'chipMultiPdf': 'สังเคราะห์หลาย PDF',
+      'chipCustomPrompts': 'ปรับแต่ง Prompt',
+      'chipUnlimitedQuizzes': 'สร้างแบบทดสอบไม่จำกัด',
+      'home': 'หน้าแรก',
+      'studies': 'การเรียน',
       'planGuidedBody':
           'การสร้างที่มีคำแนะนำมากขึ้นและการควบคุมการเรียนจะมาในรุ่นถัดไป',
       'planAdvancedBody': 'Tier ที่สูงขึ้นและขีดจำกัดที่เพิ่มขึ้นจะมาหลัง MVP',
       'planComingSoon': 'เร็ว ๆ นี้',
       'planUnavailable': 'ยังไม่สามารถเลือกได้',
+      'playfulBody':
+          'เปลี่ยนทุกอย่างให้เป็นตราประทับ จากมีมสู่โน้ตทั่วไป แปลงข้อความประจำวันให้เป็นใบรับรองตลกๆ เพื่ออวดเพื่อนๆ สดใส สร้างสรรค์ และเหมาะสำหรับแบ่งปันเสียงหัวเราะ',
+      'seriousTitle': 'เมื่อความรู้มีความหมายจริงๆ',
+      'seriousBody':
+          'อัปโหลดหนังสือ เอกสารการเรียน หรือข้อความวิชาชีพ แล้วทำแบบทดสอบที่สร้างโดย AI เพื่อพิสูจน์ทักษะของคุณ ผลลัพธ์ที่ได้รับการตรวจสอบสำหรับผู้ที่ต้องการการยอมรับที่มีความหมาย',
+      'heroSub':
+          'แนบ PDF เราสร้างแบบทดสอบ ทำแบบทดสอบให้เสร็จและแชร์ใบรับรองพร้อมคะแนนของคุณ',
+      'exCloudSec': 'พื้นฐานความปลอดภัยบนคลาวด์',
+      'exAiBasics': 'พื้นฐาน AI สำหรับทีมผลิตภัณฑ์',
+      'exJazzHist': 'ประวัติศาสตร์แจ๊สเบื้องต้น',
+      'exFilmDir': 'ผู้กำกับภาพยนตร์: แบบทดสอบ',
+      'exSpaceExp': 'การสำรวจอวกาศ 101',
+      'bulletMaterial': 'สร้างขึ้นจาก material ของคุณเอง',
+      'bulletShareable': 'ใบรับรองที่แชร์ได้พร้อมคะแนน',
+      'bulletMultiple': 'หลายใบรับรองต่อผู้ใช้',
+      'bulletFree': 'เริ่มต้นฟรีพร้อมความจุที่จัดการได้',
+      'comingNextNotice': 'ถัดไป (หากผู้ใช้ต้องการ)',
+      'syncing': 'กำลังซิงค์…',
+      'redirecting': 'กำลังเปลี่ยนหน้า...',
+      'pleaseWaitRedirect': 'โปรดรอสักครู่ขณะนำคุณไปยังหน้าถัดไป',
+      'supportTip':
+          'คำแนะนำ: หากพบปัญหา โปรดติดต่อ support@asodya.com เพื่อขอความช่วยเหลือ',
+      'certAcknowledges': 'ขอรับรองว่า',
+      'certCompletedReq':
+          'ได้สำเร็จข้อกำหนดทั้งหมดเพื่อได้รับการรับรองเป็น',
+      'certOfficer': 'เจ้าหน้าที่ออกใบรับรอง',
+      'devErrorTitle': 'ข้อผิดพลาดในการพัฒนา',
+      'unexpectedProblem':
+          'แอปพลิเคชันพบปัญหาไม่คาดคิด คุณสามารถส่งรายงานเพื่อช่วยวินิจฉัยได้',
+      'contextCopied': 'คัดลอกบริบทข้อผิดพลาดไปยังคลิปบอร์ดแล้ว',
+      'reportSentSuccess': 'ส่งรายงานข้อผิดพลาดเรียบร้อยแล้ว',
+      'reportSentFailure': 'ไม่สามารถส่งรายงานข้อผิดพลาดได้ในขณะนี้',
     },
   };
   String text(String key) =>
-      _copy[locale.languageCode]?[key] ?? _copy['en']![key] ?? key;
+      _copy[locale.languageCode]?[key] ?? _copy['en']?[key] ?? key;
   static AppLocalizations of(BuildContext context) =>
       Localizations.of<AppLocalizations>(context, AppLocalizations) ??
       const AppLocalizations(Locale('en'));
@@ -395,4 +539,19 @@ class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
 
 extension Translation on BuildContext {
   String tr(String key) => AppLocalizations.of(this).text(key);
+}
+
+class FallbackMaterialLocalizationsDelegate
+    extends LocalizationsDelegate<MaterialLocalizations> {
+  const FallbackMaterialLocalizationsDelegate();
+
+  @override
+  bool isSupported(Locale locale) => true;
+
+  @override
+  Future<MaterialLocalizations> load(Locale locale) async =>
+      DefaultMaterialLocalizations();
+
+  @override
+  bool shouldReload(FallbackMaterialLocalizationsDelegate old) => false;
 }

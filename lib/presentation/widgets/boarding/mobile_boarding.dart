@@ -9,7 +9,6 @@ import 'package:certifications/presentation/components/boarding/boarding_marketi
 import 'package:certifications/presentation/components/boarding/boarding_footer.dart';
 import 'package:certifications/presentation/widgets/attachment/on_attachment.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:certifications/core/utils/my_background.dart';
 import 'package:certifications/core/utils/my_nagivation.dart';
 import 'package:certifications/presentation/components/boarding/box_explaning.dart';
@@ -155,8 +154,7 @@ class MobileBoarding extends StatelessWidget {
                           children: [
                             BoxExplaning(
                               title: context.tr('landingExample'),
-                              body:
-                                  'Turn anything into a badge. From memes to random notes, transform everyday texts into funny certificates you can show off. Lighthearted, creative, and perfect for sharing laughs.',
+                              body: context.tr('playfulBody'),
                               height: 620,
                               width: 350,
                               image:
@@ -174,8 +172,7 @@ class MobileBoarding extends StatelessWidget {
                             const SizedBox(width: 24, height: 80),
                             BoxExplaning(
                               title: context.tr('welcomeTitle'),
-                              body:
-                                  'When knowledge really counts. Upload books, study materials, or professional texts, then take AI-generated quizzes to prove your skills. Verified results for those who want recognition that matters.',
+                              body: context.tr('seriousBody'),
                               height: 670,
                               width: 350,
                               image: 'lib/presentation/assets/img/stamp.png',

@@ -7,6 +7,7 @@ import 'package:certifications/presentation/components/auth/auth_artifact_params
 import 'package:certifications/presentation/components/auth/session_gate.dart';
 import 'package:certifications/presentation/widgets/auth/on_sync_auth.dart';
 import 'package:certifications/presentation/widgets/certifications/on_certification.dart';
+import 'package:certifications/presentation/widgets/plans/on_plans.dart';
 import 'package:flutter/material.dart';
 
 class App extends StatefulWidget {
@@ -41,6 +42,7 @@ class _AppState extends State<App> {
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [
         AppLocalizationsDelegate(),
+        FallbackMaterialLocalizationsDelegate(),
         DefaultWidgetsLocalizations.delegate,
         DefaultMaterialLocalizations.delegate,
       ],
@@ -59,6 +61,12 @@ class _AppState extends State<App> {
             settings: const RouteSettings(name: OnSyncAuthScreen.route),
             builder: (_) =>
                 OnSyncAuthScreen(authExchangeToken: authExchangeToken),
+          );
+        }
+        if (parser.path == 'plans') {
+          return MaterialPageRoute(
+            settings: const RouteSettings(name: OnPlansScreen.route),
+            builder: (_) => const OnPlansScreen(),
           );
         }
         if (parser.path == 'certifications' && parser.segments.length > 1) {

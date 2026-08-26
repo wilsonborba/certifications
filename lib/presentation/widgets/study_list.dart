@@ -29,7 +29,7 @@ class _StudyListState extends State<StudyList> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(context.tr('delete')),
+            child: Text(context.tr('cancel')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, controller.text.trim()),

@@ -1,5 +1,9 @@
 import 'package:certifications/core/utils/app_localizations.dart';
-import 'package:certifications/domain/services/waitlist_api_service.dart';
+import 'package:certifications/core/utils/my_nagivation.dart';
+import 'package:certifications/domain/services/waitlist_store.dart';
+import 'package:certifications/presentation/components/auth/login_redirect.dart';
+import 'package:certifications/presentation/components/auth/session_gate.dart';
+import 'package:certifications/presentation/components/auth/verify_session.dart';
 import 'package:flutter/material.dart';
 
 class PlansView extends StatelessWidget {
@@ -13,38 +17,33 @@ class PlansView extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final cards = <Widget>[
       const _FreePlanCard(),
-      _PlaceholderPlanCard(
-        title: context.tr('planGuided'),
-        body: context.tr('planGuidedBody'),
-      ),
-      _PlaceholderPlanCard(
-        title: context.tr('planAdvanced'),
-        body: context.tr('planAdvancedBody'),
-      ),
+      const _GuidedPlanCard(),
+      const _AdvancedPlanCard(),
     ];
     return Material(
-      color: scheme.surface,
+      color: Colors.transparent,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (showHeader) ...[
               Text(
                 context.tr('plans'),
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
                   color: scheme.onSurface,
+                  letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               Text(
                 context.tr('plansIntro'),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurface.withValues(alpha: .65),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: scheme.onSurface.withValues(alpha: .72),
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 24),
             ],
             isDesktop
                 ? Row(
@@ -54,7 +53,7 @@ class PlansView extends StatelessWidget {
                           (card) => Expanded(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
+                                horizontal: 8,
                               ),
                               child: card,
                             ),
@@ -66,7 +65,7 @@ class PlansView extends StatelessWidget {
                     children: cards
                         .map(
                           (card) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.only(bottom: 16),
                             child: card,
                           ),
                         )
@@ -79,6 +78,7 @@ class PlansView extends StatelessWidget {
   }
 }
 
+/// Free Plan Card (Current Plan)
 class _FreePlanCard extends StatefulWidget {
   const _FreePlanCard();
 
@@ -88,51 +88,91 @@ class _FreePlanCard extends StatefulWidget {
 
 class _FreePlanCardState extends State<_FreePlanCard> {
   bool _hovered = false;
-  bool _joined = false;
-  String? _message;
 
-  Future<void> _openWaitlist() async {
-    final accepted = await showDialog<bool>(
-      context: context,
-      builder: (_) => const _WaitlistDialog(),
-    );
-    if (!mounted || accepted != true) return;
-    setState(() {
-      _joined = true;
-      _message = context.tr('waitlistSuccess');
-    });
+  Future<void> _handleUse() async {
+    redirectToUrl(await urlRedirectionToAuth(), replace: true);
   }
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final isLoggedIn = readCsrfToken() != null && readCsrfToken()!.isNotEmpty;
+
     return _PlanShell(
       hovered: _hovered,
+      accentColor: scheme.primary,
       onEnter: () => setState(() => _hovered = true),
       onExit: () => setState(() => _hovered = false),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _PlanBadge(
-            label: context.tr('planFree'),
-            background: scheme.primary,
-            foreground: scheme.onPrimary,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _PlanBadge(
+                label: context.tr('planFree'),
+                background: scheme.primaryContainer,
+                foreground: scheme.onPrimaryContainer,
+              ),
+              if (isLoggedIn)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: scheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: scheme.primary.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.check_circle_rounded, size: 14, color: scheme.primary),
+                      const SizedBox(width: 4),
+                      Text(
+                        context.tr('currentPlan'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: scheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: scheme.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    context.tr('planFreeTag'),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: scheme.primary,
+                    ),
+                  ),
+                ),
+            ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Text(
             context.tr('planStudyTitle'),
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              fontSize: 22,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             context.tr('planStudyBody'),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurface.withValues(alpha: .72),
+              color: scheme.onSurface.withValues(alpha: .75),
+              height: 1.4,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -151,39 +191,27 @@ class _FreePlanCardState extends State<_FreePlanCard> {
               ),
             ],
           ),
-          const SizedBox(height: 18),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              OutlinedButton.icon(
-                onPressed: null,
-                icon: const Icon(Icons.lock_outline),
-                label: Text(context.tr('selectPlan')),
-              ),
-              ElevatedButton.icon(
-                onPressed: _joined ? null : _openWaitlist,
-                icon: Icon(
-                  _joined
-                      ? Icons.check_rounded
-                      : Icons.notifications_none_rounded,
-                ),
-                label: Text(context.tr('joinWaitlist')),
-              ),
-            ],
-          ),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 220),
-            child: _message == null
-                ? const SizedBox(height: 0)
-                : Padding(
-                    padding: const EdgeInsets.only(top: 14),
-                    child: Text(
-                      _message!,
-                      key: ValueKey(_message),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: scheme.onSurface.withValues(alpha: .72),
-                      ),
+          const SizedBox(height: 28),
+          SizedBox(
+            width: double.infinity,
+            child: isLoggedIn
+                ? OutlinedButton.icon(
+                    onPressed: null,
+                    icon: const Icon(Icons.check_rounded),
+                    label: Text(context.tr('activePlan')),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: BorderSide(color: scheme.primary.withValues(alpha: 0.5)),
+                    ),
+                  )
+                : ElevatedButton.icon(
+                    onPressed: _handleUse,
+                    icon: const Icon(Icons.arrow_forward_rounded),
+                    label: Text(context.tr('usePlan')),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: scheme.primary,
+                      foregroundColor: scheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                   ),
           ),
@@ -193,53 +221,239 @@ class _FreePlanCardState extends State<_FreePlanCard> {
   }
 }
 
-class _PlaceholderPlanCard extends StatelessWidget {
-  const _PlaceholderPlanCard({required this.title, required this.body});
-  final String title;
-  final String body;
+/// Guided Plan Card
+class _GuidedPlanCard extends StatefulWidget {
+  const _GuidedPlanCard();
+
+  @override
+  State<_GuidedPlanCard> createState() => _GuidedPlanCardState();
+}
+
+class _GuidedPlanCardState extends State<_GuidedPlanCard> {
+  bool _hovered = false;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return _PlanShell(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _PlanBadge(
-            label: context.tr('planComingSoon'),
-            background: scheme.surfaceContainerHighest,
-            foreground: scheme.onSurface,
+    final store = WaitlistStore.instance;
+
+    return ListenableBuilder(
+      listenable: store,
+      builder: (context, _) {
+        final joined = store.isJoined('guided');
+
+        return _PlanShell(
+          hovered: _hovered,
+          accentColor: Colors.blueAccent,
+          onEnter: () => setState(() => _hovered = true),
+          onExit: () => setState(() => _hovered = false),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _PlanBadge(
+                label: context.tr('planGuided'),
+                background: Colors.blueAccent.withValues(alpha: 0.18),
+                foreground: Colors.blueAccent,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                context.tr('planGuided'),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 22,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                context.tr('planGuidedBody'),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurface.withValues(alpha: .75),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _InfoChip(
+                    icon: Icons.language_outlined,
+                    label: context.tr('chipWebSearch'),
+                  ),
+                  _InfoChip(
+                    icon: Icons.picture_as_pdf_outlined,
+                    label: context.tr('chipPdfSupport'),
+                  ),
+                  _InfoChip(
+                    icon: Icons.speed_outlined,
+                    label: context.tr('chipPriorityQueue'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+              SizedBox(
+                width: double.infinity,
+                child: joined
+                    ? FilledButton.icon(
+                        onPressed: null,
+                        icon: const Icon(Icons.check_circle_rounded),
+                        label: Text(context.tr('waitlistJoined')),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: scheme.primaryContainer,
+                          foregroundColor: scheme.onPrimaryContainer,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      )
+                    : ElevatedButton.icon(
+                        onPressed: () => _handleWaitlist(context, 'guided'),
+                        icon: const Icon(Icons.notifications_active_outlined),
+                        label: Text(context.tr('joinWaitlist')),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      ),
+              ),
+            ],
           ),
-          const SizedBox(height: 14),
-          Text(
-            title,
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            body,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurface.withValues(alpha: .7),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            context.tr('planUnavailable'),
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: scheme.onSurface.withValues(alpha: .6),
-            ),
-          ),
-          const SizedBox(height: 18),
-          OutlinedButton.icon(
-            onPressed: null,
-            icon: const Icon(Icons.lock_outline),
-            label: Text(context.tr('selectPlan')),
-          ),
-        ],
-      ),
+        );
+      },
     );
+  }
+}
+
+/// Advanced Plan Card
+class _AdvancedPlanCard extends StatefulWidget {
+  const _AdvancedPlanCard();
+
+  @override
+  State<_AdvancedPlanCard> createState() => _AdvancedPlanCardState();
+}
+
+class _AdvancedPlanCardState extends State<_AdvancedPlanCard> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final store = WaitlistStore.instance;
+
+    return ListenableBuilder(
+      listenable: store,
+      builder: (context, _) {
+        final joined = store.isJoined('advanced');
+
+        return _PlanShell(
+          hovered: _hovered,
+          accentColor: Colors.deepPurpleAccent,
+          onEnter: () => setState(() => _hovered = true),
+          onExit: () => setState(() => _hovered = false),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _PlanBadge(
+                label: context.tr('planAdvanced'),
+                background: Colors.deepPurpleAccent.withValues(alpha: 0.18),
+                foreground: Colors.deepPurpleAccent,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                context.tr('planAdvanced'),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 22,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                context.tr('planAdvancedBody'),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurface.withValues(alpha: .75),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _InfoChip(
+                    icon: Icons.play_circle_outline_rounded,
+                    label: context.tr('chipYoutubeQuizzes'),
+                  ),
+                  _InfoChip(
+                    icon: Icons.layers_outlined,
+                    label: context.tr('chipMultiPdf'),
+                  ),
+                  _InfoChip(
+                    icon: Icons.tune_outlined,
+                    label: context.tr('chipCustomPrompts'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+              SizedBox(
+                width: double.infinity,
+                child: joined
+                    ? FilledButton.icon(
+                        onPressed: null,
+                        icon: const Icon(Icons.check_circle_rounded),
+                        label: Text(context.tr('waitlistJoined')),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: scheme.primaryContainer,
+                          foregroundColor: scheme.onPrimaryContainer,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      )
+                    : ElevatedButton.icon(
+                        onPressed: () => _handleWaitlist(context, 'advanced'),
+                        icon: const Icon(Icons.notifications_active_outlined),
+                        label: Text(context.tr('joinWaitlist')),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+Future<void> _handleWaitlist(BuildContext context, String planId) async {
+  final store = WaitlistStore.instance;
+  final isLoggedIn = readCsrfToken() != null && readCsrfToken()!.isNotEmpty;
+
+  if (isLoggedIn || (store.savedEmail != null && store.savedEmail!.isNotEmpty)) {
+    final email = store.savedEmail ?? 'authenticated_user';
+    await store.joinWaitlist(planId, email);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.tr('waitlistSuccess')),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+    return;
+  }
+
+  final email = await showDialog<String>(
+    context: context,
+    builder: (_) => const _WaitlistDialog(),
+  );
+
+  if (email != null && email.isNotEmpty) {
+    await store.joinWaitlist(planId, email);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.tr('waitlistSuccess')),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 }
 
@@ -247,40 +461,41 @@ class _PlanShell extends StatelessWidget {
   const _PlanShell({
     required this.child,
     this.hovered = false,
+    this.accentColor,
     this.onEnter,
     this.onExit,
   });
   final Widget child;
   final bool hovered;
+  final Color? accentColor;
   final VoidCallback? onEnter;
   final VoidCallback? onExit;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final accent = accentColor ?? scheme.primary;
+
     return MouseRegion(
       onEnter: onEnter == null ? null : (_) => onEnter!(),
       onExit: onExit == null ? null : (_) => onExit!(),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+        duration: const Duration(milliseconds: 200),
         curve: Curves.easeOutCubic,
         width: double.infinity,
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [scheme.surfaceContainerHighest, scheme.surface],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
+          color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: scheme.outline.withValues(alpha: hovered ? .72 : .36),
+            color: hovered ? accent : scheme.outline.withValues(alpha: 0.25),
+            width: hovered ? 1.8 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: scheme.onSurface.withValues(alpha: hovered ? .12 : .06),
-              blurRadius: hovered ? 32 : 18,
-              offset: Offset(0, hovered ? 16 : 10),
+              color: (hovered ? accent : scheme.onSurface).withValues(alpha: hovered ? 0.15 : 0.04),
+              blurRadius: hovered ? 28 : 14,
+              offset: Offset(0, hovered ? 12 : 6),
             ),
           ],
         ),
@@ -299,10 +514,14 @@ class _WaitlistDialog extends StatefulWidget {
 
 class _WaitlistDialogState extends State<_WaitlistDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _email = TextEditingController();
-  final _waitlist = WaitlistApiService();
+  late final TextEditingController _email;
   bool _submitting = false;
-  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _email = TextEditingController(text: WaitlistStore.instance.savedEmail ?? '');
+  }
 
   @override
   void dispose() {
@@ -310,22 +529,9 @@ class _WaitlistDialogState extends State<_WaitlistDialog> {
     super.dispose();
   }
 
-  Future<void> _submit() async {
+  void _submit() {
     if (_formKey.currentState?.validate() != true) return;
-    setState(() {
-      _submitting = true;
-      _error = null;
-    });
-    try {
-      await _waitlist.joinFreePlanWaitlist(email: _email.text);
-      if (mounted) Navigator.of(context).pop(true);
-    } on WaitlistApiException {
-      if (mounted) setState(() => _error = context.tr('waitlistFailure'));
-    } catch (_) {
-      if (mounted) setState(() => _error = context.tr('waitlistFailure'));
-    } finally {
-      if (mounted) setState(() => _submitting = false);
-    }
+    Navigator.of(context).pop(_email.text.trim());
   }
 
   @override
@@ -349,7 +555,7 @@ class _WaitlistDialogState extends State<_WaitlistDialog> {
                 autofocus: true,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.done,
-                onFieldSubmitted: (_) => _submitting ? null : _submit(),
+                onFieldSubmitted: (_) => _submit(),
                 decoration: InputDecoration(
                   labelText: context.tr('email'),
                   border: const OutlineInputBorder(),
@@ -361,36 +567,18 @@ class _WaitlistDialogState extends State<_WaitlistDialog> {
                       : context.tr('emailInvalid');
                 },
               ),
-              if (_error != null) ...[
-                const SizedBox(height: 10),
-                Text(
-                  _error!,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: scheme.error),
-                ),
-              ],
             ],
           ),
         ),
       ),
       actions: [
         TextButton(
-          onPressed: _submitting ? null : () => Navigator.of(context).pop(),
+          onPressed: () => Navigator.of(context).pop(),
           child: Text(context.tr('cancel')),
         ),
         FilledButton(
-          onPressed: _submitting ? null : _submit,
-          child: _submitting
-              ? SizedBox(
-                  height: 18,
-                  width: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: scheme.onPrimary,
-                  ),
-                )
-              : Text(context.tr('submit')),
+          onPressed: _submit,
+          child: Text(context.tr('submit')),
         ),
       ],
     );
@@ -435,21 +623,22 @@ class _InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: scheme.outlineVariant),
+        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.6)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: scheme.onSurface.withValues(alpha: .7)),
+          Icon(icon, size: 16, color: scheme.primary),
           const SizedBox(width: 6),
           Flexible(
             child: Text(
               label,
               softWrap: true,
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: scheme.onSurface.withValues(alpha: .8),
+                color: scheme.onSurface.withValues(alpha: .85),
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),

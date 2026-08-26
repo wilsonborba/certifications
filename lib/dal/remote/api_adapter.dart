@@ -1,5 +1,5 @@
-// api_adapter.dart
 import 'dart:convert';
+import 'package:certifications/presentation/components/auth/verify_session.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/browser_client.dart'; // web-only app is fine
 import 'package:http_parser/http_parser.dart';
@@ -22,9 +22,7 @@ class ApiAdapter {
     qp.forEach((k, v) {
       if (v == null) return;
 
-      // If any code ever passes a list, join (or you can repeat keys; see note below)
       if (v is Iterable) {
-        // Minimal, predictable behavior: comma-separated
         out[k] = v
             .map((e) => e?.toString() ?? '')
             .where((s) => s.isNotEmpty)
@@ -46,6 +44,11 @@ class ApiAdapter {
     Encoding? encoding,
   }) async {
     final fullHeaders = {...defaultHeaders, if (headers != null) ...headers};
+    final csrfToken = readCsrfToken();
+    if (csrfToken != null && csrfToken.isNotEmpty) {
+      fullHeaders.putIfAbsent('X-CSRF-Token', () => csrfToken);
+      fullHeaders.putIfAbsent('X-CSRFToken', () => csrfToken);
+    }
     final resolvedUrl = (queryParams == null || queryParams.isEmpty)
         ? url
         : url.replace(queryParameters: _stringQueryParams(queryParams));
@@ -180,6 +183,11 @@ extension ApiAdapterMultipart on ApiAdapter {
     List<MultipartFileData>? files,
   }) async {
     final fullHeaders = {...defaultHeaders, if (headers != null) ...headers};
+    final csrfToken = readCsrfToken();
+    if (csrfToken != null && csrfToken.isNotEmpty) {
+      fullHeaders.putIfAbsent('X-CSRF-Token', () => csrfToken);
+      fullHeaders.putIfAbsent('X-CSRFToken', () => csrfToken);
+    }
     fullHeaders.removeWhere((k, _) => k.toLowerCase() == 'content-type');
 
     final resolvedUrl = (queryParams == null || queryParams.isEmpty)

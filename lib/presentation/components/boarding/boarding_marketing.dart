@@ -149,7 +149,7 @@ class _HeroCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Attach a PDF. We create a quiz. Finish it and share a certification with your score.',
+            context.tr('heroSub'),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: scheme.onSurface.withOpacity(0.7),
               fontSize: isDesktop ? 16 : 13,
@@ -279,12 +279,12 @@ class _ExamplesWrap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final examples = const [
-      'Cloud Security Fundamentals',
-      'AI Basics for Product Teams',
-      'Jazz History Essentials',
-      'Film Directors: A Quiz',
-      'Space Exploration 101',
+    final examples = [
+      context.tr('exCloudSec'),
+      context.tr('exAiBasics'),
+      context.tr('exJazzHist'),
+      context.tr('exFilmDir'),
+      context.tr('exSpaceExp'),
     ];
 
     return Wrap(
@@ -305,11 +305,11 @@ class _BulletsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final bullets = const [
-      'Built from your own material.',
-      'Shareable, score-based certifications.',
-      'Multiple certifications per user.',
-      'Start free with managed capacity.',
+    final bullets = [
+      context.tr('bulletMaterial'),
+      context.tr('bulletShareable'),
+      context.tr('bulletMultiple'),
+      context.tr('bulletFree'),
     ];
 
     return Column(
@@ -417,14 +417,14 @@ class _MvpPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Available now',
+            context.tr('availableNow'),
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
           Text(
-            'PDF documents.',
+            context.tr('pdfDocuments'),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: scheme.onSurface.withOpacity(0.7),
               fontSize: isDesktop ? 14 : 12,
@@ -432,14 +432,14 @@ class _MvpPanel extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Coming next (if users want it)',
+            context.tr('comingNextNotice'),
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
           Text(
-            'YouTube quiz generation.',
+            context.tr('youtubeGeneration'),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: scheme.onSurface.withOpacity(0.7),
               fontSize: isDesktop ? 14 : 12,

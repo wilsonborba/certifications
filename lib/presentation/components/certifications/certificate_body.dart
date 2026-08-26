@@ -73,7 +73,7 @@ class CertificateBody extends StatelessWidget {
               SizedBox(height: 18 * verticalDensity),
 
               Text(
-                'This acknowledges that',
+                context.tr('certAcknowledges'),
                 style: text.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
                 textAlign: TextAlign.center,
               ),
@@ -93,7 +93,7 @@ class CertificateBody extends StatelessWidget {
               if ((cert.certificationAs ?? '').isNotEmpty) ...[
                 SizedBox(height: 14 * verticalDensity),
                 Text(
-                  'has successfully completed all the requirements to be recognized as a',
+                  context.tr('certCompletedReq'),
                   style: text.bodyLarge?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
@@ -101,7 +101,7 @@ class CertificateBody extends StatelessWidget {
                 ),
                 SizedBox(height: 6 * verticalDensity),
                 Text(
-                  cert.certificationAs!,
+                  cert.certificationAs ?? '',
                   style: text.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -130,12 +130,12 @@ class CertificateBody extends StatelessWidget {
                   if (cert.language != null)
                     _MetaChip(
                       label: context.tr('language'),
-                      value: cert.language!,
+                      value: cert.language ?? '',
                     ),
                   if (cert.score != null)
                     _MetaChip(
                       label: context.tr('score'),
-                      value: '${cert.score!.toStringAsFixed(2)}%',
+                      value: '${(cert.score ?? 0).toStringAsFixed(2)}%',
                     ),
                 ],
               ),
@@ -194,14 +194,14 @@ class CertificateBody extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            cert.issuerName ?? 'Certification Officer',
+                            cert.issuerName ?? context.tr('certOfficer'),
                             style: text.titleMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           if (cert.issuerTitle != null)
                             Text(
-                              cert.issuerTitle!,
+                              cert.issuerTitle ?? '',
                               style: text.bodyMedium?.copyWith(
                                 color: scheme.onSurfaceVariant,
                               ),

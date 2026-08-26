@@ -22,7 +22,7 @@ void main() async {
   ErrorWidget.builder = (details) => AppErrorView.fromFlutterError(details);
 
   PlatformDispatcher.instance.onError = (error, stack) {
-    severe('PlatformDispatcher error: $error');
+    severe('PlatformDispatcher error: $error\n$stack');
     return false;
   };
 

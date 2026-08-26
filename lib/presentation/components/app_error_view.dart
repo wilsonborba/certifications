@@ -118,7 +118,7 @@ class _AppErrorViewState extends State<AppErrorView> {
                     if (_statusMessage != null) ...[
                       const SizedBox(height: 16),
                       Text(
-                        _statusMessage!,
+                        _statusMessage ?? '',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colors.onSurfaceVariant,
                         ),
@@ -169,7 +169,7 @@ class _AppErrorViewState extends State<AppErrorView> {
     );
     if (!mounted) return;
     setState(() {
-      _statusMessage = 'Error context copied to clipboard.';
+      _statusMessage = context.tr('contextCopied');
     });
   }
 
@@ -198,14 +198,16 @@ class _AppErrorViewState extends State<AppErrorView> {
           'details': _stringifiedDetails(),
         }),
       );
+      if (!mounted) return;
       setState(() {
         _statusMessage = response.statusCode >= 200 && response.statusCode < 300
-            ? 'The error report was sent successfully.'
-            : 'The error report could not be sent right now.';
+            ? context.tr('reportSentSuccess')
+            : context.tr('reportSentFailure');
       });
     } catch (_) {
+      if (!mounted) return;
       setState(() {
-        _statusMessage = 'The error report could not be sent right now.';
+        _statusMessage = context.tr('reportSentFailure');
       });
     } finally {
       if (mounted) {

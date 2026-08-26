@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 class LiquidMetalBackground extends StatefulWidget {
@@ -151,6 +152,22 @@ class _LiquidMetalBackgroundState extends State<LiquidMetalBackground>
 
         // One painter instance reused for both passes (same blob state).
         final painter = _BlobsPainter(blobs: _blobs);
+
+        if (kIsWeb) {
+          return RepaintBoundary(
+            child: ImageFiltered(
+              imageFilter: ImageFilter.blur(
+                sigmaX: widget.blurSigma,
+                sigmaY: widget.blurSigma,
+              ),
+              child: CustomPaint(
+                painter: painter,
+                isComplex: true,
+                willChange: true,
+              ),
+            ),
+          );
+        }
 
         return RepaintBoundary(
           child: Stack(

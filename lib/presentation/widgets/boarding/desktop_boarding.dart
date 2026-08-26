@@ -6,7 +6,6 @@ import 'package:certifications/presentation/components/auth/verify_session.dart'
 import 'package:certifications/presentation/components/boarding/app_bar.dart';
 import 'package:certifications/presentation/widgets/attachment/on_attachment.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:certifications/core/utils/my_background.dart';
 import 'package:certifications/core/utils/my_nagivation.dart';
 import 'package:certifications/presentation/components/boarding/box_explaning.dart';
@@ -165,8 +164,7 @@ class _DesktopBoardingState extends State<DesktopBoarding> {
                           children: [
                             BoxExplaning(
                               title: context.tr('landingExample'),
-                              body:
-                                  'Turn anything into a badge. From memes to random notes, transform everyday texts into funny certificates you can show off. Lighthearted, creative, and perfect for sharing laughs.',
+                              body: context.tr('playfulBody'),
                               height: 820,
                               width: 600,
                               image:
@@ -184,8 +182,7 @@ class _DesktopBoardingState extends State<DesktopBoarding> {
                             const SizedBox(width: 24),
                             BoxExplaning(
                               title: context.tr('welcomeTitle'),
-                              body:
-                                  'When knowledge really counts. Upload books, study materials, or professional texts, then take AI-generated quizzes to prove your skills. Verified results for those who want recognition that matters.',
+                              body: context.tr('seriousBody'),
                               height: 820,
                               width: 600,
                               image: 'lib/presentation/assets/img/stamp.png',

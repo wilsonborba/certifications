@@ -1,9 +1,13 @@
+import 'package:certifications/core/settings.dart';
 import 'package:certifications/core/utils/my_logs.dart';
 import 'package:certifications/core/utils/my_nagivation.dart';
 import 'package:certifications/core/utils/app_localizations.dart';
+import 'package:certifications/core/utils/app_preferences.dart';
 
 import 'package:certifications/presentation/components/auth/login_redirect.dart';
 import 'package:certifications/presentation/components/preferences/app_preferences_controls.dart';
+import 'package:certifications/presentation/widgets/plans/on_plans.dart';
+import 'package:certifications/presentation/components/auth/session_gate.dart';
 import 'package:flutter/material.dart';
 
 const double _appBarHeight = 80;
@@ -15,6 +19,7 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     this.title = 'Certifications',
     this.maxActionLayoutWidth = 800,
+    this.currentTab = 'studies',
     this.onCertificates,
     this.onPlans,
     this.onTokens,
@@ -25,6 +30,7 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   final String title;
   final double maxActionLayoutWidth;
+  final String? currentTab;
 
   final VoidCallback? onCertificates;
   final VoidCallback? onPlans;
@@ -57,51 +63,204 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
           elevation: 0,
           surfaceTintColor: Theme.of(context).colorScheme.surface,
           scrolledUnderElevation: 0,
-          actions: const [],
           toolbarHeight: _appBarHeight,
           titleSpacing: 16,
-          title: Row(
-            children: [
-              // Left-aligned title
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontSize: 26,
-                  fontWeight: FontWeight.w700,
+          title: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () {
+              NavigationService.pushReplacement(const SessionGate());
+            },
+            child: Text(
+              title,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          actions: [
+            if (wide)
+              _AttachmentDesktopActions(
+                accent: accent,
+                currentTab: currentTab,
+                onCertificates: onCertificates,
+                onPlans: onPlans,
+                onSupport: onSupport,
+                onAbout: onAbout,
+                onLogout: onLogout ?? defaultLogout,
+              )
+            else
+              Builder(
+                builder: (context) => IconButton(
+                  tooltip: context.tr('menu'),
+                  icon: Icon(
+                    Icons.menu,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                  iconSize: 32,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  onPressed: () => Scaffold.maybeOf(context)?.openEndDrawer(),
                 ),
               ),
-              const Spacer(),
-              if (wide)
-                _AttachmentDesktopActions(
-                  accent: accent,
-                  onCertificates: onCertificates,
-                  onPlans: onPlans,
-                  onSupport: onSupport,
-                  onAbout: onAbout,
-                  onLogout: onLogout ?? defaultLogout,
-                )
-              else
-                Builder(
-                  builder: (context) => IconButton(
-                    tooltip: context.tr('menu'),
-                    icon: Icon(
-                      Icons.menu,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                    iconSize: 45,
-                    padding: const EdgeInsets.all(12),
-                    constraints: const BoxConstraints(
-                      minWidth: 48,
-                      minHeight: 48,
-                    ),
-                    onPressed: () => Scaffold.maybeOf(context)?.openEndDrawer(),
-                  ),
-                ),
-            ],
-          ),
+          ],
         );
       },
+    );
+  }
+}
+
+class _InlineDesktopPreferences extends StatelessWidget {
+  const _InlineDesktopPreferences();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final preferences = AppPreferencesScope.maybeOf(context);
+    if (preferences == null) return const SizedBox.shrink();
+
+    final isDark = preferences.themeMode == ThemeMode.dark;
+    final currentLocale = preferences.locale?.languageCode ?? 'en';
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          tooltip: context.tr('darkTheme'),
+          icon: Icon(
+            isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+            color: scheme.onSurface.withValues(alpha: 0.85),
+          ),
+          onPressed: () {
+            preferences.setTheme(isDark ? ThemeMode.light : ThemeMode.dark);
+          },
+        ),
+        const SizedBox(width: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          decoration: BoxDecoration(
+            color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: scheme.outline.withValues(alpha: 0.3),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _LangChip(
+                label: 'EN',
+                selected: currentLocale == 'en',
+                onTap: () => preferences.setLocale(const Locale('en')),
+              ),
+              _LangChip(
+                label: 'PT',
+                selected: currentLocale == 'pt',
+                onTap: () => preferences.setLocale(const Locale('pt')),
+              ),
+              _LangChip(
+                label: 'TH',
+                selected: currentLocale == 'th',
+                onTap: () => preferences.setLocale(const Locale('th')),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+      ],
+    );
+  }
+}
+
+class _LangChip extends StatelessWidget {
+  const _LangChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? scheme.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+            color: selected ? scheme.onPrimary : scheme.onSurface.withValues(alpha: 0.75),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _UserProfileButton extends StatelessWidget {
+  const _UserProfileButton({this.onLogout});
+  final VoidCallback? onLogout;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return PopupMenuButton<String>(
+      tooltip: context.tr('profile'),
+      icon: Icon(
+        Icons.account_circle_outlined,
+        color: scheme.onSurface,
+        size: 32,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      itemBuilder: (context) => [
+        PopupMenuItem<String>(
+          enabled: false,
+          value: 'profile',
+          child: Row(
+            children: [
+              Icon(Icons.person_outline, color: scheme.onSurface.withValues(alpha: 0.6)),
+              const SizedBox(width: 12),
+              Text(
+                context.tr('profile'),
+                style: TextStyle(color: scheme.onSurface.withValues(alpha: 0.6)),
+              ),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem<String>(
+          value: 'logout',
+          onTap: () {
+            if (onLogout != null) {
+              onLogout!();
+            } else {
+              defaultLogout();
+            }
+          },
+          child: Row(
+            children: [
+              Icon(Icons.logout, color: scheme.error),
+              const SizedBox(width: 12),
+              Text(
+                context.tr('logout'),
+                style: TextStyle(color: scheme.error, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -109,6 +268,7 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
 class _AttachmentDesktopActions extends StatelessWidget {
   const _AttachmentDesktopActions({
     required this.accent,
+    this.currentTab,
     this.onCertificates,
     this.onPlans,
     this.onTokens,
@@ -118,6 +278,7 @@ class _AttachmentDesktopActions extends StatelessWidget {
   });
 
   final Color accent;
+  final String? currentTab;
   final VoidCallback? onCertificates;
   final VoidCallback? onPlans;
   final VoidCallback? onTokens;
@@ -168,44 +329,26 @@ class _AttachmentDesktopActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final logoutStyle = _textBtnStyle(context, accent).copyWith(
-      foregroundColor: WidgetStateProperty.all(
-        Theme.of(context).colorScheme.error,
-      ),
-      overlayColor: WidgetStateProperty.resolveWith(
-        (s) => s.contains(WidgetState.hovered)
-            ? Theme.of(context).colorScheme.error.withValues(alpha: 0.12)
-            : Theme.of(context).colorScheme.surface.withValues(alpha: 0),
-      ),
-      textStyle: WidgetStateProperty.resolveWith(
-        (s) => TextStyle(
-          fontSize: s.contains(WidgetState.hovered) ? 16 : 15,
-          fontWeight: s.contains(WidgetState.hovered)
-              ? FontWeight.w600
-              : FontWeight.w500,
-          decoration: s.contains(WidgetState.hovered)
-              ? TextDecoration.underline
-              : TextDecoration.none,
-        ),
-      ),
-    );
+    void _defaultAbout() => redirectToUrl('https://${app_settings.ASODYA_MAIN_DOMAIN}', replace: false);
+    void _defaultPlans() => NavigationService.push(const OnPlansScreen());
+    void _defaultStudies() => NavigationService.pushReplacement(const SessionGate());
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const AppPreferencesButton(),
-        _item(context, context.tr('certificates'), onCertificates),
-        _item(context, context.tr('plans'), onPlans),
-        _item(context, context.tr('support'), onSupport),
-        _item(context, context.tr('about'), onAbout),
+        const _InlineDesktopPreferences(),
+        if (currentTab != 'studies')
+          _item(context, context.tr('studies'), _defaultStudies),
+        if (currentTab != 'certificates')
+          _item(context, context.tr('certificates'), onCertificates),
+        if (currentTab != 'plans')
+          _item(context, context.tr('plans'), onPlans ?? _defaultPlans),
+        if (currentTab != 'support')
+          _item(context, context.tr('support'), onSupport),
+        if (currentTab != 'about')
+          _item(context, context.tr('about'), onAbout ?? _defaultAbout),
         const SizedBox(width: 8),
-        _HoverScale(
-          child: TextButton(
-            style: logoutStyle,
-            onPressed: () => onLogout(),
-            child: Text(context.tr('logout')),
-          ),
-        ),
+        _UserProfileButton(onLogout: () async => onLogout()),
         const SizedBox(width: 8),
       ],
     );
@@ -217,6 +360,7 @@ class _AttachmentDesktopActions extends StatelessWidget {
 class AttachmentSideMenu extends StatelessWidget {
   const AttachmentSideMenu({
     super.key,
+    this.currentTab,
     this.onCertificates,
     this.onPlans,
     this.onSupport,
@@ -225,6 +369,7 @@ class AttachmentSideMenu extends StatelessWidget {
     this.width = 320,
   });
 
+  final String? currentTab;
   final VoidCallback? onCertificates;
   final VoidCallback? onPlans;
   final VoidCallback? onSupport;
@@ -262,6 +407,10 @@ class AttachmentSideMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
+    void _defaultAbout() => redirectToUrl('https://${app_settings.ASODYA_MAIN_DOMAIN}', replace: false);
+    void _defaultPlans() => NavigationService.push(const OnPlansScreen());
+    void _defaultStudies() => NavigationService.pushReplacement(const SessionGate());
+
     return Drawer(
       backgroundColor: scheme.surface,
       child: SafeArea(
@@ -272,37 +421,48 @@ class AttachmentSideMenu extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _tile(
-                context,
-                Icons.workspace_premium_outlined,
-                context.tr('certificates'),
-                onCertificates,
-              ),
-              _tile(
-                context,
-                Icons.stacked_line_chart_outlined,
-                context.tr('plans'),
-                onPlans,
-              ),
-              _tile(
-                context,
-                Icons.person_outline,
-                context.tr('profile'),
-                null,
-              ), // disabled
-              _tile(
-                context,
-                Icons.support_agent_outlined,
-                context.tr('support'),
-                onSupport,
-              ),
-              _tile(context, Icons.info_outline, context.tr('about'), onAbout),
+              if (currentTab != 'studies')
+                _tile(
+                  context,
+                  Icons.school_outlined,
+                  context.tr('studies'),
+                  _defaultStudies,
+                ),
+              if (currentTab != 'certificates')
+                _tile(
+                  context,
+                  Icons.workspace_premium_outlined,
+                  context.tr('certificates'),
+                  onCertificates,
+                ),
+              if (currentTab != 'plans')
+                _tile(
+                  context,
+                  Icons.stacked_line_chart_outlined,
+                  context.tr('plans'),
+                  onPlans ?? _defaultPlans,
+                ),
+              if (currentTab != 'support')
+                _tile(
+                  context,
+                  Icons.support_agent_outlined,
+                  context.tr('support'),
+                  onSupport,
+                ),
+              if (currentTab != 'about')
+                _tile(context, Icons.info_outline, context.tr('about'), onAbout ?? _defaultAbout),
               const Padding(
                 padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
                 child: AppPreferencesPanel(),
               ),
               const Spacer(),
               const Divider(height: 1),
+              _tile(
+                context,
+                Icons.person_outline,
+                context.tr('profile'),
+                null,
+              ),
               ListTile(
                 leading: Icon(Icons.logout, color: scheme.onSurface),
                 title: Text(
@@ -313,8 +473,9 @@ class AttachmentSideMenu extends StatelessWidget {
                 ),
                 onTap: () async {
                   _close(context);
-                  if (onLogout != null) {
-                    await onLogout!();
+                  final logout = onLogout;
+                  if (logout != null) {
+                    await logout();
                   } else {
                     await clearSessionArtifacts();
                     try {

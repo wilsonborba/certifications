@@ -1,3 +1,4 @@
+import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 class FirstPhrase extends StatelessWidget {
@@ -11,15 +12,15 @@ class FirstPhrase extends StatelessWidget {
       TextSpan(
         children: [
           TextSpan(
-            text: "Imagine sharing a\n",
+            text: '${context.tr('landingImagine')}\n',
             style: TextStyle(fontSize: fontSize),
           ),
           TextSpan(
-            text: "“Certified Master of Shrek Quotes”\n",
+            text: '“${context.tr('landingExample')}”\n',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
           ),
           TextSpan(
-            text: "certification.",
+            text: context.tr('landingCertification'),
             style: TextStyle(fontSize: fontSize),
           ),
         ],

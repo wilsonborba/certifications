@@ -1,3 +1,4 @@
+import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/core/utils/my_logs.dart';
 import 'package:certifications/core/utils/my_nagivation.dart';
 import 'package:certifications/domain/services/api_asodya_manager.dart';
@@ -131,14 +132,14 @@ abstract class BaseSyncAuthState<T extends BaseSyncAuth> extends State<T> {
   }
 
   /// Call this from your subclass build to show a loading page
-  Widget buildLoadingScaffold({String title = 'Syncing…'}) {
+  Widget buildLoadingScaffold({String? title}) {
     return Scaffold(
-      body: const Center(
+      body: Center(
         child: FuturisticLoading(
           messages: [
-            'Redirecting...',
-            'Please wait while we take you there.',
-            'Tip: If you encounter any issues, please contact support@asodya.com for assistance.',
+            context.tr('redirecting'),
+            context.tr('pleaseWaitRedirect'),
+            context.tr('supportTip'),
           ],
           isActive: true,
           transparentBackground: true,

@@ -112,7 +112,7 @@ class _StudyWorkspaceState extends State<StudyWorkspace> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(context.tr('delete')),
+            child: Text(context.tr('cancel')),
           ),
           ElevatedButton(
             onPressed: () {
