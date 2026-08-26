@@ -1,8 +1,7 @@
-import 'package:certifications/core/settings.dart';
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/core/utils/app_preferences.dart';
 import 'package:certifications/core/utils/my_background.dart';
-import 'package:certifications/core/utils/my_nagivation.dart';
+import 'package:certifications/presentation/widgets/study_list.dart';
 import 'package:flutter/material.dart';
 
 class StudyHome extends StatelessWidget {
@@ -110,11 +109,11 @@ class _StartCard extends StatelessWidget {
       ),
       const SizedBox(height: 28),
       ElevatedButton(
-        onPressed: () => redirectToUrl(
-          app_settings.ASODYA_AUTH_LOGIN_URL,
-          removeSlash: true,
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const StudyList()),
         ),
-        child: Text(context.tr('signIn')),
+        child: Text(context.tr('openStudies')),
       ),
     ],
   );
