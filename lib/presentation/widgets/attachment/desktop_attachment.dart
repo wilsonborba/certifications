@@ -1,178 +1,49 @@
 import 'package:certifications/core/settings.dart';
-import 'package:certifications/domain/services/api_certification_manager.dart';
+import 'package:certifications/core/utils/my_nagivation.dart';
 import 'package:certifications/presentation/components/attachment/app_bar.dart';
-import 'package:certifications/presentation/components/attachment/want_app.dart';
+import 'package:certifications/presentation/components/attachment/card_pdf_picker.dart';
 import 'package:certifications/presentation/widgets/certifications/on_certifications.dart';
 import 'package:certifications/presentation/widgets/plans/on_plans.dart';
 import 'package:certifications/presentation/widgets/tokens/on_tokens.dart';
-import 'package:certifications/presentation/widgets/topics/on_topics.dart';
 import 'package:flutter/material.dart';
 
-import 'package:certifications/core/utils/my_logs.dart';
-import 'package:certifications/core/utils/my_nagivation.dart';
-import 'package:certifications/domain/models/source_item.dart';
-import 'package:certifications/domain/models/mode_buckets.dart';
+class DesktopAttachment extends StatelessWidget {
+  const DesktopAttachment({super.key});
 
-import 'package:certifications/presentation/components/attachment/tab_card_sources.dart';
-import 'package:certifications/presentation/components/attachment/source_groups_list.dart';
-import 'package:certifications/presentation/components/attachment/card_pdf_picker.dart';
-
-import 'base_attachment.dart';
-
-class DesktopAttachment extends BaseAttachment {
-  const DesktopAttachment({super.key, required Future<List<SourceItem>> items})
-    : super(items: items);
-
-  @override
-  State<DesktopAttachment> createState() => _DesktopAttachmentState();
-}
-
-class _DesktopAttachmentState extends BaseAttachmentState<DesktopAttachment> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  // ---- Layout identical to your original DesktopAttachment ----
   @override
   Widget build(BuildContext context) {
+    void openCertificates() =>
+        NavigationService.push(const OnCertificationsScreen());
+    void openPlans() => NavigationService.push(const OnPlansScreen());
+    void openTokens() => NavigationService.push(OnTokensScreen());
+    void openSupport() => redirectToUrl('mailto:support@asodya.com');
+    void openAbout() => redirectToUrl(
+      'https://${app_settings.ASODYA_MAIN_DOMAIN}',
+      replace: true,
+    );
+
     return Scaffold(
       appBar: AttachmentAppBar(
-        onCertificates: () {
-          NavigationService.push(const OnCertificationsScreen());
-        },
-        onPlans: () {
-          NavigationService.push(const OnPlansScreen());
-        },
-        onTokens: () {
-          NavigationService.push(OnTokensScreen());
-        },
-        onSupport: () => redirectToUrl('mailto:support@asodya.com'),
-        onAbout: () {
-          final url = 'https://${app_settings.ASODYA_MAIN_DOMAIN}';
-          redirectToUrl(url, replace: true);
-        }, //QuizContextManager().getContext("from", "Flutter", forceNewGeneration: true, amountQuestion: 5); },
-        // onLogout: () async { await clearSessionArtifacts(); /* custom redirect */ },
+        onCertificates: openCertificates,
+        onPlans: openPlans,
+        onTokens: openTokens,
+        onSupport: openSupport,
+        onAbout: openAbout,
       ),
       endDrawer: AttachmentSideMenu(
-        onCertificates: () {
-          NavigationService.push(const OnCertificationsScreen());
-        },
-        onPlans: () {
-          NavigationService.push(const OnPlansScreen());
-        },
-        onTokens: () {
-          NavigationService.push(OnTokensScreen());
-        },
-        onSupport: () => redirectToUrl('mailto:support@asodya.com'),
-        onAbout: () {
-          final url = 'https://${app_settings.ASODYA_MAIN_DOMAIN}';
-          redirectToUrl(url, replace: true);
-        },
+        onCertificates: openCertificates,
+        onPlans: openPlans,
+        onTokens: openTokens,
+        onSupport: openSupport,
+        onAbout: openAbout,
       ),
-      body: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: Column(
-          children: [
-            //const TopHeaders(isDesktop: true),
-            const SizedBox(height: 200),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    children: [
-                      FutureBuilder<List<SourceItem>>(
-                        future: widget.items,
-                        builder: (context, snapshot) {
-                          final body = buildBody(context, snapshot);
-
-                          // Only show WantText if the future completed successfully
-                          if (snapshot.connectionState ==
-                                  ConnectionState.done &&
-                              snapshot.hasData) {
-                            return Column(
-                              children: [
-                                body,
-                                const SizedBox(height: 10),
-                                WantText(
-                                  onRequest: (url) async {
-                                    final manager = CertificationManager();
-                                    final response = await manager
-                                        .requestNewCards(url);
-                                    if (response.statusCode == 201) {}
-                                    // Optionally, you can refresh the list of cards here
-                                  },
-                                ),
-                              ],
-                            );
-                          }
-
-                          // Otherwise, just return the body (loading/error states, etc.)
-                          return body;
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const Expanded(child: CardPdfPicker()),
-              ],
-            ),
-            const SizedBox(height: 40),
-          ],
+      body: const SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: 32, vertical: 48),
+            child: CardPdfPicker(),
+          ),
         ),
-      ),
-    );
-  }
-
-  // ---- Keep the exact error widget & behavior you had on desktop ----
-  @override
-  Widget buildError(Object? error) {
-    warning('Cards load error: $error');
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          const Text('Failed to load cards'),
-          const SizedBox(height: 8),
-          const Text(
-            "Please contact our support at support@asodya.com if the issue persists.",
-            style: TextStyle(fontSize: 12, color: Colors.redAccent),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton(
-            onPressed: () => redirectToUrl('mailto:support@asodya.com'),
-            child: const Text('Contact Support'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---- Keep the exact TabCardSources props you had on desktop ----
-  @override
-  Widget buildTabs(ModeBuckets buckets) {
-    return TabCardSources(
-      leftLabel: 'Playful Mode',
-      rightLabel: 'Serious Mode',
-      leftChild: SourceGroupsList(
-        items: buckets.playful,
-        onTapWithTopic: (item) => {
-          NavigationService.push(OnTopicsScreen(itemName: item.itemName)),
-        },
-        onTapWithoutTopic: (item) => {
-          NavigationService.push(OnTopicsScreen(itemName: item.itemName)),
-        },
-        onSeeMore: (sourceName) => {},
-      ),
-      rightChild: SourceGroupsList(
-        items: buckets.serious,
-        onTapWithTopic: (item) => {
-          NavigationService.push(OnTopicsScreen(itemName: item.itemName)),
-        },
-        onTapWithoutTopic: (item) => {
-          NavigationService.push(OnTopicsScreen(itemName: item.itemName)),
-        },
-        onSeeMore: (sourceName) => {},
       ),
     );
   }
