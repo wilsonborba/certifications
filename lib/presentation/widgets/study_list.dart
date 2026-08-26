@@ -2,6 +2,7 @@ import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/study.dart';
 import 'package:certifications/domain/services/study_api_service.dart';
 import 'package:certifications/presentation/widgets/study_workspace.dart';
+import 'package:certifications/presentation/components/attachment/app_bar.dart';
 import 'package:flutter/material.dart';
 
 class StudyList extends StatefulWidget {
@@ -56,7 +57,7 @@ class _StudyListState extends State<StudyList> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(context.tr('yourStudies'))),
+    appBar: AttachmentAppBar(title: context.tr('yourStudies')),
     floatingActionButton: FloatingActionButton.extended(
       onPressed: create,
       icon: const Icon(Icons.add),

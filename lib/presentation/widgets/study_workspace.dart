@@ -3,6 +3,7 @@ import 'package:certifications/domain/models/study.dart';
 import 'package:certifications/domain/services/study_api_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:certifications/presentation/widgets/question_session.dart';
+import 'package:certifications/presentation/components/attachment/app_bar.dart';
 import 'package:flutter/material.dart';
 
 class StudyWorkspace extends StatefulWidget {
@@ -16,6 +17,8 @@ class _StudyWorkspaceState extends State<StudyWorkspace> {
   final api = StudyApiService();
   late Study study = widget.study;
   bool busy = false;
+  bool useWeb = false;
+  String difficulty = 'easy';
   String? error;
   Future<void> _refresh() async {
     setState(() => busy = true);
@@ -151,7 +154,7 @@ class _StudyWorkspaceState extends State<StudyWorkspace> {
   Widget build(BuildContext context) {
     final max = 150 * 1024 * 1024;
     return Scaffold(
-      appBar: AppBar(title: Text(study.name)),
+      appBar: AttachmentAppBar(title: study.name),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: busy ? null : _add,
         icon: const Icon(Icons.add),
@@ -172,31 +175,55 @@ class _StudyWorkspaceState extends State<StudyWorkspace> {
                 study.sources.every((source) => source.status == 'ready'))
               Padding(
                 padding: const EdgeInsets.only(bottom: 16),
-                child: SegmentedButton<String>(
-                  segments: [
-                    ButtonSegment(
-                      value: 'easy',
-                      label: Text(context.tr('easy')),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SegmentedButton<String>(
+                      segments: [
+                        ButtonSegment(
+                          value: 'easy',
+                          label: Text(context.tr('easy')),
+                        ),
+                        ButtonSegment(
+                          value: 'medium',
+                          label: Text(context.tr('medium')),
+                        ),
+                        ButtonSegment(
+                          value: 'hard',
+                          label: Text(context.tr('hard')),
+                        ),
+                      ],
+                      selected: {difficulty},
+                      onSelectionChanged: (value) =>
+                          setState(() => difficulty = value.first),
                     ),
-                    ButtonSegment(
-                      value: 'medium',
-                      label: Text(context.tr('medium')),
+                    const SizedBox(height: 12),
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(context.tr('useWeb')),
+                      subtitle: Text(context.tr('useWebDescription')),
+                      value: useWeb,
+                      onChanged: busy
+                          ? null
+                          : (value) => setState(() => useWeb = value),
                     ),
-                    ButtonSegment(
-                      value: 'hard',
-                      label: Text(context.tr('hard')),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: busy
+                          ? null
+                          : () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => QuestionSession(
+                                  studyId: study.id,
+                                  difficulty: difficulty,
+                                  useWeb: useWeb,
+                                ),
+                              ),
+                            ),
+                      child: Text(context.tr('generate')),
                     ),
                   ],
-                  selected: const {'easy'},
-                  onSelectionChanged: (value) => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => QuestionSession(
-                        studyId: study.id,
-                        difficulty: value.first,
-                      ),
-                    ),
-                  ),
                 ),
               ),
             if (busy)

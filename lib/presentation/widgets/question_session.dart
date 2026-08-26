@@ -4,15 +4,18 @@ import 'package:certifications/domain/services/study_api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:certifications/presentation/components/attachment/app_bar.dart';
 
 class QuestionSession extends StatefulWidget {
   const QuestionSession({
     super.key,
     required this.studyId,
     required this.difficulty,
+    required this.useWeb,
   });
   final String studyId;
   final String difficulty;
+  final bool useWeb;
   @override
   State<QuestionSession> createState() => _QuestionSessionState();
 }
@@ -22,13 +25,14 @@ class _QuestionSessionState extends State<QuestionSession> {
   late final Future<List<StudyQuestion>> future = api.generateQuestions(
     studyId: widget.studyId,
     difficulty: widget.difficulty,
+    useWeb: widget.useWeb,
     idempotencyKey: '${DateTime.now().microsecondsSinceEpoch}-question',
   );
   int index = 0;
   int? selected;
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(context.tr('question'))),
+    appBar: AttachmentAppBar(title: context.tr('question')),
     body: FutureBuilder<List<StudyQuestion>>(
       future: future,
       builder: (context, snapshot) {

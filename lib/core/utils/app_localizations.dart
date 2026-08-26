@@ -27,6 +27,9 @@ class AppLocalizations {
       'ready': 'Ready',
       'processing': 'Processing',
       'generate': 'Generate questions',
+      'useWeb': 'Use web research',
+      'useWebDescription':
+          'Allow this quiz generation to use web research when needed.',
       'easy': 'Easy',
       'medium': 'Medium',
       'hard': 'Hard',
@@ -70,6 +73,9 @@ class AppLocalizations {
       'ready': 'Pronto',
       'processing': 'Processando',
       'generate': 'Gerar perguntas',
+      'useWeb': 'Usar pesquisa na web',
+      'useWebDescription':
+          'Permite que esta geração use pesquisa na web quando necessário.',
       'easy': 'Fácil',
       'medium': 'Médio',
       'hard': 'Difícil',
@@ -113,6 +119,9 @@ class AppLocalizations {
       'ready': 'พร้อม',
       'processing': 'กำลังประมวลผล',
       'generate': 'สร้างคำถาม',
+      'useWeb': 'ใช้การค้นหาบนเว็บ',
+      'useWebDescription':
+          'อนุญาตให้การสร้างแบบทดสอบนี้ใช้การค้นหาบนเว็บเมื่อจำเป็น',
       'easy': 'ง่าย',
       'medium': 'ปานกลาง',
       'hard': 'ยาก',

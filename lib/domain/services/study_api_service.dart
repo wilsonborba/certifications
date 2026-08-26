@@ -86,6 +86,7 @@ class StudyApiService {
     required String studyId,
     required String difficulty,
     required String idempotencyKey,
+    required bool useWeb,
   }) async {
     final response = await _adapter.post(
       Uri.parse('$_base/$studyId/questions/generate'),
@@ -93,6 +94,7 @@ class StudyApiService {
       body: jsonEncode({
         'difficulty': difficulty,
         'idempotency_key': idempotencyKey,
+        'use_web': useWeb,
       }),
     );
     if (response.statusCode < 200 || response.statusCode >= 300)
