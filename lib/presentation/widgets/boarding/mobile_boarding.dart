@@ -201,13 +201,7 @@ class MobileBoarding extends StatelessWidget {
                 horizontal: 16.0,
                 vertical: 60,
               ),
-              child: PlansView(
-                isDesktop: false,
-                onConfigureKeys: () async {
-                  final url = await urlRedirectionToAuth();
-                  redirectToUrl(url, replace: true);
-                },
-              ),
+              child: PlansView(isDesktop: false),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(

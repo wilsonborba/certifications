@@ -16,18 +16,16 @@ class WaitlistApiService {
 
   final ApiAdapter _adapter;
 
-  Future<bool> joinFreePlanWaitlist() async {
+  Future<void> joinFreePlanWaitlist({required String email}) async {
     final response = await _adapter.post(
       Uri.parse(
         '${app_settings.ASODYA_API_URL}/apps/certifications/v1/waitlist',
       ),
       headers: const {'Content-Type': 'application/json'},
-      body: jsonEncode({'plan': 'free'}),
+      body: jsonEncode({'email': email.trim(), 'plan': 'free'}),
     );
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw WaitlistApiException(response.statusCode);
     }
-    final payload = jsonDecode(response.body) as Map<String, dynamic>;
-    return (payload['data'] as Map<String, dynamic>)['already_joined'] == true;
   }
 }

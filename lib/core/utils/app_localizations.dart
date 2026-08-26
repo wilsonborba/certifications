@@ -68,6 +68,35 @@ class AppLocalizations {
       'diagramUnavailable': 'Diagram unavailable',
       'studyComplete': 'Study completed',
       'memory': 'Study memory',
+      'planFree': 'Free · MVP',
+      'plansIntro':
+          'Free during the MVP — start a focused study with managed local capacity.',
+      'planStudyTitle': 'Study without configuration',
+      'planStudyBody':
+          'Create a study from your material, generate questions, and finish with a shareable certification.',
+      'tier0Capacity': 'Tier 0 · default local capacity',
+      'tier12Allowance': 'Tiers 1–2 · small guided allowance',
+      'tier35Trial': 'Tiers 3–5 · limited trial capacity',
+      'selectPlan': 'Select plan',
+      'joinWaitlist': 'Join the waitlist',
+      'waitlistTitle': 'Join the waitlist',
+      'waitlistBody':
+          'Leave your email and we will keep your place for upcoming plan access.',
+      'email': 'Email',
+      'emailInvalid': 'Enter a valid email address.',
+      'waitlistSuccess': 'Your request was received.',
+      'waitlistFailure':
+          'We could not record your request. Please try again later.',
+      'submit': 'Submit',
+      'cancel': 'Cancel',
+      'planGuided': 'Guided',
+      'planAdvanced': 'Advanced',
+      'planGuidedBody':
+          'More guided generation and study controls are planned for a future release.',
+      'planAdvancedBody':
+          'Higher tiers and expanded limits will arrive after the MVP.',
+      'planComingSoon': 'Coming soon',
+      'planUnavailable': 'Selection is not available yet.',
     },
     'pt': {
       'appName': 'Certifications',
@@ -132,6 +161,35 @@ class AppLocalizations {
       'diagramUnavailable': 'Diagrama indisponível',
       'studyComplete': 'Estudo concluído',
       'memory': 'Memória do estudo',
+      'planFree': 'Grátis · MVP',
+      'plansIntro':
+          'Grátis durante o MVP — comece um estudo focado com capacidade local gerenciada.',
+      'planStudyTitle': 'Estude sem configuração',
+      'planStudyBody':
+          'Crie um estudo com seu material, gere perguntas e conclua com uma certificação compartilhável.',
+      'tier0Capacity': 'Tier 0 · capacidade local padrão',
+      'tier12Allowance': 'Tiers 1–2 · pequena cota guiada',
+      'tier35Trial': 'Tiers 3–5 · capacidade de teste limitada',
+      'selectPlan': 'Selecionar plano',
+      'joinWaitlist': 'Entrar na lista de espera',
+      'waitlistTitle': 'Entrar na lista de espera',
+      'waitlistBody':
+          'Informe seu e-mail para reservar seu lugar no acesso aos próximos planos.',
+      'email': 'E-mail',
+      'emailInvalid': 'Informe um e-mail válido.',
+      'waitlistSuccess': 'Sua solicitação foi recebida.',
+      'waitlistFailure':
+          'Não foi possível registrar sua solicitação. Tente novamente mais tarde.',
+      'submit': 'Enviar',
+      'cancel': 'Cancelar',
+      'planGuided': 'Guiado',
+      'planAdvanced': 'Avançado',
+      'planGuidedBody':
+          'Geração mais guiada e novos controles de estudo estão planejados para uma versão futura.',
+      'planAdvancedBody':
+          'Tiers mais altos e limites ampliados chegarão depois do MVP.',
+      'planComingSoon': 'Em breve',
+      'planUnavailable': 'A seleção ainda não está disponível.',
     },
     'th': {
       'appName': 'Certifications',
@@ -195,6 +253,32 @@ class AppLocalizations {
       'diagramUnavailable': 'แผนภาพไม่พร้อมใช้งาน',
       'studyComplete': 'เรียนจบแล้ว',
       'memory': 'ความจำการเรียน',
+      'planFree': 'ฟรี · MVP',
+      'plansIntro':
+          'ฟรีในช่วง MVP — เริ่มการเรียนรู้แบบโฟกัสด้วยความจุในเครื่อง',
+      'planStudyTitle': 'เรียนรู้โดยไม่ต้องตั้งค่า',
+      'planStudyBody':
+          'สร้างการเรียนจากเนื้อหา สร้างคำถาม และจบด้วยใบรับรองที่แชร์ได้',
+      'tier0Capacity': 'Tier 0 · ความจุในเครื่องเริ่มต้น',
+      'tier12Allowance': 'Tier 1–2 · โควตาแนะนำขนาดเล็ก',
+      'tier35Trial': 'Tier 3–5 · ความจุทดลองแบบจำกัด',
+      'selectPlan': 'เลือกแผน',
+      'joinWaitlist': 'เข้าร่วมรายการรอ',
+      'waitlistTitle': 'เข้าร่วมรายการรอ',
+      'waitlistBody': 'กรอกอีเมลเพื่อรับสิทธิ์เข้าถึงแผนในอนาคต',
+      'email': 'อีเมล',
+      'emailInvalid': 'กรุณากรอกอีเมลที่ถูกต้อง',
+      'waitlistSuccess': 'ได้รับคำขอของคุณแล้ว',
+      'waitlistFailure': 'ไม่สามารถบันทึกคำขอได้ โปรดลองอีกครั้งภายหลัง',
+      'submit': 'ส่ง',
+      'cancel': 'ยกเลิก',
+      'planGuided': 'แนะนำ',
+      'planAdvanced': 'ขั้นสูง',
+      'planGuidedBody':
+          'การสร้างที่มีคำแนะนำมากขึ้นและการควบคุมการเรียนจะมาในรุ่นถัดไป',
+      'planAdvancedBody': 'Tier ที่สูงขึ้นและขีดจำกัดที่เพิ่มขึ้นจะมาหลัง MVP',
+      'planComingSoon': 'เร็ว ๆ นี้',
+      'planUnavailable': 'ยังไม่สามารถเลือกได้',
     },
   };
   String text(String key) =>
