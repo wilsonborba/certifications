@@ -1,4 +1,5 @@
 import 'package:certifications/dal/local/local_source_adapter.dart';
+import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 class CookieConsentSnack {
@@ -111,11 +112,7 @@ class _CookieConsentContent extends StatelessWidget {
                 // Keep message readable; let it wrap on mobile
                 maxWidth: c.maxWidth >= 720 ? c.maxWidth * 0.66 : c.maxWidth,
               ),
-              child: Text(
-                'We use cookies to enhance your browsing experience, provide essential functionality, '
-                'and analyze traffic. You can accept all cookies or only the necessary ones.',
-                style: bodyStyle,
-              ),
+              child: Text(context.tr('cookieMessage'), style: bodyStyle),
             ),
 
             // Buttons group
@@ -128,13 +125,13 @@ class _CookieConsentContent extends StatelessWidget {
                 ElevatedButton(
                   style: _purpleElevatedStyle(),
                   onPressed: onAcceptNecessary,
-                  child: const Text('Accept only necessary'),
+                  child: Text(context.tr('acceptNecessary')),
                 ),
                 // Accept all
                 ElevatedButton(
                   style: _purpleElevatedStyle(),
                   onPressed: onAcceptAll,
-                  child: const Text('Accept all'),
+                  child: Text(context.tr('acceptAll')),
                 ),
               ],
             ),

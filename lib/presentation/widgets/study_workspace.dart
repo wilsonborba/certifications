@@ -96,7 +96,7 @@ class _StudyWorkspaceState extends State<StudyWorkspace> {
               child: TextField(
                 controller: first,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Start'),
+                decoration: InputDecoration(labelText: context.tr('start')),
               ),
             ),
             const SizedBox(width: 12),
@@ -104,7 +104,7 @@ class _StudyWorkspaceState extends State<StudyWorkspace> {
               child: TextField(
                 controller: last,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'End'),
+                decoration: InputDecoration(labelText: context.tr('end')),
               ),
             ),
           ],

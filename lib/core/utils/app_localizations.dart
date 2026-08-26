@@ -91,6 +91,12 @@ class AppLocalizations {
       'comingNext': 'Coming next',
       'youtubeGeneration': 'YouTube quiz generation.',
       'planFree': 'Free · MVP',
+      'cookieMessage':
+          'We use cookies to improve your experience and provide essential functionality.',
+      'acceptNecessary': 'Accept only necessary',
+      'acceptAll': 'Accept all',
+      'start': 'Start',
+      'end': 'End',
       'plansIntro':
           'Free during the MVP — start a focused study with managed local capacity.',
       'planStudyTitle': 'Study without configuration',
@@ -206,6 +212,12 @@ class AppLocalizations {
       'comingNext': 'A seguir',
       'youtubeGeneration': 'Geração de quizzes do YouTube.',
       'planFree': 'Grátis · MVP',
+      'cookieMessage':
+          'Usamos cookies para melhorar sua experiência e fornecer funções essenciais.',
+      'acceptNecessary': 'Aceitar somente necessárias',
+      'acceptAll': 'Aceitar todas',
+      'start': 'Início',
+      'end': 'Fim',
       'plansIntro':
           'Grátis durante o MVP — comece um estudo focado com capacidade local gerenciada.',
       'planStudyTitle': 'Estude sem configuração',
@@ -319,6 +331,12 @@ class AppLocalizations {
       'comingNext': 'ถัดไป',
       'youtubeGeneration': 'การสร้างแบบทดสอบจาก YouTube',
       'planFree': 'ฟรี · MVP',
+      'cookieMessage':
+          'เราใช้คุกกี้เพื่อปรับปรุงประสบการณ์และให้ฟังก์ชันที่จำเป็น',
+      'acceptNecessary': 'ยอมรับเฉพาะที่จำเป็น',
+      'acceptAll': 'ยอมรับทั้งหมด',
+      'start': 'เริ่มต้น',
+      'end': 'สิ้นสุด',
       'plansIntro':
           'ฟรีในช่วง MVP — เริ่มการเรียนรู้แบบโฟกัสด้วยความจุในเครื่อง',
       'planStudyTitle': 'เรียนรู้โดยไม่ต้องตั้งค่า',
