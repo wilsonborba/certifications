@@ -291,12 +291,25 @@
                 }
             });
 
-            Promise.allSettled(legacyWebCacheCleanup).finally(() => {
-                const bootstrap = document.createElement("script");
-                bootstrap.src = "flutter_bootstrap.js";
-                bootstrap.async = true;
-                document.body.appendChild(bootstrap);
-            });
+            // Bootstrap must not depend on service-worker/cache cleanup. A
+            // stale browser registration can leave those promises pending and
+            // otherwise the Flutter entrypoint would never be loaded.
+            Promise.allSettled(legacyWebCacheCleanup).catch(() => {});
+            const bootstrap = document.createElement("script");
+            bootstrap.src = "flutter_bootstrap.js";
+            bootstrap.async = true;
+            bootstrap.onerror = function () {
+                const shell = document.getElementById("bootstrap-shell");
+                if (shell) shell.setAttribute("data-bootstrap-error", "true");
+            };
+            document.body.appendChild(bootstrap);
+
+            // Never leave a stale HTML shell covering the app indefinitely if
+            // a browser fails to dispatch flutter-first-frame.
+            window.setTimeout(function () {
+                const shell = document.getElementById("bootstrap-shell");
+                if (shell) shell.remove();
+            }, 15000);
         </script>
     </body>
 </html>
