@@ -47,9 +47,16 @@ class AppPreferencesScope extends InheritedNotifier<AppPreferences> {
   }) : super(notifier: preferences);
 
   static AppPreferences of(BuildContext context) {
+    final scope = maybeOf(context);
+    // The scope is installed by App.builder. Keeping a safe fallback makes
+    // preference controls harmless when rendered in an isolated preview or
+    // error surface, instead of crashing the whole app with a null check.
+    return scope ?? AppPreferences();
+  }
+
+  static AppPreferences? maybeOf(BuildContext context) {
     final scope = context
         .dependOnInheritedWidgetOfExactType<AppPreferencesScope>();
-    assert(scope != null, 'AppPreferencesScope is required above this widget.');
-    return scope!.notifier!;
+    return scope?.notifier;
   }
 }

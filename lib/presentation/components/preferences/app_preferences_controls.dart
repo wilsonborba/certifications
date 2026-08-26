@@ -50,7 +50,8 @@ class _PreferencesContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final preferences = AppPreferencesScope.of(context);
+    final preferences = AppPreferencesScope.maybeOf(context);
+    if (preferences == null) return const SizedBox.shrink();
     final selected = preferences.locale?.languageCode;
     final languages = <({String code, String label, String native})>[
       (code: 'en', label: 'English', native: 'English'),
