@@ -119,22 +119,8 @@ class BoardingAppBar extends StatelessWidget implements PreferredSizeWidget {
                       minHeight: 48,
                     ),
                     onPressed: () {
-                      // Robust open: works even if context hierarchy is tricky
                       final scaffold = Scaffold.maybeOf(context);
-                      if (scaffold != null) {
-                        scaffold.openEndDrawer();
-                      } else {
-                        // Fallback: try the primary Scaffold from root
-                        // (works when you use a nested Navigator or unusual tree)
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          final rootScaffold =
-                              ScaffoldMessenger.maybeOf(context)?.mounted ==
-                                  true
-                              ? ScaffoldMessenger.of(context)
-                              : null;
-                          // If you keep a GlobalKey<ScaffoldState>, prefer that (see section 3).
-                        });
-                      }
+                      scaffold?.openEndDrawer();
                     },
                   ),
                 ),
