@@ -144,5 +144,4 @@ class LocalSourceAdapter {
   Future<bool> exists(String key) async {
     return _store.getItem(_ns(key)) != null;
   }
-
 }

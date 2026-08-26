@@ -84,7 +84,7 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
               else
                 Builder(
                   builder: (context) => IconButton(
-                    tooltip: 'Menu',
+                    tooltip: context.tr('menu'),
                     icon: Icon(
                       Icons.menu,
                       color: Theme.of(context).colorScheme.onSurface,

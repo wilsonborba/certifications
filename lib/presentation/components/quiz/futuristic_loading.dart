@@ -63,9 +63,10 @@ class _FuturisticLoadingState extends State<FuturisticLoading>
   Widget build(BuildContext context) {
     //final theme = Theme.of(context);
 
-    BoxDecoration? decoration = const BoxDecoration(
+    final scheme = Theme.of(context).colorScheme;
+    BoxDecoration? decoration = BoxDecoration(
       gradient: LinearGradient(
-        colors: [Color(0xFFEDF1F7), Color(0xFFF9FAFC)],
+        colors: [scheme.surfaceContainerHighest, scheme.surface],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
@@ -100,7 +101,7 @@ class _FuturisticLoadingState extends State<FuturisticLoading>
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade800,
+                  color: scheme.onSurface,
                   letterSpacing: 0.3,
                 ),
               ),

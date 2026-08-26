@@ -110,7 +110,7 @@ class BoardingAppBar extends StatelessWidget implements PreferredSizeWidget {
                 // Use Builder so we get a context under the Scaffold
                 Builder(
                   builder: (context) => IconButton(
-                    tooltip: 'Menu',
+                    tooltip: context.tr('menu'),
                     icon: Icon(Icons.menu, color: scheme.onSurface),
                     iconSize: 45, // <— bigger icon
                     padding: const EdgeInsets.all(12), // <— bigger tap target
