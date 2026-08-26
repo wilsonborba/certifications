@@ -7,6 +7,7 @@ class AppLocalizations {
   static const _copy = {
     'en': {
       'appName': 'Certifications',
+      'ok': 'OK',
       'menu': 'Menu',
       'about': 'About',
       'logIn': 'Log in',
@@ -130,6 +131,7 @@ class AppLocalizations {
     },
     'pt': {
       'appName': 'Certifications',
+      'ok': 'OK',
       'menu': 'Menu',
       'about': 'Sobre',
       'logIn': 'Entrar',
@@ -253,6 +255,7 @@ class AppLocalizations {
     },
     'th': {
       'appName': 'Certifications',
+      'ok': 'ตกลง',
       'menu': 'เมนู',
       'about': 'เกี่ยวกับ',
       'logIn': 'เข้าสู่ระบบ',

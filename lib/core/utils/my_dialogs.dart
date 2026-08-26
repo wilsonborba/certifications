@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:certifications/core/utils/app_localizations.dart';
 
 void showMyDialog(
   BuildContext context, {
@@ -13,7 +14,7 @@ void showMyDialog(
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx),
-          child: const Text('OK'),
+          child: Text(context.tr('ok')),
         ),
       ],
     ),
