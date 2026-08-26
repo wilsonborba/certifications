@@ -316,7 +316,7 @@ class _BulletsList extends StatelessWidget {
       'Built from your own material.',
       'Shareable, score-based certifications.',
       'Multiple certifications per user.',
-      'Start free with your own API key.',
+      'Start free with managed capacity.',
     ];
 
     return Column(
