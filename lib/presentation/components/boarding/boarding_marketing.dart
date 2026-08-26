@@ -1,3 +1,4 @@
+import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 class BoardingMarketing extends StatelessWidget {
@@ -41,7 +42,7 @@ class BoardingMarketing extends StatelessWidget {
         _BulletsList(isDesktop: isDesktop),
         const SizedBox(height: 32),
         _SectionTitle(
-          title: 'Trust & transparency',
+          title: context.tr('trustTransparency'),
           titleSize: isDesktop ? 26 : 20,
         ),
         const SizedBox(height: 12),
@@ -367,14 +368,14 @@ class _TrustPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Bring your own API key',
+            context.tr('trustTitle'),
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
           Text(
-            'Use a Gemini or Groq API key to generate quizzes. That means content generation runs on your own provider account.',
+            context.tr('trustBody'),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: scheme.onSurface.withOpacity(0.7),
               fontSize: isDesktop ? 14 : 12,
@@ -382,14 +383,14 @@ class _TrustPanel extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Privacy, simply stated',
+            context.tr('privacyTitle'),
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
           Text(
-            'We use your sources to create your quiz. Share only what you’re comfortable sharing.',
+            context.tr('privacyBody'),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: scheme.onSurface.withOpacity(0.7),
               fontSize: isDesktop ? 14 : 12,

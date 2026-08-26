@@ -68,6 +68,13 @@ class AppLocalizations {
       'diagramUnavailable': 'Diagram unavailable',
       'studyComplete': 'Study completed',
       'memory': 'Study memory',
+      'trustTransparency': 'Trust & transparency',
+      'trustTitle': 'No provider keys required',
+      'trustBody':
+          'Certification generation is managed by the application. You never need to paste a model provider key.',
+      'privacyTitle': 'Privacy, simply stated',
+      'privacyBody':
+          'We use your sources only to create your study. Share only what you are comfortable sharing.',
       'planFree': 'Free · MVP',
       'plansIntro':
           'Free during the MVP — start a focused study with managed local capacity.',
@@ -161,6 +168,13 @@ class AppLocalizations {
       'diagramUnavailable': 'Diagrama indisponível',
       'studyComplete': 'Estudo concluído',
       'memory': 'Memória do estudo',
+      'trustTransparency': 'Confiança e transparência',
+      'trustTitle': 'Nenhuma chave de provedor necessária',
+      'trustBody':
+          'A geração da certificação é gerenciada pelo aplicativo. Você não precisa colar uma chave de provedor.',
+      'privacyTitle': 'Privacidade sem complicação',
+      'privacyBody':
+          'Usamos suas fontes apenas para criar seu estudo. Compartilhe somente o que se sentir confortável.',
       'planFree': 'Grátis · MVP',
       'plansIntro':
           'Grátis durante o MVP — comece um estudo focado com capacidade local gerenciada.',
@@ -253,6 +267,13 @@ class AppLocalizations {
       'diagramUnavailable': 'แผนภาพไม่พร้อมใช้งาน',
       'studyComplete': 'เรียนจบแล้ว',
       'memory': 'ความจำการเรียน',
+      'trustTransparency': 'ความน่าเชื่อถือและความโปร่งใส',
+      'trustTitle': 'ไม่ต้องใช้คีย์ผู้ให้บริการ',
+      'trustBody':
+          'แอปจัดการการสร้างใบรับรองให้เอง คุณไม่จำเป็นต้องวางคีย์ของผู้ให้บริการโมเดล',
+      'privacyTitle': 'ความเป็นส่วนตัวอย่างชัดเจน',
+      'privacyBody':
+          'เราใช้แหล่งข้อมูลของคุณเพื่อสร้างการเรียนเท่านั้น แชร์เฉพาะสิ่งที่คุณสบายใจ',
       'planFree': 'ฟรี · MVP',
       'plansIntro':
           'ฟรีในช่วง MVP — เริ่มการเรียนรู้แบบโฟกัสด้วยความจุในเครื่อง',
@@ -284,7 +305,8 @@ class AppLocalizations {
   String text(String key) =>
       _copy[locale.languageCode]?[key] ?? _copy['en']![key] ?? key;
   static AppLocalizations of(BuildContext context) =>
-      Localizations.of<AppLocalizations>(context, AppLocalizations)!;
+      Localizations.of<AppLocalizations>(context, AppLocalizations) ??
+      const AppLocalizations(Locale('en'));
 }
 
 class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
