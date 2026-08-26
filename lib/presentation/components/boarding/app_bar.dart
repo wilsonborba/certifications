@@ -1,3 +1,5 @@
+import 'package:certifications/core/utils/app_localizations.dart';
+import 'package:certifications/presentation/components/preferences/app_preferences_controls.dart';
 import 'package:flutter/material.dart';
 
 /// ---------------------------------------------------------------------------
@@ -60,7 +62,11 @@ class BoardingAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     return LayoutBuilder(
       builder: (ctx, constraints) {
-        final showFullActions = constraints.maxWidth >= maxActionLayoutWidth;
+        // AppBar's local layout width can be smaller than the window because
+        // the Scaffold reserves its automatic end-drawer action. Use the
+        // actual viewport, so a desktop never falls into the mobile menu.
+        final showFullActions =
+            MediaQuery.sizeOf(ctx).width >= maxActionLayoutWidth;
 
         return AppBar(
           automaticallyImplyLeading: false, // no back button
@@ -69,6 +75,10 @@ class BoardingAppBar extends StatelessWidget implements PreferredSizeWidget {
           elevation: 0,
           surfaceTintColor: scheme.surface,
           scrolledUnderElevation: 0,
+          // The custom trigger below opens the end drawer. Suppress
+          // Scaffold's automatic trailing end-drawer action; otherwise newer
+          // Flutter versions render two hamburger buttons.
+          actions: const [],
           titleSpacing: 16,
           toolbarHeight: _appBarHeight,
           title: Row(
@@ -214,18 +224,19 @@ class _DesktopActions extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        const AppPreferencesButton(),
         _HoverScale(
           child: TextButton(
             style: _textBtnStyle(purple),
             onPressed: onAbout,
-            child: const Text('About'),
+            child: Text(context.tr('about')),
           ),
         ),
         _HoverScale(
           child: TextButton(
             style: _textBtnStyle(purple),
             onPressed: onLogin,
-            child: const Text('Log in'),
+            child: Text(context.tr('logIn')),
           ),
         ),
         const SizedBox(width: 8),
@@ -233,7 +244,7 @@ class _DesktopActions extends StatelessWidget {
           child: ElevatedButton(
             style: signUpStyle,
             onPressed: onSignUp,
-            child: Text('Sign up', style: textStyle),
+            child: Text(context.tr('signUp'), style: textStyle),
           ),
         ),
         const SizedBox(width: 8),
@@ -297,12 +308,12 @@ class MobileSideMenu extends StatelessWidget {
       required VoidCallback? onTap,
     }) {
       return ListTile(
-        leading: Icon(icon, color: scheme.onPrimary),
+        leading: Icon(icon, color: scheme.onSurface),
         title: Text(
           label,
           style: Theme.of(
             context,
-          ).textTheme.titleMedium?.copyWith(color: scheme.onPrimary),
+          ).textTheme.titleMedium?.copyWith(color: scheme.onSurface),
         ),
         onTap: () {
           _close();
@@ -326,23 +337,35 @@ class MobileSideMenu extends StatelessWidget {
               //   padding: const EdgeInsets.all(16),
               //   child: Image.asset('assets/logo.png', height: 28),
               // ),
-              _item(icon: Icons.info_outline, label: 'About', onTap: onAbout),
-              _item(icon: Icons.login, label: 'Log in', onTap: onLogin),
+              _item(
+                icon: Icons.info_outline,
+                label: context.tr('about'),
+                onTap: onAbout,
+              ),
+              _item(
+                icon: Icons.login,
+                label: context.tr('logIn'),
+                onTap: onLogin,
+              ),
               _item(
                 icon: Icons.person_add_alt_1,
-                label: 'Sign up',
+                label: context.tr('signUp'),
                 onTap: onSignUp,
+              ),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: AppPreferencesPanel(),
               ),
 
               const Spacer(),
               const Divider(height: 1),
               ListTile(
-                leading: Icon(Icons.close, color: scheme.onPrimary),
+                leading: Icon(Icons.close, color: scheme.onSurface),
                 title: Text(
-                  'Close',
+                  context.tr('close'),
                   style: Theme.of(
                     context,
-                  ).textTheme.titleMedium?.copyWith(color: scheme.onPrimary),
+                  ).textTheme.titleMedium?.copyWith(color: scheme.onSurface),
                 ),
 
                 onTap: _close, // explicit close

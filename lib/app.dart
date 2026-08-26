@@ -44,6 +44,10 @@ class _AppState extends State<App> {
         DefaultWidgetsLocalizations.delegate,
         DefaultMaterialLocalizations.delegate,
       ],
+      builder: (context, child) => AppPreferencesScope(
+        preferences: preferences,
+        child: child ?? const SizedBox.shrink(),
+      ),
       navigatorKey: NavigationService.navigatorKey,
       onGenerateRoute: (settings) {
         final parser = MyRouteParser(settings: settings);

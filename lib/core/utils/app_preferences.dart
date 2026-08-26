@@ -36,3 +36,20 @@ class AppPreferences extends ChangeNotifier {
     'language': locale?.languageCode,
   });
 }
+
+/// Makes the persisted interface choices available to every route and app bar
+/// without duplicating local theme/language state in individual screens.
+class AppPreferencesScope extends InheritedNotifier<AppPreferences> {
+  const AppPreferencesScope({
+    super.key,
+    required AppPreferences preferences,
+    required super.child,
+  }) : super(notifier: preferences);
+
+  static AppPreferences of(BuildContext context) {
+    final scope = context
+        .dependOnInheritedWidgetOfExactType<AppPreferencesScope>();
+    assert(scope != null, 'AppPreferencesScope is required above this widget.');
+    return scope!.notifier!;
+  }
+}
