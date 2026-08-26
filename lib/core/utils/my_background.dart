@@ -130,7 +130,10 @@ class _LiquidMetalBackgroundState extends State<LiquidMetalBackground>
           1.0 +
           0.05 *
               math.sin(
-                (b.phase + _ctrl.lastElapsedDuration!.inMilliseconds / 1000.0) *
+                (b.phase +
+                        (_ctrl.lastElapsedDuration ?? Duration.zero)
+                                .inMilliseconds /
+                            1000.0) *
                     0.9,
               );
     }
