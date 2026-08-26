@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:certifications/core/utils/app_localizations.dart';
 
 /// The landing footer deliberately mirrors the landing navigation. It is a
 /// footer, not a second navigation model: each destination remains the same.
@@ -49,15 +50,15 @@ class BoardingFooter extends StatelessWidget {
                 children: [
                   TextButton(
                     onPressed: onAbout,
-                    child: Text('About', style: labelStyle),
+                    child: Text(context.tr('about'), style: labelStyle),
                   ),
                   TextButton(
                     onPressed: onLogin,
-                    child: Text('Log in', style: labelStyle),
+                    child: Text(context.tr('logIn'), style: labelStyle),
                   ),
                   TextButton(
                     onPressed: onSignUp,
-                    child: Text('Sign up', style: labelStyle),
+                    child: Text(context.tr('signUp'), style: labelStyle),
                   ),
                 ],
               ),

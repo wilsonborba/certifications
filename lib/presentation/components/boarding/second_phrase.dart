@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:certifications/core/utils/app_localizations.dart';
 
 class SecondPhrase extends StatelessWidget {
   final double fontSize;
@@ -11,11 +12,11 @@ class SecondPhrase extends StatelessWidget {
       TextSpan(
         children: [
           TextSpan(
-            text: "Or your layer is serious certifications?\n",
+            text: '${context.tr('landingSeriousQuestion')}\n',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
           ),
           TextSpan(
-            text: "This is your growth hack entry point.",
+            text: context.tr('landingSeriousBody'),
             style: TextStyle(fontSize: fontSize),
           ),
         ],
