@@ -444,10 +444,13 @@ class _InfoChip extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: scheme.onSurface.withValues(alpha: .7)),
           const SizedBox(width: 6),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: scheme.onSurface.withValues(alpha: .8),
+          Flexible(
+            child: Text(
+              label,
+              softWrap: true,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: scheme.onSurface.withValues(alpha: .8),
+              ),
             ),
           ),
         ],
