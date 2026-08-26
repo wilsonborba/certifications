@@ -211,13 +211,7 @@ class _DesktopBoardingState extends State<DesktopBoarding> {
                 horizontal: 24.0,
                 vertical: 80,
               ),
-              child: PlansView(
-                isDesktop: true,
-                onConfigureKeys: () async {
-                  final url = await urlRedirectionToAuth();
-                  redirectToUrl(url, replace: true);
-                },
-              ),
+              child: PlansView(isDesktop: true),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(
