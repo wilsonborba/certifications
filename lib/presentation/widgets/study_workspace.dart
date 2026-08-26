@@ -2,6 +2,7 @@ import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/study.dart';
 import 'package:certifications/domain/services/study_api_service.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:certifications/presentation/widgets/question_session.dart';
 import 'package:flutter/material.dart';
 
 class StudyWorkspace extends StatefulWidget {
@@ -167,6 +168,37 @@ class _StudyWorkspaceState extends State<StudyWorkspace> {
             ),
             const SizedBox(height: 16),
             if (error != null) _Error(message: error!),
+            if (study.sources.isNotEmpty &&
+                study.sources.every((source) => source.status == 'ready'))
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: SegmentedButton<String>(
+                  segments: [
+                    ButtonSegment(
+                      value: 'easy',
+                      label: Text(context.tr('easy')),
+                    ),
+                    ButtonSegment(
+                      value: 'medium',
+                      label: Text(context.tr('medium')),
+                    ),
+                    ButtonSegment(
+                      value: 'hard',
+                      label: Text(context.tr('hard')),
+                    ),
+                  ],
+                  selected: const {'easy'},
+                  onSelectionChanged: (value) => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => QuestionSession(
+                        studyId: study.id,
+                        difficulty: value.first,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             if (busy)
               const Padding(
                 padding: EdgeInsets.all(16),

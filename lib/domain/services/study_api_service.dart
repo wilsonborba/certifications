@@ -82,6 +82,30 @@ class StudyApiService {
       throw StudyApiException(response.statusCode);
   }
 
+  Future<List<StudyQuestion>> generateQuestions({
+    required String studyId,
+    required String difficulty,
+    required String idempotencyKey,
+  }) async {
+    final response = await _adapter.post(
+      Uri.parse('$_base/$studyId/questions/generate'),
+      headers: const {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'difficulty': difficulty,
+        'idempotency_key': idempotencyKey,
+      }),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300)
+      throw StudyApiException(response.statusCode);
+    return ((jsonDecode(response.body) as Map<String, dynamic>)['data'] as List)
+        .cast<Map<String, dynamic>>()
+        .map(StudyQuestion.fromJson)
+        .toList();
+  }
+
+  String diagramUrl(String studyId, String questionId) =>
+      '$_base/$studyId/questions/$questionId/visual';
+
   Study _study(dynamic response) => Study.fromJson(_data(response));
   List<Study> _list(String body, int code) {
     if (code < 200 || code >= 300) throw StudyApiException(code);

@@ -24,3 +24,16 @@ class Study {
   final int activeSizeBytes;
   final List<StudySource> sources;
 }
+
+class StudyQuestion {
+  StudyQuestion.fromJson(Map<String, dynamic> json)
+    : id = json['id'] as String,
+      prompt = json['prompt'] as String,
+      choices = (json['choices'] as List).cast<String>(),
+      visual =
+          (json['visual'] as Map?)?.cast<String, dynamic>() ??
+          const {'kind': 'none'};
+  final String id, prompt;
+  final List<String> choices;
+  final Map<String, dynamic> visual;
+}
