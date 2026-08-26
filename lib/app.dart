@@ -30,45 +30,46 @@ class _AppState extends State<App> {
   }
 
   @override
-  Widget build(BuildContext context) => AnimatedBuilder(
-    animation: preferences,
-    builder: (_, __) => MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
-      themeMode: preferences.themeMode,
-      locale: preferences.locale,
-      supportedLocales: AppLocalizations.supportedLocales,
-      localizationsDelegates: const [
-        AppLocalizationsDelegate(),
-        DefaultWidgetsLocalizations.delegate,
-        DefaultMaterialLocalizations.delegate,
-      ],
-      builder: (context, child) => AppPreferencesScope(
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: preferences,
+      builder: (_, __) => AppPreferencesScope(
         preferences: preferences,
-        child: child ?? const SizedBox.shrink(),
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light(),
+          darkTheme: AppTheme.dark(),
+          themeMode: preferences.themeMode,
+          locale: preferences.locale,
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizationsDelegate(),
+            DefaultWidgetsLocalizations.delegate,
+            DefaultMaterialLocalizations.delegate,
+          ],
+          navigatorKey: NavigationService.navigatorKey,
+          onGenerateRoute: (settings) {
+            final parser = MyRouteParser(settings: settings);
+            final authExchangeToken = resolveAuthExchangeToken(
+              readParam: parser.parsedParams,
+            );
+            if (parser.path == 'sync') {
+              return MaterialPageRoute(
+                settings: const RouteSettings(name: OnSyncAuthScreen.route),
+                builder: (_) =>
+                    OnSyncAuthScreen(authExchangeToken: authExchangeToken),
+              );
+            }
+            if (parser.path == 'certifications' && parser.segments.length > 1) {
+              return MaterialPageRoute(
+                builder: (_) =>
+                    OnCertificationScreen(certificationId: parser.segments[1]),
+              );
+            }
+            return MaterialPageRoute(builder: (_) => const SessionGate());
+          },
+        ),
       ),
-      navigatorKey: NavigationService.navigatorKey,
-      onGenerateRoute: (settings) {
-        final parser = MyRouteParser(settings: settings);
-        final authExchangeToken = resolveAuthExchangeToken(
-          readParam: parser.parsedParams,
-        );
-        if (parser.path == 'sync') {
-          return MaterialPageRoute(
-            settings: const RouteSettings(name: OnSyncAuthScreen.route),
-            builder: (_) =>
-                OnSyncAuthScreen(authExchangeToken: authExchangeToken),
-          );
-        }
-        if (parser.path == 'certifications' && parser.segments.length > 1) {
-          return MaterialPageRoute(
-            builder: (_) =>
-                OnCertificationScreen(certificationId: parser.segments[1]),
-          );
-        }
-        return MaterialPageRoute(builder: (_) => const SessionGate());
-      },
-    ),
-  );
+    );
+  }
 }

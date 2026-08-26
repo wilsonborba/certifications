@@ -75,10 +75,9 @@ class BoardingAppBar extends StatelessWidget implements PreferredSizeWidget {
           elevation: 0,
           surfaceTintColor: scheme.surface,
           scrolledUnderElevation: 0,
-          // The custom trigger below opens the end drawer. Suppress
-          // Scaffold's automatic trailing end-drawer action; otherwise newer
-          // Flutter versions render two hamburger buttons.
-          actions: const [],
+          // A non-empty zero-size action suppresses Scaffold's implicit
+          // end-drawer button. The only hamburger is our mobile trigger.
+          actions: const [SizedBox.shrink()],
           titleSpacing: 16,
           toolbarHeight: _appBarHeight,
           title: Row(
@@ -224,7 +223,7 @@ class _DesktopActions extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const AppPreferencesButton(),
+        const AppBarPreferencesControls(),
         _HoverScale(
           child: TextButton(
             style: _textBtnStyle(purple),

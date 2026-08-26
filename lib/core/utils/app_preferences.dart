@@ -5,15 +5,16 @@ class AppPreferences extends ChangeNotifier {
   AppPreferences()
     : _storage = LocalSourceAdapter(namespace: 'certifications.preferences');
   final LocalSourceAdapter _storage;
-  ThemeMode themeMode = ThemeMode.system;
+  ThemeMode themeMode = ThemeMode.light;
   Locale? locale;
   Future<void> load() async {
     final stored = await _storage.read<Map<String, dynamic>>('preferences');
     if (stored == null) return;
     themeMode = ThemeMode.values.firstWhere(
       (item) => item.name == stored['theme'],
-      orElse: () => ThemeMode.system,
+      orElse: () => ThemeMode.light,
     );
+    if (themeMode == ThemeMode.system) themeMode = ThemeMode.light;
     final language = stored['language'] as String?;
     locale = language == null ? null : Locale(language);
     notifyListeners();
@@ -47,9 +48,14 @@ class AppPreferencesScope extends InheritedNotifier<AppPreferences> {
   }) : super(notifier: preferences);
 
   static AppPreferences of(BuildContext context) {
-    final scope = context
-        .dependOnInheritedWidgetOfExactType<AppPreferencesScope>();
-    assert(scope != null, 'AppPreferencesScope is required above this widget.');
-    return scope!.notifier!;
+    final preferences = context
+        .dependOnInheritedWidgetOfExactType<AppPreferencesScope>()
+        ?.notifier;
+    if (preferences == null) {
+      throw FlutterError(
+        'AppPreferencesScope is required above a preferences control.',
+      );
+    }
+    return preferences;
   }
 }

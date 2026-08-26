@@ -2,23 +2,100 @@ import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/core/utils/app_preferences.dart';
 import 'package:flutter/material.dart';
 
-/// Compact controls for desktop app bars. The sheet contains the full
-/// hand-built language list and the light/dark switch shared by all routes.
-class AppPreferencesButton extends StatelessWidget {
-  const AppPreferencesButton({super.key});
+/// Two distinct desktop controls: a direct light/dark toggle and a compact
+/// language picker. They deliberately live in the app bar instead of behind
+/// a generic settings icon, so both current choices are discoverable.
+class AppBarPreferencesControls extends StatelessWidget {
+  const AppBarPreferencesControls({super.key});
+
+  static const _languages = <({String code, String label, String native})>[
+    (code: 'en', label: 'English', native: 'English'),
+    (code: 'pt', label: 'Português', native: 'Português'),
+    (code: 'th', label: 'Thai', native: 'ไทย'),
+  ];
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return IconButton(
-      tooltip: context.tr('appearanceAndLanguage'),
-      icon: Icon(Icons.tune_rounded, color: scheme.onSurface),
-      onPressed: () => showModalBottomSheet<void>(
-        context: context,
-        showDragHandle: true,
-        backgroundColor: scheme.surface,
-        builder: (_) => const _PreferencesSheet(),
-      ),
+    final preferences = AppPreferencesScope.of(context);
+    final currentLanguage =
+        preferences.locale?.languageCode ??
+        Localizations.localeOf(context).languageCode;
+    final isDark = preferences.themeMode == ThemeMode.dark;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          tooltip: isDark ? context.tr('light') : context.tr('dark'),
+          icon: Icon(
+            isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+            color: scheme.onSurface,
+          ),
+          onPressed: () =>
+              preferences.setTheme(isDark ? ThemeMode.light : ThemeMode.dark),
+        ),
+        const SizedBox(width: 2),
+        PopupMenuButton<String>(
+          tooltip: context.tr('language'),
+          color: scheme.surface,
+          elevation: 5,
+          onSelected: (code) => preferences.setLocale(Locale(code)),
+          itemBuilder: (menuContext) => _languages
+              .map(
+                (language) => PopupMenuItem<String>(
+                  value: language.code,
+                  child: Row(
+                    children: [
+                      Icon(
+                        language.code == currentLanguage
+                            ? Icons.check_rounded
+                            : Icons.language_rounded,
+                        color: scheme.onSurface,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 10),
+                      Text('${language.label} · ${language.native}'),
+                    ],
+                  ),
+                ),
+              )
+              .toList(),
+          child: Semantics(
+            button: true,
+            label: context.tr('language'),
+            child: Container(
+              height: 36,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: scheme.outline.withValues(alpha: .55),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.language_rounded,
+                    size: 17,
+                    color: scheme.onSurface,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    currentLanguage.toUpperCase(),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: scheme.onSurface,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+      ],
     );
   }
 }
@@ -29,18 +106,6 @@ class AppPreferencesPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       const _PreferencesContent(compact: true);
-}
-
-class _PreferencesSheet extends StatelessWidget {
-  const _PreferencesSheet();
-  @override
-  Widget build(BuildContext context) => SafeArea(
-    top: false,
-    child: Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
-      child: const _PreferencesContent(),
-    ),
-  );
 }
 
 class _PreferencesContent extends StatelessWidget {

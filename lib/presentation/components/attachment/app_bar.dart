@@ -57,7 +57,8 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
           elevation: 0,
           surfaceTintColor: Theme.of(context).colorScheme.surface,
           scrolledUnderElevation: 0,
-          actions: const [],
+          // Keep Scaffold from injecting a second end-drawer hamburger.
+          actions: const [SizedBox.shrink()],
           toolbarHeight: _appBarHeight,
           titleSpacing: 16,
           title: Row(
@@ -193,7 +194,7 @@ class _AttachmentDesktopActions extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const AppPreferencesButton(),
+        const AppBarPreferencesControls(),
         _item(context, context.tr('certificates'), onCertificates),
         _item(context, context.tr('plans'), onPlans),
         _item(context, context.tr('support'), onSupport),
