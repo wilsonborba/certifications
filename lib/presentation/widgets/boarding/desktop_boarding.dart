@@ -10,6 +10,7 @@ import 'package:certifications/core/utils/my_background.dart';
 import 'package:certifications/core/utils/my_nagivation.dart';
 import 'package:certifications/presentation/components/boarding/box_explaning.dart';
 import 'package:certifications/presentation/components/boarding/boarding_marketing.dart';
+import 'package:certifications/presentation/components/boarding/value_proposition_section.dart';
 import 'package:certifications/presentation/components/boarding/boarding_footer.dart';
 import 'package:certifications/presentation/components/boarding/first_phrase.dart';
 import 'package:certifications/presentation/components/boarding/middle_button.dart';
@@ -217,6 +218,13 @@ class _DesktopBoardingState extends State<DesktopBoarding> {
                 vertical: 40,
               ),
               child: BoardingMarketing(isDesktop: true),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 40,
+              ),
+              child: ValuePropositionSection(isDesktop: true),
             ),
             BoardingFooter(onAbout: _about, onLogin: _login, onSignUp: _signUp),
           ],

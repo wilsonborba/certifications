@@ -6,6 +6,7 @@ import 'package:certifications/presentation/components/auth/login_redirect.dart'
 import 'package:certifications/presentation/components/auth/verify_session.dart';
 import 'package:certifications/presentation/components/boarding/app_bar.dart';
 import 'package:certifications/presentation/components/boarding/boarding_marketing.dart';
+import 'package:certifications/presentation/components/boarding/value_proposition_section.dart';
 import 'package:certifications/presentation/components/boarding/boarding_footer.dart';
 import 'package:certifications/presentation/widgets/attachment/on_attachment.dart';
 import 'package:flutter/material.dart';
@@ -207,6 +208,13 @@ class MobileBoarding extends StatelessWidget {
                 vertical: 24,
               ),
               child: BoardingMarketing(isDesktop: false),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 24,
+              ),
+              child: ValuePropositionSection(isDesktop: false),
             ),
             BoardingFooter(onAbout: _about, onLogin: _login, onSignUp: _signUp),
           ],
