@@ -308,8 +308,13 @@ class AppLocalizations {
       'sharedQuizUnavailable': 'This shared quiz link is invalid or has expired.',
       'sharedQuizQuestionCount': '{count} questions',
       'sharedQuizResumedBanner': 'Signed in, picking up right where you left off',
-      'sharedQuizReadyMessage':
-          'You are signed in and ready to go. Taking the quiz itself is coming soon.',
+      'quizResultTitle': 'Quiz results',
+      'quizResultSummary': '{correct} of {total} correct',
+      'quizReviewTitle': 'Review your answers',
+      'viewLeaderboard': 'View leaderboard',
+      'done': 'Done',
+      'yourNameLabel': 'Your name',
+      'anonymous': 'Anonymous',
     },
     'pt': {
       'appName': 'Certifications',
@@ -622,8 +627,13 @@ class AppLocalizations {
       'sharedQuizUnavailable': 'Este link de quiz compartilhado é inválido ou expirou.',
       'sharedQuizQuestionCount': '{count} perguntas',
       'sharedQuizResumedBanner': 'Login realizado, continuando de onde você parou',
-      'sharedQuizReadyMessage':
-          'Você está conectado e pronto para começar. Fazer o quiz em si chega em breve.',
+      'quizResultTitle': 'Resultado do quiz',
+      'quizResultSummary': '{correct} de {total} corretas',
+      'quizReviewTitle': 'Revise suas respostas',
+      'viewLeaderboard': 'Ver ranking',
+      'done': 'Concluir',
+      'yourNameLabel': 'Seu nome',
+      'anonymous': 'Anônimo',
     },
     'th': {
       'appName': 'Certifications',
@@ -925,7 +935,13 @@ class AppLocalizations {
       'sharedQuizUnavailable': 'ลิงก์แบบทดสอบที่แชร์นี้ไม่ถูกต้องหรือหมดอายุแล้ว',
       'sharedQuizQuestionCount': '{count} คำถาม',
       'sharedQuizResumedBanner': 'เข้าสู่ระบบแล้ว กำลังดำเนินการต่อจากจุดที่คุณค้างไว้',
-      'sharedQuizReadyMessage': 'คุณเข้าสู่ระบบแล้วและพร้อมเริ่มต้น การทำแบบทดสอบจริงจะเปิดให้ใช้งานเร็ว ๆ นี้',
+      'quizResultTitle': 'ผลลัพธ์แบบทดสอบ',
+      'quizResultSummary': 'ถูก {correct} จาก {total} ข้อ',
+      'quizReviewTitle': 'ตรวจสอบคำตอบของคุณ',
+      'viewLeaderboard': 'ดูตารางคะแนน',
+      'done': 'เสร็จสิ้น',
+      'yourNameLabel': 'ชื่อของคุณ',
+      'anonymous': 'ไม่ระบุชื่อ',
     },
   };
   String text(String key) =>

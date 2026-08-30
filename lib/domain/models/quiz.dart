@@ -159,6 +159,53 @@ class QuizShare {
   final int? maxUses;
 }
 
+/// One graded question, as returned by the grading endpoints
+/// (`POST /studies/{id}/questions/submit` and
+/// `POST /quizzes/shared/{token}/grade`). The correct answer only ever
+/// reaches the client through this response, after it has already committed
+/// to a choice.
+class QuestionGradeDetail {
+  QuestionGradeDetail.fromJson(Map<String, dynamic> json)
+    : questionId = json['question_id'] as String,
+      chosenIndex = (json['chosen_index'] as num).toInt(),
+      correctIndex = (json['correct_index'] as num?)?.toInt(),
+      isCorrect = json['is_correct'] as bool? ?? false,
+      explanation = json['explanation'] as String?;
+
+  final String questionId;
+  final int chosenIndex;
+  final int? correctIndex;
+  final bool isCorrect;
+  final String? explanation;
+}
+
+/// Result of grading a full set of answers: overall score plus a per-question
+/// breakdown, shared by both grading endpoints.
+class QuizGradeResult {
+  QuizGradeResult.fromJson(Map<String, dynamic> json)
+    : score = (json['score'] as num).toDouble(),
+      correctCount = (json['correct_count'] as num).toInt(),
+      wrongCount = (json['wrong_count'] as num).toInt(),
+      totalQuestions = (json['total_questions'] as num).toInt(),
+      results = ((json['results'] as List? ?? const [])
+              .cast<Map<String, dynamic>>())
+          .map(QuestionGradeDetail.fromJson)
+          .toList();
+
+  final double score;
+  final int correctCount;
+  final int wrongCount;
+  final int totalQuestions;
+  final List<QuestionGradeDetail> results;
+
+  QuestionGradeDetail? detailFor(String questionId) {
+    for (final result in results) {
+      if (result.questionId == questionId) return result;
+    }
+    return null;
+  }
+}
+
 class AnswerSelection {
   final String questionId;
   final int? selectedIndex;

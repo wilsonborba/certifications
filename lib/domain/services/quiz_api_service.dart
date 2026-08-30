@@ -28,6 +28,53 @@ class QuizApiService {
   Future<Quiz> getCompleted(String quizId) async =>
       Quiz.fromJson(_data(await _adapter.get(Uri.parse('$_base/completed/$quizId'))));
 
+  /// Persists a freshly finished quiz as a [Quiz] record. [quizData] carries
+  /// the full question set (prompt/choices/visual plus the now-known
+  /// correct_index/explanation for each), so a future shared-link visitor can
+  /// be graded against the exact same quiz.
+  Future<Quiz> createCompleted({
+    required String title,
+    String? description,
+    required QuizVisibility visibility,
+    required int totalQuestions,
+    required Map<String, dynamic> quizData,
+  }) async {
+    final response = await _adapter.post(
+      Uri.parse('$_base/completed'),
+      headers: const {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'title': title,
+        'description': description,
+        'visibility': visibility.apiValue,
+        'total_questions': totalQuestions,
+        'quiz_data': quizData,
+      }),
+    );
+    return Quiz.fromJson(_data(response));
+  }
+
+  /// Grades a shared-link visitor's answers against the answer key kept
+  /// server-side, without consuming a use of the share link.
+  Future<QuizGradeResult> gradeSharedAnswers(
+    String token,
+    Map<String, int> answers,
+  ) async {
+    final response = await _adapter.post(
+      Uri.parse('$_base/shared/$token/grade'),
+      headers: const {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'answers': [
+          for (final entry in answers.entries)
+            {'question_id': entry.key, 'choice_index': entry.value},
+        ],
+      }),
+    );
+    return QuizGradeResult.fromJson(_data(response));
+  }
+
+  String sharedDiagramUrl(String token, String questionId) =>
+      '$_base/shared/$token/questions/$questionId/visual';
+
   /// Lists every completed quiz owned by the authenticated user via the real
   /// `GET /quizzes/completed` endpoint (already filters by owner server
   /// side), replacing the old workaround of deriving a quiz id from the

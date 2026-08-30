@@ -42,20 +42,21 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
   void initState() {
     super.initState();
     if (widget.studyId != null) {
-      wizardData.addListener(_persistStep);
+      wizardData.addListener(_persistDraftState);
     }
   }
 
-  void _persistStep() {
+  void _persistDraftState() {
     final studyId = widget.studyId;
     if (studyId != null) {
       DraftProgressStore.instance.saveStep(studyId, wizardData.currentStep);
+      DraftProgressStore.instance.saveVisibility(studyId, wizardData.visibility);
     }
   }
 
   @override
   void dispose() {
-    wizardData.removeListener(_persistStep);
+    wizardData.removeListener(_persistDraftState);
     wizardData.dispose();
     super.dispose();
   }
