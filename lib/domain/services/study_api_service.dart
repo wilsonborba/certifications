@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:certifications/core/settings.dart';
 import 'package:certifications/dal/remote/api_adapter.dart';
+import 'package:certifications/domain/models/quiz_wizard_data.dart';
 import 'package:certifications/domain/models/study.dart';
 import 'package:http_parser/http_parser.dart';
 
@@ -105,6 +106,12 @@ class StudyApiService {
     required String difficulty,
     required String idempotencyKey,
     required bool useWeb,
+    /// Number of questions to generate, or
+    /// [QuizWizardData.unlimitedQuestionCount] to ask for as many as the
+    /// source material can support. The sentinel is sent as a null
+    /// `question_count` so the backend can tell "no fixed cap" apart from a
+    /// real, UI-picked number.
+    int questionCount = 10,
   }) async {
     final response = await _adapter.post(
       Uri.parse('$_base/$studyId/questions/generate'),
@@ -113,6 +120,9 @@ class StudyApiService {
         'difficulty': difficulty,
         'idempotency_key': idempotencyKey,
         'use_web': useWeb,
+        'question_count': questionCount == QuizWizardData.unlimitedQuestionCount
+            ? null
+            : questionCount,
       }),
     );
     if (response.statusCode < 200 || response.statusCode >= 300)
