@@ -20,7 +20,10 @@ class ApiAsodyaManager {
   Future<Response> exchangeAuthExchangeToken(String authExchangeToken) async {
     final response = await ApiAdapter(defaultHeaders: defaultHeaders).post(
       Uri.parse('$baseUrl/apps/api/v1/exchange'),
-      body: jsonEncode({'auth_exchange_token': authExchangeToken}),
+      body: jsonEncode({
+        'auth_exchange_token': authExchangeToken,
+        'app': 'certifications',
+      }),
     );
 
     return response;
