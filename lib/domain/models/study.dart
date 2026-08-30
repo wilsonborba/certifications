@@ -17,11 +17,13 @@ class Study {
       name = json['name'] as String,
       status = json['status'] as String,
       activeSizeBytes = (json['active_size_bytes'] as num? ?? 0).toInt(),
+      createdAt = json['created_at'] as String?,
       sources = ((json['sources'] as List? ?? []).cast<Map<String, dynamic>>())
           .map(StudySource.fromJson)
           .toList();
   final String id, name, status;
   final int activeSizeBytes;
+  final String? createdAt;
   final List<StudySource> sources;
 }
 

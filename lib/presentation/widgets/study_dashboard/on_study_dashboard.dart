@@ -236,6 +236,12 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                         // real absence of data rather than a fake number.
                         averageScorePercent: 0.0,
                         hasScoreData: false,
+                        activityDates: studies
+                            .map((study) => study.createdAt == null
+                                ? null
+                                : DateTime.tryParse(study.createdAt!))
+                            .whereType<DateTime>()
+                            .toList(),
                         isDesktop: isDesktop,
                         onTapCompletedQuizzes: () => Navigator.push(
                           context,
