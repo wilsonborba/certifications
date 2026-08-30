@@ -8,6 +8,7 @@ import 'package:certifications/presentation/components/auth/login_redirect.dart'
 import 'package:certifications/presentation/components/preferences/app_preferences_controls.dart';
 import 'package:certifications/presentation/widgets/certificates/on_certificates.dart';
 import 'package:certifications/presentation/widgets/plans/on_plans.dart';
+import 'package:certifications/presentation/widgets/support/on_support.dart';
 import 'package:certifications/presentation/components/auth/session_gate.dart';
 import 'package:flutter/material.dart';
 
@@ -329,6 +330,7 @@ class _AttachmentDesktopActions extends StatelessWidget {
     void _defaultPlans() => NavigationService.push(const OnPlansScreen());
     void _defaultStudies() => NavigationService.pushReplacement(const SessionGate());
     void _defaultCertificates() => NavigationService.push(const OnCertificatesScreen());
+    void _defaultSupport() => NavigationService.push(const OnSupportScreen());
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -341,7 +343,7 @@ class _AttachmentDesktopActions extends StatelessWidget {
         if (currentTab != 'plans')
           _item(context, context.tr('plans'), onPlans ?? _defaultPlans),
         if (currentTab != 'support')
-          _item(context, context.tr('support'), onSupport),
+          _item(context, context.tr('support'), onSupport ?? _defaultSupport),
         if (currentTab != 'about')
           _item(context, context.tr('about'), onAbout ?? _defaultAbout),
         const SizedBox(width: 8),
@@ -408,6 +410,7 @@ class AttachmentSideMenu extends StatelessWidget {
     void _defaultPlans() => NavigationService.push(const OnPlansScreen());
     void _defaultStudies() => NavigationService.pushReplacement(const SessionGate());
     void _defaultCertificates() => NavigationService.push(const OnCertificatesScreen());
+    void _defaultSupport() => NavigationService.push(const OnSupportScreen());
 
     return Drawer(
       backgroundColor: scheme.surface,
@@ -445,7 +448,7 @@ class AttachmentSideMenu extends StatelessWidget {
                   context,
                   Icons.support_agent_outlined,
                   context.tr('support'),
-                  onSupport,
+                  onSupport ?? _defaultSupport,
                 ),
               if (currentTab != 'about')
                 _tile(context, Icons.info_outline, context.tr('about'), onAbout ?? _defaultAbout),
