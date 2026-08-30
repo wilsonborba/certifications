@@ -251,7 +251,7 @@ class _StandbyStudyCardState extends State<StandbyStudyCard> {
                           ),
                           OutlinedButton.icon(
                             onPressed: _openEditModal,
-                            icon: const Icon(Icons.edit_outlined, size: 16),
+                            icon: const Icon(Icons.drive_file_rename_outline, size: 16),
                             label: Text(context.tr('editStudy')),
                           ),
                           IconButton(
