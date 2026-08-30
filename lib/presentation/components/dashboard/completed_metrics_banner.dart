@@ -237,7 +237,7 @@ class _StudiesDonutChart extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final standbyFraction = total == 0 ? 0.0 : standby / total;
     final completedFraction = total == 0 ? 0.0 : completed / total;
-    const size = 108.0;
+    const size = 120.0;
 
     return Tooltip(
       message: context.trParams('studiesBreakdownTooltip', {
@@ -250,9 +250,19 @@ class _StudiesDonutChart extends StatelessWidget {
         child: InkWell(
           customBorder: const CircleBorder(),
           onTap: onTap,
-          child: SizedBox(
+          child: Container(
             width: size,
             height: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: scheme.primary.withValues(alpha: 0.16),
+                  blurRadius: 24,
+                  spreadRadius: -4,
+                ),
+              ],
+            ),
             child: TweenAnimationBuilder<double>(
               tween: Tween(begin: 0, end: 1),
               duration: const Duration(milliseconds: 900),
@@ -263,8 +273,8 @@ class _StudiesDonutChart extends StatelessWidget {
                     standbyFraction: standbyFraction,
                     completedFraction: completedFraction,
                     progress: progress,
-                    trackColor: scheme.outlineVariant.withValues(alpha: 0.25),
-                    standbyColor: Colors.amber,
+                    trackColor: scheme.onSurface.withValues(alpha: 0.06),
+                    standbyColor: scheme.primary.withValues(alpha: 0.32),
                     completedColor: scheme.primary,
                   ),
                   child: Center(
@@ -273,7 +283,7 @@ class _StudiesDonutChart extends StatelessWidget {
                       children: [
                         Text(
                           '$total',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -281,7 +291,7 @@ class _StudiesDonutChart extends StatelessWidget {
                           context.tr('studyNotebooksLabel'),
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: scheme.onSurface.withValues(alpha: 0.6),
+                            color: scheme.onSurface.withValues(alpha: 0.55),
                           ),
                         ),
                       ],
@@ -314,9 +324,14 @@ class _DonutPainter extends CustomPainter {
   final Color standbyColor;
   final Color completedColor;
 
+  // A small angular gap keeps adjacent segments (and a segment butting up
+  // against itself on a full loop) visually separated instead of reading as
+  // one solid, featureless ring.
+  static const _gap = 0.045;
+
   @override
   void paint(Canvas canvas, Size size) {
-    final strokeWidth = size.width * 0.16;
+    final strokeWidth = size.width * 0.1;
     final rect = Rect.fromLTWH(
       strokeWidth / 2,
       strokeWidth / 2,
@@ -331,25 +346,26 @@ class _DonutPainter extends CustomPainter {
     canvas.drawArc(rect, 0, 2 * math.pi, false, trackPaint);
 
     const startAngle = -math.pi / 2;
-    final standbySweep = 2 * math.pi * standbyFraction * progress;
-    final completedSweep = 2 * math.pi * completedFraction * progress;
+    final segments = [
+      if (standbyFraction > 0) (fraction: standbyFraction, color: standbyColor),
+      if (completedFraction > 0) (fraction: completedFraction, color: completedColor),
+    ];
+    final isFullLoop = (standbyFraction + completedFraction) >= 0.999;
 
-    if (standbySweep > 0) {
-      final standbyPaint = Paint()
-        ..color = standbyColor
+    var angle = startAngle;
+    for (final segment in segments) {
+      final sweep = 2 * math.pi * segment.fraction * progress;
+      if (sweep <= 0) continue;
+      final drawnSweep = (segments.length > 1 || isFullLoop)
+          ? math.max(sweep - _gap, sweep * 0.5)
+          : sweep;
+      final paint = Paint()
+        ..color = segment.color
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
         ..strokeWidth = strokeWidth;
-      canvas.drawArc(rect, startAngle, standbySweep, false, standbyPaint);
-    }
-
-    if (completedSweep > 0) {
-      final completedPaint = Paint()
-        ..color = completedColor
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeWidth = strokeWidth;
-      canvas.drawArc(rect, startAngle + standbySweep, completedSweep, false, completedPaint);
+      canvas.drawArc(rect, angle, drawnSweep, false, paint);
+      angle += sweep;
     }
   }
 

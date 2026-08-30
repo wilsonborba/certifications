@@ -4,6 +4,7 @@ import 'package:certifications/domain/services/support_api_service.dart';
 import 'package:certifications/presentation/components/attachment/app_bar.dart';
 import 'package:certifications/presentation/components/premium_hover_card.dart';
 import 'package:certifications/presentation/widgets/support/on_support_ticket.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 /// Support tab (#35): a normal per-user ticket screen, CRUD against
@@ -201,12 +202,45 @@ class _NewTicketDialogState extends State<_NewTicketDialog> {
   final _bodyController = TextEditingController();
   bool _submitting = false;
   String? _error;
+  ({String name, List<int> bytes, String mimeType})? _pendingAttachment;
 
   @override
   void dispose() {
     _subjectController.dispose();
     _bodyController.dispose();
     super.dispose();
+  }
+
+  String _mimeTypeFor(String? extension) {
+    switch (extension?.toLowerCase()) {
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      case 'gif':
+        return 'image/gif';
+      default:
+        return 'image/jpeg';
+    }
+  }
+
+  Future<void> _pickAttachment() async {
+    final result = await FilePicker.platform.pickFiles(
+      withData: true,
+      type: FileType.image,
+    );
+    final files = result?.files ?? const [];
+    if (files.isEmpty) return;
+    final picked = files.first;
+    final bytes = picked.bytes;
+    if (bytes == null) return;
+    setState(() {
+      _pendingAttachment = (
+        name: picked.name,
+        bytes: bytes,
+        mimeType: _mimeTypeFor(picked.extension),
+      );
+    });
   }
 
   Future<void> _submit() async {
@@ -217,11 +251,21 @@ class _NewTicketDialogState extends State<_NewTicketDialog> {
       _error = null;
     });
     try {
+      String? attachmentReference;
+      final attachment = _pendingAttachment;
+      if (attachment != null) {
+        attachmentReference = await widget.api.uploadAttachment(
+          filename: attachment.name,
+          bytes: attachment.bytes,
+          mimeType: attachment.mimeType,
+        );
+      }
       await widget.api.createTicket(
         subject: _subjectController.text.trim().isEmpty
             ? null
             : _subjectController.text.trim(),
         body: body,
+        attachmentReference: attachmentReference,
       );
       if (mounted) Navigator.pop(context, true);
     } catch (_) {
@@ -261,6 +305,19 @@ class _NewTicketDialogState extends State<_NewTicketDialog> {
                 border: const OutlineInputBorder(),
               ),
             ),
+            const SizedBox(height: 12),
+            if (_pendingAttachment != null)
+              Chip(
+                avatar: const Icon(Icons.image_outlined, size: 18),
+                label: Text(_pendingAttachment!.name),
+                onDeleted: () => setState(() => _pendingAttachment = null),
+              )
+            else
+              OutlinedButton.icon(
+                onPressed: _submitting ? null : _pickAttachment,
+                icon: const Icon(Icons.image_outlined, size: 18),
+                label: Text(context.tr('attachImageAction')),
+              ),
             if (_error != null) ...[
               const SizedBox(height: 12),
               Text(_error!, style: const TextStyle(color: Colors.redAccent)),
