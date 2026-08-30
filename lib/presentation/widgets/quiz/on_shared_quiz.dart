@@ -1,8 +1,10 @@
 import 'package:certifications/core/utils/app_localizations.dart';
+import 'package:certifications/domain/models/study.dart';
 import 'package:certifications/domain/services/pending_intent_store.dart';
 import 'package:certifications/domain/services/quiz_api_service.dart';
 import 'package:certifications/presentation/components/auth/quiz_auth_guard.dart';
 import 'package:certifications/presentation/components/premium_hover_card.dart';
+import 'package:certifications/presentation/widgets/quiz/shared_quiz_answer.dart';
 import 'package:flutter/material.dart';
 
 /// Landing point for a quiz share link (`/quizzes/shared/{token}`) and for
@@ -27,22 +29,35 @@ class _OnSharedQuizScreenState extends State<OnSharedQuizScreen> {
   final _quizApi = QuizApiService();
   late final Future<Map<String, dynamic>> _future = _quizApi.getShared(widget.shareToken);
   bool _starting = false;
-  bool _ready = false;
 
-  Future<void> _start(String? title) async {
+  Future<void> _start(Map<String, dynamic> data) async {
     setState(() => _starting = true);
+    final title = (data['title'] as String?) ?? context.tr('sharedQuizTitle');
     final canProceed = await ensureAuthenticatedForQuiz(
       PendingQuizIntent(shareToken: widget.shareToken, quizTitle: title),
     );
     if (!mounted) return;
     // canProceed == false means the visitor is being redirected to auth
     // right now; there is nothing left to update on this screen.
-    if (canProceed) {
-      setState(() {
-        _starting = false;
-        _ready = true;
-      });
-    }
+    if (!canProceed) return;
+    setState(() => _starting = false);
+
+    final quizData = (data['quiz_data'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final questions = ((quizData['questions'] as List? ?? const [])
+            .cast<Map<String, dynamic>>())
+        .map(StudyQuestion.fromJson)
+        .toList();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SharedQuizAnswerScreen(
+          shareToken: widget.shareToken,
+          quizId: data['quiz_id'] as String? ?? '',
+          title: title,
+          questions: questions,
+        ),
+      ),
+    );
   }
 
   @override
@@ -126,38 +141,21 @@ class _OnSharedQuizScreenState extends State<OnSharedQuizScreen> {
                           ],
                         ),
                         const SizedBox(height: 28),
-                        if (_ready)
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: scheme.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.hourglass_top, color: scheme.primary),
-                                const SizedBox(width: 12),
-                                Expanded(child: Text(context.tr('sharedQuizReadyMessage'))),
-                              ],
-                            ),
-                          )
-                        else
-                          SizedBox(
-                            width: double.infinity,
-                            height: 52,
-                            child: ElevatedButton.icon(
-                              onPressed: _starting ? null : () => _start(title),
-                              icon: _starting
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
-                                    )
-                                  : const Icon(Icons.play_arrow),
-                              label: Text(context.tr('startQuiz')),
-                            ),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton.icon(
+                            onPressed: _starting ? null : () => _start(data),
+                            icon: _starting
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.play_arrow),
+                            label: Text(context.tr('startQuiz')),
                           ),
+                        ),
                       ],
                     ),
                   );

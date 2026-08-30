@@ -216,6 +216,7 @@ class _StudyWorkspaceState extends State<StudyWorkspace> {
                               MaterialPageRoute(
                                 builder: (_) => QuestionSession(
                                   studyId: study.id,
+                                  studyName: study.name,
                                   difficulty: difficulty,
                                   useWeb: useWeb,
                                 ),

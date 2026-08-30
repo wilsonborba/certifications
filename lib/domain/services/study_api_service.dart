@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:certifications/core/settings.dart';
 import 'package:certifications/dal/remote/api_adapter.dart';
+import 'package:certifications/domain/models/quiz.dart';
 import 'package:certifications/domain/models/quiz_wizard_data.dart';
 import 'package:certifications/domain/models/study.dart';
 import 'package:http_parser/http_parser.dart';
@@ -131,6 +132,26 @@ class StudyApiService {
         .cast<Map<String, dynamic>>()
         .map(StudyQuestion.fromJson)
         .toList();
+  }
+
+  /// Grades a full set of answers server-side (the client never has the
+  /// correct answers ahead of this call) and returns the score plus a
+  /// per-question breakdown.
+  Future<QuizGradeResult> submitAnswers({
+    required String studyId,
+    required Map<String, int> answers,
+  }) async {
+    final response = await _adapter.post(
+      Uri.parse('$_base/$studyId/questions/submit'),
+      headers: const {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'answers': [
+          for (final entry in answers.entries)
+            {'question_id': entry.key, 'choice_index': entry.value},
+        ],
+      }),
+    );
+    return QuizGradeResult.fromJson(_data(response));
   }
 
   String diagramUrl(String studyId, String questionId) =>

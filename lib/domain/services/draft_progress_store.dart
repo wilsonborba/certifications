@@ -1,11 +1,14 @@
 import 'package:certifications/dal/local/local_source_adapter.dart';
+import 'package:certifications/domain/models/quiz.dart';
 
 /// Persists client-side draft progress for a study: which wizard step the
-/// user last left it on, and when it was last touched.
+/// user last left it on, when it was last touched, and the visibility choice
+/// made in the wizard's Step 4.
 ///
-/// The backend `Study` model has no field for this (it is a purely local,
-/// per-browser convenience), so it is kept in `localStorage` the same way
-/// [WaitlistStore] persists its own local-only state, namespaced by study id.
+/// The backend `Study` model has no field for any of this (it is a purely
+/// local, per-browser convenience), so it is kept in `localStorage` the same
+/// way [WaitlistStore] persists its own local-only state, namespaced by
+/// study id.
 class DraftProgressStore {
   DraftProgressStore._();
   static final DraftProgressStore instance = DraftProgressStore._();
@@ -38,8 +41,23 @@ class DraftProgressStore {
     return DateTime.tryParse(raw);
   }
 
+  /// Persists the visibility chosen in the wizard's Step 4, so it can be
+  /// recovered later when the quiz taken from this study is finished and
+  /// saved via `POST /quizzes/completed`.
+  Future<void> saveVisibility(String studyId, QuizVisibility visibility) async {
+    await _storage.upsert('$studyId::visibility', visibility.apiValue);
+  }
+
+  /// Reads back the visibility saved by [saveVisibility], defaulting to
+  /// private (matching the backend's own default) when nothing was saved.
+  Future<QuizVisibility> getVisibility(String studyId) async {
+    final raw = await _storage.read<String>('$studyId::visibility');
+    return QuizVisibility.parse(raw);
+  }
+
   Future<void> clear(String studyId) async {
     await _storage.delete('$studyId::step');
     await _storage.delete('$studyId::lastOpenedAt');
+    await _storage.delete('$studyId::visibility');
   }
 }
