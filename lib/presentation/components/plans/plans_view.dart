@@ -3,6 +3,7 @@ import 'package:certifications/core/utils/my_nagivation.dart';
 import 'package:certifications/domain/services/waitlist_store.dart';
 import 'package:certifications/presentation/components/auth/login_redirect.dart';
 import 'package:certifications/presentation/components/auth/verify_session.dart';
+import 'package:certifications/presentation/components/premium_hover_card.dart';
 import 'package:flutter/material.dart';
 
 class PlansView extends StatelessWidget {
@@ -78,15 +79,8 @@ class PlansView extends StatelessWidget {
 }
 
 /// Free Plan Card (Current Plan)
-class _FreePlanCard extends StatefulWidget {
+class _FreePlanCard extends StatelessWidget {
   const _FreePlanCard();
-
-  @override
-  State<_FreePlanCard> createState() => _FreePlanCardState();
-}
-
-class _FreePlanCardState extends State<_FreePlanCard> {
-  bool _hovered = false;
 
   Future<void> _handleUse() async {
     redirectToUrl(await urlRedirectionToAuth(), replace: true);
@@ -97,11 +91,8 @@ class _FreePlanCardState extends State<_FreePlanCard> {
     final scheme = Theme.of(context).colorScheme;
     final isLoggedIn = readCsrfToken() != null && readCsrfToken()!.isNotEmpty;
 
-    return _PlanShell(
-      hovered: _hovered,
+    return PremiumHoverCard(
       accentColor: scheme.primary,
-      onEnter: () => setState(() => _hovered = true),
-      onExit: () => setState(() => _hovered = false),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -221,15 +212,8 @@ class _FreePlanCardState extends State<_FreePlanCard> {
 }
 
 /// Guided Plan Card
-class _GuidedPlanCard extends StatefulWidget {
+class _GuidedPlanCard extends StatelessWidget {
   const _GuidedPlanCard();
-
-  @override
-  State<_GuidedPlanCard> createState() => _GuidedPlanCardState();
-}
-
-class _GuidedPlanCardState extends State<_GuidedPlanCard> {
-  bool _hovered = false;
 
   @override
   Widget build(BuildContext context) {
@@ -241,11 +225,8 @@ class _GuidedPlanCardState extends State<_GuidedPlanCard> {
       builder: (context, _) {
         final joined = store.isJoined('guided');
 
-        return _PlanShell(
-          hovered: _hovered,
+        return PremiumHoverCard(
           accentColor: Colors.blueAccent,
-          onEnter: () => setState(() => _hovered = true),
-          onExit: () => setState(() => _hovered = false),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -321,15 +302,8 @@ class _GuidedPlanCardState extends State<_GuidedPlanCard> {
 }
 
 /// Advanced Plan Card
-class _AdvancedPlanCard extends StatefulWidget {
+class _AdvancedPlanCard extends StatelessWidget {
   const _AdvancedPlanCard();
-
-  @override
-  State<_AdvancedPlanCard> createState() => _AdvancedPlanCardState();
-}
-
-class _AdvancedPlanCardState extends State<_AdvancedPlanCard> {
-  bool _hovered = false;
 
   @override
   Widget build(BuildContext context) {
@@ -341,11 +315,8 @@ class _AdvancedPlanCardState extends State<_AdvancedPlanCard> {
       builder: (context, _) {
         final joined = store.isJoined('advanced');
 
-        return _PlanShell(
-          hovered: _hovered,
+        return PremiumHoverCard(
           accentColor: Colors.deepPurpleAccent,
-          onEnter: () => setState(() => _hovered = true),
-          onExit: () => setState(() => _hovered = false),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -456,54 +427,6 @@ Future<void> handleWaitlistFlow(BuildContext context, String planId) async {
         ),
       );
     }
-  }
-}
-
-class _PlanShell extends StatelessWidget {
-  const _PlanShell({
-    required this.child,
-    this.hovered = false,
-    this.accentColor,
-    this.onEnter,
-    this.onExit,
-  });
-  final Widget child;
-  final bool hovered;
-  final Color? accentColor;
-  final VoidCallback? onEnter;
-  final VoidCallback? onExit;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final accent = accentColor ?? scheme.primary;
-
-    return MouseRegion(
-      onEnter: onEnter == null ? null : (_) => onEnter!(),
-      onExit: onExit == null ? null : (_) => onExit!(),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOutCubic,
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: hovered ? accent : scheme.outline.withValues(alpha: 0.25),
-            width: hovered ? 1.8 : 1.0,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: (hovered ? accent : scheme.onSurface).withValues(alpha: hovered ? 0.15 : 0.04),
-              blurRadius: hovered ? 28 : 14,
-              offset: Offset(0, hovered ? 12 : 6),
-            ),
-          ],
-        ),
-        child: child,
-      ),
-    );
   }
 }
 
