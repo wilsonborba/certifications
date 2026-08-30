@@ -3,12 +3,15 @@ import 'package:certifications/domain/models/quiz.dart';
 import 'package:certifications/presentation/components/premium_hover_card.dart';
 import 'package:flutter/material.dart';
 
-/// Bespoke, premium-styled master/detail list: a custom scrollable list of
-/// [quizzes] (never a default ListTile/ListView-only look) where selecting
-/// an item renders [detailBuilder]'s output for it in the same card, with no
-/// navigation. Shared by the dashboard's per-certificate mini-list (#37) and
-/// the Certificates tab's Public/Private sub-tabs (#39), per #37's own note
-/// that this exact pattern was meant to be reused there.
+/// Bespoke, premium-styled master/detail list of [quizzes] (never a default
+/// ListTile/ListView-only look) where selecting an item renders
+/// [detailBuilder]'s output for it in the same card, with no navigation.
+/// Always sizes to its own content and never scrolls independently: the
+/// enclosing page's scroll view carries it, so there is never a nested
+/// scroll region trapping the mouse wheel inside a small card. Shared by
+/// the dashboard's per-certificate mini-list (#37) and the Certificates
+/// tab's Public/Private sub-tabs (#39), per #37's own note that this exact
+/// pattern was meant to be reused there.
 class QuizMasterDetailList extends StatefulWidget {
   const QuizMasterDetailList({
     super.key,
@@ -26,8 +29,9 @@ class QuizMasterDetailList extends StatefulWidget {
   final String emptyMessage;
   final bool isDesktop;
 
-  /// Height (mobile, stacked) or width (desktop, side-by-side) reserved for
-  /// the list pane.
+  /// Width reserved for the list pane in the desktop (side-by-side) layout.
+  /// Unused on mobile: there the list is stacked above the detail panel and
+  /// simply sizes to its content, both riding the page's own scroll.
   final double listExtent;
 
   @override
@@ -69,23 +73,23 @@ class _QuizMasterDetailListState extends State<QuizMasterDetailList> {
     }
 
     final selected = _selected ?? widget.quizzes.first;
-    final list = SizedBox(
-      height: widget.isDesktop ? null : widget.listExtent,
-      child: ListView.separated(
-        shrinkWrap: !widget.isDesktop ? false : true,
-        physics: widget.isDesktop ? const NeverScrollableScrollPhysics() : null,
-        itemCount: widget.quizzes.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
-        itemBuilder: (context, index) {
-          final quiz = widget.quizzes[index];
-          final isSelected = quiz.id == selected.id;
-          return _QuizListRow(
-            quiz: quiz,
-            selected: isSelected,
-            onTap: () => setState(() => _selected = quiz),
-          );
-        },
-      ),
+    // Never its own independently scrollable region: this list always
+    // sizes to its content and lets the page's own scroll view carry it,
+    // rather than trapping the mouse wheel in a small nested scroll pocket.
+    final list = ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: widget.quizzes.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        final quiz = widget.quizzes[index];
+        final isSelected = quiz.id == selected.id;
+        return _QuizListRow(
+          quiz: quiz,
+          selected: isSelected,
+          onTap: () => setState(() => _selected = quiz),
+        );
+      },
     );
 
     final detail = AnimatedSwitcher(
@@ -101,7 +105,7 @@ class _QuizMasterDetailListState extends State<QuizMasterDetailList> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(width: widget.listExtent, child: SingleChildScrollView(child: list)),
+            SizedBox(width: widget.listExtent, child: list),
             const SizedBox(width: 20),
             Expanded(child: detail),
           ],
