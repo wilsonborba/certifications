@@ -300,6 +300,10 @@ class AppLocalizations {
       'completedOnLabel': 'Completed on',
       'totalAttemptsLabel': 'Total attempts',
       'searchQuizzesHint': 'Search your completed quizzes…',
+      'certificatesSubtitle': 'Every quiz you have completed, public or private, in one place.',
+      'searchCertificatesHint': 'Search your certificates…',
+      'noPrivateCertificatesYet': 'You have no private certificates yet.',
+      'noPublicCertificatesYet': 'You have no public certificates yet.',
     },
     'pt': {
       'appName': 'Certifications',
@@ -604,6 +608,10 @@ class AppLocalizations {
       'completedOnLabel': 'Concluído em',
       'totalAttemptsLabel': 'Total de tentativas',
       'searchQuizzesHint': 'Buscar nos seus simulados concluídos…',
+      'certificatesSubtitle': 'Todo simulado que você concluiu, público ou privado, em um só lugar.',
+      'searchCertificatesHint': 'Buscar nos seus certificados…',
+      'noPrivateCertificatesYet': 'Você ainda não tem certificados privados.',
+      'noPublicCertificatesYet': 'Você ainda não tem certificados públicos.',
     },
     'th': {
       'appName': 'Certifications',
@@ -897,6 +905,10 @@ class AppLocalizations {
       'completedOnLabel': 'เสร็จสิ้นเมื่อ',
       'totalAttemptsLabel': 'จำนวนครั้งที่ทำทั้งหมด',
       'searchQuizzesHint': 'ค้นหาแบบทดสอบที่เสร็จสิ้นของคุณ…',
+      'certificatesSubtitle': 'แบบทดสอบทุกรายการที่คุณทำเสร็จ ทั้งสาธารณะและส่วนตัว อยู่ในที่เดียว',
+      'searchCertificatesHint': 'ค้นหาใบรับรองของคุณ…',
+      'noPrivateCertificatesYet': 'คุณยังไม่มีใบรับรองส่วนตัว',
+      'noPublicCertificatesYet': 'คุณยังไม่มีใบรับรองสาธารณะ',
     },
   };
   String text(String key) =>
