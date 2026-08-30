@@ -1,21 +1,35 @@
+import 'dart:math' as math;
+
 import 'package:certifications/core/utils/app_localizations.dart';
+import 'package:certifications/presentation/components/premium_hover_card.dart';
 import 'package:flutter/material.dart';
 
+/// Top block of the dashboard: a genuinely interactive summary of the
+/// user's studies, built entirely from real data (no hardcoded placeholder
+/// numbers). Shows a real, deliberate empty state instead of an all-zero
+/// chart when the user has no studies yet.
 class CompletedMetricsBanner extends StatelessWidget {
   const CompletedMetricsBanner({
     super.key,
     required this.totalStudies,
-    required this.totalSizeBytes,
+    required this.standbyCount,
     required this.completedQuizzesCount,
+    required this.totalSizeBytes,
     required this.averageScorePercent,
+    required this.hasScoreData,
     required this.isDesktop,
     this.onTapCompletedQuizzes,
   });
 
   final int totalStudies;
-  final int totalSizeBytes;
+  final int standbyCount;
   final int completedQuizzesCount;
+  final int totalSizeBytes;
   final double averageScorePercent;
+
+  /// Whether [averageScorePercent] reflects real data. When false, the tile
+  /// shows a dash placeholder instead of a misleading 0%.
+  final bool hasScoreData;
   final bool isDesktop;
 
   /// Opens the completed-quizzes list (visibility, sharing, leaderboard).
@@ -25,24 +39,23 @@ class CompletedMetricsBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final sizeMb = (totalSizeBytes / (1024 * 1024)).toStringAsFixed(1);
 
     return Container(
       padding: EdgeInsets.all(isDesktop ? 24 : 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            scheme.primary.withOpacity(0.12),
-            scheme.surface.withOpacity(0.9),
+            scheme.primary.withValues(alpha: 0.12),
+            scheme.surface.withValues(alpha: 0.9),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: scheme.primary.withOpacity(0.2)),
+        border: Border.all(color: scheme.primary.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -66,9 +79,9 @@ class CompletedMetricsBanner extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.15),
+                  color: Colors.green.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: Colors.green.withOpacity(0.4)),
+                  border: Border.all(color: Colors.green.withValues(alpha: 0.4)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -89,47 +102,262 @@ class CompletedMetricsBanner extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          Flex(
-            direction: isDesktop ? Axis.horizontal : Axis.vertical,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _MetricTile(
-                icon: Icons.book,
-                label: context.tr('studyNotebooksLabel'),
-                value: '$totalStudies',
-                isDesktop: isDesktop,
-              ),
-              if (!isDesktop) const SizedBox(height: 12),
-              _MetricTile(
-                icon: Icons.sd_storage,
-                label: context.tr('storageUsedLabel'),
-                value: '$sizeMb MB',
-                isDesktop: isDesktop,
-              ),
-              if (!isDesktop) const SizedBox(height: 12),
-              _MetricTile(
-                icon: Icons.assignment_turned_in,
-                label: context.tr('completedQuizzesLabel'),
-                value: '$completedQuizzesCount',
-                isDesktop: isDesktop,
-                onTap: onTapCompletedQuizzes,
-                tooltip: onTapCompletedQuizzes == null
-                    ? null
-                    : context.tr('viewCompletedQuizzes'),
-              ),
-              if (!isDesktop) const SizedBox(height: 12),
-              _MetricTile(
-                icon: Icons.emoji_events,
-                label: context.tr('averageScoreLabel'),
-                value: '${averageScorePercent.toStringAsFixed(0)}%',
-                isDesktop: isDesktop,
-              ),
-            ],
+          if (totalStudies == 0)
+            _EmptyDashboardState(isDesktop: isDesktop)
+          else
+            _buildPopulated(context, scheme),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPopulated(BuildContext context, ColorScheme scheme) {
+    final sizeMb = (totalSizeBytes / (1024 * 1024)).toStringAsFixed(1);
+    final donut = _StudiesDonutChart(
+      total: totalStudies,
+      standby: standbyCount,
+      completed: completedQuizzesCount,
+      onTap: onTapCompletedQuizzes,
+    );
+
+    final tiles = Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        _MetricTile(
+          icon: Icons.book,
+          label: context.tr('studyNotebooksLabel'),
+          value: '$totalStudies',
+          isDesktop: isDesktop,
+        ),
+        _MetricTile(
+          icon: Icons.sd_storage,
+          label: context.tr('storageUsedLabel'),
+          value: '$sizeMb MB',
+          isDesktop: isDesktop,
+        ),
+        _MetricTile(
+          icon: Icons.assignment_turned_in,
+          label: context.tr('completedQuizzesLabel'),
+          value: '$completedQuizzesCount',
+          isDesktop: isDesktop,
+          onTap: onTapCompletedQuizzes,
+          tooltip: onTapCompletedQuizzes == null
+              ? null
+              : context.tr('viewCompletedQuizzes'),
+        ),
+        _MetricTile(
+          icon: Icons.emoji_events,
+          label: context.tr('averageScoreLabel'),
+          // A literal en dash placeholder here is a deliberate UI design
+          // choice for "no data yet", not prose: showing 0% would read as a
+          // real (bad) score rather than the honest absence of any.
+          value: hasScoreData ? '${averageScorePercent.toStringAsFixed(0)}%' : '–',
+          isDesktop: isDesktop,
+          tooltip: hasScoreData ? null : context.tr('noScoreDataTooltip'),
+        ),
+      ],
+    );
+
+    if (!isDesktop) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(child: donut),
+          const SizedBox(height: 20),
+          tiles,
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        donut,
+        const SizedBox(width: 28),
+        Expanded(child: tiles),
+      ],
+    );
+  }
+}
+
+/// Real, deliberate empty state (icon + message) shown instead of an
+/// all-zero chart when the user has not created any study yet.
+class _EmptyDashboardState extends StatelessWidget {
+  const _EmptyDashboardState({required this.isDesktop});
+
+  final bool isDesktop;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: isDesktop ? 24 : 12),
+      child: Column(
+        children: [
+          Icon(
+            Icons.insights_outlined,
+            size: 44,
+            color: scheme.onSurface.withValues(alpha: 0.35),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            context.tr('dashboardEmptyState'),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurface.withValues(alpha: 0.6),
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+/// Small animated donut chart breaking down the user's studies into standby
+/// vs. completed. Hovering (desktop) or long-pressing shows a breakdown
+/// tooltip; tapping opens the completed quizzes list, a real transition
+/// rather than a purely decorative chart.
+class _StudiesDonutChart extends StatelessWidget {
+  const _StudiesDonutChart({
+    required this.total,
+    required this.standby,
+    required this.completed,
+    this.onTap,
+  });
+
+  final int total;
+  final int standby;
+  final int completed;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final standbyFraction = total == 0 ? 0.0 : standby / total;
+    final completedFraction = total == 0 ? 0.0 : completed / total;
+    const size = 108.0;
+
+    return Tooltip(
+      message: context.trParams('studiesBreakdownTooltip', {
+        'standby': '$standby',
+        'completed': '$completed',
+      }),
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: SizedBox(
+            width: size,
+            height: size,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: const Duration(milliseconds: 900),
+              curve: Curves.easeOutCubic,
+              builder: (context, progress, _) {
+                return CustomPaint(
+                  painter: _DonutPainter(
+                    standbyFraction: standbyFraction,
+                    completedFraction: completedFraction,
+                    progress: progress,
+                    trackColor: scheme.outlineVariant.withValues(alpha: 0.25),
+                    standbyColor: Colors.amber,
+                    completedColor: scheme.primary,
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '$total',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        Text(
+                          context.tr('studyNotebooksLabel'),
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: scheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DonutPainter extends CustomPainter {
+  _DonutPainter({
+    required this.standbyFraction,
+    required this.completedFraction,
+    required this.progress,
+    required this.trackColor,
+    required this.standbyColor,
+    required this.completedColor,
+  });
+
+  final double standbyFraction;
+  final double completedFraction;
+  final double progress;
+  final Color trackColor;
+  final Color standbyColor;
+  final Color completedColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final strokeWidth = size.width * 0.16;
+    final rect = Rect.fromLTWH(
+      strokeWidth / 2,
+      strokeWidth / 2,
+      size.width - strokeWidth,
+      size.height - strokeWidth,
+    );
+
+    final trackPaint = Paint()
+      ..color = trackColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+    canvas.drawArc(rect, 0, 2 * math.pi, false, trackPaint);
+
+    const startAngle = -math.pi / 2;
+    final standbySweep = 2 * math.pi * standbyFraction * progress;
+    final completedSweep = 2 * math.pi * completedFraction * progress;
+
+    if (standbySweep > 0) {
+      final standbyPaint = Paint()
+        ..color = standbyColor
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = strokeWidth;
+      canvas.drawArc(rect, startAngle, standbySweep, false, standbyPaint);
+    }
+
+    if (completedSweep > 0) {
+      final completedPaint = Paint()
+        ..color = completedColor
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = strokeWidth;
+      canvas.drawArc(rect, startAngle + standbySweep, completedSweep, false, completedPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DonutPainter oldDelegate) =>
+      oldDelegate.progress != progress ||
+      oldDelegate.standbyFraction != standbyFraction ||
+      oldDelegate.completedFraction != completedFraction;
 }
 
 class _MetricTile extends StatelessWidget {
@@ -153,15 +381,13 @@ class _MetricTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    final tile = Container(
+    final tile = PremiumHoverCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: scheme.outlineVariant.withOpacity(0.3)),
-      ),
+      borderRadius: 16,
+      width: null,
+      onTap: onTap,
       child: Row(
-        mainAxisSize: isDesktop ? MainAxisSize.min : MainAxisSize.max,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, color: scheme.primary, size: 22),
           const SizedBox(width: 10),
@@ -177,31 +403,20 @@ class _MetricTile extends StatelessWidget {
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurface.withOpacity(0.6),
+                  color: scheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             ],
           ),
           if (onTap != null) ...[
             const SizedBox(width: 6),
-            Icon(Icons.chevron_right, size: 16, color: scheme.onSurface.withOpacity(0.4)),
+            Icon(Icons.chevron_right, size: 16, color: scheme.onSurface.withValues(alpha: 0.4)),
           ],
         ],
       ),
     );
 
-    if (onTap == null) return tile;
-    return Tooltip(
-      message: tooltip ?? '',
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: onTap,
-          child: tile,
-        ),
-      ),
-    );
+    if (tooltip == null) return tile;
+    return Tooltip(message: tooltip!, child: tile);
   }
 }

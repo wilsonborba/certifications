@@ -152,15 +152,57 @@ class QuizTimelineStepper extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Tooltip(
-            message: context.tr('resetWizard'),
-            child: IconButton(
-              icon: const Icon(Icons.rotate_left),
-              color: scheme.onSurface.withOpacity(0.7),
-              onPressed: () => wizardData.reset(),
-            ),
+          _ResetButton(isDesktop: isDesktop, onConfirmedReset: wizardData.reset),
+        ],
+      ),
+    );
+  }
+}
+
+/// Destructive "start over" control. Rendered as a clearly labeled button
+/// (not a bare icon someone could miss) with a confirm dialog before it
+/// actually clears the wizard back to Step 1, since the action cannot be
+/// undone.
+class _ResetButton extends StatelessWidget {
+  const _ResetButton({required this.isDesktop, required this.onConfirmedReset});
+
+  final bool isDesktop;
+  final VoidCallback onConfirmedReset;
+
+  Future<void> _confirmReset(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.tr('resetWizard')),
+        content: Text(ctx.tr('resetWizardConfirm')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(ctx.tr('cancel')),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(ctx.tr('resetWizard')),
           ),
         ],
+      ),
+    );
+    if (confirmed == true) onConfirmedReset();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return OutlinedButton.icon(
+      onPressed: () => _confirmReset(context),
+      icon: const Icon(Icons.rotate_left, size: 18),
+      label: isDesktop ? Text(context.tr('resetWizard')) : const SizedBox.shrink(),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: scheme.error,
+        side: BorderSide(color: scheme.error.withValues(alpha: 0.5)),
+        padding: EdgeInsets.symmetric(horizontal: isDesktop ? 14 : 10, vertical: 10),
       ),
     );
   }
