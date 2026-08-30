@@ -15,11 +15,14 @@ class QuizTimelineStepper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    // Short labels for the compact stepper badge; the full descriptive
+    // title (context.tr('step1Title') etc.) is shown once already, as the
+    // step content's own heading below.
     final steps = [
-      context.tr('step1Title'),
-      context.tr('step2Title'),
-      context.tr('step3Title'),
-      context.tr('step4Title'),
+      context.tr('step1ShortLabel'),
+      context.tr('step2ShortLabel'),
+      context.tr('step3ShortLabel'),
+      context.tr('step4ShortLabel'),
     ];
 
     return Container(
@@ -47,7 +50,11 @@ class QuizTimelineStepper extends StatelessWidget {
                 if (index.isOdd) {
                   final stepIdx = index ~/ 2;
                   final isPassed = wizardData.currentStep > stepIdx;
+                  // A thin connector: it only needs to fill whatever the
+                  // step badges (flex: 8 below) don't claim, never compete
+                  // with them for space on equal footing.
                   return Expanded(
+                    flex: 1,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       curve: Curves.easeOutCubic,
@@ -68,6 +75,12 @@ class QuizTimelineStepper extends StatelessWidget {
                 final isActive = wizardData.currentStep == stepIdx;
 
                 return Flexible(
+                  // A high flex weight relative to the connectors' flex: 1
+                  // above, so each badge keeps most of its natural width
+                  // (icon + label) and only the thin connector lines give
+                  // up space when the row gets tight, instead of every
+                  // child splitting the row into equal, too-narrow shares.
+                  flex: 8,
                   child: InkWell(
                   onTap: () {
                     // Allow clicking on completed or current steps to navigate

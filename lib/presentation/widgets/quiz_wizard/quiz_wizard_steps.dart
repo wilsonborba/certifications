@@ -23,7 +23,7 @@ const uploadAllowedExtensions = [
 /// Step 1: name the study. Quick-preset cards (AWS/Python/ENEM/Law) were
 /// removed after testing confirmed they were bad UX; free-text is now the
 /// only input on this step.
-class Step1ThemeView extends StatelessWidget {
+class Step1ThemeView extends StatefulWidget {
   const Step1ThemeView({
     super.key,
     required this.wizardData,
@@ -32,6 +32,25 @@ class Step1ThemeView extends StatelessWidget {
 
   final QuizWizardData wizardData;
   final bool isDesktop;
+
+  @override
+  State<Step1ThemeView> createState() => _Step1ThemeViewState();
+}
+
+class _Step1ThemeViewState extends State<Step1ThemeView> {
+  // Created once and reused for the field's whole lifetime. The previous
+  // version built a brand new TextEditingController inline on every
+  // keystroke (wizardData.setName notifies listeners, which rebuilds this
+  // widget), leaking the old one every time (never disposed) and forcing a
+  // manual cursor-position hack to paper over the cursor jumping back to
+  // the end of the field after each character.
+  late final _controller = TextEditingController(text: widget.wizardData.name);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,18 +72,17 @@ class Step1ThemeView extends StatelessWidget {
             color: scheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
-        SizedBox(height: isDesktop ? 28 : 20),
+        SizedBox(height: widget.isDesktop ? 28 : 20),
         TextField(
-          controller: TextEditingController(text: wizardData.name)
-            ..selection = TextSelection.collapsed(offset: wizardData.name.length),
-          onChanged: (val) => wizardData.setName(val),
-          style: isDesktop ? null : const TextStyle(fontSize: 16),
+          controller: _controller,
+          onChanged: widget.wizardData.setName,
+          style: widget.isDesktop ? null : const TextStyle(fontSize: 16),
           decoration: InputDecoration(
             labelText: context.tr('studyName'),
             hintText: context.tr('studyNameHint'),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
             prefixIcon: const Icon(Icons.edit),
-            contentPadding: isDesktop
+            contentPadding: widget.isDesktop
                 ? null
                 : const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
           ),

@@ -53,7 +53,7 @@ typedef RangeUpdateCallback =
 /// configuration for a single already-attached file. Rendered collapsed by
 /// default inside an accordion under that file's chip in the Phase A strip;
 /// only expands when the user wants to trim that specific file.
-class GranularRangeSelector extends StatelessWidget {
+class GranularRangeSelector extends StatefulWidget {
   const GranularRangeSelector({
     super.key,
     required this.file,
@@ -64,6 +64,34 @@ class GranularRangeSelector extends StatelessWidget {
   final AttachedFile file;
   final RangeUpdateCallback onUpdate;
   final bool isDesktop;
+
+  @override
+  State<GranularRangeSelector> createState() => _GranularRangeSelectorState();
+}
+
+class _GranularRangeSelectorState extends State<GranularRangeSelector> {
+  // Created once and kept for this file's whole time in the accordion,
+  // instead of a fresh TextEditingController per keystroke (every onUpdate
+  // call notifies QuizWizardData's listeners, which used to rebuild this
+  // whole StatelessWidget and silently leak the previous controller every
+  // time, never disposed).
+  late final _pageStartController = TextEditingController(text: '${widget.file.pageStart}');
+  late final _pageEndController = TextEditingController(text: '${widget.file.pageEnd}');
+  late final _lineStartController = TextEditingController(text: '${widget.file.lineStart}');
+  late final _lineEndController = TextEditingController(text: '${widget.file.lineEnd}');
+
+  @override
+  void dispose() {
+    _pageStartController.dispose();
+    _pageEndController.dispose();
+    _lineStartController.dispose();
+    _lineEndController.dispose();
+    super.dispose();
+  }
+
+  AttachedFile get file => widget.file;
+  RangeUpdateCallback get onUpdate => widget.onUpdate;
+  bool get isDesktop => widget.isDesktop;
 
   @override
   Widget build(BuildContext context) {
@@ -123,7 +151,7 @@ class GranularRangeSelector extends StatelessWidget {
           Expanded(
             child: TextField(
               keyboardType: TextInputType.number,
-              controller: TextEditingController(text: '${file.pageStart}'),
+              controller: _pageStartController,
               onChanged: (val) {
                 final p = int.tryParse(val);
                 if (p != null && p >= 1) onUpdate(pageStart: p);
@@ -140,7 +168,7 @@ class GranularRangeSelector extends StatelessWidget {
           Expanded(
             child: TextField(
               keyboardType: TextInputType.number,
-              controller: TextEditingController(text: '${file.pageEnd}'),
+              controller: _pageEndController,
               onChanged: (val) {
                 final p = int.tryParse(val);
                 if (p != null && p >= file.pageStart) {
@@ -163,7 +191,7 @@ class GranularRangeSelector extends StatelessWidget {
           Expanded(
             child: TextField(
               keyboardType: TextInputType.number,
-              controller: TextEditingController(text: '${file.lineStart}'),
+              controller: _lineStartController,
               onChanged: (val) {
                 final l = int.tryParse(val);
                 if (l != null && l >= 1) onUpdate(lineStart: l);
@@ -180,7 +208,7 @@ class GranularRangeSelector extends StatelessWidget {
           Expanded(
             child: TextField(
               keyboardType: TextInputType.number,
-              controller: TextEditingController(text: '${file.lineEnd}'),
+              controller: _lineEndController,
               onChanged: (val) {
                 final l = int.tryParse(val);
                 if (l != null && l >= file.lineStart) {
