@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/presentation/components/premium_hover_card.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +15,7 @@ class CompletedMetricsBanner extends StatelessWidget {
     required this.totalSizeBytes,
     required this.averageScorePercent,
     required this.hasScoreData,
+    required this.activityDates,
     required this.isDesktop,
     this.onTapCompletedQuizzes,
   });
@@ -30,6 +29,9 @@ class CompletedMetricsBanner extends StatelessWidget {
   /// Whether [averageScorePercent] reflects real data. When false, the tile
   /// shows a dash placeholder instead of a misleading 0%.
   final bool hasScoreData;
+
+  /// When each study was created, used to plot studies-per-day.
+  final List<DateTime> activityDates;
   final bool isDesktop;
 
   /// Opens the completed-quizzes list (visibility, sharing, leaderboard).
@@ -113,12 +115,6 @@ class CompletedMetricsBanner extends StatelessWidget {
 
   Widget _buildPopulated(BuildContext context, ColorScheme scheme) {
     final sizeMb = (totalSizeBytes / (1024 * 1024)).toStringAsFixed(1);
-    final donut = _StudiesDonutChart(
-      total: totalStudies,
-      standby: standbyCount,
-      completed: completedQuizzesCount,
-      onTap: onTapCompletedQuizzes,
-    );
 
     final tiles = Wrap(
       spacing: 12,
@@ -159,23 +155,12 @@ class CompletedMetricsBanner extends StatelessWidget {
       ],
     );
 
-    if (!isDesktop) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(child: donut),
-          const SizedBox(height: 20),
-          tiles,
-        ],
-      );
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        donut,
-        const SizedBox(width: 28),
-        Expanded(child: tiles),
+        _ActivityBarChart(dates: activityDates, isDesktop: isDesktop),
+        const SizedBox(height: 20),
+        tiles,
       ],
     );
   }
@@ -215,165 +200,181 @@ class _EmptyDashboardState extends StatelessWidget {
   }
 }
 
-/// Small animated donut chart breaking down the user's studies into standby
-/// vs. completed. Hovering (desktop) or long-pressing shows a breakdown
-/// tooltip; tapping opens the completed quizzes list, a real transition
-/// rather than a purely decorative chart.
-class _StudiesDonutChart extends StatelessWidget {
-  const _StudiesDonutChart({
-    required this.total,
-    required this.standby,
-    required this.completed,
-    this.onTap,
-  });
+/// One bucketed day in the activity chart.
+class _DayBucket {
+  const _DayBucket({required this.day, required this.count});
+  final DateTime day;
+  final int count;
+}
 
-  final int total;
-  final int standby;
-  final int completed;
-  final VoidCallback? onTap;
+/// Cartesian bar chart: studies created per day, over the last 2 weeks.
+/// Replaces the previous donut chart, which had nothing meaningful to show
+/// a breakdown of once most studies fell into a single category.
+class _ActivityBarChart extends StatefulWidget {
+  const _ActivityBarChart({required this.dates, required this.isDesktop});
+
+  final List<DateTime> dates;
+  final bool isDesktop;
+
+  @override
+  State<_ActivityBarChart> createState() => _ActivityBarChartState();
+}
+
+class _ActivityBarChartState extends State<_ActivityBarChart> {
+  static const _daySpan = 14;
+  int? _hoveredIndex;
+
+  List<_DayBucket> _buckets() {
+    final today = DateTime.now();
+    final startDay = DateTime(today.year, today.month, today.day)
+        .subtract(const Duration(days: _daySpan - 1));
+    final counts = List<int>.filled(_daySpan, 0);
+    for (final date in widget.dates) {
+      final day = DateTime(date.year, date.month, date.day);
+      final index = day.difference(startDay).inDays;
+      if (index >= 0 && index < _daySpan) counts[index]++;
+    }
+    return [
+      for (var i = 0; i < _daySpan; i++)
+        _DayBucket(day: startDay.add(Duration(days: i)), count: counts[i]),
+    ];
+  }
+
+  String _shortDate(DateTime day) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${months[day.month - 1]} ${day.day}';
+  }
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final standbyFraction = total == 0 ? 0.0 : standby / total;
-    final completedFraction = total == 0 ? 0.0 : completed / total;
-    const size = 120.0;
+    final buckets = _buckets();
+    final maxCount = buckets.fold<int>(1, (m, b) => b.count > m ? b.count : m);
+    // Show every label on desktop, every other on mobile so 14 short dates
+    // never overlap each other.
+    final labelStride = widget.isDesktop ? 1 : 2;
 
-    return Tooltip(
-      message: context.trParams('studiesBreakdownTooltip', {
-        'standby': '$standby',
-        'completed': '$completed',
-      }),
-      child: Material(
-        color: Colors.transparent,
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: scheme.primary.withValues(alpha: 0.16),
-                  blurRadius: 24,
-                  spreadRadius: -4,
-                ),
-              ],
-            ),
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: 1),
-              duration: const Duration(milliseconds: 900),
-              curve: Curves.easeOutCubic,
-              builder: (context, progress, _) {
-                return CustomPaint(
-                  painter: _DonutPainter(
-                    standbyFraction: standbyFraction,
-                    completedFraction: completedFraction,
-                    progress: progress,
-                    trackColor: scheme.onSurface.withValues(alpha: 0.06),
-                    standbyColor: scheme.primary.withValues(alpha: 0.32),
-                    completedColor: scheme.primary,
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '$total',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        Text(
-                          context.tr('studyNotebooksLabel'),
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: scheme.onSurface.withValues(alpha: 0.55),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+    return SizedBox(
+      height: 180,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            context.tr('studiesActivityLabel'),
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: scheme.onSurface.withValues(alpha: 0.6),
+              fontWeight: FontWeight.w600,
             ),
           ),
-        ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (var i = 0; i < buckets.length; i++)
+                  Expanded(
+                    child: _BarColumn(
+                      bucket: buckets[i],
+                      maxCount: maxCount,
+                      showLabel: i % labelStride == 0,
+                      hovered: _hoveredIndex == i,
+                      dateLabel: _shortDate(buckets[i].day),
+                      onHoverChanged: (hovered) =>
+                          setState(() => _hoveredIndex = hovered ? i : null),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _DonutPainter extends CustomPainter {
-  _DonutPainter({
-    required this.standbyFraction,
-    required this.completedFraction,
-    required this.progress,
-    required this.trackColor,
-    required this.standbyColor,
-    required this.completedColor,
+class _BarColumn extends StatelessWidget {
+  const _BarColumn({
+    required this.bucket,
+    required this.maxCount,
+    required this.showLabel,
+    required this.hovered,
+    required this.dateLabel,
+    required this.onHoverChanged,
   });
 
-  final double standbyFraction;
-  final double completedFraction;
-  final double progress;
-  final Color trackColor;
-  final Color standbyColor;
-  final Color completedColor;
-
-  // A small angular gap keeps adjacent segments (and a segment butting up
-  // against itself on a full loop) visually separated instead of reading as
-  // one solid, featureless ring.
-  static const _gap = 0.045;
+  final _DayBucket bucket;
+  final int maxCount;
+  final bool showLabel;
+  final bool hovered;
+  final String dateLabel;
+  final ValueChanged<bool> onHoverChanged;
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final strokeWidth = size.width * 0.1;
-    final rect = Rect.fromLTWH(
-      strokeWidth / 2,
-      strokeWidth / 2,
-      size.width - strokeWidth,
-      size.height - strokeWidth,
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final fraction = maxCount == 0 ? 0.0 : bucket.count / maxCount;
+
+    return Tooltip(
+      message: '$dateLabel · ${bucket.count}',
+      child: MouseRegion(
+        onEnter: (_) => onHoverChanged(true),
+        onExit: (_) => onHoverChanged(false),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (bucket.count > 0)
+                Text(
+                  '${bucket.count}',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: hovered ? scheme.primary : scheme.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
+              const SizedBox(height: 4),
+              Expanded(
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: fraction),
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, _) => FractionallySizedBox(
+                    alignment: Alignment.bottomCenter,
+                    heightFactor: value.clamp(0.04, 1.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: hovered
+                            ? scheme.primary
+                            : scheme.primary.withValues(alpha: bucket.count == 0 ? 0.08 : 0.55),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              if (showLabel)
+                Text(
+                  dateLabel,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    fontSize: 9,
+                    color: scheme.onSurface.withValues(alpha: 0.5),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
-
-    final trackPaint = Paint()
-      ..color = trackColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth;
-    canvas.drawArc(rect, 0, 2 * math.pi, false, trackPaint);
-
-    const startAngle = -math.pi / 2;
-    final segments = [
-      if (standbyFraction > 0) (fraction: standbyFraction, color: standbyColor),
-      if (completedFraction > 0) (fraction: completedFraction, color: completedColor),
-    ];
-    final isFullLoop = (standbyFraction + completedFraction) >= 0.999;
-
-    var angle = startAngle;
-    for (final segment in segments) {
-      final sweep = 2 * math.pi * segment.fraction * progress;
-      if (sweep <= 0) continue;
-      final drawnSweep = (segments.length > 1 || isFullLoop)
-          ? math.max(sweep - _gap, sweep * 0.5)
-          : sweep;
-      final paint = Paint()
-        ..color = segment.color
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeWidth = strokeWidth;
-      canvas.drawArc(rect, angle, drawnSweep, false, paint);
-      angle += sweep;
-    }
   }
-
-  @override
-  bool shouldRepaint(covariant _DonutPainter oldDelegate) =>
-      oldDelegate.progress != progress ||
-      oldDelegate.standbyFraction != standbyFraction ||
-      oldDelegate.completedFraction != completedFraction;
 }
 
 class _MetricTile extends StatelessWidget {
