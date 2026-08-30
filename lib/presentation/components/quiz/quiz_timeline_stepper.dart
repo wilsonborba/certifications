@@ -67,7 +67,8 @@ class QuizTimelineStepper extends StatelessWidget {
                 final isCompleted = wizardData.currentStep > stepIdx;
                 final isActive = wizardData.currentStep == stepIdx;
 
-                return InkWell(
+                return Flexible(
+                  child: InkWell(
                   onTap: () {
                     // Allow clicking on completed or current steps to navigate
                     if (isCompleted || isActive || stepIdx == wizardData.currentStep + 1) {
@@ -134,18 +135,23 @@ class QuizTimelineStepper extends StatelessWidget {
                         ),
                         if (isDesktop) ...[
                           const SizedBox(width: 8),
-                          Text(
-                            steps[stepIdx],
-                            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                              fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                              color: isActive
-                                  ? scheme.primary
-                                  : scheme.onSurface.withOpacity(0.8),
+                          Flexible(
+                            child: Text(
+                              steps[stepIdx],
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+                                color: isActive
+                                    ? scheme.primary
+                                    : scheme.onSurface.withOpacity(0.8),
+                              ),
                             ),
                           ),
                         ],
                       ],
                     ),
+                  ),
                   ),
                 );
               }),
