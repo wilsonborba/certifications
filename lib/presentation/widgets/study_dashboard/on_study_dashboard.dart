@@ -82,7 +82,7 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
     final isDesktop = width >= 768;
 
     return Scaffold(
-      appBar: AttachmentAppBar(title: context.tr('yourStudies')),
+      appBar: AttachmentAppBar(title: context.tr('myStudiesTitle')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           await Navigator.push(
@@ -121,6 +121,25 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      Text(
+                        context.tr('myStudiesTitle'),
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.5,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        context.tr('myStudiesSubtitle'),
+                        style: Theme.of(context).textTheme.bodyLarge
+                            ?.copyWith(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: .72),
+                            ),
+                      ),
+                      const SizedBox(height: 24),
                       CompletedMetricsBanner(
                         totalStudies: studies.length,
                         totalSizeBytes: totalBytes,
