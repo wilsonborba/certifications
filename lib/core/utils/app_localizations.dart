@@ -299,6 +299,7 @@ class AppLocalizations {
       'collapseDashboard': 'Collapse',
       'completedOnLabel': 'Completed on',
       'totalAttemptsLabel': 'Total attempts',
+      'searchQuizzesHint': 'Search your completed quizzes…',
     },
     'pt': {
       'appName': 'Certifications',
@@ -602,6 +603,7 @@ class AppLocalizations {
       'collapseDashboard': 'Recolher',
       'completedOnLabel': 'Concluído em',
       'totalAttemptsLabel': 'Total de tentativas',
+      'searchQuizzesHint': 'Buscar nos seus simulados concluídos…',
     },
     'th': {
       'appName': 'Certifications',
@@ -894,6 +896,7 @@ class AppLocalizations {
       'collapseDashboard': 'ย่อ',
       'completedOnLabel': 'เสร็จสิ้นเมื่อ',
       'totalAttemptsLabel': 'จำนวนครั้งที่ทำทั้งหมด',
+      'searchQuizzesHint': 'ค้นหาแบบทดสอบที่เสร็จสิ้นของคุณ…',
     },
   };
   String text(String key) =>
