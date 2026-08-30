@@ -6,6 +6,7 @@ import 'package:certifications/core/utils/app_preferences.dart';
 
 import 'package:certifications/presentation/components/auth/login_redirect.dart';
 import 'package:certifications/presentation/components/preferences/app_preferences_controls.dart';
+import 'package:certifications/presentation/widgets/certificates/on_certificates.dart';
 import 'package:certifications/presentation/widgets/plans/on_plans.dart';
 import 'package:certifications/presentation/components/auth/session_gate.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +23,6 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.currentTab = 'studies',
     this.onCertificates,
     this.onPlans,
-    this.onTokens,
     this.onSupport,
     this.onAbout,
     this.onLogout, // if null, a safe default logout (clear + redirect) is used
@@ -32,12 +32,10 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
   final double maxActionLayoutWidth;
   final String? currentTab;
 
+  /// Opens the Certificates tab. Defaults to pushing [OnCertificatesScreen]
+  /// when not overridden, so the nav item is never silently disabled.
   final VoidCallback? onCertificates;
   final VoidCallback? onPlans;
-
-  /// Retained temporarily so restored legacy screens can compile. It is not
-  /// rendered and there is no reachable token-configuration navigation.
-  final VoidCallback? onTokens;
   final VoidCallback? onSupport;
   final VoidCallback? onAbout;
   final Future<void> Function()? onLogout;
@@ -271,7 +269,6 @@ class _AttachmentDesktopActions extends StatelessWidget {
     this.currentTab,
     this.onCertificates,
     this.onPlans,
-    this.onTokens,
     this.onSupport,
     this.onAbout,
     required this.onLogout,
@@ -281,7 +278,6 @@ class _AttachmentDesktopActions extends StatelessWidget {
   final String? currentTab;
   final VoidCallback? onCertificates;
   final VoidCallback? onPlans;
-  final VoidCallback? onTokens;
   final VoidCallback? onSupport;
   final VoidCallback? onAbout;
   final Future<void> Function() onLogout;
@@ -332,6 +328,7 @@ class _AttachmentDesktopActions extends StatelessWidget {
     void _defaultAbout() => redirectToUrl('https://${app_settings.ASODYA_MAIN_DOMAIN}', replace: false);
     void _defaultPlans() => NavigationService.push(const OnPlansScreen());
     void _defaultStudies() => NavigationService.pushReplacement(const SessionGate());
+    void _defaultCertificates() => NavigationService.push(const OnCertificatesScreen());
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -340,7 +337,7 @@ class _AttachmentDesktopActions extends StatelessWidget {
         if (currentTab != 'studies')
           _item(context, context.tr('studies'), _defaultStudies),
         if (currentTab != 'certificates')
-          _item(context, context.tr('certificates'), onCertificates),
+          _item(context, context.tr('certificates'), onCertificates ?? _defaultCertificates),
         if (currentTab != 'plans')
           _item(context, context.tr('plans'), onPlans ?? _defaultPlans),
         if (currentTab != 'support')
@@ -410,6 +407,7 @@ class AttachmentSideMenu extends StatelessWidget {
     void _defaultAbout() => redirectToUrl('https://${app_settings.ASODYA_MAIN_DOMAIN}', replace: false);
     void _defaultPlans() => NavigationService.push(const OnPlansScreen());
     void _defaultStudies() => NavigationService.pushReplacement(const SessionGate());
+    void _defaultCertificates() => NavigationService.push(const OnCertificatesScreen());
 
     return Drawer(
       backgroundColor: scheme.surface,
@@ -433,7 +431,7 @@ class AttachmentSideMenu extends StatelessWidget {
                   context,
                   Icons.workspace_premium_outlined,
                   context.tr('certificates'),
-                  onCertificates,
+                  onCertificates ?? _defaultCertificates,
                 ),
               if (currentTab != 'plans')
                 _tile(

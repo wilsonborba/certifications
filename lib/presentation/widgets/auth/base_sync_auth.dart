@@ -2,10 +2,12 @@ import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/core/utils/my_logs.dart';
 import 'package:certifications/core/utils/my_nagivation.dart';
 import 'package:certifications/domain/services/api_asodya_manager.dart';
+import 'package:certifications/domain/services/pending_intent_store.dart';
 import 'package:certifications/presentation/components/auth/login_redirect.dart';
 import 'package:certifications/presentation/components/auth/verify_session.dart';
 import 'package:certifications/presentation/components/quiz/futuristic_loading.dart';
 import 'package:certifications/presentation/widgets/attachment/on_attachment.dart';
+import 'package:certifications/presentation/widgets/quiz/on_shared_quiz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:web/web.dart' as web;
@@ -36,7 +38,7 @@ abstract class BaseSyncAuthState<T extends BaseSyncAuth> extends State<T> {
         final hasSession = await isThereSession(cookieName: 'csrf');
 
         if (hasSession) {
-          NavigationService.push(const OnAttachmentScreen());
+          NavigationService.push(await _landingScreenAfterAuth());
           WidgetsBinding.instance.addPostFrameCallback((_) {
             cleanUrlAfterNav(path: '/');
           });
@@ -61,12 +63,12 @@ abstract class BaseSyncAuthState<T extends BaseSyncAuth> extends State<T> {
       if (resp.statusCode == 200) {
         debug('Token exchange successful: ${resp.body}');
 
-        _navOnce(() {
+        _navOnce(() async {
           // If you use MaterialApp.router, this avoids URL updates during the push:
           // Router.neglect(context, () {
           //   NavigationService.pushReplacement(const OnAttachmentScreen());
           // });
-          NavigationService.pushReplacement(const OnAttachmentScreen());
+          NavigationService.pushReplacement(await _landingScreenAfterAuth());
           WidgetsBinding.instance.addPostFrameCallback((_) {
             cleanUrlAfterNav(path: '/');
           });
@@ -82,6 +84,21 @@ abstract class BaseSyncAuthState<T extends BaseSyncAuth> extends State<T> {
       debug('Error during auth exchange token exchange: $e');
       _toLogin();
     }
+  }
+
+  /// The screen to land on right after authentication succeeds. If the
+  /// visitor was redirected here mid-way through taking a shared quiz
+  /// (#40), resumes exactly that instead of the generic logged-in home.
+  Future<Widget> _landingScreenAfterAuth() async {
+    final intent = await PendingIntentStore.instance.consumeQuizIntent();
+    final shareToken = intent?.shareToken;
+    if (shareToken != null) {
+      return OnSharedQuizScreen(shareToken: shareToken, resumed: true);
+    }
+    // A pending intent captured by quiz id (found while browsing, not via a
+    // share link) has no dedicated resume screen yet; land on the normal
+    // logged-in home rather than guessing a destination.
+    return const OnAttachmentScreen();
   }
 
   void _toLogin() async {

@@ -3,9 +3,11 @@ import 'package:certifications/domain/models/study.dart';
 import 'package:certifications/domain/services/draft_progress_store.dart';
 import 'package:certifications/domain/services/study_api_service.dart';
 import 'package:certifications/presentation/components/attachment/app_bar.dart';
+import 'package:certifications/presentation/components/dashboard/certificate_mini_list_card.dart';
 import 'package:certifications/presentation/components/dashboard/completed_metrics_banner.dart';
 import 'package:certifications/presentation/components/dashboard/draft_resume_hero_card.dart';
 import 'package:certifications/presentation/components/dashboard/standby_study_card.dart';
+import 'package:certifications/presentation/components/search/live_search_field.dart';
 import 'package:certifications/presentation/widgets/completed_quizzes/on_completed_quizzes.dart';
 import 'package:certifications/presentation/widgets/quiz_wizard/on_quiz_wizard.dart';
 import 'package:flutter/material.dart';
@@ -28,6 +30,12 @@ class OnStudyDashboardScreen extends StatefulWidget {
 class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
   final api = StudyApiService();
   late Future<_DashboardData> future = _load();
+
+  String _searchQuery = '';
+  bool _selectionMode = false;
+  final Set<String> _selectedIds = {};
+  bool _bulkDeleting = false;
+  bool _dashboardExpanded = true;
 
   Future<_DashboardData> _load() async {
     final studies = await api.list();
@@ -76,13 +84,83 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
     _reload();
   }
 
+  void _enterSelectionMode(String initialId) {
+    setState(() {
+      _selectionMode = true;
+      _selectedIds
+        ..clear()
+        ..add(initialId);
+    });
+  }
+
+  void _toggleSelected(String id) {
+    setState(() {
+      if (_selectedIds.contains(id)) {
+        _selectedIds.remove(id);
+      } else {
+        _selectedIds.add(id);
+      }
+      if (_selectedIds.isEmpty) _selectionMode = false;
+    });
+  }
+
+  void _exitSelectionMode() {
+    setState(() {
+      _selectionMode = false;
+      _selectedIds.clear();
+    });
+  }
+
+  Future<void> _deleteSelected() async {
+    final count = _selectedIds.length;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(context.tr('delete')),
+        content: Text(context.trParams('deleteSelectedConfirm', {'count': '$count'})),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(context.tr('close')),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(context.tr('delete')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _bulkDeleting = true);
+    final ids = _selectedIds.toList();
+    for (final id in ids) {
+      try {
+        await api.delete(id);
+      } catch (_) {
+        // Best-effort: keep deleting the rest even if one fails.
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _bulkDeleting = false;
+      _selectionMode = false;
+      _selectedIds.clear();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.tr('studyDeletedSuccess'))),
+    );
+    _reload();
+  }
+
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final isDesktop = width >= 768;
 
     return Scaffold(
-      appBar: AttachmentAppBar(title: context.tr('yourStudies')),
+      appBar: AttachmentAppBar(title: context.tr('myStudiesTitle')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           await Navigator.push(
@@ -110,8 +188,14 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
             }
             final data = snapshot.data;
             final studies = data?.studies ?? [];
-            final standby = studies.where((s) => s.status != 'completed').toList();
+            final allStandby = studies.where((s) => s.status != 'completed').toList();
+            final standby = _searchQuery.isEmpty
+                ? allStandby
+                : allStandby
+                      .where((s) => s.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+                      .toList();
             final totalBytes = studies.fold<int>(0, (sum, s) => sum + s.activeSizeBytes);
+            final completedCount = studies.where((s) => s.status == 'completed').length;
 
             return SingleChildScrollView(
               padding: EdgeInsets.all(isDesktop ? 24 : 16),
@@ -121,16 +205,37 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      Text(
+                        context.tr('myStudiesTitle'),
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.5,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        context.tr('myStudiesSubtitle'),
+                        style: Theme.of(context).textTheme.bodyLarge
+                            ?.copyWith(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: .72),
+                            ),
+                      ),
+                      const SizedBox(height: 24),
                       CompletedMetricsBanner(
                         totalStudies: studies.length,
+                        standbyCount: allStandby.length,
                         totalSizeBytes: totalBytes,
-                        completedQuizzesCount: studies.where((s) => s.status == 'completed').length,
+                        completedQuizzesCount: completedCount,
                         // No client-side source of the user's own quiz scores
                         // exists yet (QuizResult is transient, never persisted
                         // or fetched back, and the completed-quiz contract
                         // carries no per-user score field), so this is a
-                        // real 0.0 rather than a placeholder constant.
+                        // real absence of data rather than a fake number.
                         averageScorePercent: 0.0,
+                        hasScoreData: false,
                         isDesktop: isDesktop,
                         onTapCompletedQuizzes: () => Navigator.push(
                           context,
@@ -150,6 +255,40 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                       const SizedBox(height: 28),
                       Row(
                         children: [
+                          Icon(Icons.workspace_premium_outlined, color: Theme.of(context).colorScheme.primary),
+                          const SizedBox(width: 8),
+                          Text(
+                            context.tr('yourCertificatesLabel'),
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Spacer(),
+                          TextButton.icon(
+                            onPressed: () => setState(() => _dashboardExpanded = !_dashboardExpanded),
+                            icon: Icon(_dashboardExpanded ? Icons.expand_less : Icons.expand_more),
+                            label: Text(
+                              _dashboardExpanded
+                                  ? context.tr('collapseDashboard')
+                                  : context.tr('expandDashboard'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 220),
+                        curve: Curves.easeOutCubic,
+                        alignment: Alignment.topCenter,
+                        child: _dashboardExpanded
+                            ? Padding(
+                                padding: const EdgeInsets.only(top: 12),
+                                child: CertificateMiniListCard(isDesktop: isDesktop),
+                              )
+                            : const SizedBox(width: double.infinity),
+                      ),
+                      const SizedBox(height: 28),
+                      Row(
+                        children: [
                           Icon(Icons.hourglass_top, color: Theme.of(context).colorScheme.primary),
                           const SizedBox(width: 8),
                           Text(
@@ -158,27 +297,50 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          const Spacer(),
+                          if (allStandby.isNotEmpty)
+                            TextButton.icon(
+                              onPressed: _selectionMode
+                                  ? _exitSelectionMode
+                                  : () => setState(() => _selectionMode = true),
+                              icon: Icon(_selectionMode ? Icons.close : Icons.checklist),
+                              label: Text(
+                                _selectionMode
+                                    ? context.tr('cancel')
+                                    : context.tr('selectStudiesAction'),
+                              ),
+                            ),
                         ],
                       ),
+                      if (allStandby.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        LiveSearchField(
+                          hintText: context.tr('searchStudiesHint'),
+                          onChanged: (value) => setState(() => _searchQuery = value),
+                        ),
+                      ],
+                      if (_selectionMode) ...[
+                        const SizedBox(height: 12),
+                        _SelectionActionBar(
+                          count: _selectedIds.length,
+                          busy: _bulkDeleting,
+                          onDeleteAll: _selectedIds.isEmpty ? null : _deleteSelected,
+                        ),
+                      ],
                       const SizedBox(height: 16),
-                      if (standby.isEmpty)
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(32),
-                            child: Column(
-                              children: [
-                                const Icon(Icons.auto_stories, size: 48, color: Colors.grey),
-                                const SizedBox(height: 12),
-                                Text(context.tr('noStudies')),
-                              ],
-                            ),
-                          ),
-                        )
+                      if (allStandby.isEmpty)
+                        _StandbyEmptyState(isDesktop: isDesktop)
+                      else if (standby.isEmpty)
+                        _NoSearchResultsState(query: _searchQuery)
                       else if (isDesktop)
                         _StandbyGrid(
                           studies: standby,
                           onReload: _reload,
                           onResume: _resumeStudy,
+                          selectionMode: _selectionMode,
+                          selectedIds: _selectedIds,
+                          onToggleSelected: _toggleSelected,
+                          onEnterSelectionMode: _enterSelectionMode,
                         )
                       else
                         Column(
@@ -190,6 +352,10 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                                   onDeleted: _reload,
                                   onUpdated: _reload,
                                   onOpen: () => _resumeStudy(study),
+                                  selectionMode: _selectionMode,
+                                  selected: _selectedIds.contains(study.id),
+                                  onToggleSelected: () => _toggleSelected(study.id),
+                                  onEnterSelectionMode: () => _enterSelectionMode(study.id),
                                 ),
                               )
                               .toList(),
@@ -206,6 +372,126 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
   }
 }
 
+/// Bar shown while bulk-selecting standby studies: how many are selected,
+/// plus the delete-all action.
+class _SelectionActionBar extends StatelessWidget {
+  const _SelectionActionBar({
+    required this.count,
+    required this.busy,
+    required this.onDeleteAll,
+  });
+
+  final int count;
+  final bool busy;
+  final VoidCallback? onDeleteAll;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: scheme.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: scheme.primary.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          Text(
+            context.trParams('selectedCountLabel', {'count': '$count'}),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const Spacer(),
+          ElevatedButton.icon(
+            onPressed: busy ? null : onDeleteAll,
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            icon: busy
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : const Icon(Icons.delete_outline, size: 18),
+            label: Text(context.tr('deleteSelectedAction')),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Real empty state (icon + message) for the standby list, shown instead of
+/// a blank area when the user has no draft studies at all.
+class _StandbyEmptyState extends StatelessWidget {
+  const _StandbyEmptyState({required this.isDesktop});
+
+  final bool isDesktop;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: isDesktop ? 48 : 32, horizontal: 24),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.auto_stories_outlined, size: 48, color: scheme.onSurface.withValues(alpha: 0.35)),
+          const SizedBox(height: 14),
+          Text(
+            context.tr('noStudies'),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            context.tr('noStudiesSubtitle'),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurface.withValues(alpha: 0.6),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shown when a search query matches none of the standby studies.
+class _NoSearchResultsState extends StatelessWidget {
+  const _NoSearchResultsState({required this.query});
+
+  final String query;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      child: Column(
+        children: [
+          Icon(Icons.search_off, size: 40, color: scheme.onSurface.withValues(alpha: 0.35)),
+          const SizedBox(height: 10),
+          Text(
+            context.trParams('noSearchResultsLabel', {'query': query}),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurface.withValues(alpha: 0.6),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Multi-column responsive layout for the standby cards on wide screens;
 /// narrow screens keep the plain single-column [Column] above.
 class _StandbyGrid extends StatelessWidget {
@@ -213,11 +499,19 @@ class _StandbyGrid extends StatelessWidget {
     required this.studies,
     required this.onReload,
     required this.onResume,
+    required this.selectionMode,
+    required this.selectedIds,
+    required this.onToggleSelected,
+    required this.onEnterSelectionMode,
   });
 
   final List<Study> studies;
   final VoidCallback onReload;
   final ValueChanged<Study> onResume;
+  final bool selectionMode;
+  final Set<String> selectedIds;
+  final ValueChanged<String> onToggleSelected;
+  final ValueChanged<String> onEnterSelectionMode;
 
   @override
   Widget build(BuildContext context) {
@@ -240,6 +534,10 @@ class _StandbyGrid extends StatelessWidget {
                     onDeleted: onReload,
                     onUpdated: onReload,
                     onOpen: () => onResume(study),
+                    selectionMode: selectionMode,
+                    selected: selectedIds.contains(study.id),
+                    onToggleSelected: () => onToggleSelected(study.id),
+                    onEnterSelectionMode: () => onEnterSelectionMode(study.id),
                   ),
                 ),
               )

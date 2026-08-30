@@ -1,32 +1,79 @@
+import 'package:certifications/domain/models/quiz.dart';
 import 'package:flutter/foundation.dart';
 
-enum SourceType { aiGeneral, uploadFile, webSearch }
+/// Upload is the only real content source: general "AI generates it for me"
+/// and "search the web" were removed after confirming neither has any
+/// backend support in certifications_api (no general-knowledge generation
+/// path, no web-search ingestion path). Kept as an enum (rather than
+/// dropping the concept entirely) so a future real source type has a place
+/// to slot into.
+enum SourceType { uploadFile }
 
 enum DifficultyLevel { easy, medium, hard }
 
+/// One file attached to the study being created in the wizard, together with
+/// the portion of it (whole document by default, or a specific page/line/time
+/// range) that should actually be used to generate questions.
+class AttachedFile {
+  AttachedFile({
+    required this.bytes,
+    required this.name,
+    required this.kind,
+    this.isWholeDocument = true,
+    this.pageStart = 1,
+    this.pageEnd = 10,
+    this.lineStart = 1,
+    this.lineEnd = 50,
+    this.audioStartMs = 0,
+    this.audioEndMs = 300000, // 5 minutes default
+  });
+
+  final List<int> bytes;
+  final String name;
+  final String kind;
+
+  bool isWholeDocument;
+  int pageStart;
+  int pageEnd;
+  int lineStart;
+  int lineEnd;
+  int audioStartMs;
+  int audioEndMs;
+
+  int get sizeBytes => bytes.length;
+}
+
 class QuizWizardData extends ChangeNotifier {
+  /// Sentinel for [questionCount] meaning "generate as many questions as the
+  /// source material can actually support", rather than a fixed ceiling
+  /// picked by the UI.
+  static const int unlimitedQuestionCount = -1;
+
+  /// Per-study attached-files size cap, mirrors the backend's 150MB limit.
+  static const int maxTotalAttachedBytes = 150 * 1024 * 1024;
+
   int currentStep = 0;
   String name = '';
-  String categoryPreset = '';
-  SourceType sourceType = SourceType.aiGeneral;
-  List<int>? fileBytes;
-  String? fileName;
-  String? fileKind;
+  SourceType sourceType = SourceType.uploadFile;
+  final List<AttachedFile> attachedFiles = [];
   DifficultyLevel difficulty = DifficultyLevel.medium;
   int questionCount = 10;
-  bool useWebSearch = false;
 
-  // Granular range selection
-  bool isWholeDocument = true;
-  int pageStart = 1;
-  int pageEnd = 10;
-  int lineStart = 1;
-  int lineEnd = 50;
-  int audioStartMs = 0;
-  int audioEndMs = 300000; // 5 minutes default
+  /// Chosen at creation time (Step 4), defaulting to private to match the
+  /// backend's own default. Can still be changed later from the completed
+  /// quizzes list.
+  QuizVisibility visibility = QuizVisibility.private;
 
-  bool get isStep1Valid => name.trim().isNotEmpty || categoryPreset.isNotEmpty;
-  bool get isStep2Valid => sourceType != SourceType.uploadFile || fileBytes != null;
+  int get totalAttachedBytes =>
+      attachedFiles.fold(0, (sum, f) => sum + f.sizeBytes);
+
+  /// Whether adding a file of [additionalBytes] would push the study over
+  /// the per-study cap.
+  bool wouldExceedCap(int additionalBytes) =>
+      totalAttachedBytes + additionalBytes > maxTotalAttachedBytes;
+
+  bool get isStep1Valid => name.trim().isNotEmpty;
+  bool get isStep2Valid => attachedFiles.isNotEmpty;
   bool get isStep3Valid => true;
   bool get isStep4Valid => isStep1Valid && isStep2Valid && isStep3Valid;
 
@@ -53,18 +100,6 @@ class QuizWizardData extends ChangeNotifier {
 
   void setName(String value) {
     name = value;
-    categoryPreset = '';
-    notifyListeners();
-  }
-
-  void selectCategoryPreset(String preset) {
-    categoryPreset = preset;
-    name = preset;
-    notifyListeners();
-  }
-
-  void setSourceType(SourceType type) {
-    sourceType = type;
     notifyListeners();
   }
 
@@ -78,24 +113,32 @@ class QuizWizardData extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setFile({required List<int> bytes, required String name, required String kind}) {
-    fileBytes = bytes;
-    fileName = name;
-    fileKind = kind;
+  void setVisibility(QuizVisibility value) {
+    visibility = value;
     notifyListeners();
   }
 
-  /// Clears the currently attached file so the user can pick a different one.
-  void clearFile() {
-    fileBytes = null;
-    fileName = null;
-    fileKind = null;
+  /// Adds a newly picked file to the attached-files list. Does not enforce
+  /// the size cap itself: callers should check [wouldExceedCap] first so
+  /// they can surface a proper warning instead of silently rejecting it.
+  void addFile(AttachedFile file) {
+    attachedFiles.add(file);
     notifyListeners();
   }
 
-  /// Applies one or more range-selection updates in a single notification.
-  /// Pass only the fields that changed; the rest keep their current value.
-  void updateRange({
+  void removeFileAt(int index) {
+    if (index < 0 || index >= attachedFiles.length) return;
+    attachedFiles.removeAt(index);
+    notifyListeners();
+  }
+
+  /// Applies one or more range-selection updates to the file at [index] in a
+  /// single notification. Pass only the fields that changed; the rest keep
+  /// their current value. This is the only place that should ever mutate an
+  /// [AttachedFile]'s range fields, so every change funnels through this
+  /// object's own [notifyListeners] rather than a widget calling it directly.
+  void updateFileRange(
+    int index, {
     bool? isWholeDocument,
     int? pageStart,
     int? pageEnd,
@@ -104,34 +147,26 @@ class QuizWizardData extends ChangeNotifier {
     int? audioStartMs,
     int? audioEndMs,
   }) {
-    if (isWholeDocument != null) this.isWholeDocument = isWholeDocument;
-    if (pageStart != null) this.pageStart = pageStart;
-    if (pageEnd != null) this.pageEnd = pageEnd;
-    if (lineStart != null) this.lineStart = lineStart;
-    if (lineEnd != null) this.lineEnd = lineEnd;
-    if (audioStartMs != null) this.audioStartMs = audioStartMs;
-    if (audioEndMs != null) this.audioEndMs = audioEndMs;
+    if (index < 0 || index >= attachedFiles.length) return;
+    final file = attachedFiles[index];
+    if (isWholeDocument != null) file.isWholeDocument = isWholeDocument;
+    if (pageStart != null) file.pageStart = pageStart;
+    if (pageEnd != null) file.pageEnd = pageEnd;
+    if (lineStart != null) file.lineStart = lineStart;
+    if (lineEnd != null) file.lineEnd = lineEnd;
+    if (audioStartMs != null) file.audioStartMs = audioStartMs;
+    if (audioEndMs != null) file.audioEndMs = audioEndMs;
     notifyListeners();
   }
 
   void reset() {
     currentStep = 0;
     name = '';
-    categoryPreset = '';
-    sourceType = SourceType.aiGeneral;
-    fileBytes = null;
-    fileName = null;
-    fileKind = null;
+    sourceType = SourceType.uploadFile;
+    attachedFiles.clear();
     difficulty = DifficultyLevel.medium;
     questionCount = 10;
-    useWebSearch = false;
-    isWholeDocument = true;
-    pageStart = 1;
-    pageEnd = 10;
-    lineStart = 1;
-    lineEnd = 50;
-    audioStartMs = 0;
-    audioEndMs = 300000;
+    visibility = QuizVisibility.private;
     notifyListeners();
   }
 }

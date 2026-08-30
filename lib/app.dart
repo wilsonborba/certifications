@@ -6,8 +6,8 @@ import 'package:certifications/core/utils/my_theme.dart';
 import 'package:certifications/presentation/components/auth/auth_artifact_params.dart';
 import 'package:certifications/presentation/components/auth/session_gate.dart';
 import 'package:certifications/presentation/widgets/auth/on_sync_auth.dart';
-import 'package:certifications/presentation/widgets/certifications/on_certification.dart';
 import 'package:certifications/presentation/widgets/plans/on_plans.dart';
+import 'package:certifications/presentation/widgets/quiz/on_shared_quiz.dart';
 import 'package:flutter/material.dart';
 
 class App extends StatefulWidget {
@@ -69,10 +69,13 @@ class _AppState extends State<App> {
             builder: (_) => const OnPlansScreen(),
           );
         }
-        if (parser.path == 'certifications' && parser.segments.length > 1) {
+        // Quiz share links (#40): anonymous-friendly preview, auth-gated
+        // only at the point of actually starting the quiz.
+        if (parser.path == 'quizzes' &&
+            parser.segments.length > 2 &&
+            parser.segments[1] == 'shared') {
           return MaterialPageRoute(
-            builder: (_) =>
-                OnCertificationScreen(certificationId: parser.segments[1]),
+            builder: (_) => OnSharedQuizScreen(shareToken: parser.segments[2]),
           );
         }
         return MaterialPageRoute(builder: (_) => const SessionGate());
