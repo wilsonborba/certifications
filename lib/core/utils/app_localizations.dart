@@ -304,6 +304,12 @@ class AppLocalizations {
       'searchCertificatesHint': 'Search your certificates…',
       'noPrivateCertificatesYet': 'You have no private certificates yet.',
       'noPublicCertificatesYet': 'You have no public certificates yet.',
+      'sharedQuizTitle': 'Shared quiz',
+      'sharedQuizUnavailable': 'This shared quiz link is invalid or has expired.',
+      'sharedQuizQuestionCount': '{count} questions',
+      'sharedQuizResumedBanner': 'Signed in, picking up right where you left off',
+      'sharedQuizReadyMessage':
+          'You are signed in and ready to go. Taking the quiz itself is coming soon.',
     },
     'pt': {
       'appName': 'Certifications',
@@ -612,6 +618,12 @@ class AppLocalizations {
       'searchCertificatesHint': 'Buscar nos seus certificados…',
       'noPrivateCertificatesYet': 'Você ainda não tem certificados privados.',
       'noPublicCertificatesYet': 'Você ainda não tem certificados públicos.',
+      'sharedQuizTitle': 'Quiz compartilhado',
+      'sharedQuizUnavailable': 'Este link de quiz compartilhado é inválido ou expirou.',
+      'sharedQuizQuestionCount': '{count} perguntas',
+      'sharedQuizResumedBanner': 'Login realizado, continuando de onde você parou',
+      'sharedQuizReadyMessage':
+          'Você está conectado e pronto para começar. Fazer o quiz em si chega em breve.',
     },
     'th': {
       'appName': 'Certifications',
@@ -909,6 +921,11 @@ class AppLocalizations {
       'searchCertificatesHint': 'ค้นหาใบรับรองของคุณ…',
       'noPrivateCertificatesYet': 'คุณยังไม่มีใบรับรองส่วนตัว',
       'noPublicCertificatesYet': 'คุณยังไม่มีใบรับรองสาธารณะ',
+      'sharedQuizTitle': 'แบบทดสอบที่แชร์',
+      'sharedQuizUnavailable': 'ลิงก์แบบทดสอบที่แชร์นี้ไม่ถูกต้องหรือหมดอายุแล้ว',
+      'sharedQuizQuestionCount': '{count} คำถาม',
+      'sharedQuizResumedBanner': 'เข้าสู่ระบบแล้ว กำลังดำเนินการต่อจากจุดที่คุณค้างไว้',
+      'sharedQuizReadyMessage': 'คุณเข้าสู่ระบบแล้วและพร้อมเริ่มต้น การทำแบบทดสอบจริงจะเปิดให้ใช้งานเร็ว ๆ นี้',
     },
   };
   String text(String key) =>
