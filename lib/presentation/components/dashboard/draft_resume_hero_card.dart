@@ -34,64 +34,81 @@ class DraftResumeHeroCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: scheme.primary.withOpacity(0.3)),
       ),
-      child: Flex(
-        direction: isDesktop ? Axis.horizontal : Axis.vertical,
-        crossAxisAlignment: isDesktop
-            ? CrossAxisAlignment.center
-            : CrossAxisAlignment.stretch,
-        children: [
-          Row(
+      child: _buildContent(context, scheme),
+    );
+  }
+
+  Widget _buildContent(BuildContext context, ColorScheme scheme) {
+    final infoRow = Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: scheme.primary.withOpacity(0.15),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(Icons.play_circle_fill, color: scheme.primary, size: 28),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: scheme.primary.withOpacity(0.15),
-                  shape: BoxShape.circle,
+              Text(
+                context.tr('resumeHeroTitle'),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
-                child: Icon(Icons.play_circle_fill, color: scheme.primary, size: 28),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      context.tr('resumeHeroTitle'),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      study.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: scheme.onSurface.withOpacity(0.75),
-                      ),
-                    ),
-                    Text(
-                      context.tr('resumeHeroSubtitle'),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurface.withOpacity(0.6),
-                      ),
-                    ),
-                  ],
+              const SizedBox(height: 2),
+              Text(
+                study.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurface.withOpacity(0.75),
+                ),
+              ),
+              Text(
+                context.tr('resumeHeroSubtitle'),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurface.withOpacity(0.6),
                 ),
               ),
             ],
           ),
-          SizedBox(width: isDesktop ? 16 : 0, height: isDesktop ? 0 : 14),
-          SizedBox(
-            width: isDesktop ? null : double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: onResume,
-              icon: const Icon(Icons.arrow_forward),
-              label: Text(context.tr('resumeHeroCta')),
-            ),
-          ),
-        ],
+        ),
+      ],
+    );
+
+    final button = SizedBox(
+      width: isDesktop ? null : double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: onResume,
+        icon: const Icon(Icons.arrow_forward),
+        label: Text(context.tr('resumeHeroCta')),
       ),
+    );
+
+    // A single Flex that flips direction between desktop/mobile cannot give
+    // infoRow's own Expanded child a bounded width in the vertical
+    // (mobile) case without introducing the same "unbounded constraints"
+    // crash in the other axis, so the two layouts are built explicitly
+    // instead of sharing one conditional Flex.
+    if (isDesktop) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(child: infoRow),
+          const SizedBox(width: 16),
+          button,
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [infoRow, const SizedBox(height: 14), button],
     );
   }
 }
