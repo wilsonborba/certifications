@@ -31,6 +31,24 @@ class StudyApiService {
   );
   Future<Study> get(String id) async =>
       _study(await _adapter.get(Uri.parse('$_base/$id')));
+
+  /// Renames a study. Follows the same PATCH-a-sub-resource shape used by
+  /// [select] below, applied to the study itself.
+  Future<Study> rename(String studyId, String name) async => _study(
+    await _adapter.patch(
+      Uri.parse('$_base/$studyId'),
+      headers: const {'Content-Type': 'application/json'},
+      body: jsonEncode({'name': name}),
+    ),
+  );
+
+  Future<void> delete(String studyId) async {
+    final response = await _adapter.delete(Uri.parse('$_base/$studyId'));
+    if (response.statusCode != 204 &&
+        (response.statusCode < 200 || response.statusCode >= 300)) {
+      throw StudyApiException(response.statusCode);
+    }
+  }
   Future<StudySource> upload({
     required String studyId,
     required String kind,

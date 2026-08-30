@@ -51,6 +51,12 @@ class QuizWizardData extends ChangeNotifier {
     }
   }
 
+  void setName(String value) {
+    name = value;
+    categoryPreset = '';
+    notifyListeners();
+  }
+
   void selectCategoryPreset(String preset) {
     categoryPreset = preset;
     name = preset;
@@ -62,10 +68,49 @@ class QuizWizardData extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setDifficulty(DifficultyLevel level) {
+    difficulty = level;
+    notifyListeners();
+  }
+
+  void setQuestionCount(int count) {
+    questionCount = count;
+    notifyListeners();
+  }
+
   void setFile({required List<int> bytes, required String name, required String kind}) {
     fileBytes = bytes;
     fileName = name;
     fileKind = kind;
+    notifyListeners();
+  }
+
+  /// Clears the currently attached file so the user can pick a different one.
+  void clearFile() {
+    fileBytes = null;
+    fileName = null;
+    fileKind = null;
+    notifyListeners();
+  }
+
+  /// Applies one or more range-selection updates in a single notification.
+  /// Pass only the fields that changed; the rest keep their current value.
+  void updateRange({
+    bool? isWholeDocument,
+    int? pageStart,
+    int? pageEnd,
+    int? lineStart,
+    int? lineEnd,
+    int? audioStartMs,
+    int? audioEndMs,
+  }) {
+    if (isWholeDocument != null) this.isWholeDocument = isWholeDocument;
+    if (pageStart != null) this.pageStart = pageStart;
+    if (pageEnd != null) this.pageEnd = pageEnd;
+    if (lineStart != null) this.lineStart = lineStart;
+    if (lineEnd != null) this.lineEnd = lineEnd;
+    if (audioStartMs != null) this.audioStartMs = audioStartMs;
+    if (audioEndMs != null) this.audioEndMs = audioEndMs;
     notifyListeners();
   }
 

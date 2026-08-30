@@ -1,21 +1,7 @@
 import 'package:certifications/core/utils/app_localizations.dart';
+import 'package:certifications/domain/models/quiz.dart';
+import 'package:certifications/domain/services/quiz_api_service.dart';
 import 'package:flutter/material.dart';
-
-class LeaderboardEntry {
-  LeaderboardEntry({
-    required this.rank,
-    required this.userName,
-    required this.score,
-    required this.timeSpentSeconds,
-    required this.completedAt,
-  });
-
-  final int rank;
-  final String userName;
-  final double score;
-  final int timeSpentSeconds;
-  final String completedAt;
-}
 
 class QuizLeaderboardView extends StatelessWidget {
   const QuizLeaderboardView({
@@ -51,7 +37,7 @@ class QuizLeaderboardView extends StatelessWidget {
                           const Icon(Icons.emoji_events, size: 64, color: Colors.grey),
                           const SizedBox(height: 16),
                           Text(
-                            'Nenhum participante concluiu este simulado ainda.',
+                            context.tr('noParticipantsYet'),
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                         ],
@@ -115,7 +101,7 @@ class QuizLeaderboardView extends StatelessWidget {
                                       ),
                                     ),
                                     Text(
-                                      'Tempo: ${minutes}m ${seconds}s',
+                                      '${context.tr('timePrefix')} ${minutes}m ${seconds}s',
                                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                         color: scheme.onSurface.withOpacity(0.6),
                                       ),
@@ -147,6 +133,71 @@ class QuizLeaderboardView extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Thin stateful wrapper that fetches `GET /quizzes/completed/{id}/leaderboard`
+/// and feeds the result into the presentational [QuizLeaderboardView].
+class QuizLeaderboardScreen extends StatefulWidget {
+  const QuizLeaderboardScreen({
+    super.key,
+    required this.quizId,
+    required this.quizTitle,
+    required this.isDesktop,
+  });
+
+  final String quizId;
+  final String quizTitle;
+  final bool isDesktop;
+
+  @override
+  State<QuizLeaderboardScreen> createState() => _QuizLeaderboardScreenState();
+}
+
+class _QuizLeaderboardScreenState extends State<QuizLeaderboardScreen> {
+  final _api = QuizApiService();
+  late Future<List<LeaderboardEntry>> _future = _api.getLeaderboard(widget.quizId);
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<LeaderboardEntry>>(
+      future: _future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return Scaffold(
+            appBar: AppBar(title: Text(context.tr('leaderboard'))),
+            body: const Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasError) {
+          return Scaffold(
+            appBar: AppBar(title: Text(context.tr('leaderboard'))),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(context.tr('errorGeneric')),
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      onPressed: () =>
+                          setState(() => _future = _api.getLeaderboard(widget.quizId)),
+                      child: Text(context.tr('retry')),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+        return QuizLeaderboardView(
+          quizTitle: widget.quizTitle,
+          entries: snapshot.data ?? const [],
+          isDesktop: widget.isDesktop,
+        );
+      },
     );
   }
 }

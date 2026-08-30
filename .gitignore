@@ -1,3 +1,6 @@
+# Local documentation directory (AI Agent Working Rules #9)
+docs/
+
 # Miscellaneous
 *.class
 *.lock

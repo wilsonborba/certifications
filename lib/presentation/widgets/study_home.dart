@@ -1,7 +1,7 @@
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/core/utils/app_preferences.dart';
 import 'package:certifications/core/utils/my_background.dart';
-import 'package:certifications/presentation/widgets/study_list.dart';
+import 'package:certifications/presentation/widgets/study_dashboard/on_study_dashboard.dart';
 import 'package:flutter/material.dart';
 
 class StudyHome extends StatelessWidget {
@@ -111,7 +111,7 @@ class _StartCard extends StatelessWidget {
       ElevatedButton(
         onPressed: () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const StudyList()),
+          MaterialPageRoute(builder: (_) => const OnStudyDashboardScreen()),
         ),
         child: Text(context.tr('openStudies')),
       ),

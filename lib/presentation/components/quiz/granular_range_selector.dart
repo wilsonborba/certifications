@@ -2,6 +2,37 @@ import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/quiz_wizard_data.dart';
 import 'package:flutter/material.dart';
 
+/// Icon and accent color used to visually badge a file by its extension.
+/// Shared between [GranularRangeSelector] and the quiz wizard's file preview.
+({Color color, IconData icon}) fileKindVisual(String kind) {
+  switch (kind) {
+    case 'pdf':
+      return (color: Colors.redAccent, icon: Icons.picture_as_pdf);
+    case 'docx':
+    case 'doc':
+      return (color: Colors.blueAccent, icon: Icons.description);
+    case 'csv':
+      return (color: Colors.green, icon: Icons.table_chart);
+    case 'mp3':
+    case 'wav':
+    case 'm4a':
+      return (color: Colors.purpleAccent, icon: Icons.audiotrack);
+    case 'mp4':
+    case 'mov':
+      return (color: Colors.orangeAccent, icon: Icons.video_library);
+    default:
+      return (color: Colors.blueGrey, icon: Icons.insert_drive_file);
+  }
+}
+
+/// Human-readable file size, switching from KB to MB above 1 MB.
+String formatFileSize(int bytes) {
+  final mb = bytes / (1024 * 1024);
+  if (mb >= 1) return '${mb.toStringAsFixed(2)} MB';
+  final kb = bytes / 1024;
+  return '${kb.toStringAsFixed(0)} KB';
+}
+
 class GranularRangeSelector extends StatelessWidget {
   const GranularRangeSelector({
     super.key,
@@ -29,14 +60,14 @@ class GranularRangeSelector extends StatelessWidget {
         children: [
           Row(
             children: [
-              _buildFileKindBadge(scheme, fileKind),
+              _buildFileKindBadge(fileKind),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      wizardData.fileName ?? 'arquivo_desconhecido',
+                      wizardData.fileName ?? context.tr('unknownFileName'),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -45,7 +76,7 @@ class GranularRangeSelector extends StatelessWidget {
                     ),
                     if (wizardData.fileBytes != null)
                       Text(
-                        '${(wizardData.fileBytes!.length / (1024 * 1024)).toStringAsFixed(2)} MB',
+                        formatFileSize(wizardData.fileBytes!.length),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: scheme.onSurface.withOpacity(0.6),
                         ),
@@ -55,12 +86,8 @@ class GranularRangeSelector extends StatelessWidget {
               ),
               IconButton(
                 icon: const Icon(Icons.close),
-                onPressed: () {
-                  wizardData.fileBytes = null;
-                  wizardData.fileName = null;
-                  wizardData.fileKind = null;
-                  wizardData.notifyListeners();
-                },
+                tooltip: context.tr('removeFile'),
+                onPressed: () => wizardData.clearFile(),
               ),
             ],
           ),
@@ -68,7 +95,7 @@ class GranularRangeSelector extends StatelessWidget {
           const Divider(),
           const SizedBox(height: 12),
           Text(
-            'Qual trecho você deseja utilizar?',
+            context.tr('rangeSelectorTitle'),
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
               fontWeight: FontWeight.w600,
             ),
@@ -89,8 +116,7 @@ class GranularRangeSelector extends StatelessWidget {
             ],
             selected: {wizardData.isWholeDocument},
             onSelectionChanged: (set) {
-              wizardData.isWholeDocument = set.first;
-              wizardData.notifyListeners();
+              wizardData.updateRange(isWholeDocument: set.first);
             },
           ),
           if (!wizardData.isWholeDocument) ...[
@@ -102,34 +128,16 @@ class GranularRangeSelector extends StatelessWidget {
     );
   }
 
-  Widget _buildFileKindBadge(ColorScheme scheme, String kind) {
-    Color badgeColor = scheme.primary;
-    IconData iconData = Icons.insert_drive_file;
-
-    if (kind == 'pdf') {
-      badgeColor = Colors.redAccent;
-      iconData = Icons.picture_as_pdf;
-    } else if (kind == 'docx' || kind == 'doc') {
-      badgeColor = Colors.blueAccent;
-      iconData = Icons.description;
-    } else if (kind == 'csv') {
-      badgeColor = Colors.green;
-      iconData = Icons.table_chart;
-    } else if (kind == 'mp3' || kind == 'wav' || kind == 'm4a') {
-      badgeColor = Colors.purpleAccent;
-      iconData = Icons.audiotrack;
-    } else if (kind == 'mp4' || kind == 'mov') {
-      badgeColor = Colors.orangeAccent;
-      iconData = Icons.video_library;
-    }
+  Widget _buildFileKindBadge(String kind) {
+    final visual = fileKindVisual(kind);
 
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: badgeColor.withOpacity(0.12),
+        color: visual.color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Icon(iconData, color: badgeColor, size: 24),
+      child: Icon(visual.icon, color: visual.color, size: 24),
     );
   }
 
@@ -145,16 +153,16 @@ class GranularRangeSelector extends StatelessWidget {
               controller: TextEditingController(text: '${wizardData.pageStart}'),
               onChanged: (val) {
                 final p = int.tryParse(val);
-                if (p != null && p >= 1) wizardData.pageStart = p;
+                if (p != null && p >= 1) wizardData.updateRange(pageStart: p);
               },
               decoration: InputDecoration(
-                labelText: 'Página Inicial',
+                labelText: context.tr('pageStartLabel'),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
           ),
           const SizedBox(width: 12),
-          Text('até', style: TextStyle(color: scheme.onSurface.withOpacity(0.7))),
+          Text(context.tr('rangeUntil'), style: TextStyle(color: scheme.onSurface.withOpacity(0.7))),
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
@@ -162,10 +170,12 @@ class GranularRangeSelector extends StatelessWidget {
               controller: TextEditingController(text: '${wizardData.pageEnd}'),
               onChanged: (val) {
                 final p = int.tryParse(val);
-                if (p != null && p >= wizardData.pageStart) wizardData.pageEnd = p;
+                if (p != null && p >= wizardData.pageStart) {
+                  wizardData.updateRange(pageEnd: p);
+                }
               },
               decoration: InputDecoration(
-                labelText: 'Página Final',
+                labelText: context.tr('pageEndLabel'),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
@@ -183,16 +193,16 @@ class GranularRangeSelector extends StatelessWidget {
               controller: TextEditingController(text: '${wizardData.lineStart}'),
               onChanged: (val) {
                 final l = int.tryParse(val);
-                if (l != null && l >= 1) wizardData.lineStart = l;
+                if (l != null && l >= 1) wizardData.updateRange(lineStart: l);
               },
               decoration: InputDecoration(
-                labelText: 'Linha Inicial',
+                labelText: context.tr('lineStartLabel'),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
           ),
           const SizedBox(width: 12),
-          Text('até', style: TextStyle(color: scheme.onSurface.withOpacity(0.7))),
+          Text(context.tr('rangeUntil'), style: TextStyle(color: scheme.onSurface.withOpacity(0.7))),
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
@@ -200,10 +210,12 @@ class GranularRangeSelector extends StatelessWidget {
               controller: TextEditingController(text: '${wizardData.lineEnd}'),
               onChanged: (val) {
                 final l = int.tryParse(val);
-                if (l != null && l >= wizardData.lineStart) wizardData.lineEnd = l;
+                if (l != null && l >= wizardData.lineStart) {
+                  wizardData.updateRange(lineEnd: l);
+                }
               },
               decoration: InputDecoration(
-                labelText: 'Linha Final',
+                labelText: context.tr('lineEndLabel'),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
@@ -220,7 +232,7 @@ class GranularRangeSelector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Intervalo de Tempo: ${startMin}min até ${endMin}min',
+          '${context.tr('timeRangeLabel')} ${startMin}min ${context.tr('rangeUntil')} ${endMin}min',
           style: Theme.of(context).textTheme.bodySmall,
         ),
         RangeSlider(
@@ -230,9 +242,10 @@ class GranularRangeSelector extends StatelessWidget {
           divisions: 60,
           labels: RangeLabels('${startMin}m', '${endMin}m'),
           onChanged: (values) {
-            wizardData.audioStartMs = (values.start * 60000).toInt();
-            wizardData.audioEndMs = (values.end * 60000).toInt();
-            wizardData.notifyListeners();
+            wizardData.updateRange(
+              audioStartMs: (values.start * 60000).toInt(),
+              audioEndMs: (values.end * 60000).toInt(),
+            );
           },
         ),
       ],

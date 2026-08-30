@@ -36,6 +36,129 @@ class QuizResult {
   QuizResult({required this.selectedOptionIndexes, required this.timeSpent});
 }
 
+/// Visibility of a completed quiz: only the owner can see a `private` one,
+/// while a `public` one is listed in the community catalog and can gather
+/// third-party attempts and a leaderboard.
+enum QuizVisibility {
+  private,
+  public;
+
+  static QuizVisibility parse(String? value) =>
+      value == 'public' ? QuizVisibility.public : QuizVisibility.private;
+
+  String get apiValue => name;
+}
+
+/// A completed quiz, matching the backend's `completed_quizzes` shape.
+class Quiz {
+  Quiz({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.visibility,
+    required this.status,
+    required this.totalQuestions,
+    required this.totalAttempts,
+    required this.thirdPartyAttempts,
+    required this.createdAt,
+  });
+
+  factory Quiz.fromJson(Map<String, dynamic> json) => Quiz(
+    id: json['id'] as String,
+    title: (json['title'] as String?) ?? '',
+    description: (json['description'] as String?) ?? '',
+    visibility: QuizVisibility.parse(json['visibility'] as String?),
+    status: (json['status'] as String?) ?? 'completed',
+    totalQuestions: (json['total_questions'] as num?)?.toInt() ?? 0,
+    totalAttempts: (json['total_attempts'] as num?)?.toInt() ?? 0,
+    thirdPartyAttempts: (json['third_party_attempts'] as num?)?.toInt() ?? 0,
+    createdAt: (json['created_at'] as String?) ?? '',
+  );
+
+  final String id;
+  final String title;
+  final String description;
+  final QuizVisibility visibility;
+  final String status;
+  final int totalQuestions;
+  final int totalAttempts;
+  final int thirdPartyAttempts;
+  final String createdAt;
+
+  /// A public quiz that already has third-party attempts must be kept for
+  /// leaderboard history: the backend refuses deletion with a 403.
+  bool get isDeleteProtected =>
+      visibility == QuizVisibility.public && thirdPartyAttempts > 0;
+
+  Quiz copyWith({QuizVisibility? visibility}) => Quiz(
+    id: id,
+    title: title,
+    description: description,
+    visibility: visibility ?? this.visibility,
+    status: status,
+    totalQuestions: totalQuestions,
+    totalAttempts: totalAttempts,
+    thirdPartyAttempts: thirdPartyAttempts,
+    createdAt: createdAt,
+  );
+}
+
+/// A single row of a quiz's leaderboard.
+class LeaderboardEntry {
+  LeaderboardEntry({
+    required this.rank,
+    required this.userName,
+    required this.score,
+    required this.timeSpentSeconds,
+    required this.completedAt,
+  });
+
+  factory LeaderboardEntry.fromJson(Map<String, dynamic> json, int rank) =>
+      LeaderboardEntry(
+        rank: rank,
+        userName:
+            (json['user_name'] as String?) ??
+            (json['username'] as String?) ??
+            (json['display_name'] as String?) ??
+            '-',
+        score: (json['score'] as num?)?.toDouble() ?? 0,
+        timeSpentSeconds: (json['time_spent_seconds'] as num?)?.toInt() ?? 0,
+        completedAt: (json['completed_at'] as String?) ?? '',
+      );
+
+  final int rank;
+  final String userName;
+  final double score;
+  final int timeSpentSeconds;
+  final String completedAt;
+}
+
+/// Response of creating (or regenerating) a share link for a completed quiz.
+class QuizShare {
+  QuizShare({
+    required this.token,
+    required this.url,
+    this.expiresAt,
+    this.maxUses,
+  });
+
+  factory QuizShare.fromJson(Map<String, dynamic> json, {required String fallbackBaseUrl}) {
+    final token = json['token'] as String? ?? '';
+    final url = (json['url'] as String?) ?? '$fallbackBaseUrl/quizzes/shared/$token';
+    return QuizShare(
+      token: token,
+      url: url,
+      expiresAt: json['expires_at'] as String?,
+      maxUses: (json['max_uses'] as num?)?.toInt(),
+    );
+  }
+
+  final String token;
+  final String url;
+  final String? expiresAt;
+  final int? maxUses;
+}
+
 class AnswerSelection {
   final String questionId;
   final int? selectedIndex;

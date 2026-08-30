@@ -48,12 +48,17 @@ class QuizTimelineStepper extends StatelessWidget {
                   final stepIdx = index ~/ 2;
                   final isPassed = wizardData.currentStep > stepIdx;
                   return Expanded(
-                    child: Container(
-                      height: 2,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeOutCubic,
+                      height: isPassed ? 3 : 2,
                       margin: const EdgeInsets.symmetric(horizontal: 4),
-                      color: isPassed
-                          ? scheme.primary
-                          : scheme.outlineVariant.withOpacity(0.4),
+                      decoration: BoxDecoration(
+                        color: isPassed
+                            ? scheme.primary
+                            : scheme.outlineVariant.withOpacity(0.4),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   );
                 }
@@ -70,7 +75,9 @@ class QuizTimelineStepper extends StatelessWidget {
                     }
                   },
                   borderRadius: BorderRadius.circular(16),
-                  child: Container(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOutCubic,
                     padding: EdgeInsets.symmetric(
                       horizontal: isDesktop ? 12 : 8,
                       vertical: 6,
@@ -93,7 +100,9 @@ class QuizTimelineStepper extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          curve: Curves.easeOutCubic,
                           width: isDesktop ? 26 : 22,
                           height: isDesktop ? 26 : 22,
                           decoration: BoxDecoration(

@@ -1,6 +1,12 @@
 import 'package:certifications/core/utils/app_localizations.dart';
+import 'package:certifications/domain/services/quiz_api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+/// Expiration presets mapped to `expires_in_hours` / `max_uses` per the
+/// backend contract: 24h -> 24, 7d -> 168, 30d -> 720; the 1-use option
+/// sends `max_uses: 1` with a generous 24h default window.
+enum _SharePreset { hours24, days7, days30, oneUse }
 
 class QuizShareModal extends StatefulWidget {
   const QuizShareModal({
@@ -17,22 +23,50 @@ class QuizShareModal extends StatefulWidget {
 }
 
 class _QuizShareModalState extends State<QuizShareModal> {
-  int selectedHours = 24;
-  String generatedToken = '';
+  final _api = QuizApiService();
+  _SharePreset selectedPreset = _SharePreset.hours24;
+  String generatedUrl = '';
   bool isGenerating = false;
+  String? error;
 
-  void _generateLink() {
+  Future<void> _generateLink() async {
     setState(() {
       isGenerating = true;
+      error = null;
     });
-    Future.delayed(const Duration(milliseconds: 300), () {
+    try {
+      final share = await _api.createShare(
+        widget.quizId,
+        expiresInHours: _expiresInHoursFor(selectedPreset),
+        maxUses: selectedPreset == _SharePreset.oneUse ? 1 : null,
+      );
       if (mounted) {
         setState(() {
-          generatedToken = 'https://certifications.asodya.app/quizzes/share/${widget.quizId}_${selectedHours}h';
+          generatedUrl = share.url;
           isGenerating = false;
         });
       }
-    });
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          isGenerating = false;
+          error = context.tr('errorGeneric');
+        });
+      }
+    }
+  }
+
+  int _expiresInHoursFor(_SharePreset preset) {
+    switch (preset) {
+      case _SharePreset.hours24:
+        return 24;
+      case _SharePreset.days7:
+        return 168;
+      case _SharePreset.days30:
+        return 720;
+      case _SharePreset.oneUse:
+        return 24;
+    }
   }
 
   @override
@@ -68,40 +102,57 @@ class _QuizShareModalState extends State<QuizShareModal> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Compartilhar: "${widget.quizTitle}"',
+            context.trParams('shareModalSubtitle', {'title': widget.quizTitle}),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: scheme.onSurface.withOpacity(0.7),
             ),
           ),
           const SizedBox(height: 20),
           Text(
-            'Tempo de Expiração do Link:',
+            context.tr('expirationLabel'),
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 8),
-          DropdownButtonFormField<int>(
-            value: selectedHours,
+          DropdownButtonFormField<_SharePreset>(
+            initialValue: selectedPreset,
             decoration: InputDecoration(
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            items: const [
-              DropdownMenuItem(value: 24, child: Text('24 Horas (Curto Prazo)')),
-              DropdownMenuItem(value: 168, child: Text('7 Dias (1 Semana)')),
-              DropdownMenuItem(value: 720, child: Text('30 Dias (1 Mês)')),
+            items: [
+              DropdownMenuItem(
+                value: _SharePreset.hours24,
+                child: Text(context.tr('expiration24h')),
+              ),
+              DropdownMenuItem(
+                value: _SharePreset.days7,
+                child: Text(context.tr('expiration7d')),
+              ),
+              DropdownMenuItem(
+                value: _SharePreset.days30,
+                child: Text(context.tr('expiration30d')),
+              ),
+              DropdownMenuItem(
+                value: _SharePreset.oneUse,
+                child: Text(context.tr('expirationOneUse')),
+              ),
             ],
             onChanged: (val) {
               if (val != null) {
                 setState(() {
-                  selectedHours = val;
-                  generatedToken = '';
+                  selectedPreset = val;
+                  generatedUrl = '';
                 });
               }
             },
           ),
           const SizedBox(height: 20),
-          if (generatedToken.isNotEmpty) ...[
+          if (error != null) ...[
+            Text(error!, style: const TextStyle(color: Colors.redAccent)),
+            const SizedBox(height: 12),
+          ],
+          if (generatedUrl.isNotEmpty) ...[
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
@@ -113,7 +164,7 @@ class _QuizShareModalState extends State<QuizShareModal> {
                 children: [
                   Expanded(
                     child: Text(
-                      generatedToken,
+                      generatedUrl,
                       style: Theme.of(context).textTheme.bodySmall,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -122,9 +173,9 @@ class _QuizShareModalState extends State<QuizShareModal> {
                   IconButton(
                     icon: const Icon(Icons.copy),
                     onPressed: () {
-                      Clipboard.setData(ClipboardData(text: generatedToken));
+                      Clipboard.setData(ClipboardData(text: generatedUrl));
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Link copiado para a área de transferência!')),
+                        SnackBar(content: Text(context.tr('linkCopied'))),
                       );
                     },
                   ),
@@ -146,7 +197,9 @@ class _QuizShareModalState extends State<QuizShareModal> {
                     )
                   : const Icon(Icons.link),
               label: Text(
-                generatedToken.isEmpty ? 'Gerar Link Seguro Expirável' : 'Regerar Link',
+                generatedUrl.isEmpty
+                    ? context.tr('generateSecureLink')
+                    : context.tr('regenerateLink'),
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),

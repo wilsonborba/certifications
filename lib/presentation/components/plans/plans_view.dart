@@ -2,7 +2,6 @@ import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/core/utils/my_nagivation.dart';
 import 'package:certifications/domain/services/waitlist_store.dart';
 import 'package:certifications/presentation/components/auth/login_redirect.dart';
-import 'package:certifications/presentation/components/auth/session_gate.dart';
 import 'package:certifications/presentation/components/auth/verify_session.dart';
 import 'package:flutter/material.dart';
 
@@ -305,7 +304,7 @@ class _GuidedPlanCardState extends State<_GuidedPlanCard> {
                         ),
                       )
                     : ElevatedButton.icon(
-                        onPressed: () => _handleWaitlist(context, 'guided'),
+                        onPressed: () => handleWaitlistFlow(context, 'guided'),
                         icon: const Icon(Icons.notifications_active_outlined),
                         label: Text(context.tr('joinWaitlist')),
                         style: ElevatedButton.styleFrom(
@@ -405,7 +404,7 @@ class _AdvancedPlanCardState extends State<_AdvancedPlanCard> {
                         ),
                       )
                     : ElevatedButton.icon(
-                        onPressed: () => _handleWaitlist(context, 'advanced'),
+                        onPressed: () => handleWaitlistFlow(context, 'advanced'),
                         icon: const Icon(Icons.notifications_active_outlined),
                         label: Text(context.tr('joinWaitlist')),
                         style: ElevatedButton.styleFrom(
@@ -421,7 +420,10 @@ class _AdvancedPlanCardState extends State<_AdvancedPlanCard> {
   }
 }
 
-Future<void> _handleWaitlist(BuildContext context, String planId) async {
+/// Joins [planId]'s waitlist: reuses the saved/authenticated email when
+/// available, otherwise prompts for one. Shared with [ValuePropositionSection]
+/// so the landing page's waitlist CTA follows the exact same flow.
+Future<void> handleWaitlistFlow(BuildContext context, String planId) async {
   final store = WaitlistStore.instance;
   final isLoggedIn = readCsrfToken() != null && readCsrfToken()!.isNotEmpty;
 
@@ -515,7 +517,6 @@ class _WaitlistDialog extends StatefulWidget {
 class _WaitlistDialogState extends State<_WaitlistDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _email;
-  bool _submitting = false;
 
   @override
   void initState() {

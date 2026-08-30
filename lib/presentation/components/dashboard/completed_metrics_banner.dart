@@ -9,6 +9,7 @@ class CompletedMetricsBanner extends StatelessWidget {
     required this.completedQuizzesCount,
     required this.averageScorePercent,
     required this.isDesktop,
+    this.onTapCompletedQuizzes,
   });
 
   final int totalStudies;
@@ -16,6 +17,10 @@ class CompletedMetricsBanner extends StatelessWidget {
   final int completedQuizzesCount;
   final double averageScorePercent;
   final bool isDesktop;
+
+  /// Opens the completed-quizzes list (visibility, sharing, leaderboard).
+  /// Null hides the tap affordance on the "completed quizzes" tile.
+  final VoidCallback? onTapCompletedQuizzes;
 
   @override
   Widget build(BuildContext context) {
@@ -65,14 +70,14 @@ class CompletedMetricsBanner extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(color: Colors.green.withOpacity(0.4)),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.bolt, color: Colors.green, size: 14),
-                    SizedBox(width: 4),
+                    const Icon(Icons.bolt, color: Colors.green, size: 14),
+                    const SizedBox(width: 4),
                     Text(
-                      'Cortex IA Conectado',
-                      style: TextStyle(
+                      context.tr('cortexConnected'),
+                      style: const TextStyle(
                         color: Colors.green,
                         fontWeight: FontWeight.bold,
                         fontSize: 11,
@@ -90,28 +95,32 @@ class CompletedMetricsBanner extends StatelessWidget {
             children: [
               _MetricTile(
                 icon: Icons.book,
-                label: 'Cadernos de Estudo',
+                label: context.tr('studyNotebooksLabel'),
                 value: '$totalStudies',
                 isDesktop: isDesktop,
               ),
               if (!isDesktop) const SizedBox(height: 12),
               _MetricTile(
                 icon: Icons.sd_storage,
-                label: 'Espaço Usado FSM',
+                label: context.tr('storageUsedLabel'),
                 value: '$sizeMb MB',
                 isDesktop: isDesktop,
               ),
               if (!isDesktop) const SizedBox(height: 12),
               _MetricTile(
                 icon: Icons.assignment_turned_in,
-                label: 'Simulados Concluídos',
+                label: context.tr('completedQuizzesLabel'),
                 value: '$completedQuizzesCount',
                 isDesktop: isDesktop,
+                onTap: onTapCompletedQuizzes,
+                tooltip: onTapCompletedQuizzes == null
+                    ? null
+                    : context.tr('viewCompletedQuizzes'),
               ),
               if (!isDesktop) const SizedBox(height: 12),
               _MetricTile(
                 icon: Icons.emoji_events,
-                label: 'Média de Acertos',
+                label: context.tr('averageScoreLabel'),
                 value: '${averageScorePercent.toStringAsFixed(0)}%',
                 isDesktop: isDesktop,
               ),
@@ -129,18 +138,22 @@ class _MetricTile extends StatelessWidget {
     required this.label,
     required this.value,
     required this.isDesktop,
+    this.onTap,
+    this.tooltip,
   });
 
   final IconData icon;
   final String label;
   final String value;
   final bool isDesktop;
+  final VoidCallback? onTap;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    return Container(
+    final tile = Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: scheme.surface,
@@ -169,7 +182,25 @@ class _MetricTile extends StatelessWidget {
               ),
             ],
           ),
+          if (onTap != null) ...[
+            const SizedBox(width: 6),
+            Icon(Icons.chevron_right, size: 16, color: scheme.onSurface.withOpacity(0.4)),
+          ],
         ],
+      ),
+    );
+
+    if (onTap == null) return tile;
+    return Tooltip(
+      message: tooltip ?? '',
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: tile,
+        ),
       ),
     );
   }

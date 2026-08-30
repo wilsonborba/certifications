@@ -9,12 +9,17 @@ class StandbyStudyCard extends StatefulWidget {
     super.key,
     required this.study,
     required this.onDeleted,
+    required this.onUpdated,
     required this.onOpen,
     required this.isDesktop,
   });
 
   final Study study;
   final VoidCallback onDeleted;
+
+  /// Called after a successful rename or source-range edit so the parent
+  /// dashboard can reload the studies list with fresh data.
+  final VoidCallback onUpdated;
   final VoidCallback onOpen;
   final bool isDesktop;
 
@@ -32,7 +37,9 @@ class _StandbyStudyCardState extends State<StandbyStudyCard> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(context.tr('delete')),
-        content: Text('Deseja realmente excluir o estudo "${widget.study.name}"?'),
+        content: Text(
+          context.trParams('deleteStudyConfirm', {'name': widget.study.name}),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -54,7 +61,7 @@ class _StandbyStudyCardState extends State<StandbyStudyCard> {
       await api.delete(widget.study.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Estudo removido com sucesso.')),
+          SnackBar(content: Text(context.tr('studyDeletedSuccess'))),
         );
         widget.onDeleted();
       }
@@ -82,9 +89,9 @@ class _StandbyStudyCardState extends State<StandbyStudyCard> {
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Arquivo anexado com sucesso.')),
+          SnackBar(content: Text(context.tr('fileAttachedSuccess'))),
         );
-        setState(() {});
+        widget.onUpdated();
       }
     } catch (_) {
       if (mounted) {
@@ -93,6 +100,14 @@ class _StandbyStudyCardState extends State<StandbyStudyCard> {
         );
       }
     }
+  }
+
+  Future<void> _openEditModal() async {
+    final updated = await showDialog<bool>(
+      context: context,
+      builder: (context) => _EditStudyDialog(study: widget.study, api: api),
+    );
+    if (updated == true) widget.onUpdated();
   }
 
   @override
@@ -166,7 +181,7 @@ class _StandbyStudyCardState extends State<StandbyStudyCard> {
                                 ),
                                 const SizedBox(width: 10),
                                 Text(
-                                  '$sizeMb MB Usados',
+                                  '$sizeMb ${context.tr('mbUsedLabel')}',
                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: scheme.onSurface.withOpacity(0.6),
                                   ),
@@ -200,6 +215,11 @@ class _StandbyStudyCardState extends State<StandbyStudyCard> {
                         icon: const Icon(Icons.add, size: 16),
                         label: Text(context.tr('addFile')),
                       ),
+                      OutlinedButton.icon(
+                        onPressed: _openEditModal,
+                        icon: const Icon(Icons.edit_outlined, size: 16),
+                        label: Text(context.tr('editStudy')),
+                      ),
                       ElevatedButton.icon(
                         onPressed: widget.onOpen,
                         icon: const Icon(Icons.play_arrow, size: 16),
@@ -223,7 +243,9 @@ class _StandbyStudyCardState extends State<StandbyStudyCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Arquivos e Fontes Anexadas (${study.sources.length}):',
+                      context.trParams('attachedSourcesLabel', {
+                        'count': '${study.sources.length}',
+                      }),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -231,7 +253,7 @@ class _StandbyStudyCardState extends State<StandbyStudyCard> {
                     const SizedBox(height: 10),
                     if (study.sources.isEmpty)
                       Text(
-                        'Nenhum arquivo anexado ainda.',
+                        context.tr('noFilesAttachedYet'),
                         style: Theme.of(context).textTheme.bodySmall,
                       )
                     else
@@ -270,5 +292,188 @@ class _StandbyStudyCardState extends State<StandbyStudyCard> {
       default:
         return Icons.insert_drive_file;
     }
+  }
+}
+
+/// Rename the study and/or tweak the selected page/line/time range of each
+/// already-uploaded source.
+class _EditStudyDialog extends StatefulWidget {
+  const _EditStudyDialog({required this.study, required this.api});
+
+  final Study study;
+  final StudyApiService api;
+
+  @override
+  State<_EditStudyDialog> createState() => _EditStudyDialogState();
+}
+
+class _EditStudyDialogState extends State<_EditStudyDialog> {
+  late final TextEditingController _nameController =
+      TextEditingController(text: widget.study.name);
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final newName = _nameController.text.trim();
+    if (newName.isEmpty) return;
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      if (newName != widget.study.name) {
+        await widget.api.rename(widget.study.id, newName);
+      }
+      if (mounted) Navigator.pop(context, true);
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _error = context.tr('errorGeneric');
+        });
+      }
+    }
+  }
+
+  Future<void> _editSourceRange(StudySource source) async {
+    final first = TextEditingController();
+    final last = TextEditingController();
+    final selected = await showDialog<Map<String, int>>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(context.tr('editSourceRangesLabel')),
+        content: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: first,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(labelText: context.tr('start')),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextField(
+                controller: last,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(labelText: context.tr('end')),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(context.tr('cancel')),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final a = int.tryParse(first.text);
+              final b = int.tryParse(last.text);
+              if (a != null && b != null) {
+                Navigator.pop(
+                  context,
+                  source.kind == 'pdf'
+                      ? {'page_start': a, 'page_end': b}
+                      : source.kind == 'audio'
+                      ? {'audio_start_ms': a, 'audio_end_ms': b}
+                      : {'line_start': a, 'line_end': b},
+                );
+              }
+            },
+            child: Text(context.tr('process')),
+          ),
+        ],
+      ),
+    );
+    if (selected == null) return;
+    setState(() => _saving = true);
+    try {
+      await widget.api.select(
+        studyId: widget.study.id,
+        sourceId: source.id,
+        selection: selected,
+      );
+      await widget.api.ingest(widget.study.id, source.id);
+      if (mounted) Navigator.pop(context, true);
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _error = context.tr('errorGeneric');
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(context.tr('editStudy')),
+      content: SizedBox(
+        width: 420,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _nameController,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: context.tr('renameStudyLabel'),
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            if (widget.study.sources.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              Text(
+                context.tr('editSourceRangesLabel'),
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...widget.study.sources.map(
+                (source) => ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(source.filename, overflow: TextOverflow.ellipsis),
+                  trailing: OutlinedButton(
+                    onPressed: _saving ? null : () => _editSourceRange(source),
+                    child: Text(context.tr('selectRange')),
+                  ),
+                ),
+              ),
+            ],
+            if (_error != null) ...[
+              const SizedBox(height: 12),
+              Text(_error!, style: const TextStyle(color: Colors.redAccent)),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _saving ? null : () => Navigator.pop(context),
+          child: Text(context.tr('cancel')),
+        ),
+        ElevatedButton(
+          onPressed: _saving ? null : _save,
+          child: _saving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(context.tr('saveChanges')),
+        ),
+      ],
+    );
   }
 }

@@ -1,4 +1,4 @@
-import 'package:certifications/presentation/widgets/study_list.dart';
+import 'package:certifications/presentation/widgets/study_dashboard/on_study_dashboard.dart';
 import 'package:flutter/material.dart';
 
 /// Document-only entry point. Non-document source cards are intentionally absent.
@@ -7,6 +7,6 @@ class OnAttachmentScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const StudyList();
+    return const OnStudyDashboardScreen();
   }
 }
