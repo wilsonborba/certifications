@@ -294,6 +294,11 @@ class AppLocalizations {
       'leaderboardAction': 'View leaderboard',
       'viewCompletedQuizzes': 'View completed quizzes',
       'noCompletedQuizzesYet': 'You have no completed quizzes yet.',
+      'yourCertificatesLabel': 'Your Certificates',
+      'expandDashboard': 'Expand',
+      'collapseDashboard': 'Collapse',
+      'completedOnLabel': 'Completed on',
+      'totalAttemptsLabel': 'Total attempts',
     },
     'pt': {
       'appName': 'Certifications',
@@ -592,6 +597,11 @@ class AppLocalizations {
       'leaderboardAction': 'Ver ranking',
       'viewCompletedQuizzes': 'Ver simulados concluídos',
       'noCompletedQuizzesYet': 'Você ainda não tem simulados concluídos.',
+      'yourCertificatesLabel': 'Seus Certificados',
+      'expandDashboard': 'Expandir',
+      'collapseDashboard': 'Recolher',
+      'completedOnLabel': 'Concluído em',
+      'totalAttemptsLabel': 'Total de tentativas',
     },
     'th': {
       'appName': 'Certifications',
@@ -879,6 +889,11 @@ class AppLocalizations {
       'leaderboardAction': 'ดูตารางคะแนน',
       'viewCompletedQuizzes': 'ดูแบบทดสอบที่เสร็จสิ้น',
       'noCompletedQuizzesYet': 'คุณยังไม่มีแบบทดสอบที่เสร็จสิ้น',
+      'yourCertificatesLabel': 'ใบรับรองของคุณ',
+      'expandDashboard': 'ขยาย',
+      'collapseDashboard': 'ย่อ',
+      'completedOnLabel': 'เสร็จสิ้นเมื่อ',
+      'totalAttemptsLabel': 'จำนวนครั้งที่ทำทั้งหมด',
     },
   };
   String text(String key) =>

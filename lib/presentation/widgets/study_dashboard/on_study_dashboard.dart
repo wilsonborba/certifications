@@ -3,6 +3,7 @@ import 'package:certifications/domain/models/study.dart';
 import 'package:certifications/domain/services/draft_progress_store.dart';
 import 'package:certifications/domain/services/study_api_service.dart';
 import 'package:certifications/presentation/components/attachment/app_bar.dart';
+import 'package:certifications/presentation/components/dashboard/certificate_mini_list_card.dart';
 import 'package:certifications/presentation/components/dashboard/completed_metrics_banner.dart';
 import 'package:certifications/presentation/components/dashboard/draft_resume_hero_card.dart';
 import 'package:certifications/presentation/components/dashboard/standby_study_card.dart';
@@ -34,6 +35,7 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
   bool _selectionMode = false;
   final Set<String> _selectedIds = {};
   bool _bulkDeleting = false;
+  bool _dashboardExpanded = true;
 
   Future<_DashboardData> _load() async {
     final studies = await api.list();
@@ -250,6 +252,40 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                           onResume: () => _resumeStudy(data.mostRecentDraft!),
                         ),
                       ],
+                      const SizedBox(height: 28),
+                      Row(
+                        children: [
+                          Icon(Icons.workspace_premium_outlined, color: Theme.of(context).colorScheme.primary),
+                          const SizedBox(width: 8),
+                          Text(
+                            context.tr('yourCertificatesLabel'),
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Spacer(),
+                          TextButton.icon(
+                            onPressed: () => setState(() => _dashboardExpanded = !_dashboardExpanded),
+                            icon: Icon(_dashboardExpanded ? Icons.expand_less : Icons.expand_more),
+                            label: Text(
+                              _dashboardExpanded
+                                  ? context.tr('collapseDashboard')
+                                  : context.tr('expandDashboard'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 220),
+                        curve: Curves.easeOutCubic,
+                        alignment: Alignment.topCenter,
+                        child: _dashboardExpanded
+                            ? Padding(
+                                padding: const EdgeInsets.only(top: 12),
+                                child: CertificateMiniListCard(isDesktop: isDesktop),
+                              )
+                            : const SizedBox(width: double.infinity),
+                      ),
                       const SizedBox(height: 28),
                       Row(
                         children: [

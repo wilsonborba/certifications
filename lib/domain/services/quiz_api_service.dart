@@ -28,6 +28,22 @@ class QuizApiService {
   Future<Quiz> getCompleted(String quizId) async =>
       Quiz.fromJson(_data(await _adapter.get(Uri.parse('$_base/completed/$quizId'))));
 
+  /// Lists every completed quiz owned by the authenticated user via the real
+  /// `GET /quizzes/completed` endpoint (already filters by owner server
+  /// side), replacing the old workaround of deriving a quiz id from the
+  /// studies list and treating a study id as a quiz id.
+  Future<List<Quiz>> listCompleted() async {
+    final response = await _adapter.get(Uri.parse('$_base/completed'));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw QuizApiException(response.statusCode);
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return (payload['data'] as List)
+        .cast<Map<String, dynamic>>()
+        .map(Quiz.fromJson)
+        .toList();
+  }
+
   Future<Quiz> updateVisibility(String quizId, QuizVisibility visibility) async =>
       Quiz.fromJson(
         _data(
