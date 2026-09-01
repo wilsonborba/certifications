@@ -74,10 +74,7 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
           studyId: study.id,
           initialName: study.name,
           initialStep: savedStep,
-          onGenerate: () {
-            Navigator.pop(context);
-            _reload();
-          },
+          onGenerate: _reload,
         ),
       ),
     );
@@ -167,14 +164,10 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
             context,
             MaterialPageRoute(
               builder: (_) => OnQuizWizardScreen(
-                onGenerate: () {
-                  Navigator.pop(context);
-                  _reload();
-                },
+                onGenerate: _reload,
               ),
             ),
           );
-          _reload();
         },
         icon: const Icon(Icons.add),
         label: Text(context.tr('newStudy')),

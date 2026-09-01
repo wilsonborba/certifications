@@ -64,6 +64,10 @@ class QuizWizardData extends ChangeNotifier {
   /// quizzes list.
   QuizVisibility visibility = QuizVisibility.private;
 
+  /// Whether the backend should augment question generation with a live web
+  /// search. Defaults to false (source material only).
+  bool useWeb = false;
+
   int get totalAttachedBytes =>
       attachedFiles.fold(0, (sum, f) => sum + f.sizeBytes);
 
@@ -118,6 +122,11 @@ class QuizWizardData extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setUseWeb(bool value) {
+    useWeb = value;
+    notifyListeners();
+  }
+
   /// Adds a newly picked file to the attached-files list. Does not enforce
   /// the size cap itself: callers should check [wouldExceedCap] first so
   /// they can surface a proper warning instead of silently rejecting it.
@@ -167,6 +176,7 @@ class QuizWizardData extends ChangeNotifier {
     difficulty = DifficultyLevel.medium;
     questionCount = 10;
     visibility = QuizVisibility.private;
+    useWeb = false;
     notifyListeners();
   }
 }
