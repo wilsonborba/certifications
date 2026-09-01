@@ -15,11 +15,13 @@ class QuestionSession extends StatefulWidget {
     required this.studyName,
     required this.difficulty,
     required this.useWeb,
+    this.questionCount = 10,
   });
   final String studyId;
   final String studyName;
   final String difficulty;
   final bool useWeb;
+  final int questionCount;
   @override
   State<QuestionSession> createState() => _QuestionSessionState();
 }
@@ -32,6 +34,7 @@ class _QuestionSessionState extends State<QuestionSession> {
     difficulty: widget.difficulty,
     useWeb: widget.useWeb,
     idempotencyKey: '${DateTime.now().microsecondsSinceEpoch}-question',
+    questionCount: widget.questionCount,
   );
   final Map<String, int> _answers = {};
   int index = 0;

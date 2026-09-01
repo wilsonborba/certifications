@@ -12,10 +12,14 @@ class MobileQuizWizard extends StatelessWidget {
     super.key,
     required this.wizardData,
     required this.onGenerate,
+    this.generateError,
   });
 
   final QuizWizardData wizardData;
   final VoidCallback onGenerate;
+
+  /// When set, an error message is shown above the generate button in Step 4.
+  final String? generateError;
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +66,11 @@ class MobileQuizWizard extends StatelessWidget {
       case 2:
         return Step3FormatView(wizardData: wizardData, isDesktop: false);
       case 3:
-        return Step4ReviewView(wizardData: wizardData, onGenerate: onGenerate);
+        return Step4ReviewView(
+          wizardData: wizardData,
+          onGenerate: onGenerate,
+          generateError: generateError,
+        );
       default:
         return const SizedBox.shrink();
     }

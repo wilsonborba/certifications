@@ -570,6 +570,24 @@ class Step3FormatView extends StatelessWidget {
             onSelectionChanged: (set) => wizardData.setQuestionCount(set.first),
           ),
         ),
+        const SizedBox(height: 28),
+        SwitchListTile.adaptive(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            context.tr('useWeb'),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          subtitle: Text(
+            context.tr('useWebDescription'),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+            ),
+          ),
+          value: wizardData.useWeb,
+          onChanged: wizardData.setUseWeb,
+        ),
       ],
     );
   }
@@ -591,10 +609,15 @@ class Step4ReviewView extends StatelessWidget {
     super.key,
     required this.wizardData,
     required this.onGenerate,
+    this.generateError,
   });
 
   final QuizWizardData wizardData;
   final VoidCallback onGenerate;
+
+  /// When non-null, displayed as an inline error above the generate button so
+  /// the user knows the previous attempt failed without leaving Step 4.
+  final String? generateError;
 
   String _difficultyLabel(BuildContext context) {
     switch (wizardData.difficulty) {
@@ -718,6 +741,29 @@ class Step4ReviewView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 32),
+          if (generateError != null) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Colors.redAccent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.redAccent.withValues(alpha: 0.4)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.redAccent, size: 18),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      generateError!,
+                      style: const TextStyle(color: Colors.redAccent),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           SizedBox(
             width: double.infinity,
             height: 56,
