@@ -14,8 +14,6 @@ class CompletedMetricsBanner extends StatelessWidget {
     required this.standbyCount,
     required this.completedQuizzesCount,
     required this.totalSizeBytes,
-    required this.averageScorePercent,
-    required this.hasScoreData,
     required this.activityDates,
     required this.isDesktop,
     this.onTapCompletedQuizzes,
@@ -25,11 +23,6 @@ class CompletedMetricsBanner extends StatelessWidget {
   final int standbyCount;
   final int completedQuizzesCount;
   final int totalSizeBytes;
-  final double averageScorePercent;
-
-  /// Whether [averageScorePercent] reflects real data. When false, the tile
-  /// shows a dash placeholder instead of a misleading 0%.
-  final bool hasScoreData;
 
   /// When each study was created, used to plot studies-per-day.
   final List<DateTime> activityDates;
@@ -143,16 +136,6 @@ class CompletedMetricsBanner extends StatelessWidget {
         tooltip: onTapCompletedQuizzes == null
             ? null
             : context.tr('viewCompletedQuizzes'),
-      ),
-      _MetricTile(
-        icon: Icons.emoji_events,
-        // A literal en dash placeholder here is a deliberate UI design
-        // choice for "no data yet", not prose: showing 0% would read as a
-        // real (bad) score rather than the honest absence of any.
-        label: context.tr('averageScoreLabel'),
-        value: hasScoreData ? '${averageScorePercent.toStringAsFixed(0)}%' : '–',
-        isDesktop: isDesktop,
-        tooltip: hasScoreData ? null : context.tr('noScoreDataTooltip'),
       ),
     ];
 

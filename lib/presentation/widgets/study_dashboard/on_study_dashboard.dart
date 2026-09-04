@@ -233,13 +233,6 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                         standbyCount: allStandby.length,
                         totalSizeBytes: totalBytes,
                         completedQuizzesCount: completedCount,
-                        // No client-side source of the user's own quiz scores
-                        // exists yet (QuizResult is transient, never persisted
-                        // or fetched back, and the completed-quiz contract
-                        // carries no per-user score field), so this is a
-                        // real absence of data rather than a fake number.
-                        averageScorePercent: 0.0,
-                        hasScoreData: false,
                         activityDates: [
                           ...studies
                               .map((study) => study.createdAt == null
