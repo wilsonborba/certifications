@@ -120,52 +120,67 @@ class CompletedMetricsBanner extends StatelessWidget {
     final availableBytes = (app_settings.userTotalStorageBytes - totalSizeBytes).clamp(0, app_settings.userTotalStorageBytes);
     final availableMb = (availableBytes / (1024 * 1024)).toStringAsFixed(1);
 
-    final tiles = Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: [
-        _MetricTile(
-          icon: Icons.book,
-          label: context.tr('studyNotebooksLabel'),
-          value: '$totalStudies',
-          isDesktop: isDesktop,
-        ),
-        _MetricTile(
-          icon: Icons.sd_storage,
-          label: context.tr('storageUsedLabel'),
-          value: '$sizeMb / $quotaMb MB',
-          isDesktop: isDesktop,
-          tooltip: context.trParams('storageAvailableTooltip', {'available': availableMb, 'total': quotaMb}),
-        ),
-        _MetricTile(
-          icon: Icons.assignment_turned_in,
-          label: context.tr('completedQuizzesLabel'),
-          value: '$completedQuizzesCount',
-          isDesktop: isDesktop,
-          onTap: onTapCompletedQuizzes,
-          tooltip: onTapCompletedQuizzes == null
-              ? null
-              : context.tr('viewCompletedQuizzes'),
-        ),
-        _MetricTile(
-          icon: Icons.emoji_events,
-          label: context.tr('averageScoreLabel'),
-          // A literal en dash placeholder here is a deliberate UI design
-          // choice for "no data yet", not prose: showing 0% would read as a
-          // real (bad) score rather than the honest absence of any.
-          value: hasScoreData ? '${averageScorePercent.toStringAsFixed(0)}%' : '–',
-          isDesktop: isDesktop,
-          tooltip: hasScoreData ? null : context.tr('noScoreDataTooltip'),
-        ),
-      ],
-    );
+    final metricTiles = [
+      _MetricTile(
+        icon: Icons.book,
+        label: context.tr('studyNotebooksLabel'),
+        value: '$totalStudies',
+        isDesktop: isDesktop,
+      ),
+      _MetricTile(
+        icon: Icons.sd_storage,
+        label: context.tr('storageUsedLabel'),
+        value: '$sizeMb / $quotaMb MB',
+        isDesktop: isDesktop,
+        tooltip: context.trParams('storageAvailableTooltip', {'available': availableMb, 'total': quotaMb}),
+      ),
+      _MetricTile(
+        icon: Icons.assignment_turned_in,
+        label: context.tr('completedQuizzesLabel'),
+        value: '$completedQuizzesCount',
+        isDesktop: isDesktop,
+        onTap: onTapCompletedQuizzes,
+        tooltip: onTapCompletedQuizzes == null
+            ? null
+            : context.tr('viewCompletedQuizzes'),
+      ),
+      _MetricTile(
+        icon: Icons.emoji_events,
+        // A literal en dash placeholder here is a deliberate UI design
+        // choice for "no data yet", not prose: showing 0% would read as a
+        // real (bad) score rather than the honest absence of any.
+        label: context.tr('averageScoreLabel'),
+        value: hasScoreData ? '${averageScorePercent.toStringAsFixed(0)}%' : '–',
+        isDesktop: isDesktop,
+        tooltip: hasScoreData ? null : context.tr('noScoreDataTooltip'),
+      ),
+    ];
+
+    final Widget tilesLayout = isDesktop
+        ? Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: metricTiles,
+          )
+        : LayoutBuilder(
+            builder: (context, constraints) {
+              final itemWidth = (constraints.maxWidth - 10) / 2;
+              return Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: metricTiles
+                    .map((tile) => SizedBox(width: itemWidth, child: tile))
+                    .toList(),
+              );
+            },
+          );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _ActivityBarChart(dates: activityDates, isDesktop: isDesktop),
         const SizedBox(height: 20),
-        tiles,
+        tilesLayout,
       ],
     );
   }
@@ -212,9 +227,7 @@ class _DayBucket {
   final int count;
 }
 
-/// Cartesian bar chart: studies created per day, over the last 2 weeks.
-/// Replaces the previous donut chart, which had nothing meaningful to show
-/// a breakdown of once most studies fell into a single category.
+/// Cartesian bar chart: studies and quizzes created/completed per day over recent days.
 class _ActivityBarChart extends StatefulWidget {
   const _ActivityBarChart({required this.dates, required this.isDesktop});
 
@@ -226,21 +239,22 @@ class _ActivityBarChart extends StatefulWidget {
 }
 
 class _ActivityBarChartState extends State<_ActivityBarChart> {
-  static const _daySpan = 14;
+  int get _daySpan => widget.isDesktop ? 14 : 7;
   int? _hoveredIndex;
 
   List<_DayBucket> _buckets() {
+    final span = _daySpan;
     final today = DateTime.now();
     final startDay = DateTime(today.year, today.month, today.day)
-        .subtract(const Duration(days: _daySpan - 1));
-    final counts = List<int>.filled(_daySpan, 0);
+        .subtract(Duration(days: span - 1));
+    final counts = List<int>.filled(span, 0);
     for (final date in widget.dates) {
       final day = DateTime(date.year, date.month, date.day);
       final index = day.difference(startDay).inDays;
-      if (index >= 0 && index < _daySpan) counts[index]++;
+      if (index >= 0 && index < span) counts[index]++;
     }
     return [
-      for (var i = 0; i < _daySpan; i++)
+      for (var i = 0; i < span; i++)
         _DayBucket(day: startDay.add(Duration(days: i)), count: counts[i]),
     ];
   }
@@ -258,9 +272,8 @@ class _ActivityBarChartState extends State<_ActivityBarChart> {
     final scheme = Theme.of(context).colorScheme;
     final buckets = _buckets();
     final maxCount = buckets.fold<int>(1, (m, b) => b.count > m ? b.count : m);
-    // Show every label on desktop, every other on mobile so 14 short dates
-    // never overlap each other.
-    final labelStride = widget.isDesktop ? 1 : 2;
+    // Show every label on desktop and on mobile since mobile shows 7 days.
+    final labelStride = 1;
 
     return SizedBox(
       height: 180,
@@ -413,22 +426,31 @@ class _MetricTile extends StatelessWidget {
         children: [
           Icon(icon, color: scheme.primary, size: 22),
           const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: isDesktop ? 16 : 14,
+                  ),
                 ),
-              ),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurface.withValues(alpha: 0.6),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurface.withValues(alpha: 0.6),
+                    fontSize: isDesktop ? 12 : 11,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           if (onTap != null) ...[
             const SizedBox(width: 6),
