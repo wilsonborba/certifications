@@ -26,6 +26,8 @@ class AttachedFile {
     this.lineEnd = 50,
     this.audioStartMs = 0,
     this.audioEndMs = 300000, // 5 minutes default
+    this.totalPages,
+    this.totalLines,
   });
 
   final List<int> bytes;
@@ -39,6 +41,17 @@ class AttachedFile {
   int lineEnd;
   int audioStartMs;
   int audioEndMs;
+
+  /// Real page count for PDFs, computed client-side right after picking the
+  /// file so the range selector can show it and clamp its defaults instead
+  /// of guessing a fixed 1-10 that may not exist in a short document. Null
+  /// for kinds where a page count isn't known (DOCX has no reliable one
+  /// without a full layout engine) or couldn't be read.
+  int? totalPages;
+
+  /// Real line count for text-based files (txt/md/csv), same reasoning as
+  /// [totalPages].
+  int? totalLines;
 
   int get sizeBytes => bytes.length;
 }
@@ -56,7 +69,7 @@ class QuizWizardData extends ChangeNotifier {
   String name = '';
   SourceType sourceType = SourceType.uploadFile;
   final List<AttachedFile> attachedFiles = [];
-  DifficultyLevel difficulty = DifficultyLevel.medium;
+  DifficultyLevel difficulty = DifficultyLevel.easy;
   int questionCount = 10;
 
   /// Chosen at creation time (Step 4), defaulting to private to match the

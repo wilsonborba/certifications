@@ -1,4 +1,5 @@
 import 'package:certifications/core/utils/app_localizations.dart';
+import 'package:certifications/dal/remote/api_adapter.dart';
 import 'package:certifications/domain/models/study.dart';
 import 'package:certifications/domain/services/quiz_api_service.dart';
 import 'package:certifications/presentation/components/attachment/app_bar.dart';
@@ -36,6 +37,22 @@ class _SharedQuizAnswerScreenState extends State<SharedQuizAnswerScreen> {
   int _index = 0;
   bool _finishing = false;
   String? _error;
+
+  // Cached per question.id so navigating back to an already-viewed question
+  // reuses the already-downloaded diagram instead of re-fetching it.
+  final Map<String, Future<List<int>>> _diagramCache = {};
+
+  Future<List<int>> _diagramBytes(StudyQuestion question) {
+    return _diagramCache.putIfAbsent(question.id, () async {
+      final response = await ApiAdapter().get(
+        Uri.parse(_quizApi.sharedDiagramUrl(widget.shareToken, question.id)),
+      );
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw Exception('Diagram request failed: ${response.statusCode}');
+      }
+      return response.bodyBytes;
+    });
+  }
 
   Future<String?> _promptForName() => showDialog<String>(
     context: context,
@@ -135,9 +152,10 @@ class _SharedQuizAnswerScreenState extends State<SharedQuizAnswerScreen> {
               ),
               const SizedBox(height: 20),
               QuestionVisual(
+                key: ValueKey(question.id),
                 visual: question.visual,
-                diagramUrl: question.visual['kind'] == 'd2'
-                    ? _quizApi.sharedDiagramUrl(widget.shareToken, question.id)
+                diagramBytes: question.visual['kind'] == 'd2'
+                    ? _diagramBytes(question)
                     : null,
               ),
               ...List.generate(

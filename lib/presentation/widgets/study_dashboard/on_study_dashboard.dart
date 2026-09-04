@@ -1,6 +1,8 @@
 import 'package:certifications/core/utils/app_localizations.dart';
+import 'package:certifications/domain/models/quiz.dart';
 import 'package:certifications/domain/models/study.dart';
 import 'package:certifications/domain/services/draft_progress_store.dart';
+import 'package:certifications/domain/services/quiz_api_service.dart';
 import 'package:certifications/domain/services/study_api_service.dart';
 import 'package:certifications/presentation/components/attachment/app_bar.dart';
 import 'package:certifications/presentation/components/dashboard/certificate_mini_list_card.dart';
@@ -12,11 +14,12 @@ import 'package:certifications/presentation/widgets/completed_quizzes/on_complet
 import 'package:certifications/presentation/widgets/quiz_wizard/on_quiz_wizard.dart';
 import 'package:flutter/material.dart';
 
-/// Studies list paired with the most recently touched draft (if any), used
-/// to power the resume hero card without a second round trip.
+/// Studies list paired with completed quizzes and the most recently touched draft (if any),
+/// used to power the resume hero card and metrics accurately.
 class _DashboardData {
-  _DashboardData(this.studies, this.mostRecentDraft);
+  _DashboardData(this.studies, this.completedQuizzes, this.mostRecentDraft);
   final List<Study> studies;
+  final List<Quiz> completedQuizzes;
   final Study? mostRecentDraft;
 }
 
@@ -29,6 +32,7 @@ class OnStudyDashboardScreen extends StatefulWidget {
 
 class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
   final api = StudyApiService();
+  final quizApi = QuizApiService();
   late Future<_DashboardData> future = _load();
 
   String _searchQuery = '';
@@ -38,7 +42,12 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
   bool _dashboardExpanded = true;
 
   Future<_DashboardData> _load() async {
-    final studies = await api.list();
+    final results = await Future.wait([
+      api.list(),
+      quizApi.listCompleted().catchError((_) => <Quiz>[]),
+    ]);
+    final studies = results[0] as List<Study>;
+    final completedQuizzes = results[1] as List<Quiz>;
     final standby = studies.where((s) => s.status != 'completed').toList();
 
     Study? mostRecent;
@@ -54,7 +63,7 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
     // entry returned by the API as a reasonable "most recent" proxy.
     mostRecent ??= standby.isNotEmpty ? standby.last : null;
 
-    return _DashboardData(studies, mostRecent);
+    return _DashboardData(studies, completedQuizzes, mostRecent);
   }
 
   void _reload() {
@@ -157,7 +166,8 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
     final isDesktop = width >= 768;
 
     return Scaffold(
-      appBar: AttachmentAppBar(title: context.tr('myStudiesTitle')),
+      appBar: AttachmentAppBar(title: context.tr('myStudiesTitle'), currentTab: 'studies'),
+      endDrawer: const AttachmentSideMenu(currentTab: 'studies'),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           await Navigator.push(
@@ -188,7 +198,8 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                       .where((s) => s.name.toLowerCase().contains(_searchQuery.toLowerCase()))
                       .toList();
             final totalBytes = studies.fold<int>(0, (sum, s) => sum + s.activeSizeBytes);
-            final completedCount = studies.where((s) => s.status == 'completed').length;
+            final completedCount = data?.completedQuizzes.length ??
+                studies.where((s) => s.status == 'completed').length;
 
             return SingleChildScrollView(
               padding: EdgeInsets.all(isDesktop ? 24 : 16),

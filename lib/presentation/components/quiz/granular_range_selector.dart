@@ -1,6 +1,29 @@
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/quiz_wizard_data.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+/// Rejects any edit that would make the field read below 1 or above [max]
+/// (when known). The field simply never displays an invalid number in the
+/// first place — no silent correction to reconcile later, no divergence
+/// between what's on screen and what gets sent to the backend.
+class _BoundedIntFormatter extends TextInputFormatter {
+  _BoundedIntFormatter({this.max});
+  final int? max;
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) return newValue;
+    final parsed = int.tryParse(newValue.text);
+    if (parsed == null) return oldValue;
+    if (parsed < 1) return oldValue;
+    if (max != null && parsed > max!) return oldValue;
+    return newValue;
+  }
+}
 
 /// Icon and accent color used to visually badge a file by its extension.
 /// Shared between [GranularRangeSelector] and the quiz wizard's file chips.
@@ -99,7 +122,7 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
     final kind = file.kind.toLowerCase();
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isDesktop ? 20 : 14),
       decoration: BoxDecoration(
         color: scheme.surface,
         borderRadius: BorderRadius.circular(16),
@@ -115,23 +138,34 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
             ),
           ),
           const SizedBox(height: 10),
-          SegmentedButton<bool>(
-            segments: [
-              ButtonSegment(
-                value: true,
-                label: Text(context.tr('wholeDocument')),
-                icon: const Icon(Icons.select_all),
-              ),
-              ButtonSegment(
-                value: false,
-                label: Text(context.tr('selectRange')),
-                icon: const Icon(Icons.tune),
-              ),
-            ],
-            selected: {file.isWholeDocument},
-            onSelectionChanged: (set) {
-              onUpdate(isWholeDocument: set.first);
-            },
+          SizedBox(
+            width: double.infinity,
+            child: SegmentedButton<bool>(
+              segments: [
+                ButtonSegment(
+                  value: true,
+                  label: Text(
+                    context.tr('wholeDocument'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  icon: const Icon(Icons.select_all),
+                ),
+                ButtonSegment(
+                  value: false,
+                  label: Text(
+                    context.tr('selectRange'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  icon: const Icon(Icons.tune),
+                ),
+              ],
+              selected: {file.isWholeDocument},
+              onSelectionChanged: (set) {
+                onUpdate(isWholeDocument: set.first);
+              },
+            ),
           ),
           if (!file.isWholeDocument) ...[
             const SizedBox(height: 16),
@@ -146,80 +180,104 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
     final scheme = Theme.of(context).colorScheme;
 
     if (kind == 'pdf' || kind == 'docx' || kind == 'doc') {
-      return Row(
+      final total = file.totalPages;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: TextField(
-              keyboardType: TextInputType.number,
-              controller: _pageStartController,
-              onChanged: (val) {
-                final p = int.tryParse(val);
-                if (p != null && p >= 1) onUpdate(pageStart: p);
-              },
-              decoration: InputDecoration(
-                labelText: context.tr('pageStartLabel'),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
+          _TotalCountLabel(
+            text: total != null
+                ? context.trParams('totalPagesLabel', {'count': '$total'})
+                : context.tr('totalPagesUnknown'),
           ),
-          const SizedBox(width: 12),
-          Text(context.tr('rangeUntil'), style: TextStyle(color: scheme.onSurface.withValues(alpha: 0.7))),
-          const SizedBox(width: 12),
-          Expanded(
-            child: TextField(
-              keyboardType: TextInputType.number,
-              controller: _pageEndController,
-              onChanged: (val) {
-                final p = int.tryParse(val);
-                if (p != null && p >= file.pageStart) {
-                  onUpdate(pageEnd: p);
-                }
-              },
-              decoration: InputDecoration(
-                labelText: context.tr('pageEndLabel'),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  keyboardType: TextInputType.number,
+                  controller: _pageStartController,
+                  inputFormatters: [_BoundedIntFormatter(max: total)],
+                  onChanged: (val) {
+                    final p = int.tryParse(val);
+                    if (p != null) onUpdate(pageStart: p);
+                  },
+                  decoration: InputDecoration(
+                    labelText: context.tr('pageStartLabel'),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 12),
+              Text(context.tr('rangeUntil'), style: TextStyle(color: scheme.onSurface.withValues(alpha: 0.7))),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  keyboardType: TextInputType.number,
+                  controller: _pageEndController,
+                  inputFormatters: [_BoundedIntFormatter(max: total)],
+                  onChanged: (val) {
+                    final p = int.tryParse(val);
+                    if (p != null && p >= file.pageStart) onUpdate(pageEnd: p);
+                  },
+                  decoration: InputDecoration(
+                    labelText: context.tr('pageEndLabel'),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       );
     }
 
     if (kind == 'csv' || kind == 'txt' || kind == 'md') {
-      return Row(
+      final total = file.totalLines;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: TextField(
-              keyboardType: TextInputType.number,
-              controller: _lineStartController,
-              onChanged: (val) {
-                final l = int.tryParse(val);
-                if (l != null && l >= 1) onUpdate(lineStart: l);
-              },
-              decoration: InputDecoration(
-                labelText: context.tr('lineStartLabel'),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
+          _TotalCountLabel(
+            text: total != null
+                ? context.trParams('totalLinesLabel', {'count': '$total'})
+                : context.tr('totalLinesUnknown'),
           ),
-          const SizedBox(width: 12),
-          Text(context.tr('rangeUntil'), style: TextStyle(color: scheme.onSurface.withValues(alpha: 0.7))),
-          const SizedBox(width: 12),
-          Expanded(
-            child: TextField(
-              keyboardType: TextInputType.number,
-              controller: _lineEndController,
-              onChanged: (val) {
-                final l = int.tryParse(val);
-                if (l != null && l >= file.lineStart) {
-                  onUpdate(lineEnd: l);
-                }
-              },
-              decoration: InputDecoration(
-                labelText: context.tr('lineEndLabel'),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  keyboardType: TextInputType.number,
+                  controller: _lineStartController,
+                  inputFormatters: [_BoundedIntFormatter(max: total)],
+                  onChanged: (val) {
+                    final l = int.tryParse(val);
+                    if (l != null) onUpdate(lineStart: l);
+                  },
+                  decoration: InputDecoration(
+                    labelText: context.tr('lineStartLabel'),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 12),
+              Text(context.tr('rangeUntil'), style: TextStyle(color: scheme.onSurface.withValues(alpha: 0.7))),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  keyboardType: TextInputType.number,
+                  controller: _lineEndController,
+                  inputFormatters: [_BoundedIntFormatter(max: total)],
+                  onChanged: (val) {
+                    final l = int.tryParse(val);
+                    if (l != null && l >= file.lineStart) onUpdate(lineEnd: l);
+                  },
+                  decoration: InputDecoration(
+                    labelText: context.tr('lineEndLabel'),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       );
@@ -250,6 +308,26 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
           },
         ),
       ],
+    );
+  }
+}
+
+/// Small caption showing the file's real page/line count (or that it
+/// couldn't be determined), so the user picks a range against a known
+/// length instead of guessing.
+class _TotalCountLabel extends StatelessWidget {
+  const _TotalCountLabel({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Text(
+      text,
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        color: scheme.onSurface.withValues(alpha: 0.6),
+        fontStyle: FontStyle.italic,
+      ),
     );
   }
 }

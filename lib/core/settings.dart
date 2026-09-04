@@ -49,6 +49,8 @@ class Settings {
     createdAt: DateTime.now().toIso8601String(),
   ).toJson();
 
+  final int userTotalStorageBytes = 500 * 1024 * 1024; // 500 MB
+
   static final Settings _instance = Settings._internal();
 
   Settings._internal();

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/quiz_wizard_data.dart';
 import 'package:certifications/domain/services/draft_progress_store.dart';
@@ -48,7 +50,14 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
     ..currentStep = widget.initialStep.clamp(0, 3);
 
   bool _generating = false;
+  int _generateStep = 0; // tracks which pipeline step is currently running
   String? _generateError;
+
+  Timer? _progressTimer;
+  int _questionsGenerated = 0;
+  int? _questionsTarget;
+  int _chunksDone = 0;
+  int _chunksTotal = 0;
 
   @override
   void initState() {
@@ -68,12 +77,67 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
 
   @override
   void dispose() {
+    _progressTimer?.cancel();
     wizardData.removeListener(_persistDraftState);
     wizardData.dispose();
     super.dispose();
   }
 
-  /// Returns the MIME type for an [AttachedFile.kind] string.
+  /// Polls the backend for real "questions generated so far" progress while
+  /// the AI generation step runs, instead of leaving the loading screen on a
+  /// static message. Cancelled as soon as [_generate] moves past step 3.
+  void _startProgressPolling(String studyId) {
+    _progressTimer?.cancel();
+    _pollProgressOnce(studyId); // don't wait 5s for the first update
+    // Polled, not pushed: every 5s is frequent enough to feel live without
+    // hammering the backend on a loading screen users may sit on for a while.
+    _progressTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => _pollProgressOnce(studyId),
+    );
+  }
+
+  Future<void> _pollProgressOnce(String studyId) async {
+    try {
+      final progress = await _api.getGenerationProgress(studyId);
+      if (!mounted) return;
+      setState(() {
+        _questionsGenerated = progress.questionsGenerated;
+        _questionsTarget = progress.questionsTarget;
+        _chunksDone = progress.chunksDone;
+        _chunksTotal = progress.chunksTotal;
+      });
+    } catch (_) {
+      // Best-effort: a missed poll just means the count doesn't tick this
+      // round, the loading screen still shows the last known progress.
+    }
+  }
+
+  /// Maps a raw file extension to the [SourceKind] value the API expects.
+  /// The API enum uses semantic names (text, audio, video), not extensions.
+  String _apiKind(String ext) {
+    switch (ext.toLowerCase()) {
+      case 'pdf':
+        return 'pdf';
+      case 'docx':
+        return 'docx';
+      case 'csv':
+        return 'csv';
+      case 'mp3':
+      case 'wav':
+      case 'm4a':
+        return 'audio';
+      case 'mp4':
+      case 'mov':
+        return 'video';
+      case 'txt':
+      case 'md':
+      default:
+        return 'text';
+    }
+  }
+
+  /// Returns the MIME type for an [AttachedFile.kind] string (raw extension).
   String _mimeType(String kind) {
     switch (kind.toLowerCase()) {
       case 'pdf':
@@ -123,6 +187,7 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
   Future<void> _generate() async {
     setState(() {
       _generating = true;
+      _generateStep = 0; // step 0: creating study
       _generateError = null;
     });
 
@@ -131,11 +196,13 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
       final studyId =
           widget.studyId ?? (await _api.create(wizardData.name)).id;
 
+      setState(() => _generateStep = 1); // step 1: uploading files
+
       // 2. Upload each attached file, then apply granular range if configured.
       for (final file in wizardData.attachedFiles) {
         final source = await _api.upload(
           studyId: studyId,
-          kind: file.kind,
+          kind: _apiKind(file.kind),
           filename: file.name,
           bytes: file.bytes,
           mimeType: _mimeType(file.kind),
@@ -147,20 +214,47 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
             sourceId: source.id,
             selection: _rangeSelection(file),
           );
-          await _api.ingest(studyId, source.id);
         }
+        // Ingest must always run — it extracts text and flips the source to
+        // SourceStatus.ready. Without it, generate returns 422 because no
+        // ready source is available, even for whole-document uploads.
+        setState(() => _generateStep = 2); // step 2: processing content
+        await _api.ingest(studyId, source.id);
       }
+
+      setState(() {
+        _generateStep = 3; // step 3: generating questions with AI
+        _questionsGenerated = 0;
+        _chunksDone = 0;
+        _chunksTotal = 0;
+        _questionsTarget = wizardData.questionCount == QuizWizardData.unlimitedQuestionCount
+            ? null
+            : wizardData.questionCount;
+      });
+      _startProgressPolling(studyId);
+
+      // Generate the questions now so the user stays on the beautiful step-by-step
+      // progress screen until the AI completes generation, avoiding any secondary
+      // blank circular loading indicator on the question screen.
+      final questions = await _api.generateQuestions(
+        studyId: studyId,
+        difficulty: wizardData.difficulty.name,
+        useWeb: wizardData.useWeb,
+        idempotencyKey: '${DateTime.now().microsecondsSinceEpoch}-question',
+        questionCount: wizardData.questionCount,
+      );
+      _progressTimer?.cancel();
 
       // 3. Record last-opened time for the draft-resume hero card.
       await DraftProgressStore.instance.touch(studyId);
 
       if (!mounted) return;
 
-      // 4. Navigate to the question session. The whole generate/answer/result
-      //    flow happens inside QuestionSession → QuizResultScreen, so we push
-      //    and wait for the user to finish (pop back to us) before notifying
-      //    the dashboard.
-      await Navigator.push(
+      // 4. Navigate to the question session with pre-generated questions.
+      // We replace the wizard route with QuestionSession so that the wizard
+      // is completely unmounted and does not attempt to pop afterwards.
+      widget.onGenerate();
+      await Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) => QuestionSession(
@@ -169,28 +263,26 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
             difficulty: wizardData.difficulty.name,
             useWeb: wizardData.useWeb,
             questionCount: wizardData.questionCount,
+            initialQuestions: questions,
           ),
         ),
       );
-
-      if (!mounted) return;
-
-      // 5. Notify the caller (dashboard) to refresh its list, then close the
-      //    wizard so the user lands back on a refreshed dashboard.
-      widget.onGenerate();
-      Navigator.pop(context);
     } on StudyApiException catch (e) {
+      _progressTimer?.cancel();
       if (!mounted) return;
       setState(() {
         _generating = false;
+        _generateStep = 0;
         _generateError = e.statusCode == 402
             ? context.tr('errorPaymentRequired')
             : context.tr('errorGeneric');
       });
     } catch (_) {
+      _progressTimer?.cancel();
       if (!mounted) return;
       setState(() {
         _generating = false;
+        _generateStep = 0;
         _generateError = context.tr('errorGeneric');
       });
     }
@@ -208,12 +300,17 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
         appBar: AttachmentAppBar(title: context.tr('wizardTitle')),
         body: SafeArea(
           child: FuturisticLoading(
+            currentStep: _generateStep,
             messages: [
               context.tr('loadingCreatingStudy'),
               context.tr('loadingUploadingFiles'),
               context.tr('loadingProcessingContent'),
               context.tr('loadingAlmostReady'),
             ],
+            questionsGenerated: _generateStep == 3 ? _questionsGenerated : null,
+            questionsTarget: _questionsTarget,
+            chunksDone: _chunksDone,
+            chunksTotal: _chunksTotal,
           ),
         ),
       );

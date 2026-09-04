@@ -116,6 +116,7 @@ class _OnCertificatesScreenState extends State<OnCertificatesScreen>
         title: context.tr('certificates'),
         currentTab: 'certificates',
       ),
+      endDrawer: const AttachmentSideMenu(currentTab: 'certificates'),
       body: SafeArea(
         child: FutureBuilder<List<Quiz>>(
           future: _future,

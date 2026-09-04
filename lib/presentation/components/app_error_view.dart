@@ -50,6 +50,21 @@ class _AppErrorViewState extends State<AppErrorView> {
 
   @override
   Widget build(BuildContext context) {
+    // This view is what ErrorWidget.builder renders in place of whatever
+    // widget just crashed, wherever in the tree that happened to be - it
+    // cannot assume a healthy Navigator/Overlay ancestor still exists above
+    // it (the crash itself may be exactly what left the ambient Overlay in
+    // a bad state). SelectableText below is implemented with EditableText,
+    // which hard-requires an Overlay ancestor to build at all ("No Overlay
+    // widget found") - without providing our own, a broken ambient Overlay
+    // means the error screen itself throws a second, more confusing error,
+    // hiding the real one and leaving the "copy" button unreachable.
+    return Overlay(
+      initialEntries: [OverlayEntry(builder: _buildScaffold)],
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
@@ -133,7 +148,7 @@ class _AppErrorViewState extends State<AppErrorView> {
                           FilledButton.icon(
                             onPressed: _copyDetails,
                             icon: const Icon(Icons.copy_all_rounded),
-                            label: Text(context.tr('memory')),
+                            label: Text(context.tr('copyErrorDetails')),
                           ),
                         if (!widget.showDetails)
                           FilledButton.icon(

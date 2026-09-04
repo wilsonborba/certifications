@@ -477,7 +477,7 @@ class _HoverScaleState extends State<_HoverScale> {
 }
 
 /// Right-side (end) Drawer used on mobile layout.
-/// Closes on backdrop tap, swipe, or pressing the 'Close ✕' tile.
+/// Closes on backdrop tap, swipe, or pressing the 'Close' tile.
 class MobileSideMenu extends StatelessWidget {
   const MobileSideMenu({
     super.key,

@@ -32,6 +32,7 @@ class _OnCompletedQuizzesScreenState extends State<OnCompletedQuizzesScreen> {
 
     return Scaffold(
       appBar: AttachmentAppBar(title: context.tr('completedQuizzesTitle')),
+      endDrawer: const AttachmentSideMenu(),
       body: SafeArea(
         child: FutureBuilder<List<Quiz>>(
           future: _future,

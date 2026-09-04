@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/quiz.dart';
 import 'package:certifications/domain/models/quiz_wizard_data.dart';
@@ -5,6 +7,7 @@ import 'package:certifications/presentation/components/premium_hover_card.dart';
 import 'package:certifications/presentation/components/quiz/granular_range_selector.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:syncfusion_flutter_pdf/pdf.dart';
 
 /// Extensions accepted by the Step 2 file picker.
 const uploadAllowedExtensions = [
@@ -139,19 +142,56 @@ class _Step2SourceViewState extends State<Step2SourceView> {
         blocked = true;
         continue;
       }
-      wizardData.addFile(
-        AttachedFile(
-          bytes: bytes,
-          name: picked.name,
-          kind: picked.extension?.toLowerCase() ?? 'pdf',
-        ),
+      final kind = picked.extension?.toLowerCase() ?? 'pdf';
+      final file = AttachedFile(
+        bytes: bytes,
+        name: picked.name,
+        kind: kind,
+        totalPages: kind == 'pdf' ? _countPdfPages(bytes) : null,
+        totalLines: (kind == 'txt' || kind == 'md' || kind == 'csv')
+            ? _countLines(bytes)
+            : null,
       );
+      // The default range (page/line 1-10) was picked blind; clamp it now
+      // that the real length is known so a short document doesn't send a
+      // selection the backend has to reject (#pdf pages, e.g.).
+      if (file.totalPages != null && file.totalPages! < file.pageEnd) {
+        file.pageEnd = file.totalPages!;
+      }
+      if (file.totalLines != null && file.totalLines! < file.lineEnd) {
+        file.lineEnd = file.totalLines!;
+      }
+      wizardData.addFile(file);
     }
 
     if (blocked && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.tr('capExceededWarning'))),
       );
+    }
+  }
+
+  /// Real page count so the range selector can show/enforce it instead of a
+  /// blind 1-10 default. Returns null (shown as "unknown") rather than
+  /// guessing when the PDF can't be parsed client-side.
+  int? _countPdfPages(List<int> bytes) {
+    try {
+      final document = PdfDocument(inputBytes: bytes);
+      final count = document.pages.count;
+      document.dispose();
+      return count;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  int? _countLines(List<int> bytes) {
+    try {
+      final text = utf8.decode(bytes, allowMalformed: true);
+      if (text.isEmpty) return 0;
+      return '\n'.allMatches(text).length + 1;
+    } catch (_) {
+      return null;
     }
   }
 
@@ -177,40 +217,36 @@ class _Step2SourceViewState extends State<Step2SourceView> {
     final ratio = (usedMb / capMb).clamp(0.0, 1.0);
     final over = wizardData.totalAttachedBytes > QuizWizardData.maxTotalAttachedBytes;
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            context.tr('step2Title'),
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          context.tr('step2Title'),
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
           ),
-          const SizedBox(height: 16),
-          PremiumHoverCard(
-            padding: EdgeInsets.all(widget.isDesktop ? 24 : 18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 16,
-                  runSpacing: 12,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: scheme.primary.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Icon(Icons.upload_file, color: scheme.primary),
+        ),
+        const SizedBox(height: 16),
+        PremiumHoverCard(
+          padding: EdgeInsets.all(widget.isDesktop ? 24 : 18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+                if (widget.isDesktop)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: scheme.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(14),
                         ),
-                        const SizedBox(width: 12),
-                        Column(
+                        child: Icon(Icons.upload_file, color: scheme.primary),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
@@ -227,15 +263,59 @@ class _Step2SourceViewState extends State<Step2SourceView> {
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                    FilledButton.icon(
-                      onPressed: _pickFiles,
-                      icon: const Icon(Icons.add),
-                      label: Text(context.tr('addFiles')),
-                    ),
-                  ],
-                ),
+                      ),
+                      const SizedBox(width: 16),
+                      FilledButton.icon(
+                        onPressed: _pickFiles,
+                        icon: const Icon(Icons.add),
+                        label: Text(context.tr('addFiles')),
+                      ),
+                    ],
+                  )
+                else
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: scheme.primary.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Icon(Icons.upload_file, color: scheme.primary),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  context.tr('sourceUpload'),
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                  context.tr('sourceUploadHint'),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: scheme.onSurface.withValues(alpha: 0.6),
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      FilledButton.icon(
+                        onPressed: _pickFiles,
+                        icon: const Icon(Icons.add),
+                        label: Text(context.tr('addFiles')),
+                      ),
+                    ],
+                  ),
                 const SizedBox(height: 20),
                 _CapUsageBar(usedMb: usedMb, capMb: capMb, ratio: ratio, over: over),
                 const SizedBox(height: 20),
@@ -320,8 +400,7 @@ class _Step2SourceViewState extends State<Step2SourceView> {
             ),
           ),
         ],
-      ),
-    );
+      );
   }
 }
 
@@ -531,19 +610,9 @@ class Step3FormatView extends StatelessWidget {
                 label: Text(context.tr('easy')),
                 icon: const Icon(Icons.sentiment_satisfied),
               ),
-              ButtonSegment(
-                value: DifficultyLevel.medium,
-                label: Text(context.tr('medium')),
-                icon: const Icon(Icons.sentiment_neutral),
-              ),
-              ButtonSegment(
-                value: DifficultyLevel.hard,
-                label: Text(context.tr('hard')),
-                icon: const Icon(Icons.sentiment_very_dissatisfied),
-              ),
             ],
-            selected: {wizardData.difficulty},
-            onSelectionChanged: (set) => wizardData.setDifficulty(set.first),
+            selected: {DifficultyLevel.easy},
+            onSelectionChanged: (_) => wizardData.setDifficulty(DifficultyLevel.easy),
           ),
         ),
         const SizedBox(height: 28),
@@ -768,7 +837,7 @@ class Step4ReviewView extends StatelessWidget {
             width: double.infinity,
             height: 56,
             child: ElevatedButton.icon(
-              onPressed: onGenerate,
+              onPressed: wizardData.isStep4Valid ? onGenerate : null,
               icon: const Icon(Icons.auto_awesome),
               label: Text(
                 context.tr('generateQuizNow'),

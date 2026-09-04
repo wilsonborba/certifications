@@ -40,7 +40,7 @@ class _LiquidMetalBackgroundState extends State<LiquidMetalBackground>
   @override
   void initState() {
     super.initState();
-    // ✅ Use a normal controller and repeat over finite range (0..1)
+    // Use a normal controller and repeat over finite range (0..1)
     _ctrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),

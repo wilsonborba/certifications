@@ -45,6 +45,7 @@ class _OnSupportScreenState extends State<OnSupportScreen> {
 
     return Scaffold(
       appBar: AttachmentAppBar(title: context.tr('support'), currentTab: 'support'),
+      endDrawer: const AttachmentSideMenu(currentTab: 'support'),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openNewTicket,
         icon: const Icon(Icons.add_comment_outlined),

@@ -21,6 +21,7 @@ class QuizMasterDetailList extends StatefulWidget {
     required this.emptyMessage,
     this.isDesktop = false,
     this.listExtent = 320,
+    this.maxListHeight,
   });
 
   final List<Quiz> quizzes;
@@ -30,9 +31,11 @@ class QuizMasterDetailList extends StatefulWidget {
   final bool isDesktop;
 
   /// Width reserved for the list pane in the desktop (side-by-side) layout.
-  /// Unused on mobile: there the list is stacked above the detail panel and
-  /// simply sizes to its content, both riding the page's own scroll.
+  /// Unused on mobile: there the list is stacked above the detail panel.
   final double listExtent;
+
+  /// Optional maximum height for the list pane with an internal scroll view.
+  final double? maxListHeight;
 
   @override
   State<QuizMasterDetailList> createState() => _QuizMasterDetailListState();
@@ -73,12 +76,13 @@ class _QuizMasterDetailListState extends State<QuizMasterDetailList> {
     }
 
     final selected = _selected ?? widget.quizzes.first;
-    // Never its own independently scrollable region: this list always
-    // sizes to its content and lets the page's own scroll view carry it,
-    // rather than trapping the mouse wheel in a small nested scroll pocket.
+    final isScrollable = widget.maxListHeight != null;
+
     final list = ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: !isScrollable,
+      physics: isScrollable
+          ? const AlwaysScrollableScrollPhysics()
+          : const NeverScrollableScrollPhysics(),
       itemCount: widget.quizzes.length,
       separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
@@ -92,6 +96,13 @@ class _QuizMasterDetailListState extends State<QuizMasterDetailList> {
       },
     );
 
+    final wrappedList = isScrollable
+        ? ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: widget.maxListHeight!),
+            child: Scrollbar(thumbVisibility: true, child: list),
+          )
+        : list;
+
     final detail = AnimatedSwitcher(
       duration: const Duration(milliseconds: 200),
       child: KeyedSubtree(
@@ -101,22 +112,20 @@ class _QuizMasterDetailListState extends State<QuizMasterDetailList> {
     );
 
     if (widget.isDesktop) {
-      return IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(width: widget.listExtent, child: list),
-            const SizedBox(width: 20),
-            Expanded(child: detail),
-          ],
-        ),
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(width: widget.listExtent, child: wrappedList),
+          const SizedBox(width: 20),
+          Expanded(child: detail),
+        ],
       );
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        list,
+        wrappedList,
         const Divider(height: 28),
         detail,
       ],

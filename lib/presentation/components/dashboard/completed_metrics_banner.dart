@@ -1,3 +1,4 @@
+import 'package:certifications/core/settings.dart';
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/presentation/components/premium_hover_card.dart';
 import 'package:flutter/material.dart';
@@ -115,6 +116,9 @@ class CompletedMetricsBanner extends StatelessWidget {
 
   Widget _buildPopulated(BuildContext context, ColorScheme scheme) {
     final sizeMb = (totalSizeBytes / (1024 * 1024)).toStringAsFixed(1);
+    final quotaMb = (app_settings.userTotalStorageBytes / (1024 * 1024)).toStringAsFixed(0);
+    final availableBytes = (app_settings.userTotalStorageBytes - totalSizeBytes).clamp(0, app_settings.userTotalStorageBytes);
+    final availableMb = (availableBytes / (1024 * 1024)).toStringAsFixed(1);
 
     final tiles = Wrap(
       spacing: 12,
@@ -129,8 +133,9 @@ class CompletedMetricsBanner extends StatelessWidget {
         _MetricTile(
           icon: Icons.sd_storage,
           label: context.tr('storageUsedLabel'),
-          value: '$sizeMb MB',
+          value: '$sizeMb / $quotaMb MB',
           isDesktop: isDesktop,
+          tooltip: context.trParams('storageAvailableTooltip', {'available': availableMb, 'total': quotaMb}),
         ),
         _MetricTile(
           icon: Icons.assignment_turned_in,

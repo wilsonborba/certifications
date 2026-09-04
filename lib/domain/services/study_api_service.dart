@@ -102,6 +102,14 @@ class StudyApiService {
       throw StudyApiException(response.statusCode);
   }
 
+  Future<void> deleteStudy(String studyId) async {
+    final response = await _adapter.delete(
+      Uri.parse('$_base/$studyId'),
+    );
+    if (response.statusCode != 204)
+      throw StudyApiException(response.statusCode);
+  }
+
   Future<List<StudyQuestion>> generateQuestions({
     required String studyId,
     required String difficulty,
@@ -152,6 +160,16 @@ class StudyApiService {
       }),
     );
     return QuizGradeResult.fromJson(_data(response));
+  }
+
+  /// Polled by the wizard's loading screen while [generateQuestions] is
+  /// in flight to show real progress (questions generated so far, out of
+  /// how many chunks of source material) instead of a static spinner.
+  Future<GenerationProgress> getGenerationProgress(String studyId) async {
+    final response = await _adapter.get(
+      Uri.parse('$_base/$studyId/questions/progress'),
+    );
+    return GenerationProgress.fromJson(_data(response));
   }
 
   String diagramUrl(String studyId, String questionId) =>

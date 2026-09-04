@@ -41,6 +41,7 @@ class _CertificateMiniListCardState extends State<CertificateMiniListCard> {
             emptyIcon: Icons.workspace_premium_outlined,
             emptyMessage: context.tr('noCompletedQuizzesYet'),
             isDesktop: widget.isDesktop,
+            maxListHeight: widget.isDesktop ? 280 : 220,
           );
         },
       ),

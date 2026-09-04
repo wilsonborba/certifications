@@ -48,12 +48,14 @@ class QuizResultScreen extends StatelessWidget {
     return Scaffold(
       appBar: AttachmentAppBar(title: context.tr('quizResultTitle')),
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
-            child: ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 760),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                 PremiumHoverCard(
                   accentColor: scheme.primary,
                   child: Column(
@@ -67,28 +69,118 @@ class QuizResultScreen extends StatelessWidget {
                       const SizedBox(height: 16),
                       Row(
                         children: [
-                          Text(
-                            '${grade.score.toStringAsFixed(0)}%',
-                            style: Theme.of(context).textTheme.displaySmall
-                                ?.copyWith(
-                                  color: scheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: grade.score >= 70
+                                  ? Colors.green.withValues(alpha: 0.15)
+                                  : (grade.score >= 50
+                                      ? Colors.amber.withValues(alpha: 0.15)
+                                      : Colors.redAccent.withValues(alpha: 0.15)),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: grade.score >= 70
+                                    ? Colors.green
+                                    : (grade.score >= 50 ? Colors.amber : Colors.redAccent),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Text(
+                              '${grade.score.toStringAsFixed(0)}%',
+                              style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                                color: grade.score >= 70
+                                    ? Colors.green
+                                    : (grade.score >= 50 ? Colors.amber : Colors.redAccent),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
-                            child: Text(
-                              context.trParams('quizResultSummary', {
-                                'correct': '${grade.correctCount}',
-                                'total': '${grade.totalQuestions}',
-                              }),
-                              style: Theme.of(context).textTheme.bodyLarge,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  context.trParams('quizResultSummary', {
+                                    'correct': '${grade.correctCount}',
+                                    'total': '${grade.totalQuestions}',
+                                  }),
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  grade.score >= 70
+                                      ? (context.tr('certificateEarned') != 'certificateEarned'
+                                          ? context.tr('certificateEarned')
+                                          : 'Achievement Certificate Earned!')
+                                      : (context.tr('completedPractice') != 'completedPractice'
+                                          ? context.tr('completedPractice')
+                                          : 'Practice Quiz Completed'),
+                                  style: TextStyle(
+                                    color: grade.score >= 70 ? Colors.green : scheme.onSurface.withValues(alpha: 0.7),
+                                    fontWeight: grade.score >= 70 ? FontWeight.bold : FontWeight.normal,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                      if (quizId != null) ...[
+                      if (grade.score >= 70) ...[
                         const SizedBox(height: 20),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                scheme.primaryContainer.withValues(alpha: 0.7),
+                                scheme.secondaryContainer.withValues(alpha: 0.5),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: scheme.primary.withValues(alpha: 0.4)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.workspace_premium_rounded, size: 44, color: Colors.amber),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'CERTIFICATE OF COMPLETION',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 1.2,
+                                        color: scheme.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                    ),
+                                    Text(
+                                      'Issued on ${DateTime.now().toLocal().toString().split(' ')[0]} • Score: ${grade.score.toStringAsFixed(0)}%',
+                                      style: Theme.of(context).textTheme.bodySmall,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      if (quizId != null) ...[
+                        const SizedBox(height: 16),
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton.icon(
@@ -207,6 +299,7 @@ class QuizResultScreen extends StatelessWidget {
                 ),
               ],
             ),
+          ),
           ),
         ),
       ),

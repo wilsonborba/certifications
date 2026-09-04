@@ -9,10 +9,10 @@ abstract final class AppTheme {
     onPrimary: Color(0xFFFFFFFF),
     secondary: Color(0xFF3D3D3D),
     onSecondary: Color(0xFFFFFFFF),
-    surface: Color(0xFFFFFFFF),
-    onSurface: Color(0xFF111111),
-    surfaceContainerHighest: Color(0xFFF1F1F1),
-    outline: Color(0xFF9B9B9B),
+    surface: Color(0xFFF7F7F7),          // cards / elevated surfaces: near-white
+    onSurface: Color(0xFF0D0D0D),        // near-black for strong text contrast
+    surfaceContainerHighest: Color(0xFFDEDEDE), // input fills, chips: clearly distinct
+    outline: Color(0xFF7A7A7A),          // borders: darker so they show on gray bg
     error: Color(0xFF8B1E1E),
     onError: Color(0xFFFFFFFF),
   );
@@ -28,12 +28,12 @@ abstract final class AppTheme {
     error: Color(0xFFFFB4AB),
     onError: Color(0xFF690005),
   );
-  static ThemeData light() => _build(_light);
-  static ThemeData dark() => _build(_dark);
-  static ThemeData _build(ColorScheme scheme) => ThemeData(
+  static ThemeData light() => _build(_light, scaffoldBg: const Color(0xFFE2E2E2));
+  static ThemeData dark() => _build(_dark, scaffoldBg: _dark.surface);
+  static ThemeData _build(ColorScheme scheme, {required Color scaffoldBg}) => ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
-    scaffoldBackgroundColor: scheme.surface,
+    scaffoldBackgroundColor: scaffoldBg,
     textTheme: GoogleFonts.interTextTheme().apply(
       bodyColor: scheme.onSurface,
       displayColor: scheme.onSurface,

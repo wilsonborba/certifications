@@ -48,8 +48,10 @@ dependencies:
   web: ^1.1.1
   http_parser: ^4.0.2
   syncfusion_flutter_pdfviewer: ^26.1.42
+  syncfusion_flutter_pdf: ^26.1.42
   qr_flutter: ^4.1.0
   share_plus: ^10.0.2
+  url_launcher: ^6.3.1
   pdf: ^3.10.8
   intl: ^0.19.0
   flutter_math_fork: ^0.7.4

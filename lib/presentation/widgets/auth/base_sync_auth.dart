@@ -38,7 +38,11 @@ abstract class BaseSyncAuthState<T extends BaseSyncAuth> extends State<T> {
         final hasSession = await isThereSession(cookieName: 'csrf');
 
         if (hasSession) {
-          NavigationService.push(await _landingScreenAfterAuth());
+          // pushReplacement (not push): this screen must not linger as a
+          // stale route[0] under the landing screen — popUntil((r) =>
+          // r.isFirst) elsewhere in the app (quiz cancel, quiz done) relies
+          // on the landing screen actually being the first route.
+          NavigationService.pushReplacement(await _landingScreenAfterAuth());
           WidgetsBinding.instance.addPostFrameCallback((_) {
             cleanUrlAfterNav(path: '/');
           });
