@@ -5,27 +5,41 @@ import 'package:certifications/core/utils/my_logs.dart';
 import 'package:certifications/core/settings.dart';
 import 'package:certifications/dal/local/local_source_adapter.dart';
 import 'package:flutter/material.dart';
+import 'package:certifications/domain/services/api_asodya_manager.dart';
+import 'package:certifications/presentation/components/auth/login_redirect.dart';
 import 'package:certifications/core/utils/my_router_parser.dart';
 
 /// Clears cookies + local storage. Call this for Logout.
 Future<void> clearSessionArtifacts() async {
+  try {
+    await ApiAsodyaManager().logOut();
+  } catch (e) {
+    debug('backend logOut failed: $e');
+  }
   // cookies
   deleteCookies(const ['csrf', 'sid']);
 }
 
 Future<void> defaultLogout() async {
   await clearSessionArtifacts();
-  // send to auth login screen (same flow you already use elsewhere)
+  // send to auth login screen with encrypted applicationInfo context
   try {
+    final loginUrl = await urlRedirectionToAuth();
+    redirectToUrl(
+      loginUrl,
+      replace: true,
+      removeSlash: true,
+    );
+  } catch (e) {
+    debug('default logout redirect fallback to base auth: $e');
     redirectToUrl(
       app_settings.ASODYA_AUTH_LOGIN_URL,
       replace: true,
       removeSlash: true,
     );
-  } catch (e) {
-    debug('default logout redirect failed: $e');
   }
 }
+
 
 void redirectToUrl(
   String url, {
