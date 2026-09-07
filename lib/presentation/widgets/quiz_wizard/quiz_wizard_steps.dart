@@ -715,16 +715,15 @@ class Step4ReviewView extends StatelessWidget {
             'names': wizardData.attachedFiles.map((f) => f.name).join(', '),
           });
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            context.tr('step4Title'),
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          context.tr('step4Title'),
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
           ),
+        ),
           const SizedBox(height: 20),
           PremiumHoverCard(
             child: Column(
@@ -846,8 +845,7 @@ class Step4ReviewView extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
+      );
   }
 }
 

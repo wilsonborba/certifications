@@ -28,30 +28,29 @@ class MobileQuizWizard extends StatelessWidget {
     return AnimatedBuilder(
       animation: wizardData,
       builder: (context, _) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            QuizTimelineStepper(wizardData: wizardData, isDesktop: false),
-            const SizedBox(height: 16),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: scheme.surface.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: scheme.outlineVariant.withOpacity(0.3),
-                    ),
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              QuizTimelineStepper(wizardData: wizardData, isDesktop: false),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: scheme.surface.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: scheme.outlineVariant.withOpacity(0.3),
                   ),
-                  child: _buildCurrentStepView(context),
                 ),
+                child: _buildCurrentStepView(context),
               ),
-            ),
-            const SizedBox(height: 16),
-            _buildNavigationFooter(context),
-          ],
+              const SizedBox(height: 16),
+              _buildNavigationFooter(context),
+            ],
+          ),
         );
       },
     );

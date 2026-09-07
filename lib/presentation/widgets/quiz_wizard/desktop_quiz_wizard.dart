@@ -28,13 +28,14 @@ class DesktopQuizWizard extends StatelessWidget {
         child: AnimatedBuilder(
           animation: wizardData,
           builder: (context, _) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                QuizTimelineStepper(wizardData: wizardData, isDesktop: true),
-                const SizedBox(height: 24),
-                Expanded(
-                  child: Container(
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  QuizTimelineStepper(wizardData: wizardData, isDesktop: true),
+                  const SizedBox(height: 24),
+                  Container(
                     padding: const EdgeInsets.all(32),
                     decoration: BoxDecoration(
                       color: scheme.surface.withOpacity(0.9),
@@ -52,10 +53,10 @@ class DesktopQuizWizard extends StatelessWidget {
                     ),
                     child: _buildCurrentStepView(context),
                   ),
-                ),
-                const SizedBox(height: 20),
-                _buildNavigationFooter(context),
-              ],
+                  const SizedBox(height: 20),
+                  _buildNavigationFooter(context),
+                ],
+              ),
             );
           },
         ),
