@@ -13,7 +13,8 @@ class Settings {
 
   /// Non-secret frontend behavior belongs in settings, not in an environment
   /// file or compiler flag. Switch this only when preparing a production build.
-  final bool developmentMode = true;
+  static const bool _envDev = bool.fromEnvironment('DEVELOPMENT_MODE', defaultValue: false);
+  final bool developmentMode = _envDev;
 
   // ASODYA URLS
 
