@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:certifications/core/utils/app_localizations.dart';
 
 /// Step-aware loading screen shown while the wizard runs its async pipeline
 /// (create → upload → ingest → generate). Each step is passed in by the
@@ -146,6 +147,41 @@ class FuturisticLoading extends StatelessWidget {
                     ),
                   );
                 }),
+                const SizedBox(height: 24),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHigh.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: scheme.outlineVariant.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
+                        size: 16,
+                        color: scheme.onSurfaceVariant.withValues(alpha: 0.8),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          AppLocalizations.of(context)
+                              .text('mvpLocalOllamaDisclaimer'),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant
+                                    .withValues(alpha: 0.85),
+                                height: 1.35,
+                                fontSize: 11.5,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
