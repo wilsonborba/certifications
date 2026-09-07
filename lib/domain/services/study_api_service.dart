@@ -142,6 +142,19 @@ class StudyApiService {
         .toList();
   }
 
+  Future<List<StudyQuestion>> getQuestions(String studyId) async {
+    final response = await _adapter.get(
+      Uri.parse('$_base/$studyId/questions'),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw StudyApiException(response.statusCode);
+    }
+    return ((jsonDecode(response.body) as Map<String, dynamic>)['data'] as List)
+        .cast<Map<String, dynamic>>()
+        .map(StudyQuestion.fromJson)
+        .toList();
+  }
+
   /// Grades a full set of answers server-side (the client never has the
   /// correct answers ahead of this call) and returns the score plus a
   /// per-question breakdown.

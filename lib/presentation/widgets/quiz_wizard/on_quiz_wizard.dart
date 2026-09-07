@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/quiz_wizard_data.dart';
+import 'package:certifications/domain/models/study.dart';
 import 'package:certifications/domain/services/draft_progress_store.dart';
 import 'package:certifications/domain/services/study_api_service.dart';
 import 'package:certifications/presentation/components/attachment/app_bar.dart';
@@ -233,16 +234,25 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
       });
       _startProgressPolling(studyId);
 
-      // Generate the questions now so the user stays on the beautiful step-by-step
-      // progress screen until the AI completes generation, avoiding any secondary
-      // blank circular loading indicator on the question screen.
-      final questions = await _api.generateQuestions(
-        studyId: studyId,
-        difficulty: wizardData.difficulty.name,
-        useWeb: wizardData.useWeb,
-        idempotencyKey: '${DateTime.now().microsecondsSinceEpoch}-question',
-        questionCount: wizardData.questionCount,
-      );
+      List<StudyQuestion> questions;
+      try {
+        questions = await _api.generateQuestions(
+          studyId: studyId,
+          difficulty: wizardData.difficulty.name,
+          useWeb: wizardData.useWeb,
+          idempotencyKey: '${DateTime.now().microsecondsSinceEpoch}-question',
+          questionCount: wizardData.questionCount,
+        );
+      } catch (e) {
+        // If the HTTP connection dropped/timed out on client while server continued,
+        // poll or check if questions were generated and saved on the server.
+        final recoveredQuestions = await _api.getQuestions(studyId).catchError((_) => <StudyQuestion>[]);
+        if (recoveredQuestions.isNotEmpty) {
+          questions = recoveredQuestions;
+        } else {
+          rethrow;
+        }
+      }
       _progressTimer?.cancel();
 
       // 3. Record last-opened time for the draft-resume hero card.
