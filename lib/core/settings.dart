@@ -21,11 +21,11 @@ class Settings {
 
   String get ASODYA_API_URL => developmentMode
       ? 'http://192.168.1.103:8101'
-      : 'https://api.$ASODYA_MAIN_DOMAIN:8101';
+      : 'https://api.$ASODYA_MAIN_DOMAIN';
 
   String get ASODYA_AUTH_URL => developmentMode
       ? 'http://192.168.1.103:8100'
-      : 'https://auth.$ASODYA_MAIN_DOMAIN:8100';
+      : 'https://auth.$ASODYA_MAIN_DOMAIN';
 
   String get ASODYA_AUTH_LOGIN_URL => '$ASODYA_AUTH_URL/log_in';
   String get ASODYA_AUTH_SIGNUP_URL => '$ASODYA_AUTH_URL/sign_up';
