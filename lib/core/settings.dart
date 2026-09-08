@@ -17,7 +17,7 @@ class Settings {
   final bool developmentMode = _envDev;
 
   /// Build / deployment timestamp displayed in footers and info views
-  static const String buildVersion = 'v1.0.0 (2026-09-08 05:17 UTC)';
+  static const String buildVersion = 'v1.0.0 (2026-09-08 12:30 +07)';
 
   // ASODYA URLS
 
