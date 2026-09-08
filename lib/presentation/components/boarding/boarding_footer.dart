@@ -1,3 +1,4 @@
+import 'package:certifications/core/settings.dart';
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:flutter/material.dart';
 
@@ -36,12 +37,25 @@ class BoardingFooter extends StatelessWidget {
                 ? CrossAxisAlignment.start
                 : CrossAxisAlignment.center,
             children: [
-              Text(
-                context.tr('appName'),
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -.4,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    context.tr('appName'),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -.4,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Deployed: ${Settings.buildVersion}',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: scheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ],
               ),
               SizedBox(height: constraints.maxWidth < 620 ? 18 : 0),
               Wrap(
