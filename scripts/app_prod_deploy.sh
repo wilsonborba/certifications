@@ -13,6 +13,7 @@ cd "$REPO_DIR"
 flutter build web \
   --release \
   --no-tree-shake-icons \
+  --dart-define=DEVELOPMENT_MODE=false \
   --dart-define=BUILD_TIMESTAMP="$BKK_TIMESTAMP"
 
 echo "=== Deploying to Cloudflare Pages (certifications.asodya.com) ==="
