@@ -173,14 +173,20 @@ def deploy_pages_project(project_name, build_dir, custom_domain=None, branch="ma
 
     # 8. Poll until success
     for _ in range(30):
-        s = cf_request("GET", f"/accounts/{ACCOUNT_ID}/pages/projects/{project_name}/deployments/{dep_id}")
-        stage = s["result"]["latest_stage"]
-        status = stage["status"]
-        print(f"Deploy status: {stage['name']} -> {status}")
-        if status == "success":
-            break
-        if status == "failure":
-            raise RuntimeError(f"Deployment failed at stage {stage['name']}")
+        try:
+            s = cf_request("GET", f"/accounts/{ACCOUNT_ID}/pages/projects/{project_name}/deployments/{dep_id}")
+            stage = s["result"]["latest_stage"]
+            status = stage["status"]
+            print(f"Deploy status: {stage['name']} -> {status}")
+            if status == "success":
+                break
+            if status == "failure":
+                raise RuntimeError(f"Deployment failed at stage {stage['name']}")
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                print("Deploy status: initializing (404)...")
+            else:
+                raise
         time.sleep(2)
 
     # 9. Attach Custom Domain AFTER first deployment is live
