@@ -249,6 +249,8 @@ class AppLocalizations {
       'tapFileToConfigureHint':
           'Tap a file to select a specific range instead of the whole document.',
       'noFilesAddedYet': 'No files added yet. Tap Add files to get started.',
+      'mvpLocalOllamaDisclaimer':
+          'Note: This may take some time because this MVP is running on a local Ollama machine for testing purposes.',
       'questionCountMax': 'Max',
       'questionCountMaxLabel': 'As many as the material supports',
       'visibilityPublicWarning':
@@ -598,6 +600,8 @@ class AppLocalizations {
           'Toque em um arquivo para selecionar um trecho específico em vez do documento inteiro.',
       'noFilesAddedYet':
           'Nenhum arquivo adicionado ainda. Toque em Adicionar arquivos para começar.',
+      'mvpLocalOllamaDisclaimer':
+          'Nota: Isso pode levar algum tempo pois este MVP está executando em uma máquina local com Ollama para fins de teste.',
       'questionCountMax': 'Máx',
       'questionCountMaxLabel': 'Tantas quanto o material permitir',
       'visibilityPublicWarning':
@@ -940,6 +944,8 @@ class AppLocalizations {
       'capExceededWarning': 'การเพิ่มไฟล์นี้จะเกินขีดจำกัด 150MB ของการเรียนนี้',
       'tapFileToConfigureHint': 'แตะไฟล์เพื่อเลือกช่วงเฉพาะแทนเอกสารทั้งหมด',
       'noFilesAddedYet': 'ยังไม่มีไฟล์ที่เพิ่ม แตะเพิ่มไฟล์เพื่อเริ่มต้น',
+      'mvpLocalOllamaDisclaimer':
+          'หมายเหตุ: การดำเนินการนี้อาจใช้เวลาสักครู่ เนื่องจาก MVP นี้ทำงานบนเครื่องภายในผ่าน Ollama สำหรับการทดสอบ',
       'questionCountMax': 'สูงสุด',
       'questionCountMaxLabel': 'มากที่สุดเท่าที่เนื้อหารองรับ',
       'visibilityPublicWarning':

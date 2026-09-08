@@ -16,6 +16,9 @@ class Settings {
   static const bool _envDev = bool.fromEnvironment('DEVELOPMENT_MODE', defaultValue: false);
   final bool developmentMode = _envDev;
 
+  /// Build / deployment timestamp displayed in footers and info views
+  static const String buildVersion = 'v1.0.0 (2026-09-08 12:30 +07)';
+
   // ASODYA URLS
 
   String get ASODYA_MAIN_DOMAIN => 'asodya.com';

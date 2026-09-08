@@ -1,3 +1,4 @@
+import 'package:certifications/core/settings.dart';
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/quiz.dart';
 import 'package:certifications/domain/models/study.dart';
@@ -369,6 +370,16 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                               )
                               .toList(),
                         ),
+                      const SizedBox(height: 32),
+                      Center(
+                        child: Text(
+                          'Certifications ${Settings.buildVersion}',
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),

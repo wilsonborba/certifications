@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/quiz_wizard_data.dart';
+import 'package:certifications/domain/models/study.dart';
+import 'package:certifications/domain/services/client_telemetry_service.dart';
 import 'package:certifications/domain/services/draft_progress_store.dart';
 import 'package:certifications/domain/services/study_api_service.dart';
 import 'package:certifications/presentation/components/attachment/app_bar.dart';
@@ -233,16 +235,77 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
       });
       _startProgressPolling(studyId);
 
-      // Generate the questions now so the user stays on the beautiful step-by-step
-      // progress screen until the AI completes generation, avoiding any secondary
-      // blank circular loading indicator on the question screen.
-      final questions = await _api.generateQuestions(
-        studyId: studyId,
-        difficulty: wizardData.difficulty.name,
-        useWeb: wizardData.useWeb,
-        idempotencyKey: '${DateTime.now().microsecondsSinceEpoch}-question',
-        questionCount: wizardData.questionCount,
-      );
+      List<StudyQuestion> questions;
+      try {
+        questions = await _api.generateQuestions(
+          studyId: studyId,
+          difficulty: wizardData.difficulty.name,
+          useWeb: wizardData.useWeb,
+          idempotencyKey: '${DateTime.now().microsecondsSinceEpoch}-question',
+          questionCount: wizardData.questionCount,
+        );
+      } catch (e) {
+        // Immediate client/auth/quota errors should not enter recovery loop
+        if (e is StudyApiException &&
+            (e.statusCode == 400 ||
+                e.statusCode == 401 ||
+                e.statusCode == 402 ||
+                e.statusCode == 403 ||
+                e.statusCode == 404 ||
+                e.statusCode == 422 ||
+                e.statusCode == 429)) {
+          rethrow;
+        }
+
+        // If the HTTP connection dropped or timed out on client while server continued
+        // (e.g. Cloudflare 100s proxy timeout 524, 504 Gateway Timeout, or network drop),
+        // poll until generation completes on the server or fails.
+        List<StudyQuestion> recovered = [];
+        final deadline = DateTime.now().add(const Duration(minutes: 6));
+        while (DateTime.now().isBefore(deadline)) {
+          await Future.delayed(const Duration(seconds: 4));
+          if (!mounted) return;
+          try {
+            final progress = await _api.getGenerationProgress(studyId);
+            if (mounted) {
+              setState(() {
+                _questionsGenerated = progress.questionsGenerated;
+                _questionsTarget = progress.questionsTarget;
+                _chunksDone = progress.chunksDone;
+                _chunksTotal = progress.chunksTotal;
+              });
+            }
+            if (progress.status == 'error') {
+              rethrow;
+            }
+            if (progress.status == 'ready' || progress.questionsGenerated > 0) {
+              final list = await _api.getQuestions(studyId);
+              if (list.isNotEmpty &&
+                  (progress.status == 'ready' ||
+                      (wizardData.questionCount != QuizWizardData.unlimitedQuestionCount &&
+                          list.length >= wizardData.questionCount))) {
+                recovered = list;
+                break;
+              }
+            }
+          } catch (pollErr) {
+            if (pollErr is StudyApiException && pollErr.statusCode == 404) {
+              rethrow;
+            }
+            // Direct check for questions
+            final list = await _api.getQuestions(studyId).catchError((_) => <StudyQuestion>[]);
+            if (list.isNotEmpty) {
+              recovered = list;
+              break;
+            }
+          }
+        }
+        if (recovered.isNotEmpty) {
+          questions = recovered;
+        } else {
+          rethrow;
+        }
+      }
       _progressTimer?.cancel();
 
       // 3. Record last-opened time for the draft-resume hero card.
@@ -267,18 +330,35 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
           ),
         ),
       );
-    } on StudyApiException catch (e) {
+    } on StudyApiException catch (e, stack) {
       _progressTimer?.cancel();
+      ClientTelemetryService.instance.reportHandledError(
+        title: 'Quiz Wizard API Failure (${e.statusCode})',
+        error: e.message ?? e.toString(),
+        stackTrace: stack,
+        errorCode: 'STUDY_API_${e.statusCode}',
+        requestId: e.requestId,
+        route: '/quiz_wizard',
+        details: {'status_code': e.statusCode, 'message': e.message, 'study_id': widget.studyId},
+      );
       if (!mounted) return;
       setState(() {
         _generating = false;
         _generateStep = 0;
         _generateError = e.statusCode == 402
             ? context.tr('errorPaymentRequired')
-            : context.tr('errorGeneric');
+            : (e.message != null && e.message!.isNotEmpty ? e.message : context.tr('errorGeneric'));
       });
-    } catch (_) {
+    } catch (e, stack) {
       _progressTimer?.cancel();
+      ClientTelemetryService.instance.reportHandledError(
+        title: 'Quiz Wizard Unhandled Error',
+        error: e.toString(),
+        stackTrace: stack,
+        errorCode: 'WIZARD_EXCEPTION',
+        route: '/quiz_wizard',
+        details: {'study_id': widget.studyId},
+      );
       if (!mounted) return;
       setState(() {
         _generating = false;

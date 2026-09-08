@@ -61,4 +61,22 @@ class ApiAsodyaManager {
 
     return response;
   }
+
+  Future<Response> logOut() async {
+    try {
+      final csrfToken = readCsrfToken();
+      if (csrfToken != null) {
+        defaultHeaders['X-CSRF-Token'] = csrfToken;
+      }
+    } catch (e) {
+      debug('Error reading CSRF token: $e');
+    }
+
+    final response = await ApiAdapter(
+      defaultHeaders: defaultHeaders,
+    ).post(Uri.parse('$baseUrl/user/sync/v1/log-out'));
+
+    return response;
+  }
 }
+
