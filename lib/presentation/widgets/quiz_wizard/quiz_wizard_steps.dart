@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:archive/archive.dart';
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/quiz.dart';
 import 'package:certifications/domain/models/quiz_wizard_data.dart';
@@ -147,7 +148,11 @@ class _Step2SourceViewState extends State<Step2SourceView> {
         bytes: bytes,
         name: picked.name,
         kind: kind,
-        totalPages: kind == 'pdf' ? _countPdfPages(bytes) : null,
+        totalPages: kind == 'pdf'
+            ? _countPdfPages(bytes)
+            : (kind == 'docx' || kind == 'doc')
+                ? _countDocxPages(bytes)
+                : null,
         totalLines: (kind == 'txt' || kind == 'md' || kind == 'csv')
             ? _countLines(bytes)
             : null,
@@ -183,6 +188,33 @@ class _Step2SourceViewState extends State<Step2SourceView> {
     } catch (_) {
       return null;
     }
+  }
+
+  /// Computes the page or paragraph count for a DOCX document from its internal XML.
+  int? _countDocxPages(List<int> bytes) {
+    try {
+      final archive = ZipDecoder().decodeBytes(bytes);
+
+      // 1. Check docProps/app.xml for pre-computed Word <Pages> tag
+      final appXml = archive.findFile('docProps/app.xml');
+      if (appXml != null) {
+        final content = utf8.decode(appXml.content as List<int>, allowMalformed: true);
+        final match = RegExp(r'<Pages>(\d+)</Pages>').firstMatch(content);
+        if (match != null) {
+          final pages = int.tryParse(match.group(1)!);
+          if (pages != null && pages > 0) return pages;
+        }
+      }
+
+      // 2. Fallback: Count paragraphs in word/document.xml
+      final docXml = archive.findFile('word/document.xml');
+      if (docXml != null) {
+        final content = utf8.decode(docXml.content as List<int>, allowMalformed: true);
+        final count = RegExp(r'<w:p[ >]').allMatches(content).length;
+        if (count > 0) return count;
+      }
+    } catch (_) {}
+    return null;
   }
 
   int? _countLines(List<int> bytes) {
