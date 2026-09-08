@@ -171,6 +171,8 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
   Map<String, int> _rangeSelection(AttachedFile file) {
     switch (file.kind.toLowerCase()) {
       case 'pdf':
+      case 'docx':
+      case 'doc':
         return {'page_start': file.pageStart, 'page_end': file.pageEnd};
       case 'mp3':
       case 'wav':
