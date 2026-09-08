@@ -251,8 +251,6 @@ class AppLocalizations {
       'noFilesAddedYet': 'No files added yet. Tap Add files to get started.',
       'mvpLocalOllamaDisclaimer':
           'Note: This may take some time because this MVP is running on a local Ollama machine for testing purposes.',
-      'questionCountMax': 'Max',
-      'questionCountMaxLabel': 'As many as the material supports',
       'visibilityPublicWarning':
           'Once someone else attempts a public quiz, it can no longer be deleted, to preserve leaderboard history.',
       'completedMetrics': 'Completed Metrics',
@@ -602,8 +600,6 @@ class AppLocalizations {
           'Nenhum arquivo adicionado ainda. Toque em Adicionar arquivos para começar.',
       'mvpLocalOllamaDisclaimer':
           'Nota: Isso pode levar algum tempo pois este MVP está executando em uma máquina local com Ollama para fins de teste.',
-      'questionCountMax': 'Máx',
-      'questionCountMaxLabel': 'Tantas quanto o material permitir',
       'visibilityPublicWarning':
           'Assim que outra pessoa responder um quiz público, ele não poderá mais ser excluído, para preservar o histórico do ranking.',
       'completedMetrics': 'Métricas Concluídas',
@@ -946,8 +942,6 @@ class AppLocalizations {
       'noFilesAddedYet': 'ยังไม่มีไฟล์ที่เพิ่ม แตะเพิ่มไฟล์เพื่อเริ่มต้น',
       'mvpLocalOllamaDisclaimer':
           'หมายเหตุ: การดำเนินการนี้อาจใช้เวลาสักครู่ เนื่องจาก MVP นี้ทำงานบนเครื่องภายในผ่าน Ollama สำหรับการทดสอบ',
-      'questionCountMax': 'สูงสุด',
-      'questionCountMaxLabel': 'มากที่สุดเท่าที่เนื้อหารองรับ',
       'visibilityPublicWarning':
           'เมื่อมีผู้อื่นทำแบบทดสอบสาธารณะนี้แล้ว จะไม่สามารถลบได้อีก เพื่อรักษาประวัติตารางคะแนน',
       'completedMetrics': 'เมตริกที่เสร็จสิ้น',

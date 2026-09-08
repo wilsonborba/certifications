@@ -57,11 +57,6 @@ class AttachedFile {
 }
 
 class QuizWizardData extends ChangeNotifier {
-  /// Sentinel for [questionCount] meaning "generate as many questions as the
-  /// source material can actually support", rather than a fixed ceiling
-  /// picked by the UI.
-  static const int unlimitedQuestionCount = -1;
-
   /// Per-study attached-files size cap, mirrors the backend's 150MB limit.
   static const int maxTotalAttachedBytes = 150 * 1024 * 1024;
 

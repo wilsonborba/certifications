@@ -231,9 +231,7 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
         _questionsGenerated = 0;
         _chunksDone = 0;
         _chunksTotal = 0;
-        _questionsTarget = wizardData.questionCount == QuizWizardData.unlimitedQuestionCount
-            ? null
-            : wizardData.questionCount;
+        _questionsTarget = wizardData.questionCount;
       });
       _startProgressPolling(studyId);
 
@@ -284,8 +282,7 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
               final list = await _api.getQuestions(studyId);
               if (list.isNotEmpty &&
                   (progress.status == 'ready' ||
-                      (wizardData.questionCount != QuizWizardData.unlimitedQuestionCount &&
-                          list.length >= wizardData.questionCount))) {
+                      list.length >= wizardData.questionCount)) {
                 recovered = list;
                 break;
               }
