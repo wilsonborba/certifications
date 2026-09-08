@@ -244,11 +244,63 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
           questionCount: wizardData.questionCount,
         );
       } catch (e) {
-        // If the HTTP connection dropped/timed out on client while server continued,
-        // poll or check if questions were generated and saved on the server.
-        final recoveredQuestions = await _api.getQuestions(studyId).catchError((_) => <StudyQuestion>[]);
-        if (recoveredQuestions.isNotEmpty) {
-          questions = recoveredQuestions;
+        // Immediate client/auth/quota errors should not enter recovery loop
+        if (e is StudyApiException &&
+            (e.statusCode == 400 ||
+                e.statusCode == 401 ||
+                e.statusCode == 402 ||
+                e.statusCode == 403 ||
+                e.statusCode == 404 ||
+                e.statusCode == 422 ||
+                e.statusCode == 429)) {
+          rethrow;
+        }
+
+        // If the HTTP connection dropped or timed out on client while server continued
+        // (e.g. Cloudflare 100s proxy timeout 524, 504 Gateway Timeout, or network drop),
+        // poll until generation completes on the server or fails.
+        List<StudyQuestion> recovered = [];
+        final deadline = DateTime.now().add(const Duration(minutes: 6));
+        while (DateTime.now().isBefore(deadline)) {
+          await Future.delayed(const Duration(seconds: 4));
+          if (!mounted) return;
+          try {
+            final progress = await _api.getGenerationProgress(studyId);
+            if (mounted) {
+              setState(() {
+                _questionsGenerated = progress.questionsGenerated;
+                _questionsTarget = progress.questionsTarget;
+                _chunksDone = progress.chunksDone;
+                _chunksTotal = progress.chunksTotal;
+              });
+            }
+            if (progress.status == 'error') {
+              rethrow;
+            }
+            if (progress.status == 'ready' || progress.questionsGenerated > 0) {
+              final list = await _api.getQuestions(studyId);
+              if (list.isNotEmpty &&
+                  (progress.status == 'ready' ||
+                      (wizardData.questionCount != QuizWizardData.unlimitedQuestionCount &&
+                          list.length >= wizardData.questionCount))) {
+                recovered = list;
+                break;
+              }
+            }
+          } catch (pollErr) {
+            if (pollErr is StudyApiException && pollErr.statusCode == 404) {
+              rethrow;
+            }
+            // Direct check for questions
+            final list = await _api.getQuestions(studyId).catchError((_) => <StudyQuestion>[]);
+            if (list.isNotEmpty) {
+              recovered = list;
+              break;
+            }
+          }
+        }
+        if (recovered.isNotEmpty) {
+          questions = recovered;
         } else {
           rethrow;
         }
