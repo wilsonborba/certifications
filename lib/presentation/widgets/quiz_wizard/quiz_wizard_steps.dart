@@ -663,15 +663,11 @@ class Step3FormatView extends StatelessWidget {
         const SizedBox(height: 12),
         _maybeFullWidth(
           SegmentedButton<int>(
-            segments: [
-              const ButtonSegment(value: 5, label: Text('5')),
-              const ButtonSegment(value: 10, label: Text('10')),
-              const ButtonSegment(value: 15, label: Text('15')),
-              const ButtonSegment(value: 20, label: Text('20')),
-              ButtonSegment(
-                value: QuizWizardData.unlimitedQuestionCount,
-                label: Text(context.tr('questionCountMax')),
-              ),
+            segments: const [
+              ButtonSegment(value: 5, label: Text('5')),
+              ButtonSegment(value: 10, label: Text('10')),
+              ButtonSegment(value: 15, label: Text('15')),
+              ButtonSegment(value: 20, label: Text('20')),
             ],
             selected: {wizardData.questionCount},
             onSelectionChanged: (set) => wizardData.setQuestionCount(set.first),
@@ -699,10 +695,7 @@ class Step3FormatView extends StatelessWidget {
     );
   }
 
-  String _questionCountLabel(BuildContext context) =>
-      wizardData.questionCount == QuizWizardData.unlimitedQuestionCount
-      ? context.tr('questionCountMaxLabel')
-      : '${wizardData.questionCount}';
+  String _questionCountLabel(BuildContext context) => '${wizardData.questionCount}';
 
   Widget _maybeFullWidth(Widget child) =>
       isDesktop ? child : SizedBox(width: double.infinity, child: child);
@@ -738,9 +731,7 @@ class Step4ReviewView extends StatelessWidget {
   }
 
   String _questionCountLine(BuildContext context) =>
-      wizardData.questionCount == QuizWizardData.unlimitedQuestionCount
-      ? context.tr('questionCountMaxLabel')
-      : '${wizardData.questionCount} ${context.tr('questionsSuffixLabel')}';
+      '${wizardData.questionCount} ${context.tr('questionsSuffixLabel')}';
 
   @override
   Widget build(BuildContext context) {
