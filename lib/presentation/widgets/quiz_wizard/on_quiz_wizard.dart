@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/quiz_wizard_data.dart';
 import 'package:certifications/domain/models/study.dart';
+import 'package:certifications/domain/services/client_telemetry_service.dart';
 import 'package:certifications/domain/services/draft_progress_store.dart';
 import 'package:certifications/domain/services/study_api_service.dart';
 import 'package:certifications/presentation/components/attachment/app_bar.dart';
@@ -329,18 +330,35 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
           ),
         ),
       );
-    } on StudyApiException catch (e) {
+    } on StudyApiException catch (e, stack) {
       _progressTimer?.cancel();
+      ClientTelemetryService.instance.reportHandledError(
+        title: 'Quiz Wizard API Failure (${e.statusCode})',
+        error: e.message ?? e.toString(),
+        stackTrace: stack,
+        errorCode: 'STUDY_API_${e.statusCode}',
+        requestId: e.requestId,
+        route: '/quiz_wizard',
+        details: {'status_code': e.statusCode, 'message': e.message, 'study_id': widget.studyId},
+      );
       if (!mounted) return;
       setState(() {
         _generating = false;
         _generateStep = 0;
         _generateError = e.statusCode == 402
             ? context.tr('errorPaymentRequired')
-            : context.tr('errorGeneric');
+            : (e.message != null && e.message!.isNotEmpty ? e.message : context.tr('errorGeneric'));
       });
-    } catch (_) {
+    } catch (e, stack) {
       _progressTimer?.cancel();
+      ClientTelemetryService.instance.reportHandledError(
+        title: 'Quiz Wizard Unhandled Error',
+        error: e.toString(),
+        stackTrace: stack,
+        errorCode: 'WIZARD_EXCEPTION',
+        route: '/quiz_wizard',
+        details: {'study_id': widget.studyId},
+      );
       if (!mounted) return;
       setState(() {
         _generating = false;
