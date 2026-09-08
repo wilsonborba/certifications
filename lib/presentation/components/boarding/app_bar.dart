@@ -195,23 +195,6 @@ class _InlineDesktopPreferences extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: scheme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: scheme.primary.withValues(alpha: 0.3)),
-          ),
-          child: Text(
-            Settings.buildVersion,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: scheme.primary,
-            ),
-          ),
-        ),
         const SizedBox(width: 12),
       ],
     );
