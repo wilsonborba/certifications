@@ -118,7 +118,7 @@ class ClientTelemetryService {
       Future(() async {
         try {
           final settings = app_settings;
-          final uri = Uri.parse('${settings.ASODYA_API_URL}/telemetry/v1/client-errors');
+          final uri = Uri.parse('${settings.ASODYA_API_URL}/apps/api/v1/client-error');
 
           final payload = {
             'app_name': 'certifications',
