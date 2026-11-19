@@ -1,7 +1,4 @@
 /// Accepted Certifications v2 frontend screen routes (Area 10).
-///
-/// Opening or refreshing any route recovers saved state from the backend and
-/// never starts a generation job or quiz attempt on GET.
 enum CertificationsScreen {
   landing,
   catalog,
@@ -35,24 +32,17 @@ class CertificationsRoute {
   });
 
   bool get requiresAuth => switch (screen) {
-        CertificationsScreen.dashboard ||
-        CertificationsScreen.studies ||
-        CertificationsScreen.studyNew ||
-        CertificationsScreen.studyDetail ||
-        CertificationsScreen.generation ||
-        CertificationsScreen.studyQuestions ||
-        CertificationsScreen.attempt ||
-        CertificationsScreen.attemptResults ||
-        CertificationsScreen.history =>
-          true,
-        _ => false,
-      };
-
-  /// Never starts a job or attempt on route navigation / GET.
-  bool get mutatesOnOpen => false;
-
-  /// Safe route path for telemetry (strips private query tokens/secrets).
-  String get safeTelemetryPath => routeTemplate;
+    CertificationsScreen.dashboard ||
+    CertificationsScreen.studies ||
+    CertificationsScreen.studyNew ||
+    CertificationsScreen.studyDetail ||
+    CertificationsScreen.generation ||
+    CertificationsScreen.studyQuestions ||
+    CertificationsScreen.attempt ||
+    CertificationsScreen.attemptResults ||
+    CertificationsScreen.history => true,
+    _ => false,
+  };
 
   static CertificationsRoute parse(Uri uri) {
     final segs = uri.pathSegments.where((s) => s.isNotEmpty).toList();
@@ -83,7 +73,7 @@ class CertificationsRoute {
     if (segs.length >= 3 && segs[0] == 'quizzes' && segs[1] == 'shared') {
       return CertificationsRoute(
         screen: CertificationsScreen.sharedQuiz,
-        routeTemplate: '/quizzes/shared/{token}',
+        routeTemplate: '/quizzes/shared/:token',
         id: segs[2],
         queryParameters: qp,
       );
@@ -124,7 +114,7 @@ class CertificationsRoute {
           case 'quizzes':
             return CertificationsRoute(
               screen: CertificationsScreen.quizDetail,
-              routeTemplate: '/v1/quizzes/{quiz_id}',
+              routeTemplate: '/v1/quizzes/:quiz_id',
               id: param,
               queryParameters: qp,
             );
@@ -138,28 +128,28 @@ class CertificationsRoute {
             }
             return CertificationsRoute(
               screen: CertificationsScreen.studyDetail,
-              routeTemplate: '/v1/studies/{study_id}',
+              routeTemplate: '/v1/studies/:study_id',
               id: param,
               queryParameters: qp,
             );
           case 'generations':
             return CertificationsRoute(
               screen: CertificationsScreen.generation,
-              routeTemplate: '/v1/generations/{generation_id}',
+              routeTemplate: '/v1/generations/:generation_id',
               id: param,
               queryParameters: qp,
             );
           case 'attempts':
             return CertificationsRoute(
               screen: CertificationsScreen.attempt,
-              routeTemplate: '/v1/attempts/{attempt_id}',
+              routeTemplate: '/v1/attempts/:attempt_id',
               id: param,
               queryParameters: qp,
             );
           case 'certificates':
             return CertificationsRoute(
               screen: CertificationsScreen.certificate,
-              routeTemplate: '/v1/certificates/{certificate_code}',
+              routeTemplate: '/v1/certificates/:certificate_code',
               id: param,
               queryParameters: qp,
             );
@@ -168,7 +158,7 @@ class CertificationsRoute {
         if (segs[1] == 'studies' && segs[3] == 'questions') {
           return CertificationsRoute(
             screen: CertificationsScreen.studyQuestions,
-            routeTemplate: '/v1/studies/{study_id}/questions',
+            routeTemplate: '/v1/studies/:study_id/questions',
             id: segs[2],
             queryParameters: qp,
           );
@@ -176,7 +166,7 @@ class CertificationsRoute {
         if (segs[1] == 'attempts' && segs[3] == 'results') {
           return CertificationsRoute(
             screen: CertificationsScreen.attemptResults,
-            routeTemplate: '/v1/attempts/{attempt_id}/results',
+            routeTemplate: '/v1/attempts/:attempt_id/results',
             id: segs[2],
             queryParameters: qp,
           );
