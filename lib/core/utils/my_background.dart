@@ -1,10 +1,22 @@
 import 'dart:math' as math;
-import 'dart:ui';
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
+/// The moving colored bubbles of Certifications (Area25: keep the effect,
+/// optimize how it is drawn; certifications#52).
+///
+/// The same soft, additive, slowly changing color blobs as before, drawn
+/// more cheaply:
+/// - one soft white blob is drawn once into an image with its blur baked
+///   in; each frame only places tinted copies of it, so there is no
+///   full-screen blur filter on every frame;
+/// - a frame repaints the painter only, it does not rebuild widgets;
+/// - the movement is updated [maxFps] times a second at most (ambient motion
+///   needs no 60 updates), with the same speed in pixels per second;
+/// - the ticker stops while the route is hidden (TickerMode) and with
+///   reduced motion, which shows one still frame.
 class LiquidMetalBackground extends StatefulWidget {
   const LiquidMetalBackground({
     super.key,
@@ -12,8 +24,10 @@ class LiquidMetalBackground extends StatefulWidget {
     this.minRadius = 80,
     this.maxRadius = 180,
     this.speed = 24, // pixels/second baseline
-    this.blurSigma = 20, // Gaussian blur strength
-    this.centerFocusRadius = .45, // 0..1 of min(width,height)
+    this.blurSigma = 20, // Gaussian blur strength, baked into the blob
+    this.centerFocusRadius = .45, // kept for callers; the web look has none
+    this.maxFps = 30,
+    this.seed,
   });
 
   final int blobCount;
@@ -23,49 +37,61 @@ class LiquidMetalBackground extends StatefulWidget {
   final double blurSigma;
   final double centerFocusRadius;
 
+  /// Movement updates per second at most.
+  final int maxFps;
+
+  /// A fixed random seed (tests and measurements); null is random.
+  final int? seed;
+
   @override
   State<LiquidMetalBackground> createState() => _LiquidMetalBackgroundState();
 }
 
 class _LiquidMetalBackgroundState extends State<LiquidMetalBackground>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  final math.Random _rng = math.Random();
+  late final Ticker _ticker = createTicker(_onTick);
+  late final math.Random _rng = math.Random(widget.seed);
   final List<_Blob> _blobs = [];
-
-  // Animation timing to compute delta-time physics.
-  late DateTime _lastTick;
+  final _frame = ValueNotifier<int>(0);
+  Duration _last = Duration.zero;
+  Duration _lastPaint = Duration.zero;
+  Duration _elapsed = Duration.zero;
   Size _size = Size.zero;
+  ui.Image? _sprite;
+  double _spriteSigma = -1;
 
   @override
-  void initState() {
-    super.initState();
-    // Use a normal controller and repeat over finite range (0..1)
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    )..addListener(_onFrame);
-    _ctrl.repeat(); // no min/max -> safe finite values
-    _lastTick = DateTime.now();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final still = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    if (still && _ticker.isActive) {
+      _ticker.stop();
+    } else if (!still && !_ticker.isActive) {
+      _last = Duration.zero;
+      _ticker.start();
+    }
   }
 
   @override
   void dispose() {
-    _ctrl.removeListener(_onFrame);
-    _ctrl.dispose();
+    _ticker.dispose();
+    _frame.dispose();
+    _sprite?.dispose();
     super.dispose();
   }
 
-  void _onFrame() {
+  void _onTick(Duration elapsed) {
     if (_size == Size.zero) return;
-    final now = DateTime.now();
-    final dt = (now.difference(_lastTick).inMicroseconds / 1e6).clamp(
-      0.0,
-      0.05,
-    );
-    _lastTick = now;
+    final dt = ((elapsed - _last).inMicroseconds / 1e6).clamp(0.0, 0.05);
+    _last = elapsed;
+    _elapsed = elapsed;
     _step(dt);
-    setState(() {});
+    // Repaint at most maxFps times a second.
+    final interval = Duration(microseconds: 1000000 ~/ widget.maxFps);
+    if (elapsed - _lastPaint >= interval) {
+      _lastPaint = elapsed;
+      _frame.value++;
+    }
   }
 
   void _ensureBlobs(Size size) {
@@ -74,23 +100,19 @@ class _LiquidMetalBackgroundState extends State<LiquidMetalBackground>
       final r =
           _rng.nextDouble() * (widget.maxRadius - widget.minRadius) +
           widget.minRadius;
-
       final pos = Offset(
         _rng.nextDouble() * math.max(1, size.width),
         _rng.nextDouble() * math.max(1, size.height),
       );
-
-      // Random direction, normalized; speed scaled a bit by radius so big blobs drift slower.
+      // Big blobs drift slower.
       final theta = _rng.nextDouble() * math.pi * 2;
       final baseSpeed = widget.speed * (0.7 + 0.6 * _rng.nextDouble());
       final vel =
           Offset(math.cos(theta), math.sin(theta)) *
           (baseSpeed * (120 / (r + 40)));
-
       final hue = _rng.nextDouble() * 360.0;
       final hueSpeed =
           (_rng.nextDouble() * 24 + 10) * (_rng.nextBool() ? 1 : -1);
-
       _blobs.add(
         _Blob(
           position: pos,
@@ -107,8 +129,6 @@ class _LiquidMetalBackgroundState extends State<LiquidMetalBackground>
   void _step(double dt) {
     for (final b in _blobs) {
       var p = b.position + b.velocity * dt;
-
-      // Bounce at edges
       if (p.dx - b.radius < 0) {
         p = Offset(b.radius, p.dy);
         b.velocity = Offset(b.velocity.dx.abs(), b.velocity.dy);
@@ -125,94 +145,69 @@ class _LiquidMetalBackgroundState extends State<LiquidMetalBackground>
       }
       b.position = p;
       b.hueOffset += b.hueSpeed * dt;
-
-      // Gentle breathing radius to feel liquid
+      // Gentle breathing radius.
       b.radiusPulse =
           1.0 +
-          0.05 *
-              math.sin(
-                (b.phase +
-                        (_ctrl.lastElapsedDuration ?? Duration.zero)
-                                .inMilliseconds /
-                            1000.0) *
-                    0.9,
-              );
+          0.05 * math.sin((b.phase + _elapsed.inMilliseconds / 1000.0) * 0.9);
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, c) {
-        final size = c.biggest;
-        if (size != Size.zero) {
-          _size = size;
-          _ensureBlobs(size);
-        }
+  /// One soft white blob of unit radius [_spriteRadius] with the blur baked
+  /// in: a radial falloff, then the Gaussian blur, drawn once.
+  static const double _spriteRadius = 128;
 
-        // One painter instance reused for both passes (same blob state).
-        final painter = _BlobsPainter(blobs: _blobs);
-
-        if (kIsWeb) {
-          return RepaintBoundary(
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(
-                sigmaX: widget.blurSigma,
-                sigmaY: widget.blurSigma,
-              ),
-              child: CustomPaint(
-                painter: painter,
-                isComplex: true,
-                willChange: true,
-              ),
-            ),
-          );
-        }
-
-        return RepaintBoundary(
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // Pass 1: soft & dreamy (heavily blurred)
-              ImageFiltered(
-                imageFilter: ImageFilter.blur(
-                  sigmaX: widget.blurSigma,
-                  sigmaY: widget.blurSigma,
-                ),
-                child: CustomPaint(
-                  painter: painter,
-                  isComplex: true,
-                  willChange: true,
-                ),
-              ),
-
-              // Pass 2: crisp center reveal (keeps foreground readable).
-              ShaderMask(
-                shaderCallback: (rect) {
-                  final radius =
-                      widget.centerFocusRadius *
-                      math.min(rect.width, rect.height);
-                  return RadialGradient(
-                    center: Alignment.center,
-                    radius: (radius / (math.min(rect.width, rect.height)))
-                        .clamp(0.0, 0.95),
-                    colors: const [Colors.white, Colors.transparent],
-                    stops: const [0.0, 1.0],
-                  ).createShader(rect);
-                },
-                blendMode: BlendMode.dstIn,
-                child: CustomPaint(
-                  painter: painter,
-                  isComplex: true,
-                  willChange: true,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+  ui.Image _spriteFor(double sigma) {
+    if (_sprite != null && _spriteSigma == sigma) return _sprite!;
+    _sprite?.dispose();
+    // The blur of the old full-screen filter, relative to a blob of the
+    // middle radius; the sprite scales with each blob.
+    final mid = (widget.minRadius + widget.maxRadius) / 2;
+    final s = sigma * _spriteRadius / mid;
+    final pad = (s * 3).ceilToDouble();
+    final side = (2 * (_spriteRadius + pad)).ceil();
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    final center = Offset(side / 2, side / 2);
+    canvas.drawCircle(
+      center,
+      _spriteRadius,
+      Paint()
+        ..shader = ui.Gradient.radial(
+          center,
+          _spriteRadius,
+          const [Color(0xFFFFFFFF), Color(0x00FFFFFF)],
+          const [0.0, 1.0],
+        )
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, s),
     );
+    final picture = recorder.endRecording();
+    _sprite = picture.toImageSync(side, side);
+    picture.dispose();
+    _spriteSigma = sigma;
+    return _sprite!;
   }
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, c) {
+      final size = c.biggest;
+      if (size != Size.zero) {
+        _size = size;
+        _ensureBlobs(size);
+      }
+      return RepaintBoundary(
+        child: CustomPaint(
+          size: size,
+          painter: _BlobsPainter(
+            blobs: _blobs,
+            sprite: _spriteFor(widget.blurSigma),
+            spriteRadius: _spriteRadius,
+            repaint: _frame,
+          ),
+        ),
+      );
+    },
+  );
 }
 
 class _Blob {
@@ -231,44 +226,52 @@ class _Blob {
   final double baseHue;
   final double hueSpeed;
   final double phase;
-
-  // animated modifiers
   double hueOffset = 0.0;
   double radiusPulse = 1.0;
 }
 
-/// Draws additive, radial-gradient blobs (Gaussian-ish falloff).
+/// Places a tinted copy of the soft blob for each bubble, added together
+/// (BlendMode.plus) so neighbors merge as before.
 class _BlobsPainter extends CustomPainter {
-  _BlobsPainter({required this.blobs});
+  _BlobsPainter({
+    required this.blobs,
+    required this.sprite,
+    required this.spriteRadius,
+    required Listenable repaint,
+  }) : super(repaint: repaint);
 
   final List<_Blob> blobs;
+  final ui.Image sprite;
+  final double spriteRadius;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty || blobs.isEmpty) return;
-
-    // Use additive blending so separate blobs “merge” smoothly (metaball feel).
-    final paint = Paint()..blendMode = BlendMode.plus;
-
+    final src = Rect.fromLTWH(
+      0,
+      0,
+      sprite.width.toDouble(),
+      sprite.height.toDouble(),
+    );
+    final scaleUnit = sprite.width / (2 * spriteRadius);
     for (final b in blobs) {
       final r = b.radius * b.radiusPulse;
-
-      // Smooth, colorful fill built in HSV then converted to RGB.
       final hue = (b.baseHue + b.hueOffset) % 360;
-      final col = HSVColor.fromAHSV(0.85, hue, 0.75, 1.0).toColor();
-
-      // Radial falloff → soft “energy” field
-      paint.shader = ui.Gradient.radial(
-        b.position,
-        r,
-        [col, col.withValues(alpha: 0.0)],
-        const [0.0, 1.0],
+      final color = HSVColor.fromAHSV(0.85, hue, 0.75, 1.0).toColor();
+      final half = r * scaleUnit;
+      canvas.drawImageRect(
+        sprite,
+        src,
+        Rect.fromCenter(center: b.position, width: 2 * half, height: 2 * half),
+        Paint()
+          ..blendMode = BlendMode.plus
+          ..filterQuality = FilterQuality.low
+          ..colorFilter = ColorFilter.mode(color, BlendMode.modulate),
       );
-
-      canvas.drawCircle(b.position, r, paint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _BlobsPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _BlobsPainter old) =>
+      old.sprite != sprite || old.blobs != blobs;
 }
