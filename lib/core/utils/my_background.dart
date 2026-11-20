@@ -202,6 +202,7 @@ class _LiquidMetalBackgroundState extends State<LiquidMetalBackground>
             blobs: _blobs,
             sprite: _spriteFor(widget.blurSigma),
             spriteRadius: _spriteRadius,
+            ownLayer: Theme.of(context).brightness == Brightness.light,
             repaint: _frame,
           ),
         ),
@@ -231,14 +232,21 @@ class _Blob {
 }
 
 /// Places a tinted copy of the soft blob for each bubble, added together
-/// (BlendMode.plus) so neighbors merge as before.
+/// (BlendMode.plus) so neighbors merge as before. On a light page the
+/// bubbles are added in their own layer, as the original blurred layer did,
+/// so they keep their colours instead of adding up to white. On a dark page
+/// adding onto the near-black background looks the same without the extra
+/// layer, which saves a full-screen pass every frame.
 class _BlobsPainter extends CustomPainter {
   _BlobsPainter({
     required this.blobs,
     required this.sprite,
     required this.spriteRadius,
+    required this.ownLayer,
     required Listenable repaint,
   }) : super(repaint: repaint);
+
+  final bool ownLayer;
 
   final List<_Blob> blobs;
   final ui.Image sprite;
@@ -254,6 +262,7 @@ class _BlobsPainter extends CustomPainter {
       sprite.height.toDouble(),
     );
     final scaleUnit = sprite.width / (2 * spriteRadius);
+    if (ownLayer) canvas.saveLayer(Offset.zero & size, Paint());
     for (final b in blobs) {
       final r = b.radius * b.radiusPulse;
       final hue = (b.baseHue + b.hueOffset) % 360;
@@ -269,9 +278,10 @@ class _BlobsPainter extends CustomPainter {
           ..colorFilter = ColorFilter.mode(color, BlendMode.modulate),
       );
     }
+    if (ownLayer) canvas.restore();
   }
 
   @override
   bool shouldRepaint(covariant _BlobsPainter old) =>
-      old.sprite != sprite || old.blobs != blobs;
+      old.sprite != sprite || old.blobs != blobs || old.ownLayer != ownLayer;
 }
