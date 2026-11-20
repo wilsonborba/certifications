@@ -1,8 +1,11 @@
+import 'package:certifications/core/routes.dart';
+import 'package:certifications/core/tracking_manifest.dart';
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/core/utils/app_preferences.dart';
 import 'package:certifications/core/utils/my_nagivation.dart';
 import 'package:certifications/core/utils/my_router_parser.dart';
 import 'package:certifications/core/utils/my_theme.dart';
+import 'package:certifications/domain/services/client_telemetry_service.dart';
 import 'package:certifications/presentation/components/auth/auth_artifact_params.dart';
 import 'package:certifications/presentation/components/auth/session_gate.dart';
 import 'package:certifications/presentation/widgets/auth/on_sync_auth.dart';
@@ -51,19 +54,24 @@ class _AppState extends State<App> {
         child: child ?? const SizedBox.shrink(),
       ),
       navigatorKey: NavigationService.navigatorKey,
+      navigatorObservers: [
+        ScreenTrailObserver(ClientTelemetryService.instance.tracker),
+      ],
       onGenerateRoute: (settings) {
         final parser = MyRouteParser(settings: settings);
+        final parsedUri = Uri.tryParse(settings.name ?? '') ?? Uri(path: '/');
+        final route = CertificationsRoute.parse(parsedUri);
         final authExchangeToken = resolveAuthExchangeToken(
           readParam: parser.parsedParams,
         );
-        if (parser.path == 'sync') {
+        if (route.screen == CertificationsScreen.syncAuth) {
           return MaterialPageRoute(
             settings: const RouteSettings(name: OnSyncAuthScreen.route),
             builder: (_) =>
                 OnSyncAuthScreen(authExchangeToken: authExchangeToken),
           );
         }
-        if (parser.path == 'plans') {
+        if (route.screen == CertificationsScreen.plans) {
           return MaterialPageRoute(
             settings: const RouteSettings(name: OnPlansScreen.route),
             builder: (_) => const OnPlansScreen(),
@@ -71,14 +79,17 @@ class _AppState extends State<App> {
         }
         // Quiz share links (#40): anonymous-friendly preview, auth-gated
         // only at the point of actually starting the quiz.
-        if (parser.path == 'quizzes' &&
-            parser.segments.length > 2 &&
-            parser.segments[1] == 'shared') {
+        if (route.screen == CertificationsScreen.sharedQuiz &&
+            route.id != null) {
           return MaterialPageRoute(
-            builder: (_) => OnSharedQuizScreen(shareToken: parser.segments[2]),
+            settings: RouteSettings(name: route.routeTemplate),
+            builder: (_) => OnSharedQuizScreen(shareToken: route.id!),
           );
         }
-        return MaterialPageRoute(builder: (_) => const SessionGate());
+        return MaterialPageRoute(
+          settings: RouteSettings(name: route.routeTemplate),
+          builder: (_) => const SessionGate(),
+        );
       },
     ),
   );

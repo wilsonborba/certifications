@@ -6,7 +6,10 @@ import 'package:certifications/presentation/components/auth/auth_artifact_params
 
 MyEncryption encryptor = MyEncryption();
 
-Future<String> urlRedirectionToAuth({bool isToLogin = true}) async {
+Future<String> urlRedirectionToAuth({
+  bool isToLogin = true,
+  String? returnTo,
+}) async {
   debug('Redirecting to login...');
 
   final appContextJson = jsonEncode(app_settings.applicationInfo);
@@ -23,16 +26,15 @@ Future<String> urlRedirectionToAuth({bool isToLogin = true}) async {
         : app_settings.ASODYA_AUTH_SIGNUP_URL,
   );
 
-  final url = base
-      .replace(
-        queryParameters: {
-          ...buildAppContextQueryParameters(
-            encryptedAppContext,
-            baseQueryParameters: base.queryParameters,
-          ),
-        },
-      )
-      .toString();
+  final queryParams = {
+    ...buildAppContextQueryParameters(
+      encryptedAppContext,
+      baseQueryParameters: base.queryParameters,
+    ),
+    if (returnTo != null && returnTo.isNotEmpty) 'return_to': returnTo,
+  };
+
+  final url = base.replace(queryParameters: queryParams).toString();
 
   debug('Redirect URL: $url');
   return url;
