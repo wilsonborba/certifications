@@ -9,6 +9,7 @@ import 'package:certifications/domain/services/client_telemetry_service.dart';
 import 'package:certifications/presentation/components/auth/auth_artifact_params.dart';
 import 'package:certifications/presentation/components/auth/session_gate.dart';
 import 'package:certifications/presentation/widgets/auth/on_sync_auth.dart';
+import 'package:certifications/presentation/widgets/landing/landing_scaffold.dart';
 import 'package:certifications/presentation/widgets/plans/on_plans.dart';
 import 'package:certifications/presentation/widgets/quiz/on_shared_quiz.dart';
 import 'package:flutter/material.dart';
@@ -69,6 +70,12 @@ class _AppState extends State<App> {
             settings: const RouteSettings(name: OnSyncAuthScreen.route),
             builder: (_) =>
                 OnSyncAuthScreen(authExchangeToken: authExchangeToken),
+          );
+        }
+        if (route.screen == CertificationsScreen.learn && route.id != null) {
+          return MaterialPageRoute(
+            settings: RouteSettings(name: '/learn/${route.id}'),
+            builder: (_) => LearnScreen(topicId: route.id!),
           );
         }
         if (route.screen == CertificationsScreen.plans) {

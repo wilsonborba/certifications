@@ -8,9 +8,14 @@ import 'package:flutter/services.dart';
 /// names differ in case from the shipped files, so the asset bundle fails
 /// on case-sensitive file systems (certifications#52).
 abstract final class NovaColors {
-  static const active = Color(0xFF1434CB);
-  static const activeHover = Color(0xFF173BE8);
-  static const activePressed = Color(0xFF0F2595);
+  // Brand accent in the Nova active slots (certifications#53, owner design
+  // review 2026-11-20): Certifications' own colour from the shared logo and
+  // the bubbles, not Visa blue. Light: purple fill with white text (5.3:1).
+  // Dark: a light purple fill with dark text, readable as text on the dark
+  // surfaces.
+  static const active = Color(0xFFA201FF);
+  static const activeHover = Color(0xFF8C00DD);
+  static const activePressed = Color(0xFF7400B8);
   static const onActive = Color(0xFFFFFFFF);
   static const surface1 = Color(0xFFFFFFFF);
   static const surface2 = Color(0xFFF5F5F5);
@@ -20,10 +25,10 @@ abstract final class NovaColors {
   static const border = Color(0x1A000000);
   static const disabled = Color(0x33000000);
 
-  static const activeDark = Color(0xFFBDEAFF);
-  static const activeHoverDark = Color(0xFFDBF4FF);
-  static const activePressedDark = Color(0xFF80D7FF);
-  static const onActiveDark = Color(0xFF2E2E2E);
+  static const activeDark = Color(0xFFD18BFF);
+  static const activeHoverDark = Color(0xFFDDA6FF);
+  static const activePressedDark = Color(0xFFC06BFF);
+  static const onActiveDark = Color(0xFF1A0026);
   static const surface1Dark = Color(0xFF0A0A0A);
   static const surface2Dark = Color(0xFF1A1A1A);
   static const surface3Dark = Color(0xFF2E2E2E);

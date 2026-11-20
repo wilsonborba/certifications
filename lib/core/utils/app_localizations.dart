@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'landing_copy.dart';
+
 class AppLocalizations {
   const AppLocalizations(this.locale);
   final Locale locale;
@@ -108,13 +110,13 @@ class AppLocalizations {
       'start': 'Start',
       'end': 'End',
       'plansIntro':
-          'Free during the MVP — start a focused study with managed local capacity.',
+          'Free during the MVP. Start a focused study with managed local capacity.',
       'planStudyTitle': 'Study without configuration',
       'planStudyBody':
           'Create a study from your material, generate questions, and finish with a shareable certification.',
       'tier0Capacity': 'Tier 0 · default local capacity',
-      'tier12Allowance': 'Tiers 1–2 · small guided allowance',
-      'tier35Trial': 'Tiers 3–5 · limited trial capacity',
+      'tier12Allowance': 'Tiers 1 to 2 · small guided allowance',
+      'tier35Trial': 'Tiers 3 to 5 · limited trial capacity',
       'selectPlan': 'Select plan',
       'usePlan': 'Use',
       'currentPlan': 'Current Plan',
@@ -122,7 +124,7 @@ class AppLocalizations {
       'waitlistJoined': 'Waitlist Subscribed',
       'planFreeTag': 'Available Now · MVP',
       'planGuidedTag': 'Coming Soon · Guided Phase',
-      'planAdvancedTag': 'Coming Soon · Tiers 3–5',
+      'planAdvancedTag': 'Coming Soon · Tiers 3 to 5',
       'chipWebSearch': 'Integrated Web Search',
       'chipPdfSupport': 'Expanded PDF Support',
       'chipPriorityQueue': 'Priority Processing Queue',
@@ -453,13 +455,13 @@ class AppLocalizations {
       'start': 'Início',
       'end': 'Fim',
       'plansIntro':
-          'Grátis durante o MVP — comece um estudo focado com capacidade local gerenciada.',
+          'Grátis durante o MVP. Comece um estudo focado com capacidade local gerenciada.',
       'planStudyTitle': 'Estude sem configuração',
       'planStudyBody':
           'Crie um estudo com seu material, gere perguntas e conclua com uma certificação compartilhável.',
       'tier0Capacity': 'Tier 0 · capacidade local padrão',
-      'tier12Allowance': 'Tiers 1–2 · pequena cota guiada',
-      'tier35Trial': 'Tiers 3–5 · capacidade de teste limitada',
+      'tier12Allowance': 'Tiers 1 a 2 · pequena cota guiada',
+      'tier35Trial': 'Tiers 3 a 5 · capacidade de teste limitada',
       'selectPlan': 'Selecionar plano',
       'joinWaitlist': 'Entrar na lista de espera',
       'waitlistTitle': 'Entrar na lista de espera',
@@ -480,7 +482,7 @@ class AppLocalizations {
       'waitlistJoined': 'Inscrito na Lista de Espera',
       'planFreeTag': 'Disponível Agora · MVP',
       'planGuidedTag': 'Em breve · Fase Guiada',
-      'planAdvancedTag': 'Em breve · Tiers 3–5',
+      'planAdvancedTag': 'Em breve · Tiers 3 a 5',
       'chipWebSearch': 'Pesquisa Web Integrada',
       'chipPdfSupport': 'Suporte Expandido a PDFs',
       'chipPriorityQueue': 'Fila Prioritária de Processamento',
@@ -719,7 +721,7 @@ class AppLocalizations {
       'landingCertification': 'ใบรับรอง',
       'landingSeriousQuestion': 'หรือสาขาของคุณต้องการใบรับรองที่จริงจัง?',
       'landingSeriousBody': 'นี่คือจุดเริ่มต้นของการเติบโตของคุณ',
-      'welcomeTitle': 'เปลี่ยนเนื้อหาให้เป็นความเชี่ยวชาญ',
+      'welcomeTitle': 'เปลี่ยน​เนื้อหา​ให้​เป็น​ความ​เชี่ยวชาญ',
       'welcomeBody': 'สร้างการเรียนรู้ที่มีสมาธิจากเนื้อหาที่คุณเลือก',
       'signIn': 'เข้าสู่ระบบ',
       'openStudies': 'เปิดการเรียน',
@@ -773,11 +775,11 @@ class AppLocalizations {
       'diagramUnavailable': 'แผนภาพไม่พร้อมใช้งาน',
       'studyComplete': 'เรียนจบแล้ว',
       'memory': 'ความจำการเรียน',
-      'trustTransparency': 'ความน่าเชื่อถือและความโปร่งใส',
+      'trustTransparency': 'ความ​น่า​เชื่อถือ​และ​ความ​โปร่งใส',
       'trustTitle': 'ไม่ต้องใช้คีย์ผู้ให้บริการ',
       'trustBody':
           'แอปจัดการการสร้างใบรับรองให้เอง คุณไม่จำเป็นต้องวางคีย์ของผู้ให้บริการโมเดล',
-      'privacyTitle': 'ความเป็นส่วนตัวอย่างชัดเจน',
+      'privacyTitle': 'ความ​เป็น​ส่วน​ตัว​อย่าง​ชัดเจน',
       'privacyBody':
           'เราใช้แหล่งข้อมูลของคุณเพื่อสร้างการเรียนเท่านั้น แชร์เฉพาะสิ่งที่คุณสบายใจ',
       'howItWorks': 'วิธีการทำงาน',
@@ -802,13 +804,13 @@ class AppLocalizations {
       'start': 'เริ่มต้น',
       'end': 'สิ้นสุด',
       'plansIntro':
-          'ฟรีในช่วง MVP — เริ่มการเรียนรู้แบบโฟกัสด้วยความจุในเครื่อง',
+          'ฟรีในช่วง MVP เริ่มการเรียนรู้แบบโฟกัสด้วยความจุในเครื่อง',
       'planStudyTitle': 'เรียนรู้โดยไม่ต้องตั้งค่า',
       'planStudyBody':
           'สร้างการเรียนจากเนื้อหา สร้างคำถาม และจบด้วยใบรับรองที่แชร์ได้',
       'tier0Capacity': 'Tier 0 · ความจุในเครื่องเริ่มต้น',
-      'tier12Allowance': 'Tier 1–2 · โควตาแนะนำขนาดเล็ก',
-      'tier35Trial': 'Tier 3–5 · ความจุทดลองแบบจำกัด',
+      'tier12Allowance': 'Tier 1 ถึง 2 · โควตาแนะนำขนาดเล็ก',
+      'tier35Trial': 'Tier 3 ถึง 5 · ความจุทดลองแบบจำกัด',
       'selectPlan': 'เลือกแผน',
       'joinWaitlist': 'เข้าร่วมรายการรอ',
       'waitlistTitle': 'เข้าร่วมรายการรอ',
@@ -827,7 +829,7 @@ class AppLocalizations {
       'waitlistJoined': 'ลงทะเบียนในรายการรอแล้ว',
       'planFreeTag': 'เปิดใช้งานแล้ว · MVP',
       'planGuidedTag': 'เร็ว ๆ นี้ · ระยะแนะนำ',
-      'planAdvancedTag': 'เร็ว ๆ นี้ · Tier 3–5',
+      'planAdvancedTag': 'เร็ว ๆ นี้ · Tier 3 ถึง 5',
       'chipWebSearch': 'ค้นหาเว็บในตัว',
       'chipPdfSupport': 'รองรับ PDF เพิ่มเติม',
       'chipPriorityQueue': 'คิวประมวลผลด่วน',
@@ -1043,7 +1045,11 @@ class AppLocalizations {
     },
   };
   String text(String key) =>
-      _copy[locale.languageCode]?[key] ?? _copy['en']?[key] ?? key;
+      _copy[locale.languageCode]?[key] ??
+      landingCopy[locale.languageCode]?[key] ??
+      _copy['en']?[key] ??
+      landingCopy['en']?[key] ??
+      key;
   static AppLocalizations of(BuildContext context) =>
       Localizations.of<AppLocalizations>(context, AppLocalizations) ??
       const AppLocalizations(Locale('en'));

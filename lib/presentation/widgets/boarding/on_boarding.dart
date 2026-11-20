@@ -1,8 +1,6 @@
 import 'package:certifications/presentation/components/boarding/cookies_check.dart';
 import 'package:flutter/material.dart';
-import 'package:certifications/presentation/screen_adjuster.dart';
-import 'package:certifications/presentation/widgets/boarding/desktop_boarding.dart';
-import 'package:certifications/presentation/widgets/boarding/mobile_boarding.dart';
+import 'package:certifications/presentation/widgets/landing/landing_scaffold.dart';
 
 class OnBoardingScreen extends StatefulWidget {
   const OnBoardingScreen({super.key});
@@ -26,9 +24,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
   Widget build(BuildContext context) {
     // If your ScreenAdjuster returns a Scaffold itself, that's fine.
     // If not, ensure there's a Scaffold above this widget in the tree.
-    return ScreenAdjuster(
-      mobileWidget: MobileBoarding(),
-      desktopWidget: DesktopBoarding(),
-    ).adjust(context);
+    // One responsive landing for every width (certifications#53).
+    return const LandingScreen();
   }
 }

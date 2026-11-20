@@ -84,8 +84,6 @@ flutter:
   assets:
     - lib/presentation/assets/img/second_screen_bkg.svg
     - lib/presentation/assets/img/creeper.png
-    - lib/presentation/assets/img/no_creeper.png
-    - lib/presentation/assets/img/stamp.png
     - lib/presentation/assets/img/attachment_lines.svg
     - lib/presentation/assets/img/attachment_lines.svg
     - lib/presentation/assets/img/attach_line.png

@@ -16,6 +16,7 @@ enum CertificationsScreen {
   syncAuth,
   plans,
   sharedQuiz,
+  learn,
 }
 
 class CertificationsRoute {
@@ -60,6 +61,14 @@ class CertificationsRoute {
       return CertificationsRoute(
         screen: CertificationsScreen.syncAuth,
         routeTemplate: '/sync',
+        queryParameters: qp,
+      );
+    }
+    if (segs.length == 2 && segs[0] == 'learn') {
+      return CertificationsRoute(
+        screen: CertificationsScreen.learn,
+        routeTemplate: '/learn/:topic',
+        id: segs[1],
         queryParameters: qp,
       );
     }

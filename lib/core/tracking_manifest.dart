@@ -56,6 +56,7 @@ const certificationsScreens = <TrailScreen>[
     sensitivePath: true,
   ),
   TrailScreen(name: 'plans', route: '/plans', label: 'Plans'),
+  TrailScreen(name: 'learn', route: '/learn/:topic', label: 'Landing topic'),
   TrailScreen(
     name: 'sync',
     route: '/sync',
