@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -106,9 +105,8 @@ class BoxExplaning extends StatelessWidget {
         (imageSize * 0.70) + resolvedPadding.right + imageInset;
 
     // Colors (youthful + tactile)
-    final Color glassFill = cs.surface.withAlpha(
-      (0.75 * 255).toInt(),
-    ); // soft white
+    // Solid surface: no blur or glass (certifications#52, Apple UX).
+    final Color cardFill = cs.surface;
     final Color hairlineA = cs.primary.withAlpha((0.70 * 255).toInt());
     final Color hairlineB = cs.primary.withAlpha((0.35 * 255).toInt());
     final Color innerStroke = cs.onSurface.withValues(alpha: .16);
@@ -127,44 +125,6 @@ class BoxExplaning extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Accent underglow (your "linear border" vibe) — thin, blurred, and subtle.
-          Positioned(
-            left: 14,
-            right: 14,
-            bottom: -8,
-            child: IgnorePointer(
-              child: Container(
-                height: 18,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(999),
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      accentColor.withAlpha((0.0 * 255).toInt()),
-                      (accentColor == Colors.transparent
-                              ? cs.primary
-                              : accentColor)
-                          .withAlpha((0.35 * 255).toInt()),
-                      accentColor.withAlpha((0.0 * 255).toInt()),
-                    ],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color:
-                          (accentColor == Colors.transparent
-                                  ? cs.primary
-                                  : accentColor)
-                              .withAlpha((0.25 * 255).toInt()),
-                      blurRadius: 20,
-                      spreadRadius: -2,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
           // Gradient shell (1px) → inner glass card
           ClipRRect(
             borderRadius: BorderRadius.circular(shellRadius),
@@ -181,53 +141,35 @@ class BoxExplaning extends StatelessWidget {
                   ),
                 ),
 
-                // Inner "glass" card with blur and subtle inner stroke
+                // Inner solid card with a subtle inner stroke
                 Padding(
                   padding: const EdgeInsets.all(1.2), // shell thickness
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(borderRadius),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: glassFill,
-                          borderRadius: BorderRadius.circular(borderRadius),
-                          border: Border.all(
-                            color: innerStroke, // hairline inner stroke
-                            width: 0.8,
-                          ),
-                          boxShadow: [
-                            // soft elevation
-                            BoxShadow(
-                              color: cs.onSurface.withValues(alpha: .12),
-                              blurRadius: 18,
-                              offset: const Offset(0, 10),
-                            ),
-                            // gentle highlight to feel tactile
-                            BoxShadow(
-                              color: cs.surface.withValues(alpha: .65),
-                              blurRadius: 6,
-                              spreadRadius: -2,
-                              offset: const Offset(-1, -1),
-                            ),
-                          ],
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: cardFill,
+                        borderRadius: BorderRadius.circular(borderRadius),
+                        border: Border.all(
+                          color: innerStroke, // hairline inner stroke
+                          width: 0.8,
                         ),
-                        child: Padding(
-                          padding: EdgeInsets.only(
-                            left: resolvedPadding.left,
-                            top: resolvedPadding.top,
-                            right: reservedRight,
-                            bottom: resolvedPadding.bottom,
-                          ),
-                          child: _CardContent(
-                            title: title,
-                            body: body,
-                            titleSize: titleSize,
-                            bodySize: bodySize,
-                            titleColor: titleColor,
-                            bodyColor: bodyColor,
-                            primary: cs.primary,
-                          ),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          left: resolvedPadding.left,
+                          top: resolvedPadding.top,
+                          right: reservedRight,
+                          bottom: resolvedPadding.bottom,
+                        ),
+                        child: _CardContent(
+                          title: title,
+                          body: body,
+                          titleSize: titleSize,
+                          bodySize: bodySize,
+                          titleColor: titleColor,
+                          bodyColor: bodyColor,
+                          primary: cs.primary,
                         ),
                       ),
                     ),
