@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### 🚀 Features
+
+- *(59)* Add holder confirmation and verification UI ([`fab39e9`](https://github.com/wilsonborba/certifications/commit/fab39e94eeddfbffb251a6701693f8bb63f61ba1))
+
 ### 🐛 Bug Fixes
 
 - *(build)* Keep image below 4.11.0 so the web release build resolves with the archive that pdf allows (#61)
