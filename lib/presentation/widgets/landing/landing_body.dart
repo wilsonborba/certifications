@@ -109,7 +109,9 @@ class LandingActions {
   final VoidCallback onWaitlist;
 }
 
-/// The width-limited column of a section with its gutters.
+/// The width-limited column of a section with its gutters. A section is the
+/// page surface unless it says otherwise, so the plain sections read white
+/// (dark: the darkest surface) between the tinted ones.
 class Section extends StatelessWidget {
   const Section({
     super.key,
@@ -128,7 +130,7 @@ class Section extends StatelessWidget {
     final narrow = isNarrow(context);
     return Container(
       width: double.infinity,
-      color: color,
+      color: color ?? Theme.of(context).colorScheme.surface,
       padding: EdgeInsets.fromLTRB(
         narrow ? 20 : 48,
         narrow ? top * .66 : top,
@@ -245,6 +247,56 @@ class LandingBody extends StatelessWidget {
   );
 }
 
+/// How strong the page colour is at the centre of the hero scrim.
+const heroScrimAlpha = .78;
+
+class HeroScrim extends StatelessWidget {
+  const HeroScrim({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final surface = Theme.of(context).colorScheme.surface;
+    return IgnorePointer(
+      child: LayoutBuilder(
+        builder: (context, size) => DecoratedBox(
+          key: const Key('hero-scrim'),
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              radius: .5,
+              colors: [
+                surface.withValues(alpha: heroScrimAlpha),
+                surface.withValues(alpha: heroScrimAlpha),
+                surface.withValues(alpha: 0),
+              ],
+              stops: const [0, .35, 1],
+              transform: _StretchX(
+                size.maxHeight == 0 ? 1 : size.maxWidth / size.maxHeight,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Stretches a radial gradient into an oval as wide as its box.
+class _StretchX extends GradientTransform {
+  const _StretchX(this.factor);
+
+  final double factor;
+
+  @override
+  Matrix4 transform(Rect bounds, {TextDirection? textDirection}) {
+    final c = bounds.center;
+    final x = factor.clamp(1.0, 3.0);
+    return Matrix4.identity()
+      ..translateByDouble(c.dx, c.dy, 0, 1)
+      ..scaleByDouble(x, 1, 1, 1)
+      ..translateByDouble(-c.dx, -c.dy, 0, 1);
+  }
+}
+
 /// The hero: the moving bubbles with the title, the promise and the actions
 /// on them (Craft). The bubbles stay still under reduced motion.
 class LandingHero extends StatelessWidget {
@@ -268,7 +320,14 @@ class LandingHero extends StatelessWidget {
             ),
           ),
         ),
+        // The bubbles add their colours, so where they overlap they turn
+        // white. A soft oval of the page colour behind the text keeps the
+        // title readable in both themes; the bubbles stay bright around it.
+        // A plain gradient, no blur.
+        const Positioned.fill(child: HeroScrim()),
         Section(
+          // The bubbles show through the hero.
+          color: Colors.transparent,
           top: narrow ? 120 : 160,
           bottom: narrow ? 120 : 160,
           child: Column(

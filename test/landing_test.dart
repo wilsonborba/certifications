@@ -125,6 +125,95 @@ void main() {
     );
   });
 
+  testWidgets(
+    'the topic row is a calm surface section; the sections alternate',
+    (tester) async {
+      for (final mode in [ThemeMode.light, ThemeMode.dark]) {
+        await open(tester, mode: mode);
+        final scheme = Theme.of(
+          tester.element(find.byKey(const Key('topics-section'))),
+        ).colorScheme;
+        Color? fill(String key) => tester
+            .widget<Container>(
+              find
+                  .descendant(
+                    of: find.byKey(Key(key)),
+                    matching: find.byType(Container),
+                  )
+                  .first,
+            )
+            .color;
+        expect(fill('topics-section'), scheme.surface, reason: '$mode');
+        expect(fill('steps-section'), scheme.surface, reason: '$mode');
+        expect(fill('trust-section'), scheme.surface, reason: '$mode');
+        expect(fill('cards-section'), scheme.surfaceContainerLow);
+        expect(fill('mvp-section'), scheme.surfaceContainerLow);
+        expect(scheme.surface, isNot(scheme.surfaceContainerLow));
+      }
+      // Light mode: the topic row section is white.
+      await open(tester);
+      expect(
+        tester
+            .widget<Container>(
+              find
+                  .descendant(
+                    of: find.byKey(const Key('topics-section')),
+                    matching: find.byType(Container),
+                  )
+                  .first,
+            )
+            .color,
+        const Color(0xFFFFFFFF),
+      );
+    },
+  );
+
+  testWidgets('the hero title reads over any bubble colour, both themes', (
+    tester,
+  ) async {
+    for (final mode in [ThemeMode.light, ThemeMode.dark]) {
+      await open(tester, mode: mode);
+      final hero = find.byKey(const Key('landing-hero'));
+      final layers = tester.widget<Stack>(hero).children;
+      // Bubbles, then the scrim, then the text.
+      expect(layers, hasLength(3));
+      expect(
+        find.descendant(
+          of: find.byWidget(layers[0]),
+          matching: find.byType(LiquidMetalBackground),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byWidget(layers[1]),
+          matching: find.byKey(const Key('hero-scrim')),
+        ),
+        findsOneWidget,
+      );
+      final scheme = Theme.of(tester.element(hero)).colorScheme;
+      final gradient =
+          (tester
+                          .widget<DecoratedBox>(
+                            find.byKey(const Key('hero-scrim')),
+                          )
+                          .decoration
+                      as BoxDecoration)
+                  .gradient!
+              as RadialGradient;
+      final centre = gradient.colors.first;
+      expect(centre.a, greaterThanOrEqualTo(.7));
+      expect(gradient.stops![1], greaterThan(0));
+      // The worst bubble under the title: white in dark (the bubbles add
+      // up to white), black in light.
+      final worst = mode == ThemeMode.dark ? Colors.white : Colors.black;
+      final under = Color.alphaBlend(centre, worst);
+      final title = tester.widget<Text>(find.byKey(const Key('hero-title')));
+      final ink = title.style?.color ?? scheme.onSurface;
+      expect(contrast(ink, under), greaterThanOrEqualTo(4.5), reason: '$mode');
+    }
+  });
+
   testWidgets('the actions start a study and join the waitlist', (
     tester,
   ) async {
