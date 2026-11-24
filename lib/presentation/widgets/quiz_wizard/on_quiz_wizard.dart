@@ -110,10 +110,13 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
     }
   }
 
-  Future<void> _ensureStudyDraft() async {
-    if (_activeStudyId != null) return;
+  Future<String?> _ensureStudyDraft() async {
+    if (_activeStudyId != null) return _activeStudyId;
     final pending = _draftPreparation;
-    if (pending != null) return pending;
+    if (pending != null) {
+      await pending;
+      return _activeStudyId;
+    }
     final operation = () async {
       final study = await _api.create(wizardData.name);
       if (!mounted) return;
@@ -134,6 +137,7 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
     _draftPreparation = operation;
     try {
       await operation;
+      return _activeStudyId;
     } finally {
       if (identical(_draftPreparation, operation)) _draftPreparation = null;
     }
@@ -572,6 +576,7 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
               ? DesktopQuizWizard(
                   wizardData: wizardData,
                   onPrepareSources: _ensureStudyDraft,
+                  studyApi: _api,
                   onInspectSources: _inspectSources,
                   isInspectingSources: _analyzingSources,
                   inspectionStatus: _analysisStatus,
@@ -582,6 +587,7 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
               : MobileQuizWizard(
                   wizardData: wizardData,
                   onPrepareSources: _ensureStudyDraft,
+                  studyApi: _api,
                   onInspectSources: _inspectSources,
                   isInspectingSources: _analyzingSources,
                   inspectionStatus: _analysisStatus,

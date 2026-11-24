@@ -43,6 +43,66 @@ class StudyApiService {
   Future<Study> get(String id) async =>
       _study(await _adapter.get(Uri.parse('$_base/$id')));
 
+  /// Lists only Reports entries the authenticated caller may read.
+  Future<List<ReportPickerItem>> listReports() async {
+    final response = await _adapter.get(
+      Uri.parse(
+        '${app_settings.ASODYA_API_URL}/apps/certifications/v1/reports/picker',
+      ),
+    );
+    return _pickerItems(response).map(ReportPickerItem.fromJson).toList();
+  }
+
+  Future<List<ReportDatasetPickerItem>> listReportDatasets(
+    ReportPickerItem report,
+  ) async {
+    final uri =
+        Uri.parse(
+          '${app_settings.ASODYA_API_URL}/apps/certifications/v1/reports/picker',
+        ).replace(
+          queryParameters: {'project': report.project, 'report': report.report},
+        );
+    final response = await _adapter.get(uri);
+    return _pickerItems(response)
+        .map(ReportDatasetPickerItem.fromJson)
+        .where((dataset) => dataset.canView)
+        .toList();
+  }
+
+  /// Attaches one all-only Reports dataset to the prepared study. Reports
+  /// rechecks caller access and visibility; the browser supplies no identity
+  /// or FSM authority fields.
+  Future<StudySource> attachReportDataset({
+    required String studyId,
+    required ReportDatasetPickerItem dataset,
+  }) async {
+    if (!dataset.canView) {
+      throw const StudyApiException(
+        403,
+        message: 'Report dataset is not readable',
+      );
+    }
+    final response = await _adapter.post(
+      Uri.parse('$_base/$studyId/sources'),
+      headers: const {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'kind': 'report',
+        'filename': dataset.title,
+        'external_ref': dataset.externalRef,
+        'is_restricted': false,
+      }),
+    );
+    final source = StudySource.fromJson(_data(response));
+    if (source.id.isEmpty ||
+        source.sourceKind != 'report' ||
+        source.selectionKind != 'all' ||
+        source.selectionSpec.isNotEmpty ||
+        source.externalRef != dataset.externalRef) {
+      throw const FormatException('Invalid attached Reports source response');
+    }
+    return source;
+  }
+
   /// Renames a study using the Rust API's title field.
   Future<Study> rename(String studyId, String name) async => _study(
     await _adapter.patch(
@@ -281,5 +341,14 @@ class StudyApiService {
     final data = decoded['data'];
     if (data is Map<String, dynamic>) return data;
     return decoded;
+  }
+
+  List<Map<String, dynamic>> _pickerItems(dynamic response) {
+    final data = _data(response);
+    final items = data['items'];
+    if (items is! List || items.any((item) => item is! Map)) {
+      throw const FormatException('Reports picker response is missing items');
+    }
+    return items.map((item) => (item as Map).cast<String, dynamic>()).toList();
   }
 }

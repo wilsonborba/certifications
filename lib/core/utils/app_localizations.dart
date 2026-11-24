@@ -239,6 +239,20 @@ class AppLocalizations {
           'A selected text file could not be read as valid UTF-8.',
       'preparedNotesUnavailable':
           'Prepared Notes arrive ready. Their sources are not uploaded again.',
+      'reportsSourceLabel': 'Use a Reports dataset',
+      'reportsSourceHint':
+          'Choose a report and one readable dataset. The full dataset is attached.',
+      'reportPickerLabel': 'Report',
+      'reportDatasetLabel': 'Dataset',
+      'reportPickerUnavailable': 'Reports sources are unavailable right now.',
+      'noReadableReports': 'No readable reports are available.',
+      'noReadableDatasets':
+          'No readable datasets are available in this report.',
+      'addReportDataset': 'Add dataset',
+      'reportSourceAttached': 'Reports dataset added.',
+      'reportSourceAttachUnconfirmed':
+          'Could not confirm whether the dataset was added. Refresh sources before trying again.',
+      'refreshReports': 'Refresh reports',
       'sourceStorageNotice':
           'This storage is not an archive. Keep your own copy of each original.',
       'difficultyLabel': 'Difficulty:',
@@ -628,6 +642,21 @@ class AppLocalizations {
           'Não foi possível ler um arquivo de texto selecionado como UTF-8 válido.',
       'preparedNotesUnavailable':
           'As Notas preparadas chegam prontas. As fontes não são enviadas novamente.',
+      'reportsSourceLabel': 'Usar um conjunto do Reports',
+      'reportsSourceHint':
+          'Escolha um relatório e um conjunto legível. O conjunto completo será anexado.',
+      'reportPickerLabel': 'Relatório',
+      'reportDatasetLabel': 'Conjunto de dados',
+      'reportPickerUnavailable':
+          'As fontes do Reports estão indisponíveis no momento.',
+      'noReadableReports': 'Nenhum relatório legível está disponível.',
+      'noReadableDatasets':
+          'Nenhum conjunto legível está disponível neste relatório.',
+      'addReportDataset': 'Adicionar conjunto',
+      'reportSourceAttached': 'Conjunto do Reports adicionado.',
+      'reportSourceAttachUnconfirmed':
+          'Não foi possível confirmar se o conjunto foi adicionado. Atualize as fontes antes de tentar novamente.',
+      'refreshReports': 'Atualizar relatórios',
       'sourceStorageNotice':
           'Este armazenamento não é um arquivo permanente. Guarde sua própria cópia dos originais.',
       'difficultyLabel': 'Dificuldade:',
@@ -1011,6 +1040,19 @@ class AppLocalizations {
           'ไม่สามารถอ่านไฟล์ข้อความที่เลือกเป็น UTF-8 ที่ถูกต้องได้',
       'preparedNotesUnavailable':
           'โน้ตที่เตรียมไว้พร้อมใช้งานแล้ว และจะไม่อัปโหลดแหล่งข้อมูลซ้ำ',
+      'reportsSourceLabel': 'ใช้ชุดข้อมูลจาก Reports',
+      'reportsSourceHint':
+          'เลือกรายงานและชุดข้อมูลที่อ่านได้ ระบบจะแนบชุดข้อมูลทั้งหมด',
+      'reportPickerLabel': 'รายงาน',
+      'reportDatasetLabel': 'ชุดข้อมูล',
+      'reportPickerUnavailable': 'แหล่งข้อมูล Reports ยังไม่พร้อมใช้งาน',
+      'noReadableReports': 'ไม่มีรายงานที่อ่านได้',
+      'noReadableDatasets': 'ไม่มีชุดข้อมูลที่อ่านได้ในรายงานนี้',
+      'addReportDataset': 'เพิ่มชุดข้อมูล',
+      'reportSourceAttached': 'เพิ่มชุดข้อมูลจาก Reports แล้ว',
+      'reportSourceAttachUnconfirmed':
+          'ยืนยันไม่ได้ว่าเพิ่มชุดข้อมูลแล้วหรือไม่ โปรดรีเฟรชแหล่งข้อมูลก่อนลองอีกครั้ง',
+      'refreshReports': 'รีเฟรชรายงาน',
       'sourceStorageNotice':
           'พื้นที่นี้ไม่ใช่ที่เก็บถาวร โปรดเก็บสำเนาไฟล์ต้นฉบับไว้ด้วย',
       'difficultyLabel': 'ระดับความยาก:',

@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/quiz.dart';
 import 'package:certifications/domain/models/quiz_wizard_data.dart';
+import 'package:certifications/domain/models/study.dart';
+import 'package:certifications/domain/services/study_api_service.dart';
 import 'package:certifications/presentation/components/premium_hover_card.dart';
 import 'package:certifications/presentation/components/quiz/granular_range_selector.dart';
 import 'package:file_picker/file_picker.dart';
@@ -117,11 +119,13 @@ class Step2SourceView extends StatefulWidget {
     required this.wizardData,
     required this.isDesktop,
     required this.onPrepareSources,
+    required this.studyApi,
   });
 
   final QuizWizardData wizardData;
   final bool isDesktop;
-  final Future<void> Function() onPrepareSources;
+  final Future<String?> Function() onPrepareSources;
+  final StudyApiService studyApi;
 
   @override
   State<Step2SourceView> createState() => _Step2SourceViewState();
@@ -129,6 +133,15 @@ class Step2SourceView extends StatefulWidget {
 
 class _Step2SourceViewState extends State<Step2SourceView> {
   int? _expandedIndex;
+  String? _studyId;
+  List<ReportPickerItem> _reports = const [];
+  List<ReportDatasetPickerItem> _reportDatasets = const [];
+  String? _selectedReportKey;
+  String? _selectedDatasetRef;
+  String? _reportPickerError;
+  bool _loadingReports = true;
+  bool _loadingReportDatasets = false;
+  bool _attachingReport = false;
 
   @override
   void initState() {
@@ -136,7 +149,9 @@ class _Step2SourceViewState extends State<Step2SourceView> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       try {
-        await widget.onPrepareSources();
+        _studyId = await widget.onPrepareSources();
+        if (!mounted) return;
+        await _loadReports();
       } catch (_) {
         if (!mounted) return;
         ScaffoldMessenger.of(
@@ -144,6 +159,259 @@ class _Step2SourceViewState extends State<Step2SourceView> {
         ).showSnackBar(SnackBar(content: Text(context.tr('errorGeneric'))));
       }
     });
+  }
+
+  Future<void> _loadReports() async {
+    setState(() {
+      _loadingReports = true;
+      _reportPickerError = null;
+      _reports = const [];
+      _reportDatasets = const [];
+      _selectedReportKey = null;
+      _selectedDatasetRef = null;
+    });
+    try {
+      final reports = await widget.studyApi.listReports();
+      if (!mounted) return;
+      setState(() => _reports = reports);
+    } catch (_) {
+      if (!mounted) return;
+      setState(
+        () => _reportPickerError = context.tr('reportPickerUnavailable'),
+      );
+    } finally {
+      if (mounted) setState(() => _loadingReports = false);
+    }
+  }
+
+  Future<void> _selectReport(String? key) async {
+    setState(() {
+      _selectedReportKey = key;
+      _selectedDatasetRef = null;
+      _reportDatasets = const [];
+      _reportPickerError = null;
+    });
+    if (key == null) return;
+    ReportPickerItem? report;
+    for (final item in _reports) {
+      if ('${item.project}/${item.report}' == key) {
+        report = item;
+        break;
+      }
+    }
+    if (report == null) return;
+    setState(() => _loadingReportDatasets = true);
+    try {
+      final datasets = await widget.studyApi.listReportDatasets(report);
+      if (!mounted || _selectedReportKey != key) return;
+      setState(() => _reportDatasets = datasets);
+    } catch (_) {
+      if (!mounted || _selectedReportKey != key) return;
+      setState(
+        () => _reportPickerError = context.tr('reportPickerUnavailable'),
+      );
+    } finally {
+      if (mounted && _selectedReportKey == key) {
+        setState(() => _loadingReportDatasets = false);
+      }
+    }
+  }
+
+  Future<void> _attachReportDataset() async {
+    final studyId = _studyId;
+    ReportDatasetPickerItem? selected;
+    for (final item in _reportDatasets) {
+      if (item.externalRef == _selectedDatasetRef && item.canView) {
+        selected = item;
+        break;
+      }
+    }
+    if (studyId == null || selected == null || _attachingReport) return;
+    final dataset = selected;
+    setState(() => _attachingReport = true);
+    try {
+      final source = await widget.studyApi.attachReportDataset(
+        studyId: studyId,
+        dataset: dataset,
+      );
+      if (!mounted) return;
+      widget.wizardData.addExistingSource(source);
+      // Account usage/caps come from study detail. Reload after the attach so
+      // the meter reflects the newly committed server-side dataset bytes.
+      try {
+        final study = await widget.studyApi.get(studyId);
+        if (!mounted) return;
+        widget.wizardData.setAccountQuota(
+          usedBytes: study.accountUsedBytes,
+          maxBytes: study.accountMaxBytes,
+          fileLimitBytes: study.maxFileBytes,
+          studyLimitBytes: study.maxStudyBytes,
+        );
+        widget.wizardData.setExistingSources(study.sources);
+      } catch (_) {
+        if (!mounted) return;
+        widget.wizardData.setAccountQuota(
+          usedBytes: null,
+          maxBytes: null,
+          fileLimitBytes: null,
+          studyLimitBytes: null,
+        );
+      }
+      setState(() {
+        _selectedDatasetRef = null;
+        _reportPickerError = null;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.tr('reportSourceAttached'))),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      // The POST has no duplicate suppression. Refresh the authoritative list
+      // before showing a retry path; never repeat an ambiguous attach blindly.
+      try {
+        final study = await widget.studyApi.get(studyId);
+        widget.wizardData.setExistingSources(study.sources);
+        final exists = study.sources.any(
+          (source) => source.externalRef == dataset.externalRef,
+        );
+        if (exists && mounted) {
+          setState(() => _selectedDatasetRef = null);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(context.tr('reportSourceAttached'))),
+          );
+        } else if (mounted) {
+          setState(
+            () => _reportPickerError = context.tr(
+              'reportSourceAttachUnconfirmed',
+            ),
+          );
+        }
+      } catch (_) {
+        if (mounted) {
+          setState(
+            () => _reportPickerError = context.tr(
+              'reportSourceAttachUnconfirmed',
+            ),
+          );
+        }
+      }
+    } finally {
+      if (mounted) setState(() => _attachingReport = false);
+    }
+  }
+
+  Widget _reportPickerCard(BuildContext context) {
+    final reportKey = _selectedReportKey;
+    final reportSelected =
+        reportKey != null &&
+        _reports.any((item) => '${item.project}/${item.report}' == reportKey);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              context.tr('reportsSourceLabel'),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              context.tr('reportsSourceHint'),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            if (_loadingReports || _loadingReportDatasets)
+              const LinearProgressIndicator(),
+            if (_reportPickerError case final error?) ...[
+              const SizedBox(height: 8),
+              Text(
+                error,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ],
+            if (!_loadingReports &&
+                _reportPickerError == null &&
+                _reports.isEmpty)
+              Text(context.tr('noReadableReports')),
+            if (_reports.isNotEmpty) ...[
+              DropdownButtonFormField<String>(
+                initialValue: _selectedReportKey,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: context.tr('reportPickerLabel'),
+                ),
+                items: _reports
+                    .map(
+                      (item) => DropdownMenuItem(
+                        value: '${item.project}/${item.report}',
+                        child: Text(
+                          '${item.title} · ${item.project}/${item.report}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: _loadingReportDatasets ? null : _selectReport,
+              ),
+            ],
+            if (reportSelected && !_loadingReportDatasets) ...[
+              const SizedBox(height: 10),
+              if (_reportDatasets.isEmpty && _reportPickerError == null)
+                Text(context.tr('noReadableDatasets')),
+              if (_reportDatasets.isNotEmpty)
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedDatasetRef,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: context.tr('reportDatasetLabel'),
+                  ),
+                  items: _reportDatasets
+                      .where((item) => item.canView)
+                      .map(
+                        (item) => DropdownMenuItem(
+                          value: item.externalRef,
+                          child: Text(
+                            '${item.title} · ${item.datasetId}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) =>
+                      setState(() => _selectedDatasetRef = value),
+                ),
+            ],
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _loadingReports || _attachingReport
+                      ? null
+                      : _loadReports,
+                  icon: const Icon(Icons.refresh),
+                  label: Text(context.tr('refreshReports')),
+                ),
+                FilledButton.icon(
+                  onPressed:
+                      _selectedDatasetRef == null ||
+                          _attachingReport ||
+                          _studyId == null
+                      ? null
+                      : _attachReportDataset,
+                  icon: const Icon(Icons.add),
+                  label: Text(context.tr('addReportDataset')),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _pickFiles() async {
@@ -410,6 +678,8 @@ class _Step2SourceViewState extends State<Step2SourceView> {
         ),
 
         const SizedBox(height: 20),
+        _reportPickerCard(context),
+        const SizedBox(height: 20),
 
         // Attached Files Section
         if (wizardData.existingSources.isNotEmpty) ...[
@@ -499,8 +769,8 @@ class _Step2SourceViewState extends State<Step2SourceView> {
   }
 }
 
-/// A running-total bar against the per-study 150MB cap, always visible above
-/// the file strip so the user knows how much room is left.
+/// A running-total bar against the server-reported study/account cap, always
+/// visible above the file strip so the user knows how much room is left.
 class _CapUsageBar extends StatelessWidget {
   const _CapUsageBar({
     required this.usedBytes,

@@ -70,6 +70,89 @@ class StudySourcePreview {
   final String preview;
 }
 
+/// Caller-readable Reports descriptor returned by the Certifications picker.
+class ReportPickerItem {
+  const ReportPickerItem({
+    required this.project,
+    required this.report,
+    required this.title,
+    required this.isRestricted,
+  });
+
+  factory ReportPickerItem.fromJson(Map<String, dynamic> json) {
+    final project = json['project'];
+    final report = json['report'];
+    final title = json['title'];
+    final restricted = json['is_restricted'];
+    if (project is! String ||
+        report is! String ||
+        title is! String ||
+        restricted is! bool) {
+      throw const FormatException('Invalid Reports picker item');
+    }
+    return ReportPickerItem(
+      project: project,
+      report: report,
+      title: title,
+      isRestricted: restricted,
+    );
+  }
+
+  final String project;
+  final String report;
+  final String title;
+  final bool isRestricted;
+}
+
+/// Dataset descriptor from `GET /reports/picker?project=…&report=…`.
+class ReportDatasetPickerItem {
+  const ReportDatasetPickerItem({
+    required this.project,
+    required this.report,
+    required this.datasetId,
+    required this.title,
+    required this.canView,
+    required this.visibility,
+  });
+
+  factory ReportDatasetPickerItem.fromJson(Map<String, dynamic> json) {
+    final project = json['project'];
+    final report = json['report'];
+    final rawDataset = json['dataset'];
+    if (project is! String || report is! String || rawDataset is! Map) {
+      throw const FormatException('Invalid Reports dataset picker item');
+    }
+    final dataset = rawDataset.cast<String, dynamic>();
+    final id = dataset['dataset_id'];
+    final title = dataset['title'];
+    final canView = dataset['can_view'];
+    final visibility = dataset['visibility'];
+    if (id is! String ||
+        title is! String ||
+        canView is! bool ||
+        visibility is! String) {
+      throw const FormatException('Invalid Reports dataset descriptor');
+    }
+    return ReportDatasetPickerItem(
+      project: project,
+      report: report,
+      datasetId: id,
+      title: title,
+      canView: canView,
+      visibility: visibility,
+    );
+  }
+
+  final String project;
+  final String report;
+  final String datasetId;
+  final String title;
+  final bool canView;
+  final String visibility;
+
+  String get externalRef => '$project/$report/$datasetId';
+}
+
 class StudyAnalysisEvent {
   const StudyAnalysisEvent(this.name, this.data);
 

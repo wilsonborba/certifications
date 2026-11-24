@@ -88,6 +88,114 @@ void main() {
     expect(summary.activeSizeBytes, isNull);
   });
 
+  test(
+    'Reports picker and attachment use the exact selected dataset contract',
+    () async {
+      final requests = <http.Request>[];
+      final client = MockClient((request) async {
+        requests.add(request);
+        if (request.method == 'GET' &&
+            request.url.path.endsWith('/reports/picker')) {
+          if (request.url.queryParameters.isEmpty) {
+            return http.Response(
+              jsonEncode({
+                'items': [
+                  {
+                    'project': 'proj1',
+                    'report': 'rep1',
+                    'title': 'Quarterly',
+                    'is_restricted': false,
+                  },
+                ],
+              }),
+              200,
+            );
+          }
+          return http.Response(
+            jsonEncode({
+              'items': [
+                {
+                  'project': 'proj1',
+                  'report': 'rep1',
+                  'dataset': {
+                    'dataset_id': 'data1',
+                    'title': 'Counts',
+                    'can_view': true,
+                    'visibility': 'public',
+                  },
+                },
+                {
+                  'project': 'proj1',
+                  'report': 'rep1',
+                  'dataset': {
+                    'dataset_id': 'hidden',
+                    'title': 'Hidden',
+                    'can_view': false,
+                    'visibility': 'restricted',
+                  },
+                },
+              ],
+            }),
+            200,
+          );
+        }
+        if (request.method == 'POST' &&
+            request.url.path.endsWith('/studies/study-1/sources')) {
+          return http.Response(
+            jsonEncode({
+              'id': 'source-report-1',
+              'filename': 'Counts',
+              'mime_type': 'text/plain',
+              'size_bytes': 42,
+              'sha256': 'aabb',
+              'fsm_ref': '',
+              'source_kind': 'report',
+              'status': 'ready',
+              'selection_kind': 'all',
+              'selection_spec': '',
+              'is_restricted': false,
+              'external_ref': 'proj1/rep1/data1',
+              'created_at': 1760000000,
+              'updated_at': 1760000000,
+            }),
+            201,
+          );
+        }
+        return http.Response('unexpected request', 404);
+      });
+      final service = StudyApiService(
+        adapter: ApiAdapter(client: client, csrfTokenProvider: () => null),
+      );
+
+      final reports = await service.listReports();
+      final datasets = await service.listReportDatasets(reports.single);
+      final source = await service.attachReportDataset(
+        studyId: 'study-1',
+        dataset: datasets.single,
+      );
+
+      expect(requests[0].method, 'GET');
+      expect(requests[0].url.queryParameters, isEmpty);
+      expect(requests[1].url.queryParameters, {
+        'project': 'proj1',
+        'report': 'rep1',
+      });
+      expect(datasets.map((item) => item.datasetId), ['data1']);
+      expect(requests[2].method, 'POST');
+      expect(requests[2].url.path, endsWith('/studies/study-1/sources'));
+      expect(jsonDecode(requests[2].body), {
+        'kind': 'report',
+        'filename': 'Counts',
+        'external_ref': 'proj1/rep1/data1',
+        'is_restricted': false,
+      });
+      expect(source.sourceKind, 'report');
+      expect(source.selectionKind, 'all');
+      expect(source.externalRef, 'proj1/rep1/data1');
+      client.close();
+    },
+  );
+
   test('create uses title and loads the authoritative detail quota', () async {
     final requests = <http.Request>[];
     final client = MockClient((request) async {
@@ -488,6 +596,9 @@ void main() {
       expect(copy.text('sourceStorageNotice'), isNotEmpty);
       expect(copy.text('sourcePreviewTitle'), isNotEmpty);
       expect(copy.text('narrowSelectionUnavailable'), isNotEmpty);
+      expect(copy.text('reportsSourceLabel'), isNotEmpty);
+      expect(copy.text('reportPickerLabel'), isNotEmpty);
+      expect(copy.text('reportDatasetLabel'), isNotEmpty);
     }
     expect(AppLocalizations(const Locale('xx')).text('newStudy'), isNotEmpty);
   });

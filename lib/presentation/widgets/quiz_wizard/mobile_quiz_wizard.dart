@@ -1,5 +1,6 @@
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/quiz_wizard_data.dart';
+import 'package:certifications/domain/services/study_api_service.dart';
 import 'package:certifications/presentation/components/quiz/quiz_timeline_stepper.dart';
 import 'package:certifications/presentation/widgets/quiz_wizard/quiz_wizard_steps.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ class MobileQuizWizard extends StatelessWidget {
     super.key,
     required this.wizardData,
     required this.onPrepareSources,
+    required this.studyApi,
     required this.onGenerate,
     required this.onInspectSources,
     required this.isInspectingSources,
@@ -21,7 +23,8 @@ class MobileQuizWizard extends StatelessWidget {
   });
 
   final QuizWizardData wizardData;
-  final Future<void> Function() onPrepareSources;
+  final Future<String?> Function() onPrepareSources;
+  final StudyApiService studyApi;
   final VoidCallback onGenerate;
   final VoidCallback onInspectSources;
   final bool isInspectingSources;
@@ -49,10 +52,10 @@ class MobileQuizWizard extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: scheme.surface.withOpacity(0.9),
+                  color: scheme.surface.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: scheme.outlineVariant.withOpacity(0.3),
+                    color: scheme.outlineVariant.withValues(alpha: 0.3),
                   ),
                 ),
                 child: _buildCurrentStepView(context),
@@ -75,6 +78,7 @@ class MobileQuizWizard extends StatelessWidget {
           wizardData: wizardData,
           isDesktop: false,
           onPrepareSources: onPrepareSources,
+          studyApi: studyApi,
         );
       case 2:
         return Step3FormatView(wizardData: wizardData, isDesktop: false);

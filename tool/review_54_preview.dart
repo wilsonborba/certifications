@@ -23,6 +23,8 @@ const _study = <String, dynamic>{
 };
 
 class _FixtureClient extends http.BaseClient {
+  bool _reportAttached = false;
+
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     final path = request.url.path;
@@ -33,12 +35,85 @@ class _FixtureClient extends http.BaseClient {
       }
       return _response(_study, 201);
     }
+    if (request.method == 'GET' && path.endsWith('/reports/picker')) {
+      if (request.url.queryParameters.isEmpty) {
+        return _response({
+          'items': [
+            {
+              'project': 'sample-project',
+              'report': 'monthly-metrics',
+              'title': 'Monthly metrics',
+              'is_restricted': false,
+            },
+          ],
+        }, 200);
+      }
+      if (request.url.queryParameters['project'] != 'sample-project' ||
+          request.url.queryParameters['report'] != 'monthly-metrics') {
+        throw StateError('Unexpected report picker query: ${request.url}');
+      }
+      return _response({
+        'items': [
+          {
+            'project': 'sample-project',
+            'report': 'monthly-metrics',
+            'dataset': {
+              'dataset_id': 'counts',
+              'title': 'Monthly counts',
+              'can_view': true,
+              'visibility': 'public',
+            },
+          },
+        ],
+      }, 200);
+    }
+    if (request.method == 'POST' && path.endsWith('/studies/review-study/sources')) {
+      final body = jsonDecode((request as http.Request).body);
+      if (body is! Map ||
+          body['kind'] != 'report' ||
+          body['external_ref'] != 'sample-project/monthly-metrics/counts' ||
+          body['is_restricted'] != false ||
+          body.containsKey('fsm_ref')) {
+        throw StateError('Unexpected report attachment body: $body');
+      }
+      _reportAttached = true;
+      return _response({
+        'id': 'sample-report-source',
+        'filename': 'Monthly counts',
+        'mime_type': 'text/plain',
+        'size_bytes': 128,
+        'sha256': 'fixture-report-sha256',
+        'fsm_ref': '',
+        'source_kind': 'report',
+        'status': 'ready',
+        'selection_kind': 'all',
+        'selection_spec': '',
+        'is_restricted': false,
+        'external_ref': 'sample-project/monthly-metrics/counts',
+      }, 201);
+    }
     if (request.method == 'GET' && path.endsWith('/studies/review-study')) {
       return _response({
         'study': _study,
-        'sources': [],
+        'sources': _reportAttached
+            ? [
+                {
+                  'id': 'sample-report-source',
+                  'filename': 'Monthly counts',
+                  'mime_type': 'text/plain',
+                  'size_bytes': 128,
+                  'sha256': 'fixture-report-sha256',
+                  'source_kind': 'report',
+                  'status': 'ready',
+                  'selection_kind': 'all',
+                  'selection_spec': '',
+                  'is_restricted': false,
+                  'external_ref': 'sample-project/monthly-metrics/counts',
+                },
+              ]
+            : [],
         'quota': {
-          'used_bytes': 1024,
+          'used_bytes': _reportAttached ? 1152 : 1024,
           'reserved_bytes': 0,
           'max_file_bytes': 5000000,
           'max_study_bytes': 15000000,
