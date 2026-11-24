@@ -45,6 +45,83 @@ class CertificateVerification {
       );
 }
 
+/// One-time certificate holder identity returned by the authenticated API.
+class CertificateHolderIdentity {
+  const CertificateHolderIdentity({
+    required this.holderId,
+    required this.displayName,
+    required this.confirmed,
+  });
+
+  final String? holderId;
+  final String? displayName;
+  final bool confirmed;
+
+  factory CertificateHolderIdentity.fromJson(Map<String, dynamic> json) =>
+      CertificateHolderIdentity(
+        holderId: json['holder_id'] as String?,
+        displayName: json['display_name'] as String?,
+        confirmed: json['confirmed'] as bool,
+      );
+}
+
+/// Idempotent certificate issuance response. File URLs are retained from the
+/// server response; the public UI uses the matching file route by code.
+class IssuedCertificate {
+  const IssuedCertificate({
+    required this.id,
+    required this.verificationCode,
+    required this.holderPublicId,
+    required this.holderName,
+    required this.quizId,
+    required this.quizTitle,
+    required this.attemptId,
+    required this.scoreCorrect,
+    required this.scoreTotal,
+    required this.status,
+    required this.revocationReason,
+    required this.issuedAt,
+    required this.pdfUrl,
+    required this.imageUrl,
+    this.revokedAt,
+  });
+
+  final String id;
+  final String verificationCode;
+  final String holderPublicId;
+  final String holderName;
+  final String quizId;
+  final String quizTitle;
+  final String attemptId;
+  final int scoreCorrect;
+  final int scoreTotal;
+  final String status;
+  final String revocationReason;
+  final int issuedAt;
+  final int? revokedAt;
+  final String pdfUrl;
+  final String imageUrl;
+
+  factory IssuedCertificate.fromJson(Map<String, dynamic> json) =>
+      IssuedCertificate(
+        id: json['id'] as String,
+        verificationCode: json['verification_code'] as String,
+        holderPublicId: json['holder_public_id'] as String,
+        holderName: json['holder_name'] as String,
+        quizId: json['quiz_id'] as String,
+        quizTitle: json['quiz_title'] as String,
+        attemptId: json['attempt_id'] as String,
+        scoreCorrect: (json['score_correct'] as num).toInt(),
+        scoreTotal: (json['score_total'] as num).toInt(),
+        status: json['status'] as String,
+        revocationReason: json['revocation_reason'] as String,
+        issuedAt: (json['issued_at'] as num).toInt(),
+        revokedAt: (json['revoked_at'] as num?)?.toInt(),
+        pdfUrl: json['pdf_url'] as String,
+        imageUrl: json['image_url'] as String,
+      );
+}
+
 class CertificateActivitySummary {
   const CertificateActivitySummary({
     required this.focusLostCount,

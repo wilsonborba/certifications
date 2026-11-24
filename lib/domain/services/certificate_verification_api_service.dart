@@ -41,6 +41,36 @@ class CertificateVerificationApiService {
     return CertificateVerification.fromJson(decoded);
   }
 
+  /// Reads the signed-in caller's identity state before rendering the
+  /// confirmation step. The service never accepts a client-supplied owner id.
+  Future<CertificateHolderIdentity> getMyIdentity() async {
+    final response = await _adapter.get(Uri.parse('$_base/me/identity'));
+    return CertificateHolderIdentity.fromJson(_decodeMap(response));
+  }
+
+  /// Confirms the exact displayed name. The Rust endpoint normalizes
+  /// whitespace and rejects later ordinary changes.
+  Future<CertificateHolderIdentity> confirmMyIdentity(
+    String displayName,
+  ) async {
+    final response = await _adapter.put(
+      Uri.parse('$_base/me/identity'),
+      headers: const {'Content-Type': 'application/json'},
+      body: {'display_name': displayName},
+    );
+    return CertificateHolderIdentity.fromJson(_decodeMap(response));
+  }
+
+  /// The server owns eligibility, idempotency and immutable issuance snapshots.
+  Future<IssuedCertificate> issueForAttempt(String attemptId) async {
+    final response = await _adapter.post(
+      Uri.parse(
+        '$_base/attempts/${Uri.encodeComponent(attemptId)}/certificate',
+      ),
+    );
+    return IssuedCertificate.fromJson(_decodeMap(response));
+  }
+
   Future<CertificateFile> downloadPdf(String code) async =>
       _download(code, 'pdf', 'application/pdf');
 
@@ -66,6 +96,17 @@ class CertificateVerificationApiService {
       contentType: contentType!,
       bytes: response.bodyBytes,
     );
+  }
+
+  Map<String, dynamic> _decodeMap(dynamic response) {
+    _ensureSuccess(response);
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      throw const FormatException(
+        'Expected a JSON object from certificate API',
+      );
+    }
+    return decoded;
   }
 
   void _ensureSuccess(dynamic response) {

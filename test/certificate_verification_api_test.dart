@@ -8,6 +8,76 @@ import 'package:http/testing.dart';
 
 void main() {
   test(
+    'identity and idempotent issuance use the confirmed Rust API DTOs',
+    () async {
+      final requests = <http.Request>[];
+      final client = MockClient((request) async {
+        requests.add(request);
+        if (request.url.path.endsWith('/me/identity') &&
+            request.method == 'GET') {
+          return http.Response(
+            jsonEncode({
+              'holder_id': 'internal-holder-id',
+              'display_name': 'Ana Silva',
+              'confirmed': true,
+            }),
+            200,
+          );
+        }
+        if (request.url.path.endsWith('/me/identity')) {
+          return http.Response(
+            jsonEncode({
+              'holder_id': 'internal-holder-id',
+              'display_name': 'Ana Silva',
+              'confirmed': true,
+            }),
+            200,
+          );
+        }
+        return http.Response(
+          jsonEncode({
+            'id': 'certificate-internal-id',
+            'verification_code': 'ASODYA-CODE123456',
+            'holder_public_id': 'holder-public-id',
+            'holder_name': 'Ana Silva',
+            'quiz_id': 'quiz-1',
+            'quiz_title': 'Sample quiz',
+            'attempt_id': 'attempt-1',
+            'score_correct': 0,
+            'score_total': 1,
+            'status': 'active',
+            'revocation_reason': '',
+            'issued_at': 1760000000,
+            'revoked_at': null,
+            'pdf_url': '/certificates/ASODYA-CODE123456/files/pdf',
+            'image_url': '/certificates/ASODYA-CODE123456/files/image',
+          }),
+          200,
+        );
+      });
+      final service = CertificateVerificationApiService(
+        adapter: ApiAdapter(client: client, csrfTokenProvider: () => null),
+      );
+
+      final current = await service.getMyIdentity();
+      final confirmed = await service.confirmMyIdentity('Ana Silva');
+      final issued = await service.issueForAttempt('attempt-1');
+
+      expect(current.confirmed, isTrue);
+      expect(current.displayName, 'Ana Silva');
+      expect(confirmed.holderId, 'internal-holder-id');
+      expect(issued.verificationCode, 'ASODYA-CODE123456');
+      expect(issued.scoreCorrect, 0); // zero is a factual score, not a verdict
+      expect(requests.map((r) => '${r.method} ${r.url.path}'), [
+        'GET /apps/certifications/v1/me/identity',
+        'PUT /apps/certifications/v1/me/identity',
+        'POST /apps/certifications/v1/attempts/attempt-1/certificate',
+      ]);
+      expect(jsonDecode(requests[1].body), {'display_name': 'Ana Silva'});
+    },
+  );
+
+  test(
     'verification parses only factual status and activity summary',
     () async {
       final client = MockClient((request) async {
