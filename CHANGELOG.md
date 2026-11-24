@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug Fixes
 
+- Remove cookie consent snackbar ([`64ba6e2`](https://github.com/wilsonborba/certifications/commit/64ba6e211c0d516c47e9fddafa97763004c0720f))
+
 - *(build)* Keep image below 4.11.0 so the web release build resolves with the archive that pdf allows (#61)
 
 ## [1.0.0] - 2026-09-08
