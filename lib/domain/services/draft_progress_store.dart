@@ -13,8 +13,9 @@ class DraftProgressStore {
   DraftProgressStore._();
   static final DraftProgressStore instance = DraftProgressStore._();
 
-  final LocalSourceAdapter _storage =
-      LocalSourceAdapter(namespace: 'certifications.draft_progress');
+  final LocalSourceAdapter _storage = LocalSourceAdapter(
+    namespace: 'certifications.draft_progress',
+  );
 
   Future<int?> getStep(String studyId) async {
     final value = await _storage.read<num>('$studyId::step');
@@ -55,9 +56,33 @@ class DraftProgressStore {
     return QuizVisibility.parse(raw);
   }
 
+  Future<void> saveGenerationJobId(String studyId, String jobId) async {
+    await _storage.upsert('$studyId::generationJobId', jobId);
+  }
+
+  Future<String?> getGenerationJobId(String studyId) async =>
+      _storage.read<String>('$studyId::generationJobId');
+
+  Future<void> clearGenerationJobId(String studyId) async {
+    await _storage.delete('$studyId::generationJobId');
+  }
+
+  Future<void> saveGenerationIdempotencyKey(String studyId, String key) async {
+    await _storage.upsert('$studyId::generationIdempotencyKey', key);
+  }
+
+  Future<String?> getGenerationIdempotencyKey(String studyId) async =>
+      _storage.read<String>('$studyId::generationIdempotencyKey');
+
+  Future<void> clearGenerationIdempotencyKey(String studyId) async {
+    await _storage.delete('$studyId::generationIdempotencyKey');
+  }
+
   Future<void> clear(String studyId) async {
     await _storage.delete('$studyId::step');
     await _storage.delete('$studyId::lastOpenedAt');
     await _storage.delete('$studyId::visibility');
+    await _storage.delete('$studyId::generationJobId');
+    await _storage.delete('$studyId::generationIdempotencyKey');
   }
 }

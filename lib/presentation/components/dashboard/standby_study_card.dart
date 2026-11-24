@@ -261,6 +261,27 @@ class _StandbyStudyCardState extends State<StandbyStudyCard> {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
+                          FutureBuilder<String?>(
+                            future: DraftProgressStore.instance
+                                .getGenerationJobId(study.id),
+                            builder: (context, snapshot) {
+                              final jobId = snapshot.data;
+                              if (jobId == null || jobId.isEmpty) {
+                                return const SizedBox.shrink();
+                              }
+                              return OutlinedButton.icon(
+                                onPressed: () => Navigator.pushNamed(
+                                  context,
+                                  '/v1/generations/${Uri.encodeComponent(jobId)}',
+                                ),
+                                icon: const Icon(
+                                  Icons.pending_actions,
+                                  size: 16,
+                                ),
+                                label: Text(context.tr('continueGeneration')),
+                              );
+                            },
+                          ),
                           OutlinedButton.icon(
                             onPressed: () =>
                                 setState(() => isExpanded = !isExpanded),
