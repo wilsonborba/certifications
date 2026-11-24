@@ -57,9 +57,6 @@ class AttachedFile {
 }
 
 class QuizWizardData extends ChangeNotifier {
-  /// Per-study attached-files size cap, mirrors the backend's 150MB limit.
-  static const int maxTotalAttachedBytes = 150 * 1024 * 1024;
-
   int currentStep = 0;
   String name = '';
   SourceType sourceType = SourceType.uploadFile;
@@ -75,14 +72,28 @@ class QuizWizardData extends ChangeNotifier {
   /// Whether the backend should augment question generation with a live web
   /// search. Defaults to false (source material only).
   bool useWeb = false;
+  int? accountUsedBytes;
+  int? accountMaxBytes;
 
   int get totalAttachedBytes =>
       attachedFiles.fold(0, (sum, f) => sum + f.sizeBytes);
 
-  /// Whether adding a file of [additionalBytes] would push the study over
-  /// the per-study cap.
-  bool wouldExceedCap(int additionalBytes) =>
-      totalAttachedBytes + additionalBytes > maxTotalAttachedBytes;
+  /// Whether the known backend account allowance would be exceeded by the
+  /// selected, not-yet-uploaded files. Unknown allowance is not treated as 0.
+  bool wouldExceedAccountQuota(int additionalBytes) =>
+      accountUsedBytes != null &&
+      accountMaxBytes != null &&
+      accountUsedBytes! + totalAttachedBytes + additionalBytes >
+          accountMaxBytes!;
+
+  int? get projectedAccountUsageBytes =>
+      accountUsedBytes == null ? null : accountUsedBytes! + totalAttachedBytes;
+
+  void setAccountQuota({required int? usedBytes, required int? maxBytes}) {
+    accountUsedBytes = usedBytes;
+    accountMaxBytes = maxBytes;
+    notifyListeners();
+  }
 
   bool get isStep1Valid => name.trim().isNotEmpty;
   bool get isStep2Valid => attachedFiles.isNotEmpty;
@@ -135,9 +146,8 @@ class QuizWizardData extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Adds a newly picked file to the attached-files list. Does not enforce
-  /// the size cap itself: callers should check [wouldExceedCap] first so
-  /// they can surface a proper warning instead of silently rejecting it.
+  /// Adds a newly picked file to the attached-files list. Callers may block
+  /// only when the backend account allowance is known and would be exceeded.
   void addFile(AttachedFile file) {
     attachedFiles.add(file);
     notifyListeners();

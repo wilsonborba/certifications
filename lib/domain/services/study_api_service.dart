@@ -12,7 +12,8 @@ class StudyApiException implements Exception {
   final String? requestId;
 
   @override
-  String toString() => 'StudyApiException(statusCode: $statusCode, message: $message, requestId: $requestId)';
+  String toString() =>
+      'StudyApiException(statusCode: $statusCode, message: $message, requestId: $requestId)';
 }
 
 class StudyApiService {
@@ -55,12 +56,14 @@ class StudyApiService {
       throw StudyApiException(response.statusCode);
     }
   }
+
   Future<StudySource> upload({
     required String studyId,
     required String kind,
     required String filename,
     required List<int> bytes,
     required String mimeType,
+    void Function(double progress)? onProgress,
   }) async {
     final response = await _adapter.postMultipart(
       url: Uri.parse('$_base/$studyId/sources'),
@@ -73,6 +76,7 @@ class StudyApiService {
           contentType: MediaType.parse(mimeType),
         ),
       ],
+      onProgress: onProgress,
     );
     return StudySource.fromJson(_data(response));
   }
@@ -107,9 +111,7 @@ class StudyApiService {
   }
 
   Future<void> deleteStudy(String studyId) async {
-    final response = await _adapter.delete(
-      Uri.parse('$_base/$studyId'),
-    );
+    final response = await _adapter.delete(Uri.parse('$_base/$studyId'));
     if (response.statusCode != 204)
       throw StudyApiException(response.statusCode);
   }
@@ -119,6 +121,7 @@ class StudyApiService {
     required String difficulty,
     required String idempotencyKey,
     required bool useWeb,
+
     /// Number of questions to generate, 1-20.
     int questionCount = 10,
   }) async {
@@ -141,9 +144,7 @@ class StudyApiService {
   }
 
   Future<List<StudyQuestion>> getQuestions(String studyId) async {
-    final response = await _adapter.get(
-      Uri.parse('$_base/$studyId/questions'),
-    );
+    final response = await _adapter.get(Uri.parse('$_base/$studyId/questions'));
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw StudyApiException(response.statusCode);
     }
@@ -191,15 +192,22 @@ class StudyApiService {
     String? requestId;
     try {
       if (response.headers != null) {
-        requestId = response.headers['x-request-id'] ?? response.headers['X-Request-ID'];
+        requestId =
+            response.headers['x-request-id'] ??
+            response.headers['X-Request-ID'];
       }
       final decoded = jsonDecode(response.body);
       if (decoded is Map<String, dynamic>) {
-        message = decoded['detail']?.toString() ?? decoded['message']?.toString();
+        message =
+            decoded['detail']?.toString() ?? decoded['message']?.toString();
         requestId = decoded['request_id']?.toString() ?? requestId;
       }
     } catch (_) {}
-    return StudyApiException(response.statusCode, message: message, requestId: requestId);
+    return StudyApiException(
+      response.statusCode,
+      message: message,
+      requestId: requestId,
+    );
   }
 
   Study _study(dynamic response) => Study.fromJson(_data(response));

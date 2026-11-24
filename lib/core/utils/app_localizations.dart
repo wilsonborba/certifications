@@ -65,9 +65,11 @@ class AppLocalizations {
       'delete': 'Delete',
       'complete': 'Complete study',
       'errorGeneric': 'Something went wrong. Please try again.',
-      'errorPaymentRequired': 'You have reached your plan limit. Please upgrade to continue.',
+      'errorPaymentRequired':
+          'You have reached your plan limit. Please upgrade to continue.',
       'loadingCreatingStudy': 'Creating your study…',
       'loadingUploadingFiles': 'Uploading your files…',
+      'uploadFileLabel': 'File',
       'loadingProcessingContent': 'Processing content…',
       'loadingAlmostReady': 'Almost ready, generating questions…',
       'retry': 'Retry',
@@ -184,8 +186,7 @@ class AppLocalizations {
       'contextCopied': 'Error context copied to clipboard.',
       'reportSentSuccess': 'The error report was sent successfully.',
       'reportSentFailure': 'The error report could not be sent right now.',
-      'valPropTitle':
-          'Your Study Intelligence, Powered by High-Precision AI.',
+      'valPropTitle': 'Your Study Intelligence, Powered by High-Precision AI.',
       'valPropSubtitle':
           'Turn PDFs, books, audio lectures, and videos into practice tests and interactive quizzes in seconds. Study your way, at your speed, hassle-free.',
       'valPropTile1Title': '1. Learn Any Subject in 1 Click',
@@ -243,9 +244,20 @@ class AppLocalizations {
       'timeRangeLabel': 'Time Range:',
       'removeFile': 'Remove file',
       'addFiles': 'Add files',
-      'filesCapUsageLabel': '{used} MB of {cap} MB used',
+      'accountQuotaUsageLabel':
+          '{used} MiB used of {cap} MiB account allowance; {pending} MiB selected',
+      'accountQuotaUnavailableLabel':
+          'Account allowance unavailable; {pending} MiB selected',
+      'accountQuotaExceededWarning':
+          'This selection exceeds the available account allowance.',
+      'wholeDocumentOnly':
+          'This source uses the whole document. Page selection is available for PDFs.',
+      'passageSelectionHint':
+          'Select text to use only that passage. The saved selection uses its source line range.',
+      'audioRangeUnavailable':
+          'Audio duration is unavailable, so this source uses the whole file.',
       'capExceededWarning':
-          'Adding this file would exceed the 150MB limit for this study.',
+          'This selection exceeds the available account allowance.',
       'tapFileToConfigureHint':
           'Tap a file to select a specific range instead of the whole document.',
       'noFilesAddedYet': 'No files added yet. Tap Add files to get started.',
@@ -264,8 +276,10 @@ class AppLocalizations {
       'storageAvailableTooltip': '{available} MB available of {total} MB',
       'completedQuizzesLabel': 'Completed Quizzes',
       'averageScoreLabel': 'Average Score',
-      'noScoreDataTooltip': 'No completed quizzes yet, so there is no score to average.',
-      'dashboardEmptyState': 'Your dashboard will come alive once you start a study.',
+      'noScoreDataTooltip':
+          'No completed quizzes yet, so there is no score to average.',
+      'dashboardEmptyState':
+          'Your dashboard will come alive once you start a study.',
       'studiesActivityLabel': 'Studies created, last 14 days',
       'deleteStudyConfirm': 'Do you really want to delete the study "{name}"?',
       'studyDeletedSuccess': 'Study removed successfully.',
@@ -278,7 +292,8 @@ class AppLocalizations {
       'selectStudiesAction': 'Select',
       'selectedCountLabel': '{count} selected',
       'deleteSelectedAction': 'Delete selected',
-      'deleteSelectedConfirm': 'Delete {count} selected studies? This cannot be undone.',
+      'deleteSelectedConfirm':
+          'Delete {count} selected studies? This cannot be undone.',
       'searchStudiesHint': 'Search your studies…',
       'noSearchResultsLabel': 'No studies match "{query}".',
       'editStudy': 'Rename study',
@@ -318,14 +333,17 @@ class AppLocalizations {
       'completedOnLabel': 'Completed on',
       'totalAttemptsLabel': 'Total attempts',
       'searchQuizzesHint': 'Search your completed quizzes…',
-      'certificatesSubtitle': 'Every quiz you have completed, public or private, in one place.',
+      'certificatesSubtitle':
+          'Every quiz you have completed, public or private, in one place.',
       'searchCertificatesHint': 'Search your certificates…',
       'noPrivateCertificatesYet': 'You have no private certificates yet.',
       'noPublicCertificatesYet': 'You have no public certificates yet.',
       'sharedQuizTitle': 'Shared quiz',
-      'sharedQuizUnavailable': 'This shared quiz link is invalid or has expired.',
+      'sharedQuizUnavailable':
+          'This shared quiz link is invalid or has expired.',
       'sharedQuizQuestionCount': '{count} questions',
-      'sharedQuizResumedBanner': 'Signed in, picking up right where you left off',
+      'sharedQuizResumedBanner':
+          'Signed in, picking up right where you left off',
       'quizResultTitle': 'Quiz results',
       'quizResultSummary': '{correct} of {total} correct',
       'quizReviewTitle': 'Review your answers',
@@ -410,9 +428,11 @@ class AppLocalizations {
       'delete': 'Excluir',
       'complete': 'Concluir estudo',
       'errorGeneric': 'Algo deu errado. Tente novamente.',
-      'errorPaymentRequired': 'Você atingiu o limite do seu plano. Faça upgrade para continuar.',
+      'errorPaymentRequired':
+          'Você atingiu o limite do seu plano. Faça upgrade para continuar.',
       'loadingCreatingStudy': 'Criando seu estudo…',
       'loadingUploadingFiles': 'Enviando seus arquivos…',
+      'uploadFileLabel': 'Arquivo',
       'loadingProcessingContent': 'Processando conteúdo…',
       'loadingAlmostReady': 'Quase pronto, gerando perguntas…',
       'retry': 'Tentar novamente',
@@ -526,8 +546,7 @@ class AppLocalizations {
       'unexpectedProblem':
           'O aplicativo encontrou um problema inesperado. Você pode enviar um relatório para ajudar no diagnóstico.',
       'copyErrorDetails': 'Copiar detalhes do erro',
-      'contextCopied':
-          'Contexto do erro copiado para a área de transferência.',
+      'contextCopied': 'Contexto do erro copiado para a área de transferência.',
       'reportSentSuccess': 'O relatório de erro foi enviado com sucesso.',
       'reportSentFailure':
           'Não foi possível enviar o relatório de erro no momento.',
@@ -547,8 +566,7 @@ class AppLocalizations {
       'valPropTile4Title': '4. Dashboard Inteligente & Retomada Rápida',
       'valPropTile4Desc':
           'Precisou pausar os estudos? Seu rascunho fica salvo automaticamente. Com 1 clique, você retoma o preenchimento exatamente no ponto onde parou.',
-      'valPropTile5Title':
-          '5. Compartilhe com Segurança e Dispute o Ranking',
+      'valPropTile5Title': '5. Compartilhe com Segurança e Dispute o Ranking',
       'valPropTile5Desc':
           'Crie quizzes privados com links seguros que expiram automaticamente ou publique seus simulados no catálogo da comunidade Asodya e dispute o Ranking Oficial!',
       'valPropCtaGetStarted': 'Começar Grátis',
@@ -578,7 +596,8 @@ class AppLocalizations {
       'reviewVisibilityLabel': 'Visibilidade:',
       'reviewFilesCountLabel': '{count} arquivo(s): {names}',
       'totalPagesLabel': 'Total de páginas no documento: {count}',
-      'totalPagesUnknown': 'Total de páginas indisponível para este tipo de arquivo',
+      'totalPagesUnknown':
+          'Total de páginas indisponível para este tipo de arquivo',
       'totalLinesLabel': 'Total de linhas no arquivo: {count}',
       'totalLinesUnknown': 'Total de linhas indisponível para este arquivo',
       'sourcesLabel': 'Fontes',
@@ -591,9 +610,19 @@ class AppLocalizations {
       'timeRangeLabel': 'Intervalo de Tempo:',
       'removeFile': 'Remover arquivo',
       'addFiles': 'Adicionar arquivos',
-      'filesCapUsageLabel': '{used} MB de {cap} MB usados',
-      'capExceededWarning':
-          'Adicionar este arquivo ultrapassaria o limite de 150MB deste estudo.',
+      'accountQuotaUsageLabel':
+          '{used} MiB usados de {cap} MiB da cota da conta; {pending} MiB selecionados',
+      'accountQuotaUnavailableLabel':
+          'Cota da conta indisponível; {pending} MiB selecionados',
+      'accountQuotaExceededWarning':
+          'Esta seleção excede a cota disponível da conta.',
+      'wholeDocumentOnly':
+          'Esta fonte usa o documento inteiro. A seleção de páginas está disponível para PDFs.',
+      'passageSelectionHint':
+          'Selecione o texto para usar apenas esse trecho. A seleção salva usa as linhas correspondentes na fonte.',
+      'audioRangeUnavailable':
+          'A duração do áudio não está disponível; esta fonte usa o arquivo inteiro.',
+      'capExceededWarning': 'Esta seleção excede a cota disponível da conta.',
       'tapFileToConfigureHint':
           'Toque em um arquivo para selecionar um trecho específico em vez do documento inteiro.',
       'noFilesAddedYet':
@@ -613,11 +642,12 @@ class AppLocalizations {
       'storageAvailableTooltip': '{available} MB disponíveis de {total} MB',
       'completedQuizzesLabel': 'Simulados Concluídos',
       'averageScoreLabel': 'Média de Acertos',
-      'noScoreDataTooltip': 'Ainda não há simulados concluídos, então não há média para calcular.',
-      'dashboardEmptyState': 'Seu painel ganha vida assim que você iniciar um estudo.',
+      'noScoreDataTooltip':
+          'Ainda não há simulados concluídos, então não há média para calcular.',
+      'dashboardEmptyState':
+          'Seu painel ganha vida assim que você iniciar um estudo.',
       'studiesActivityLabel': 'Estudos criados, últimos 14 dias',
-      'deleteStudyConfirm':
-          'Deseja realmente excluir o estudo "{name}"?',
+      'deleteStudyConfirm': 'Deseja realmente excluir o estudo "{name}"?',
       'studyDeletedSuccess': 'Estudo removido com sucesso.',
       'fileAttachedSuccess': 'Arquivo anexado com sucesso.',
       'attachedSourcesLabel': 'Arquivos e Fontes Anexadas ({count}):',
@@ -669,14 +699,17 @@ class AppLocalizations {
       'completedOnLabel': 'Concluído em',
       'totalAttemptsLabel': 'Total de tentativas',
       'searchQuizzesHint': 'Buscar nos seus simulados concluídos…',
-      'certificatesSubtitle': 'Todo simulado que você concluiu, público ou privado, em um só lugar.',
+      'certificatesSubtitle':
+          'Todo simulado que você concluiu, público ou privado, em um só lugar.',
       'searchCertificatesHint': 'Buscar nos seus certificados…',
       'noPrivateCertificatesYet': 'Você ainda não tem certificados privados.',
       'noPublicCertificatesYet': 'Você ainda não tem certificados públicos.',
       'sharedQuizTitle': 'Quiz compartilhado',
-      'sharedQuizUnavailable': 'Este link de quiz compartilhado é inválido ou expirou.',
+      'sharedQuizUnavailable':
+          'Este link de quiz compartilhado é inválido ou expirou.',
       'sharedQuizQuestionCount': '{count} perguntas',
-      'sharedQuizResumedBanner': 'Login realizado, continuando de onde você parou',
+      'sharedQuizResumedBanner':
+          'Login realizado, continuando de onde você parou',
       'quizResultTitle': 'Resultado do quiz',
       'quizResultSummary': '{correct} de {total} corretas',
       'quizReviewTitle': 'Revise suas respostas',
@@ -760,9 +793,11 @@ class AppLocalizations {
       'delete': 'ลบ',
       'complete': 'เรียนจบ',
       'errorGeneric': 'เกิดข้อผิดพลาด โปรดลองอีกครั้ง',
-      'errorPaymentRequired': 'คุณถึงขีดจำกัดของแผนแล้ว กรุณาอัปเกรดเพื่อดำเนินการต่อ',
+      'errorPaymentRequired':
+          'คุณถึงขีดจำกัดของแผนแล้ว กรุณาอัปเกรดเพื่อดำเนินการต่อ',
       'loadingCreatingStudy': 'กำลังสร้างการศึกษาของคุณ…',
       'loadingUploadingFiles': 'กำลังอัปโหลดไฟล์…',
+      'uploadFileLabel': 'ไฟล์',
       'loadingProcessingContent': 'กำลังประมวลผลเนื้อหา…',
       'loadingAlmostReady': 'เกือบพร้อมแล้ว กำลังสร้างคำถาม…',
       'retry': 'ลองอีกครั้ง',
@@ -865,8 +900,7 @@ class AppLocalizations {
       'supportTip':
           'คำแนะนำ: หากพบปัญหา โปรดติดต่อ support@asodya.com เพื่อขอความช่วยเหลือ',
       'certAcknowledges': 'ขอรับรองว่า',
-      'certCompletedReq':
-          'ได้สำเร็จข้อกำหนดทั้งหมดเพื่อได้รับการรับรองเป็น',
+      'certCompletedReq': 'ได้สำเร็จข้อกำหนดทั้งหมดเพื่อได้รับการรับรองเป็น',
       'certOfficer': 'เจ้าหน้าที่ออกใบรับรอง',
       'devErrorTitle': 'ข้อผิดพลาดในการพัฒนา',
       'unexpectedProblem':
@@ -888,12 +922,10 @@ class AppLocalizations {
       'valPropTile3Title': '3. อินเทอร์เฟซที่เรียบง่ายสไตล์ Apple',
       'valPropTile3Desc':
           'ออกแบบมาเพื่อประสิทธิภาพสูงสุด ประสบการณ์ภาพที่ทันสมัย สะอาดตา และราบรื่นใน 4 ขั้นตอนง่ายๆ เปลี่ยนขั้นตอนเมื่อใดก็ได้โดยไม่สูญเสียข้อมูลที่กรอกไว้',
-      'valPropTile4Title':
-          '4. แดชบอร์ดอัจฉริยะและการเริ่มต่ออย่างรวดเร็ว',
+      'valPropTile4Title': '4. แดชบอร์ดอัจฉริยะและการเริ่มต่ออย่างรวดเร็ว',
       'valPropTile4Desc':
           'ต้องหยุดการเรียนชั่วคราวหรือไม่ ฉบับร่างของคุณจะได้รับการบันทึกโดยอัตโนมัติ ด้วย 1 คลิก กลับมาเรียนต่อจากจุดที่คุณค้างไว้ได้ทันที',
-      'valPropTile5Title':
-          '5. แชร์อย่างปลอดภัยและแข่งขันในตารางคะแนน',
+      'valPropTile5Title': '5. แชร์อย่างปลอดภัยและแข่งขันในตารางคะแนน',
       'valPropTile5Desc':
           'สร้างแบบทดสอบส่วนตัวพร้อมลิงก์ที่ปลอดภัยซึ่งหมดอายุโดยอัตโนมัติ หรือเผยแพร่แบบทดสอบของคุณในแคตตาล็อกชุมชน Asodya และแข่งขันในตารางคะแนนอย่างเป็นทางการ!',
       'valPropCtaGetStarted': 'เริ่มต้นใช้งานฟรี',
@@ -936,8 +968,17 @@ class AppLocalizations {
       'timeRangeLabel': 'ช่วงเวลา:',
       'removeFile': 'ลบไฟล์',
       'addFiles': 'เพิ่มไฟล์',
-      'filesCapUsageLabel': 'ใช้ไป {used} MB จาก {cap} MB',
-      'capExceededWarning': 'การเพิ่มไฟล์นี้จะเกินขีดจำกัด 150MB ของการเรียนนี้',
+      'accountQuotaUsageLabel':
+          'ใช้ไป {used} MiB จากโควตาบัญชี {cap} MiB; เลือกไว้ {pending} MiB',
+      'accountQuotaUnavailableLabel':
+          'ไม่มีข้อมูลโควตาบัญชี; เลือกไว้ {pending} MiB',
+      'accountQuotaExceededWarning': 'ไฟล์ที่เลือกเกินโควตาบัญชีที่เหลืออยู่',
+      'wholeDocumentOnly':
+          'แหล่งข้อมูลนี้ใช้ทั้งเอกสาร การเลือกหน้าใช้ได้กับ PDF',
+      'passageSelectionHint':
+          'เลือกข้อความเพื่อใช้เฉพาะช่วงนั้น ระบบจะบันทึกช่วงบรรทัดของแหล่งข้อมูล',
+      'audioRangeUnavailable':
+          'ไม่มีข้อมูลความยาวเสียง แหล่งข้อมูลนี้จะใช้ทั้งไฟล์',
       'tapFileToConfigureHint': 'แตะไฟล์เพื่อเลือกช่วงเฉพาะแทนเอกสารทั้งหมด',
       'noFilesAddedYet': 'ยังไม่มีไฟล์ที่เพิ่ม แตะเพิ่มไฟล์เพื่อเริ่มต้น',
       'mvpLocalOllamaDisclaimer':
@@ -955,8 +996,10 @@ class AppLocalizations {
       'storageAvailableTooltip': 'ว่าง {available} MB จากทั้งหมด {total} MB',
       'completedQuizzesLabel': 'แบบทดสอบที่เสร็จสิ้น',
       'averageScoreLabel': 'คะแนนเฉลี่ย',
-      'noScoreDataTooltip': 'ยังไม่มีแบบทดสอบที่เสร็จสิ้น จึงยังไม่มีคะแนนเฉลี่ย',
-      'dashboardEmptyState': 'แดชบอร์ดของคุณจะมีชีวิตชีวาทันทีที่คุณเริ่มการเรียน',
+      'noScoreDataTooltip':
+          'ยังไม่มีแบบทดสอบที่เสร็จสิ้น จึงยังไม่มีคะแนนเฉลี่ย',
+      'dashboardEmptyState':
+          'แดชบอร์ดของคุณจะมีชีวิตชีวาทันทีที่คุณเริ่มการเรียน',
       'studiesActivityLabel': 'การเรียนที่สร้าง ใน 14 วันที่ผ่านมา',
       'deleteStudyConfirm': 'คุณต้องการลบการเรียน "{name}" จริงหรือไม่?',
       'studyDeletedSuccess': 'ลบการเรียนเรียบร้อยแล้ว',
@@ -969,15 +1012,15 @@ class AppLocalizations {
       'selectStudiesAction': 'เลือก',
       'selectedCountLabel': 'เลือกแล้ว {count} รายการ',
       'deleteSelectedAction': 'ลบรายการที่เลือก',
-      'deleteSelectedConfirm': 'ลบการเรียน {count} รายการที่เลือกใช่หรือไม่ ไม่สามารถย้อนกลับได้',
+      'deleteSelectedConfirm':
+          'ลบการเรียน {count} รายการที่เลือกใช่หรือไม่ ไม่สามารถย้อนกลับได้',
       'searchStudiesHint': 'ค้นหาการเรียนของคุณ…',
       'noSearchResultsLabel': 'ไม่พบการเรียนที่ตรงกับ "{query}"',
       'editStudy': 'เปลี่ยนชื่อการเรียน',
       'renameStudyLabel': 'ชื่อการเรียน',
       'saveChanges': 'บันทึกการเปลี่ยนแปลง',
       'resumeHeroTitle': 'เริ่มต่อจากจุดที่คุณค้างไว้',
-      'resumeHeroSubtitle':
-          'กลับไปทำฉบับร่างล่าสุดต่อจากจุดที่คุณหยุดไว้',
+      'resumeHeroSubtitle': 'กลับไปทำฉบับร่างล่าสุดต่อจากจุดที่คุณหยุดไว้',
       'resumeHeroCta': 'เริ่มต่อเลย',
       'editSourceRangesLabel': 'ช่วงที่เลือกไว้',
       'expiration24h': '24 ชั่วโมง (ระยะสั้น)',
@@ -1009,14 +1052,17 @@ class AppLocalizations {
       'completedOnLabel': 'เสร็จสิ้นเมื่อ',
       'totalAttemptsLabel': 'จำนวนครั้งที่ทำทั้งหมด',
       'searchQuizzesHint': 'ค้นหาแบบทดสอบที่เสร็จสิ้นของคุณ…',
-      'certificatesSubtitle': 'แบบทดสอบทุกรายการที่คุณทำเสร็จ ทั้งสาธารณะและส่วนตัว อยู่ในที่เดียว',
+      'certificatesSubtitle':
+          'แบบทดสอบทุกรายการที่คุณทำเสร็จ ทั้งสาธารณะและส่วนตัว อยู่ในที่เดียว',
       'searchCertificatesHint': 'ค้นหาใบรับรองของคุณ…',
       'noPrivateCertificatesYet': 'คุณยังไม่มีใบรับรองส่วนตัว',
       'noPublicCertificatesYet': 'คุณยังไม่มีใบรับรองสาธารณะ',
       'sharedQuizTitle': 'แบบทดสอบที่แชร์',
-      'sharedQuizUnavailable': 'ลิงก์แบบทดสอบที่แชร์นี้ไม่ถูกต้องหรือหมดอายุแล้ว',
+      'sharedQuizUnavailable':
+          'ลิงก์แบบทดสอบที่แชร์นี้ไม่ถูกต้องหรือหมดอายุแล้ว',
       'sharedQuizQuestionCount': '{count} คำถาม',
-      'sharedQuizResumedBanner': 'เข้าสู่ระบบแล้ว กำลังดำเนินการต่อจากจุดที่คุณค้างไว้',
+      'sharedQuizResumedBanner':
+          'เข้าสู่ระบบแล้ว กำลังดำเนินการต่อจากจุดที่คุณค้างไว้',
       'quizResultTitle': 'ผลลัพธ์แบบทดสอบ',
       'quizResultSummary': 'ถูก {correct} จาก {total} ข้อ',
       'quizReviewTitle': 'ตรวจสอบคำตอบของคุณ',

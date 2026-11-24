@@ -52,6 +52,7 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
     ..currentStep = widget.initialStep.clamp(0, 3);
 
   bool _generating = false;
+  String? _activeStudyId;
   int _generateStep = 0; // tracks which pipeline step is currently running
   String? _generateError;
 
@@ -60,20 +61,62 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
   int? _questionsTarget;
   int _chunksDone = 0;
   int _chunksTotal = 0;
+  double? _uploadProgress;
+  int _uploadFileIndex = 0;
 
   @override
   void initState() {
     super.initState();
+    _activeStudyId = widget.studyId;
     if (widget.studyId != null) {
       wizardData.addListener(_persistDraftState);
+      _loadExistingStudy(widget.studyId!);
+    } else {
+      _loadAccountQuota();
+    }
+  }
+
+  Future<void> _loadExistingStudy(String studyId) async {
+    try {
+      final study = await _api.get(studyId);
+      if (!mounted) return;
+      wizardData.setAccountQuota(
+        usedBytes: study.accountUsedBytes,
+        maxBytes: study.accountMaxBytes,
+      );
+    } catch (_) {
+      // Keep quota explicitly unavailable when the backend cannot provide it.
+    }
+  }
+
+  Future<void> _loadAccountQuota() async {
+    try {
+      final studies = await _api.list();
+      Study? quota;
+      for (final study in studies) {
+        if (study.accountUsedBytes != null && study.accountMaxBytes != null) {
+          quota = study;
+          break;
+        }
+      }
+      if (!mounted || quota == null) return;
+      wizardData.setAccountQuota(
+        usedBytes: quota.accountUsedBytes,
+        maxBytes: quota.accountMaxBytes,
+      );
+    } catch (_) {
+      // The limit remains unknown when the backend cannot supply it.
     }
   }
 
   void _persistDraftState() {
-    final studyId = widget.studyId;
+    final studyId = _activeStudyId;
     if (studyId != null) {
       DraftProgressStore.instance.saveStep(studyId, wizardData.currentStep);
-      DraftProgressStore.instance.saveVisibility(studyId, wizardData.visibility);
+      DraftProgressStore.instance.saveVisibility(
+        studyId,
+        wizardData.visibility,
+      );
     }
   }
 
@@ -115,8 +158,7 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
     }
   }
 
-  /// Maps a raw file extension to the [SourceKind] value the API expects.
-  /// The API enum uses semantic names (text, audio, video), not extensions.
+  /// Maps a supported file extension to the backend source kind.
   String _apiKind(String ext) {
     switch (ext.toLowerCase()) {
       case 'pdf':
@@ -129,9 +171,6 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
       case 'wav':
       case 'm4a':
         return 'audio';
-      case 'mp4':
-      case 'mov':
-        return 'video';
       case 'txt':
       case 'md':
       default:
@@ -154,10 +193,6 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
         return 'audio/wav';
       case 'm4a':
         return 'audio/mp4';
-      case 'mp4':
-        return 'video/mp4';
-      case 'mov':
-        return 'video/quicktime';
       case 'txt':
       case 'md':
       default:
@@ -171,14 +206,10 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
   Map<String, int> _rangeSelection(AttachedFile file) {
     switch (file.kind.toLowerCase()) {
       case 'pdf':
-      case 'docx':
-      case 'doc':
         return {'page_start': file.pageStart, 'page_end': file.pageEnd};
       case 'mp3':
       case 'wav':
       case 'm4a':
-      case 'mp4':
-      case 'mov':
         return {
           'audio_start_ms': file.audioStartMs,
           'audio_end_ms': file.audioEndMs,
@@ -197,19 +228,28 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
 
     try {
       // 1. Create study — skip when resuming an existing draft (studyId known).
-      final studyId =
-          widget.studyId ?? (await _api.create(wizardData.name)).id;
+      final studyId = widget.studyId ?? (await _api.create(wizardData.name)).id;
+      _activeStudyId = studyId;
 
       setState(() => _generateStep = 1); // step 1: uploading files
 
       // 2. Upload each attached file, then apply granular range if configured.
-      for (final file in wizardData.attachedFiles) {
+      for (var index = 0; index < wizardData.attachedFiles.length; index++) {
+        final file = wizardData.attachedFiles[index];
+        setState(() {
+          _uploadFileIndex = index;
+          _uploadProgress = null;
+        });
         final source = await _api.upload(
           studyId: studyId,
           kind: _apiKind(file.kind),
           filename: file.name,
           bytes: file.bytes,
           mimeType: _mimeType(file.kind),
+          onProgress: (progress) {
+            if (!mounted) return;
+            setState(() => _uploadProgress = progress);
+          },
         );
 
         if (!file.isWholeDocument) {
@@ -292,7 +332,9 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
               rethrow;
             }
             // Direct check for questions
-            final list = await _api.getQuestions(studyId).catchError((_) => <StudyQuestion>[]);
+            final list = await _api
+                .getQuestions(studyId)
+                .catchError((_) => <StudyQuestion>[]);
             if (list.isNotEmpty) {
               recovered = list;
               break;
@@ -338,7 +380,11 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
         errorCode: 'STUDY_API_${e.statusCode}',
         requestId: e.requestId,
         route: '/quiz_wizard',
-        details: {'status_code': e.statusCode, 'message': e.message, 'study_id': widget.studyId},
+        details: {
+          'status_code': e.statusCode,
+          'message': e.message,
+          'study_id': widget.studyId,
+        },
       );
       if (!mounted) return;
       setState(() {
@@ -346,7 +392,9 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
         _generateStep = 0;
         _generateError = e.statusCode == 402
             ? context.tr('errorPaymentRequired')
-            : (e.message != null && e.message!.isNotEmpty ? e.message : context.tr('errorGeneric'));
+            : (e.message != null && e.message!.isNotEmpty
+                  ? e.message
+                  : context.tr('errorGeneric'));
       });
     } catch (e, stack) {
       _progressTimer?.cancel();
@@ -390,6 +438,9 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
             questionsTarget: _questionsTarget,
             chunksDone: _chunksDone,
             chunksTotal: _chunksTotal,
+            uploadProgress: _generateStep == 1 ? _uploadProgress : null,
+            uploadFileIndex: _uploadFileIndex,
+            uploadFileCount: wizardData.attachedFiles.length,
           ),
         ),
       );

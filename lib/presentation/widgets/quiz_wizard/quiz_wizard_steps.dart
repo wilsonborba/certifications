@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:archive/archive.dart';
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/quiz.dart';
 import 'package:certifications/domain/models/quiz_wizard_data.dart';
@@ -8,6 +7,7 @@ import 'package:certifications/presentation/components/premium_hover_card.dart';
 import 'package:certifications/presentation/components/quiz/granular_range_selector.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 
 /// Extensions accepted by the Step 2 file picker.
@@ -20,8 +20,6 @@ const uploadAllowedExtensions = [
   'mp3',
   'wav',
   'm4a',
-  'mp4',
-  'mov',
 ];
 
 /// Step 1: name the study. Quick-preset cards (AWS/Python/ENEM/Law) were
@@ -65,9 +63,9 @@ class _Step1ThemeViewState extends State<Step1ThemeView> {
       children: [
         Text(
           context.tr('step1Title'),
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Text(
@@ -103,8 +101,8 @@ class _Step1ThemeViewState extends State<Step1ThemeView> {
 ///
 /// Split into two visual phases:
 /// - Phase A (add files): an "Add files" button, a horizontally scrollable
-///   strip of the files added so far, and a running total against the
-///   per-study 150MB cap.
+///   strip of the files added so far, and a meter based on backend account
+///   quota values. Missing quota data remains explicitly unavailable.
 /// - Phase B (configure a file, optional): each file defaults to whole
 ///   document. Tapping a file's chip expands [GranularRangeSelector] for
 ///   just that file, accordion-style, collapsed by default.
@@ -139,7 +137,7 @@ class _Step2SourceViewState extends State<Step2SourceView> {
     for (final picked in result.files) {
       final bytes = picked.bytes;
       if (bytes == null) continue;
-      if (wizardData.wouldExceedCap(bytes.length)) {
+      if (wizardData.wouldExceedAccountQuota(bytes.length)) {
         blocked = true;
         continue;
       }
@@ -148,11 +146,7 @@ class _Step2SourceViewState extends State<Step2SourceView> {
         bytes: bytes,
         name: picked.name,
         kind: kind,
-        totalPages: kind == 'pdf'
-            ? _countPdfPages(bytes)
-            : (kind == 'docx' || kind == 'doc')
-                ? _countDocxPages(bytes)
-                : null,
+        totalPages: kind == 'pdf' ? _countPdfPages(bytes) : null,
         totalLines: (kind == 'txt' || kind == 'md' || kind == 'csv')
             ? _countLines(bytes)
             : null,
@@ -171,7 +165,7 @@ class _Step2SourceViewState extends State<Step2SourceView> {
 
     if (blocked && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.tr('capExceededWarning'))),
+        SnackBar(content: Text(context.tr('accountQuotaExceededWarning'))),
       );
     }
   }
@@ -188,33 +182,6 @@ class _Step2SourceViewState extends State<Step2SourceView> {
     } catch (_) {
       return null;
     }
-  }
-
-  /// Computes the page or paragraph count for a DOCX document from its internal XML.
-  int? _countDocxPages(List<int> bytes) {
-    try {
-      final archive = ZipDecoder().decodeBytes(bytes);
-
-      // 1. Check docProps/app.xml for pre-computed Word <Pages> tag
-      final appXml = archive.findFile('docProps/app.xml');
-      if (appXml != null) {
-        final content = utf8.decode(appXml.content as List<int>, allowMalformed: true);
-        final match = RegExp(r'<Pages>(\d+)</Pages>').firstMatch(content);
-        if (match != null) {
-          final pages = int.tryParse(match.group(1)!);
-          if (pages != null && pages > 0) return pages;
-        }
-      }
-
-      // 2. Fallback: Count paragraphs in word/document.xml
-      final docXml = archive.findFile('word/document.xml');
-      if (docXml != null) {
-        final content = utf8.decode(docXml.content as List<int>, allowMalformed: true);
-        final count = RegExp(r'<w:p[ >]').allMatches(content).length;
-        if (count > 0) return count;
-      }
-    } catch (_) {}
-    return null;
   }
 
   int? _countLines(List<int> bytes) {
@@ -244,19 +211,21 @@ class _Step2SourceViewState extends State<Step2SourceView> {
   Widget build(BuildContext context) {
     final wizardData = widget.wizardData;
     final scheme = Theme.of(context).colorScheme;
-    final usedMb = (wizardData.totalAttachedBytes / (1024 * 1024));
-    final capMb = QuizWizardData.maxTotalAttachedBytes / (1024 * 1024);
-    final ratio = (usedMb / capMb).clamp(0.0, 1.0);
-    final over = wizardData.totalAttachedBytes > QuizWizardData.maxTotalAttachedBytes;
+    final usedBytes = wizardData.projectedAccountUsageBytes;
+    final capBytes = wizardData.accountMaxBytes;
+    final ratio = usedBytes != null && capBytes != null && capBytes > 0
+        ? (usedBytes / capBytes).clamp(0.0, 1.0)
+        : null;
+    final over = usedBytes != null && capBytes != null && usedBytes > capBytes;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           context.tr('step2Title'),
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
         // Primary Upload Box Card
@@ -266,9 +235,7 @@ class _Step2SourceViewState extends State<Step2SourceView> {
           decoration: BoxDecoration(
             color: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: scheme.outline.withValues(alpha: 0.2),
-            ),
+            border: Border.all(color: scheme.outline.withValues(alpha: 0.2)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -299,7 +266,9 @@ class _Step2SourceViewState extends State<Step2SourceView> {
                             context.tr('sourceUploadHint'),
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
-                                  color: scheme.onSurface.withValues(alpha: 0.6),
+                                  color: scheme.onSurface.withValues(
+                                    alpha: 0.6,
+                                  ),
                                 ),
                           ),
                         ],
@@ -341,7 +310,9 @@ class _Step2SourceViewState extends State<Step2SourceView> {
                                 context.tr('sourceUploadHint'),
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
-                                      color: scheme.onSurface.withValues(alpha: 0.6),
+                                      color: scheme.onSurface.withValues(
+                                        alpha: 0.6,
+                                      ),
                                     ),
                               ),
                             ],
@@ -358,7 +329,13 @@ class _Step2SourceViewState extends State<Step2SourceView> {
                   ],
                 ),
               const SizedBox(height: 18),
-              _CapUsageBar(usedMb: usedMb, capMb: capMb, ratio: ratio, over: over),
+              _CapUsageBar(
+                usedBytes: usedBytes,
+                capBytes: capBytes,
+                pendingBytes: wizardData.totalAttachedBytes,
+                ratio: ratio,
+                over: over,
+              ),
             ],
           ),
         ),
@@ -410,30 +387,32 @@ class _Step2SourceViewState extends State<Step2SourceView> {
               ),
             ),
           ),
-          if (_expandedIndex != null && _expandedIndex! < wizardData.attachedFiles.length) ...[
+          if (_expandedIndex != null &&
+              _expandedIndex! < wizardData.attachedFiles.length) ...[
             const SizedBox(height: 16),
             GranularRangeSelector(
               key: ValueKey('range_$_expandedIndex'),
               file: wizardData.attachedFiles[_expandedIndex!],
               isDesktop: widget.isDesktop,
-              onUpdate: ({
-                bool? isWholeDocument,
-                int? pageStart,
-                int? pageEnd,
-                int? lineStart,
-                int? lineEnd,
-                int? audioStartMs,
-                int? audioEndMs,
-              }) => wizardData.updateFileRange(
-                _expandedIndex!,
-                isWholeDocument: isWholeDocument,
-                pageStart: pageStart,
-                pageEnd: pageEnd,
-                lineStart: lineStart,
-                lineEnd: lineEnd,
-                audioStartMs: audioStartMs,
-                audioEndMs: audioEndMs,
-              ),
+              onUpdate:
+                  ({
+                    bool? isWholeDocument,
+                    int? pageStart,
+                    int? pageEnd,
+                    int? lineStart,
+                    int? lineEnd,
+                    int? audioStartMs,
+                    int? audioEndMs,
+                  }) => wizardData.updateFileRange(
+                    _expandedIndex!,
+                    isWholeDocument: isWholeDocument,
+                    pageStart: pageStart,
+                    pageEnd: pageEnd,
+                    lineStart: lineStart,
+                    lineEnd: lineEnd,
+                    audioStartMs: audioStartMs,
+                    audioEndMs: audioEndMs,
+                  ),
             ),
           ],
         ],
@@ -446,35 +425,47 @@ class _Step2SourceViewState extends State<Step2SourceView> {
 /// the file strip so the user knows how much room is left.
 class _CapUsageBar extends StatelessWidget {
   const _CapUsageBar({
-    required this.usedMb,
-    required this.capMb,
+    required this.usedBytes,
+    required this.capBytes,
+    required this.pendingBytes,
     required this.ratio,
     required this.over,
   });
 
-  final double usedMb;
-  final double capMb;
-  final double ratio;
+  final int? usedBytes;
+  final int? capBytes;
+  final int pendingBytes;
+  final double? ratio;
   final bool over;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final barColor = over ? scheme.error : scheme.primary;
+    final locale = AppLocalizations.of(context).locale.toLanguageTag();
+    String mib(int bytes) =>
+        NumberFormat.decimalPattern(locale).format(bytes / (1024 * 1024));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Text(
-              context.trParams('filesCapUsageLabel', {
-                'used': usedMb.toStringAsFixed(1),
-                'cap': capMb.toStringAsFixed(0),
-              }),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: scheme.onSurface.withValues(alpha: 0.7),
-                fontWeight: FontWeight.w600,
+            Expanded(
+              child: Text(
+                usedBytes != null && capBytes != null
+                    ? context.trParams('accountQuotaUsageLabel', {
+                        'used': mib(usedBytes!),
+                        'cap': mib(capBytes!),
+                        'pending': mib(pendingBytes),
+                      })
+                    : context.trParams('accountQuotaUnavailableLabel', {
+                        'pending': mib(pendingBytes),
+                      }),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurface.withValues(alpha: 0.7),
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             if (over) ...[
@@ -484,15 +475,16 @@ class _CapUsageBar extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: LinearProgressIndicator(
-            value: ratio,
-            minHeight: 6,
-            backgroundColor: scheme.outlineVariant.withValues(alpha: 0.25),
-            valueColor: AlwaysStoppedAnimation(barColor),
+        if (ratio != null)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: ratio,
+              minHeight: 6,
+              backgroundColor: scheme.outlineVariant.withValues(alpha: 0.25),
+              valueColor: AlwaysStoppedAnimation(barColor),
+            ),
           ),
-        ),
       ],
     );
   }
@@ -530,7 +522,9 @@ class _FileChip extends StatelessWidget {
           color: scheme.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: expanded ? scheme.primary : scheme.outlineVariant.withValues(alpha: 0.4),
+            color: expanded
+                ? scheme.primary
+                : scheme.outlineVariant.withValues(alpha: 0.4),
             width: expanded ? 1.6 : 1,
           ),
         ),
@@ -540,7 +534,10 @@ class _FileChip extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: visual.color.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(6),
@@ -581,9 +578,9 @@ class _FileChip extends StatelessWidget {
               file.name,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
             ),
             const Spacer(),
             Row(
@@ -599,7 +596,9 @@ class _FileChip extends StatelessWidget {
                 Icon(
                   file.isWholeDocument ? Icons.select_all : Icons.tune,
                   size: 13,
-                  color: expanded ? scheme.primary : scheme.onSurface.withValues(alpha: 0.4),
+                  color: expanded
+                      ? scheme.primary
+                      : scheme.onSurface.withValues(alpha: 0.4),
                 ),
               ],
             ),
@@ -628,16 +627,16 @@ class Step3FormatView extends StatelessWidget {
       children: [
         Text(
           context.tr('step3Title'),
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 24),
         Text(
           context.tr('difficultyLabel'),
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 12),
         _maybeFullWidth(
@@ -650,15 +649,16 @@ class Step3FormatView extends StatelessWidget {
               ),
             ],
             selected: {DifficultyLevel.easy},
-            onSelectionChanged: (_) => wizardData.setDifficulty(DifficultyLevel.easy),
+            onSelectionChanged: (_) =>
+                wizardData.setDifficulty(DifficultyLevel.easy),
           ),
         ),
         const SizedBox(height: 28),
         Text(
           '${context.tr('questionCount')}: ${_questionCountLabel(context)}',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 12),
         _maybeFullWidth(
@@ -678,14 +678,16 @@ class Step3FormatView extends StatelessWidget {
           contentPadding: EdgeInsets.zero,
           title: Text(
             context.tr('useWeb'),
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           subtitle: Text(
             context.tr('useWebDescription'),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
           value: wizardData.useWeb,
@@ -695,7 +697,8 @@ class Step3FormatView extends StatelessWidget {
     );
   }
 
-  String _questionCountLabel(BuildContext context) => '${wizardData.questionCount}';
+  String _questionCountLabel(BuildContext context) =>
+      '${wizardData.questionCount}';
 
   Widget _maybeFullWidth(Widget child) =>
       isDesktop ? child : SizedBox(width: double.infinity, child: child);
@@ -749,132 +752,149 @@ class Step4ReviewView extends StatelessWidget {
       children: [
         Text(
           context.tr('step4Title'),
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
-          const SizedBox(height: 20),
-          PremiumHoverCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _ReceiptRow(
-                  label: context.tr('reviewThemeLabel'),
-                  value: wizardData.name,
+        const SizedBox(height: 20),
+        PremiumHoverCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _ReceiptRow(
+                label: context.tr('reviewThemeLabel'),
+                value: wizardData.name,
+              ),
+              Divider(
+                height: 32,
+                color: scheme.outlineVariant.withValues(alpha: 0.3),
+              ),
+              _ReceiptRow(
+                label: context.tr('reviewSourceLabel'),
+                value: filesValue,
+              ),
+              Divider(
+                height: 32,
+                color: scheme.outlineVariant.withValues(alpha: 0.3),
+              ),
+              _ReceiptRow(
+                label: context.tr('reviewLevelLabel'),
+                value:
+                    '${_difficultyLabel(context)} • ${_questionCountLine(context)}',
+              ),
+              Divider(
+                height: 32,
+                color: scheme.outlineVariant.withValues(alpha: 0.3),
+              ),
+              Text(
+                context.tr('reviewVisibilityLabel'),
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: scheme.onSurface.withValues(alpha: 0.6),
                 ),
-                Divider(height: 32, color: scheme.outlineVariant.withValues(alpha: 0.3)),
-                _ReceiptRow(
-                  label: context.tr('reviewSourceLabel'),
-                  value: filesValue,
-                ),
-                Divider(height: 32, color: scheme.outlineVariant.withValues(alpha: 0.3)),
-                _ReceiptRow(
-                  label: context.tr('reviewLevelLabel'),
-                  value: '${_difficultyLabel(context)} • ${_questionCountLine(context)}',
-                ),
-                Divider(height: 32, color: scheme.outlineVariant.withValues(alpha: 0.3)),
-                Text(
-                  context.tr('reviewVisibilityLabel'),
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: scheme.onSurface.withValues(alpha: 0.6),
+              ),
+              const SizedBox(height: 10),
+              SegmentedButton<QuizVisibility>(
+                segments: [
+                  ButtonSegment(
+                    value: QuizVisibility.private,
+                    label: Text(context.tr('visibilityPrivate')),
+                    icon: const Icon(Icons.lock_outline),
                   ),
-                ),
-                const SizedBox(height: 10),
-                SegmentedButton<QuizVisibility>(
-                  segments: [
-                    ButtonSegment(
-                      value: QuizVisibility.private,
-                      label: Text(context.tr('visibilityPrivate')),
-                      icon: const Icon(Icons.lock_outline),
-                    ),
-                    ButtonSegment(
-                      value: QuizVisibility.public,
-                      label: Text(context.tr('visibilityPublic')),
-                      icon: const Icon(Icons.public),
-                    ),
-                  ],
-                  selected: {wizardData.visibility},
-                  onSelectionChanged: (set) => wizardData.setVisibility(set.first),
-                ),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeOutCubic,
-                  alignment: Alignment.topCenter,
-                  child: !isPublic
-                      ? const SizedBox.shrink()
-                      : Padding(
-                          padding: const EdgeInsets.only(top: 14),
-                          child: Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: Colors.amber.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: Colors.amber.withValues(alpha: 0.4),
-                              ),
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(
-                                  Icons.warning_amber_rounded,
-                                  color: Colors.amber.shade800,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    context.tr('visibilityPublicWarning'),
-                                    style: Theme.of(context).textTheme.bodySmall,
-                                  ),
-                                ),
-                              ],
+                  ButtonSegment(
+                    value: QuizVisibility.public,
+                    label: Text(context.tr('visibilityPublic')),
+                    icon: const Icon(Icons.public),
+                  ),
+                ],
+                selected: {wizardData.visibility},
+                onSelectionChanged: (set) =>
+                    wizardData.setVisibility(set.first),
+              ),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                alignment: Alignment.topCenter,
+                child: !isPublic
+                    ? const SizedBox.shrink()
+                    : Padding(
+                        padding: const EdgeInsets.only(top: 14),
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: Colors.amber.withValues(alpha: 0.4),
                             ),
                           ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.warning_amber_rounded,
+                                color: Colors.amber.shade800,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  context.tr('visibilityPublicWarning'),
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
+                      ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 32),
+        if (generateError != null) ...[
+          Container(
+            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: Colors.redAccent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.redAccent.withValues(alpha: 0.4),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  color: Colors.redAccent,
+                  size: 18,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    generateError!,
+                    style: const TextStyle(color: Colors.redAccent),
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 32),
-          if (generateError != null) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: Colors.redAccent.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.redAccent.withValues(alpha: 0.4)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.redAccent, size: 18),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      generateError!,
-                      style: const TextStyle(color: Colors.redAccent),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton.icon(
-              onPressed: wizardData.isStep4Valid ? onGenerate : null,
-              icon: const Icon(Icons.auto_awesome),
-              label: Text(
-                context.tr('generateQuizNow'),
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+        ],
+        SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: ElevatedButton.icon(
+            onPressed: wizardData.isStep4Valid ? onGenerate : null,
+            icon: const Icon(Icons.auto_awesome),
+            label: Text(
+              context.tr('generateQuizNow'),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
-        ],
-      );
+        ),
+      ],
+    );
   }
 }
 
@@ -904,9 +924,9 @@ class _ReceiptRow extends StatelessWidget {
           value,
           maxLines: 3,
           overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
       ],
     );

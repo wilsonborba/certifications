@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/quiz_wizard_data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 /// Rejects any edit that would make the field read below 1 or above [max]
 /// (when known). The field simply never displays an invalid number in the
@@ -40,9 +43,6 @@ class _BoundedIntFormatter extends TextInputFormatter {
     case 'wav':
     case 'm4a':
       return (color: Colors.purpleAccent, icon: Icons.audiotrack);
-    case 'mp4':
-    case 'mov':
-      return (color: Colors.orangeAccent, icon: Icons.video_library);
     default:
       return (color: Colors.blueGrey, icon: Icons.insert_drive_file);
   }
@@ -98,10 +98,18 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
   // call notifies QuizWizardData's listeners, which used to rebuild this
   // whole StatelessWidget and silently leak the previous controller every
   // time, never disposed).
-  late final _pageStartController = TextEditingController(text: '${widget.file.pageStart}');
-  late final _pageEndController = TextEditingController(text: '${widget.file.pageEnd}');
-  late final _lineStartController = TextEditingController(text: '${widget.file.lineStart}');
-  late final _lineEndController = TextEditingController(text: '${widget.file.lineEnd}');
+  late final _pageStartController = TextEditingController(
+    text: '${widget.file.pageStart}',
+  );
+  late final _pageEndController = TextEditingController(
+    text: '${widget.file.pageEnd}',
+  );
+  late final _lineStartController = TextEditingController(
+    text: '${widget.file.lineStart}',
+  );
+  late final _lineEndController = TextEditingController(
+    text: '${widget.file.lineEnd}',
+  );
 
   @override
   void dispose() {
@@ -133,41 +141,55 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
         children: [
           Text(
             context.tr('rangeSelectorTitle'),
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: SegmentedButton<bool>(
-              segments: [
-                ButtonSegment(
-                  value: true,
-                  label: Text(
-                    context.tr('wholeDocument'),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+          if (kind == 'docx' || kind == 'mp3' || kind == 'wav' || kind == 'm4a')
+            Text(
+              context.tr(
+                kind == 'docx' ? 'wholeDocumentOnly' : 'audioRangeUnavailable',
+              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            )
+          else
+            SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<bool>(
+                segments: [
+                  ButtonSegment(
+                    value: true,
+                    label: Text(
+                      context.tr('wholeDocument'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    icon: const Icon(Icons.select_all),
                   ),
-                  icon: const Icon(Icons.select_all),
-                ),
-                ButtonSegment(
-                  value: false,
-                  label: Text(
-                    context.tr('selectRange'),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  ButtonSegment(
+                    value: false,
+                    label: Text(
+                      context.tr('selectRange'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    icon: const Icon(Icons.tune),
                   ),
-                  icon: const Icon(Icons.tune),
-                ),
-              ],
-              selected: {file.isWholeDocument},
-              onSelectionChanged: (set) {
-                onUpdate(isWholeDocument: set.first);
-              },
+                ],
+                selected: {file.isWholeDocument},
+                onSelectionChanged: (set) {
+                  onUpdate(isWholeDocument: set.first);
+                },
+              ),
             ),
-          ),
-          if (!file.isWholeDocument) ...[
+          if (!file.isWholeDocument &&
+              kind != 'docx' &&
+              kind != 'mp3' &&
+              kind != 'wav' &&
+              kind != 'm4a') ...[
             const SizedBox(height: 16),
             _buildRangeControls(context, kind),
           ],
@@ -184,6 +206,21 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (kind == 'pdf') ...[
+            SizedBox(
+              height: isDesktop ? 480 : 360,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: SfPdfViewer.memory(
+                  Uint8List.fromList(file.bytes),
+                  enableTextSelection: false,
+                  canShowScrollHead: false,
+                  canShowScrollStatus: true,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           _TotalCountLabel(
             text: total != null
                 ? context.trParams('totalPagesLabel', {'count': '$total'})
@@ -203,12 +240,19 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
                   },
                   decoration: InputDecoration(
                     labelText: context.tr('pageStartLabel'),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
-              Text(context.tr('rangeUntil'), style: TextStyle(color: scheme.onSurface.withValues(alpha: 0.7))),
+              Text(
+                context.tr('rangeUntil'),
+                style: TextStyle(
+                  color: scheme.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: TextField(
@@ -221,7 +265,9 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
                   },
                   decoration: InputDecoration(
                     labelText: context.tr('pageEndLabel'),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
@@ -236,6 +282,17 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (kind == 'txt' || kind == 'md') ...[
+            Text(
+              context.tr('passageSelectionHint'),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 8),
+            _textPassagePicker(context),
+            const SizedBox(height: 12),
+          ],
           _TotalCountLabel(
             text: total != null
                 ? context.trParams('totalLinesLabel', {'count': '$total'})
@@ -255,12 +312,19 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
                   },
                   decoration: InputDecoration(
                     labelText: context.tr('lineStartLabel'),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
-              Text(context.tr('rangeUntil'), style: TextStyle(color: scheme.onSurface.withValues(alpha: 0.7))),
+              Text(
+                context.tr('rangeUntil'),
+                style: TextStyle(
+                  color: scheme.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: TextField(
@@ -273,7 +337,9 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
                   },
                   decoration: InputDecoration(
                     labelText: context.tr('lineEndLabel'),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
@@ -283,31 +349,50 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
       );
     }
 
-    // Audio or video timestamp range.
-    final startMin = (file.audioStartMs / 60000).floor();
-    final endMin = (file.audioEndMs / 60000).floor();
+    // The backend has no duration/preview contract yet. Avoid presenting an
+    // arbitrary maximum as if it were the real duration; whole-file selection
+    // remains available until the browser can report trustworthy metadata.
+    if (file.kind == 'mp3' || file.kind == 'wav' || file.kind == 'm4a') {
+      return Text(
+        context.tr('audioRangeUnavailable'),
+        style: Theme.of(context).textTheme.bodySmall,
+      );
+    }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '${context.tr('timeRangeLabel')} ${startMin}min ${context.tr('rangeUntil')} ${endMin}min',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-        RangeSlider(
-          values: RangeValues(startMin.toDouble(), endMin.toDouble()),
-          min: 0,
-          max: 60,
-          divisions: 60,
-          labels: RangeLabels('${startMin}m', '${endMin}m'),
-          onChanged: (values) {
+    return const SizedBox.shrink();
+  }
+
+  Widget _textPassagePicker(BuildContext context) {
+    final text = utf8.decode(file.bytes, allowMalformed: true);
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 280),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: SingleChildScrollView(
+        child: SelectableText(
+          text,
+          onSelectionChanged: (selection, _) {
+            if (!selection.isValid || selection.isCollapsed) return;
+            final start = selection.start.clamp(0, text.length);
+            final end = selection.end.clamp(start, text.length);
+            final firstLine =
+                '\n'.allMatches(text.substring(0, start)).length + 1;
+            final lastLine = '\n'.allMatches(text.substring(0, end)).length + 1;
+            _lineStartController.text = '$firstLine';
+            _lineEndController.text = '$lastLine';
             onUpdate(
-              audioStartMs: (values.start * 60000).toInt(),
-              audioEndMs: (values.end * 60000).toInt(),
+              isWholeDocument: false,
+              lineStart: firstLine,
+              lineEnd: lastLine,
             );
           },
         ),
-      ],
+      ),
     );
   }
 }

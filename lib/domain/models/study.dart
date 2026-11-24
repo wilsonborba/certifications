@@ -17,12 +17,21 @@ class Study {
       name = json['name'] as String,
       status = json['status'] as String,
       activeSizeBytes = (json['active_size_bytes'] as num? ?? 0).toInt(),
+      accountUsedBytes = (json['account_used_bytes'] as num?)?.toInt(),
+      accountMaxBytes = (json['account_max_bytes'] as num?)?.toInt(),
+      retainedSizeBytes = (json['retained_size_bytes'] as num?)?.toInt(),
       createdAt = json['created_at'] as String?,
       sources = ((json['sources'] as List? ?? []).cast<Map<String, dynamic>>())
           .map(StudySource.fromJson)
           .toList();
   final String id, name, status;
   final int activeSizeBytes;
+
+  /// Effective account usage/allowance returned by the backend. Null means
+  /// this response did not include quota data; callers must not invent it.
+  final int? accountUsedBytes;
+  final int? accountMaxBytes;
+  final int? retainedSizeBytes;
   final String? createdAt;
   final List<StudySource> sources;
 }
@@ -38,7 +47,8 @@ class QuestionCitation {
   final String source;
   final String selection;
 
-  bool get isWeb => source.startsWith('http://') || source.startsWith('https://');
+  bool get isWeb =>
+      source.startsWith('http://') || source.startsWith('https://');
 }
 
 class StudyQuestion {
@@ -49,7 +59,8 @@ class StudyQuestion {
       visual =
           (json['visual'] as Map?)?.cast<String, dynamic>() ??
           const {'kind': 'none'},
-      citations = (json['citations'] as List?)
+      citations =
+          (json['citations'] as List?)
               ?.cast<Map<String, dynamic>>()
               .map(QuestionCitation.fromJson)
               .toList() ??

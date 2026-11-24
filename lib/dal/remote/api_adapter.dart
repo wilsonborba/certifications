@@ -1,8 +1,12 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:js_interop';
+import 'dart:typed_data';
 import 'package:certifications/presentation/components/auth/verify_session.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/browser_client.dart'; // web-only app is fine
 import 'package:http_parser/http_parser.dart';
+import 'package:web/web.dart' as web;
 
 class ApiAdapter {
   final Map<String, String> defaultHeaders;
@@ -181,6 +185,7 @@ extension ApiAdapterMultipart on ApiAdapter {
     Map<String, String>? headers,
     Map<String, String>? fields,
     List<MultipartFileData>? files,
+    void Function(double progress)? onProgress,
   }) async {
     final fullHeaders = {...defaultHeaders, if (headers != null) ...headers};
     final csrfToken = readCsrfToken();
@@ -193,6 +198,16 @@ extension ApiAdapterMultipart on ApiAdapter {
     final resolvedUrl = (queryParams == null || queryParams.isEmpty)
         ? url
         : url.replace(queryParameters: _stringQueryParams(queryParams));
+
+    if (onProgress != null) {
+      return _postMultipartWithProgress(
+        resolvedUrl,
+        headers: fullHeaders,
+        fields: fields,
+        files: files,
+        onProgress: onProgress,
+      );
+    }
 
     final req = http.MultipartRequest('POST', resolvedUrl);
     req.headers.addAll(fullHeaders);
@@ -215,5 +230,70 @@ extension ApiAdapterMultipart on ApiAdapter {
     // IMPORTANT: send with the SAME credentialed client
     final streamed = await _client.send(req);
     return http.Response.fromStream(streamed);
+  }
+
+  Future<http.Response> _postMultipartWithProgress(
+    Uri url, {
+    required Map<String, String> headers,
+    Map<String, String>? fields,
+    List<MultipartFileData>? files,
+    required void Function(double progress) onProgress,
+  }) {
+    final form = web.FormData();
+    fields?.forEach((name, value) => form.append(name, value.toJS));
+    for (final file in files ?? const <MultipartFileData>[]) {
+      final blob = web.Blob(
+        [Uint8List.fromList(file.bytes).toJS].toJS,
+        web.BlobPropertyBag(
+          type: file.contentType?.toString() ?? 'application/octet-stream',
+        ),
+      );
+      form.append(file.field, blob, file.filename);
+    }
+
+    final request = web.XMLHttpRequest();
+    final result = Completer<http.Response>();
+    request.open('POST', url.toString());
+    request.withCredentials = true;
+    for (final entry in headers.entries) {
+      if (entry.key.toLowerCase() == 'content-type') continue;
+      request.setRequestHeader(entry.key, entry.value);
+    }
+    request.upload.onprogress = ((web.ProgressEvent event) {
+      if (event.lengthComputable && event.total > 0) {
+        onProgress((event.loaded / event.total).clamp(0.0, 1.0));
+      }
+    }).toJS;
+    request.onload = ((web.ProgressEvent _) {
+      if (result.isCompleted) return;
+      final responseHeaders = <String, String>{};
+      for (final line in request.getAllResponseHeaders().split(
+        RegExp(r'\r?\n'),
+      )) {
+        final separator = line.indexOf(':');
+        if (separator <= 0) continue;
+        responseHeaders[line.substring(0, separator).trim().toLowerCase()] =
+            line.substring(separator + 1).trim();
+      }
+      result.complete(
+        http.Response(
+          request.responseText,
+          request.status,
+          headers: responseHeaders,
+        ),
+      );
+    }).toJS;
+    request.onerror = ((web.Event _) {
+      if (!result.isCompleted) {
+        result.completeError(StateError('The upload request failed.'));
+      }
+    }).toJS;
+    request.onabort = ((web.Event _) {
+      if (!result.isCompleted) {
+        result.completeError(StateError('The upload request was cancelled.'));
+      }
+    }).toJS;
+    request.send(form);
+    return result.future;
   }
 }
