@@ -7,7 +7,13 @@ class PublicQuizStatistics {
     required this.distinctParticipants,
     required this.averageScorePct,
     required this.typicalDurationSec,
+    required this.durationDenominator,
     required this.basis,
+    required this.averageScoreDenominator,
+    required this.scoreDistributionDenominator,
+    required this.scoreDistribution,
+    required this.scoreDistributionReportView,
+    required this.questionProvenance,
   });
 
   final String quizId;
@@ -15,7 +21,13 @@ class PublicQuizStatistics {
   final int distinctParticipants;
   final double? averageScorePct;
   final int? typicalDurationSec;
+  final int durationDenominator;
   final String basis;
+  final int averageScoreDenominator;
+  final int scoreDistributionDenominator;
+  final List<ScoreDistributionBand> scoreDistribution;
+  final Map<String, dynamic> scoreDistributionReportView;
+  final Map<String, dynamic> questionProvenance;
 
   bool get hasCompletedAttempts => completedAttemptCount > 0;
 
@@ -26,6 +38,33 @@ class PublicQuizStatistics {
         distinctParticipants: (json['distinct_participants'] as num).toInt(),
         averageScorePct: (json['average_score_pct'] as num?)?.toDouble(),
         typicalDurationSec: (json['typical_duration_sec'] as num?)?.toInt(),
+        durationDenominator: (json['duration_denominator'] as num).toInt(),
         basis: json['basis'] as String,
+        averageScoreDenominator: (json['average_score_denominator'] as num)
+            .toInt(),
+        scoreDistributionDenominator:
+            (json['score_distribution_denominator'] as num).toInt(),
+        scoreDistribution: (json['score_distribution'] as List<dynamic>)
+            .map(
+              (item) =>
+                  ScoreDistributionBand.fromJson(item as Map<String, dynamic>),
+            )
+            .toList(growable: false),
+        scoreDistributionReportView:
+            json['score_distribution_report_view'] as Map<String, dynamic>,
+        questionProvenance: json['question_provenance'] as Map<String, dynamic>,
+      );
+}
+
+class ScoreDistributionBand {
+  const ScoreDistributionBand({required this.label, required this.count});
+
+  final String label;
+  final int count;
+
+  factory ScoreDistributionBand.fromJson(Map<String, dynamic> json) =>
+      ScoreDistributionBand(
+        label: json['score_band'] as String,
+        count: (json['attempt_count'] as num).toInt(),
       );
 }

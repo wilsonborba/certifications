@@ -12,6 +12,12 @@ const certificationsScreens = <TrailScreen>[
     label: 'Quiz detail',
   ),
   TrailScreen(
+    name: 'public_quiz_statistics',
+    route: '/v1/quizzes/:quiz_id/statistics',
+    label: 'Public quiz statistics',
+    sensitivePath: true,
+  ),
+  TrailScreen(
     name: 'dashboard',
     route: '/v1/dashboard',
     label: 'Personal dashboard',

@@ -3,6 +3,7 @@ enum CertificationsScreen {
   landing,
   catalog,
   quizDetail,
+  publicQuizStatistics,
   dashboard,
   studies,
   studyNew,
@@ -155,6 +156,14 @@ class CertificationsRoute {
             );
         }
       } else if (segs.length == 4) {
+        if (segs[1] == 'quizzes' && segs[3] == 'statistics') {
+          return CertificationsRoute(
+            screen: CertificationsScreen.publicQuizStatistics,
+            routeTemplate: '/v1/quizzes/:quiz_id/statistics',
+            id: segs[2],
+            queryParameters: qp,
+          );
+        }
         if (segs[1] == 'studies' && segs[3] == 'questions') {
           return CertificationsRoute(
             screen: CertificationsScreen.studyQuestions,

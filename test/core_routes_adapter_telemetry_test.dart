@@ -29,6 +29,13 @@ void main() {
           'quiz_detail',
         ),
         (
+          '/v1/quizzes/q123/statistics',
+          CertificationsScreen.publicQuizStatistics,
+          'q123',
+          false,
+          'public_quiz_statistics',
+        ),
+        (
           '/v1/dashboard',
           CertificationsScreen.dashboard,
           null,

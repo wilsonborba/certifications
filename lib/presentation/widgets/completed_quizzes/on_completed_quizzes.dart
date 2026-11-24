@@ -268,6 +268,16 @@ class _CompletedQuizTileState extends State<_CompletedQuizTile> {
                 icon: const Icon(Icons.emoji_events_outlined),
                 onPressed: _busy ? null : _openLeaderboard,
               ),
+              if (isPublic)
+                IconButton(
+                  tooltip: context.tr('publicStatsAction'),
+                  icon: const Icon(Icons.bar_chart_outlined),
+                  onPressed: _busy
+                      ? null
+                      : () => Navigator.of(context).pushNamed(
+                          '/v1/quizzes/${Uri.encodeComponent(_quiz.id)}/statistics',
+                        ),
+                ),
               _quiz.isDeleteProtected
                   ? Tooltip(
                       message: context.tr('deleteProtectedTooltip'),
