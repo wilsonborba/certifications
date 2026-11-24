@@ -8,9 +8,9 @@ import 'package:certifications/domain/services/draft_progress_store.dart';
 import 'package:certifications/domain/services/study_api_service.dart';
 import 'package:certifications/presentation/components/attachment/app_bar.dart';
 import 'package:certifications/presentation/components/quiz/futuristic_loading.dart';
-import 'package:certifications/presentation/widgets/question_session.dart';
 import 'package:certifications/presentation/widgets/quiz_wizard/desktop_quiz_wizard.dart';
 import 'package:certifications/presentation/widgets/quiz_wizard/mobile_quiz_wizard.dart';
+import 'package:certifications/presentation/widgets/quiz_wizard/question_authoring_screen.dart';
 import 'package:flutter/material.dart';
 
 class OnQuizWizardScreen extends StatefulWidget {
@@ -24,9 +24,8 @@ class OnQuizWizardScreen extends StatefulWidget {
     this.draft,
   });
 
-  /// Called after the study is created and the quiz session is finished, so
-  /// the caller (dashboard) can reload its list. This is now a post-success
-  /// hook only — the actual generate work happens inside this screen.
+  /// Called after publication so the caller (dashboard) can reload its list.
+  /// Generation and author review happen inside this screen.
   final VoidCallback onGenerate;
 
   /// The draft study being resumed, if any. When set the wizard's current
@@ -262,8 +261,9 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
     try {
       await _ensureStudyDraft();
       final studyId = _activeStudyId;
-      if (studyId == null)
+      if (studyId == null) {
         throw const FormatException('Study draft unavailable');
+      }
       await _uploadAttachedFiles(studyId);
       await _api.streamAnalysis(
         studyId,
@@ -424,26 +424,26 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
         }
       }
       _progressTimer?.cancel();
+      if (questions.isEmpty) {
+        throw const FormatException(
+          'Generation returned no reviewable questions',
+        );
+      }
 
       // 3. Record last-opened time for the draft-resume hero card.
       await DraftProgressStore.instance.touch(studyId);
 
       if (!mounted) return;
 
-      // 4. Navigate to the question session with pre-generated questions.
-      // We replace the wizard route with QuestionSession so that the wizard
-      // is completely unmounted and does not attempt to pop afterwards.
-      widget.onGenerate();
+      // 4. Keep the generated questions in the owner review flow. Publishing
+      // remains an explicit, separate action after review.
       await Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => QuestionSession(
+          builder: (_) => QuestionAuthoringScreen(
             studyId: studyId,
-            studyName: wizardData.name,
-            difficulty: wizardData.difficulty.name,
-            useWeb: wizardData.useWeb,
-            questionCount: wizardData.questionCount,
-            initialQuestions: questions,
+            studyTitle: wizardData.name,
+            onPublished: widget.onGenerate,
           ),
         ),
       );
