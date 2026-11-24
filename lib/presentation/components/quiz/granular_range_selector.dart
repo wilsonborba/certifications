@@ -1,32 +1,10 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/quiz_wizard_data.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
-
-/// Rejects any edit that would make the field read below 1 or above [max]
-/// (when known). The field simply never displays an invalid number in the
-/// first place — no silent correction to reconcile later, no divergence
-/// between what's on screen and what gets sent to the backend.
-class _BoundedIntFormatter extends TextInputFormatter {
-  _BoundedIntFormatter({this.max});
-  final int? max;
-
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    if (newValue.text.isEmpty) return newValue;
-    final parsed = int.tryParse(newValue.text);
-    if (parsed == null) return oldValue;
-    if (parsed < 1) return oldValue;
-    if (max != null && parsed > max!) return oldValue;
-    return newValue;
-  }
-}
 
 /// Icon and accent color used to visually badge a file by its extension.
 /// Shared between [GranularRangeSelector] and the quiz wizard's file chips.
@@ -38,7 +16,13 @@ class _BoundedIntFormatter extends TextInputFormatter {
     case 'doc':
       return (color: Colors.blueAccent, icon: Icons.description);
     case 'csv':
+    case 'xlsx':
       return (color: Colors.green, icon: Icons.table_chart);
+    case 'png':
+    case 'jpg':
+    case 'jpeg':
+    case 'webp':
+      return (color: Colors.teal, icon: Icons.image_outlined);
     case 'mp3':
     case 'wav':
     case 'm4a':
@@ -56,78 +40,25 @@ String formatFileSize(int bytes) {
   return '${kb.toStringAsFixed(0)} KB';
 }
 
-/// Callback signature used by [GranularRangeSelector] to report a range
-/// change back to the [QuizWizardData] entry that owns the file being
-/// configured. Mirrors [QuizWizardData.updateFileRange]'s named parameters
-/// exactly so callers can pass that method in directly (bound to the file's
-/// index) without an adapter.
-typedef RangeUpdateCallback =
-    void Function({
-      bool? isWholeDocument,
-      int? pageStart,
-      int? pageEnd,
-      int? lineStart,
-      int? lineEnd,
-      int? audioStartMs,
-      int? audioEndMs,
-    });
-
-/// "Phase B" of Step 2's file selection: whole-document-by-default range
-/// configuration for a single already-attached file. Rendered collapsed by
-/// default inside an accordion under that file's chip in the Phase A strip;
-/// only expands when the user wants to trim that specific file.
-class GranularRangeSelector extends StatefulWidget {
+/// Preview for an attached source. Narrow selection remains unavailable
+/// until the backend publishes a contract that enforces its meaning.
+class GranularRangeSelector extends StatelessWidget {
   const GranularRangeSelector({
     super.key,
     required this.file,
-    required this.onUpdate,
     required this.isDesktop,
   });
 
   final AttachedFile file;
-  final RangeUpdateCallback onUpdate;
   final bool isDesktop;
-
-  @override
-  State<GranularRangeSelector> createState() => _GranularRangeSelectorState();
-}
-
-class _GranularRangeSelectorState extends State<GranularRangeSelector> {
-  // Created once and kept for this file's whole time in the accordion,
-  // instead of a fresh TextEditingController per keystroke (every onUpdate
-  // call notifies QuizWizardData's listeners, which used to rebuild this
-  // whole StatelessWidget and silently leak the previous controller every
-  // time, never disposed).
-  late final _pageStartController = TextEditingController(
-    text: '${widget.file.pageStart}',
-  );
-  late final _pageEndController = TextEditingController(
-    text: '${widget.file.pageEnd}',
-  );
-  late final _lineStartController = TextEditingController(
-    text: '${widget.file.lineStart}',
-  );
-  late final _lineEndController = TextEditingController(
-    text: '${widget.file.lineEnd}',
-  );
-
-  @override
-  void dispose() {
-    _pageStartController.dispose();
-    _pageEndController.dispose();
-    _lineStartController.dispose();
-    _lineEndController.dispose();
-    super.dispose();
-  }
-
-  AttachedFile get file => widget.file;
-  RangeUpdateCallback get onUpdate => widget.onUpdate;
-  bool get isDesktop => widget.isDesktop;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final kind = file.kind.toLowerCase();
+    final isPdf = kind == 'pdf';
+    final isText = kind == 'txt' || kind == 'md';
+    final isAudio = kind == 'mp3' || kind == 'wav' || kind == 'm4a';
 
     return Container(
       padding: EdgeInsets.all(isDesktop ? 20 : 14),
@@ -140,73 +71,30 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            context.tr('rangeSelectorTitle'),
+            context.tr('sourcePreviewTitle'),
             style: Theme.of(
               context,
             ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 10),
-          if (kind == 'docx' || kind == 'mp3' || kind == 'wav' || kind == 'm4a')
+          if (isPdf || isText || isAudio)
             Text(
-              context.tr(
-                kind == 'docx' ? 'wholeDocumentOnly' : 'audioRangeUnavailable',
-              ),
+              isAudio
+                  ? context.tr('audioRangeUnavailable')
+                  : context.tr('narrowSelectionUnavailable'),
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             )
           else
-            SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<bool>(
-                segments: [
-                  ButtonSegment(
-                    value: true,
-                    label: Text(
-                      context.tr('wholeDocument'),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    icon: const Icon(Icons.select_all),
-                  ),
-                  ButtonSegment(
-                    value: false,
-                    label: Text(
-                      context.tr('selectRange'),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    icon: const Icon(Icons.tune),
-                  ),
-                ],
-                selected: {file.isWholeDocument},
-                onSelectionChanged: (set) {
-                  onUpdate(isWholeDocument: set.first);
-                },
-              ),
+            Text(
+              context.tr('wholeDocumentOnly'),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
-          if (!file.isWholeDocument &&
-              kind != 'docx' &&
-              kind != 'mp3' &&
-              kind != 'wav' &&
-              kind != 'm4a') ...[
+          if (isPdf) ...[
             const SizedBox(height: 16),
-            _buildRangeControls(context, kind),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRangeControls(BuildContext context, String kind) {
-    final scheme = Theme.of(context).colorScheme;
-
-    if (kind == 'pdf' || kind == 'docx' || kind == 'doc') {
-      final total = file.totalPages;
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (kind == 'pdf') ...[
             SizedBox(
               height: isDesktop ? 480 : 360,
               child: ClipRRect(
@@ -219,199 +107,25 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-          ],
-          _TotalCountLabel(
-            text: total != null
-                ? context.trParams('totalPagesLabel', {'count': '$total'})
-                : context.tr('totalPagesUnknown'),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  keyboardType: TextInputType.number,
-                  controller: _pageStartController,
-                  inputFormatters: [_BoundedIntFormatter(max: total)],
-                  onChanged: (val) {
-                    final p = int.tryParse(val);
-                    if (p != null) onUpdate(pageStart: p);
-                  },
-                  decoration: InputDecoration(
-                    labelText: context.tr('pageStartLabel'),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                context.tr('rangeUntil'),
-                style: TextStyle(
-                  color: scheme.onSurface.withValues(alpha: 0.7),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  keyboardType: TextInputType.number,
-                  controller: _pageEndController,
-                  inputFormatters: [_BoundedIntFormatter(max: total)],
-                  onChanged: (val) {
-                    final p = int.tryParse(val);
-                    if (p != null && p >= file.pageStart) onUpdate(pageEnd: p);
-                  },
-                  decoration: InputDecoration(
-                    labelText: context.tr('pageEndLabel'),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      );
-    }
-
-    if (kind == 'csv' || kind == 'txt' || kind == 'md') {
-      final total = file.totalLines;
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (kind == 'txt' || kind == 'md') ...[
-            Text(
-              context.tr('passageSelectionHint'),
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-            ),
+          ] else if (isText) ...[
             const SizedBox(height: 8),
-            _textPassagePicker(context),
-            const SizedBox(height: 12),
+            Container(
+              constraints: const BoxConstraints(maxHeight: 360),
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: scheme.outlineVariant),
+              ),
+              child: SingleChildScrollView(
+                child: SelectableText(
+                  utf8.decode(file.bytes, allowMalformed: true),
+                ),
+              ),
+            ),
           ],
-          _TotalCountLabel(
-            text: total != null
-                ? context.trParams('totalLinesLabel', {'count': '$total'})
-                : context.tr('totalLinesUnknown'),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  keyboardType: TextInputType.number,
-                  controller: _lineStartController,
-                  inputFormatters: [_BoundedIntFormatter(max: total)],
-                  onChanged: (val) {
-                    final l = int.tryParse(val);
-                    if (l != null) onUpdate(lineStart: l);
-                  },
-                  decoration: InputDecoration(
-                    labelText: context.tr('lineStartLabel'),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                context.tr('rangeUntil'),
-                style: TextStyle(
-                  color: scheme.onSurface.withValues(alpha: 0.7),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  keyboardType: TextInputType.number,
-                  controller: _lineEndController,
-                  inputFormatters: [_BoundedIntFormatter(max: total)],
-                  onChanged: (val) {
-                    final l = int.tryParse(val);
-                    if (l != null && l >= file.lineStart) onUpdate(lineEnd: l);
-                  },
-                  decoration: InputDecoration(
-                    labelText: context.tr('lineEndLabel'),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
         ],
-      );
-    }
-
-    // The backend has no duration/preview contract yet. Avoid presenting an
-    // arbitrary maximum as if it were the real duration; whole-file selection
-    // remains available until the browser can report trustworthy metadata.
-    if (file.kind == 'mp3' || file.kind == 'wav' || file.kind == 'm4a') {
-      return Text(
-        context.tr('audioRangeUnavailable'),
-        style: Theme.of(context).textTheme.bodySmall,
-      );
-    }
-
-    return const SizedBox.shrink();
-  }
-
-  Widget _textPassagePicker(BuildContext context) {
-    final text = utf8.decode(file.bytes, allowMalformed: true);
-    return Container(
-      constraints: const BoxConstraints(maxHeight: 280),
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
-      child: SingleChildScrollView(
-        child: SelectableText(
-          text,
-          onSelectionChanged: (selection, _) {
-            if (!selection.isValid || selection.isCollapsed) return;
-            final start = selection.start.clamp(0, text.length);
-            final end = selection.end.clamp(start, text.length);
-            final firstLine =
-                '\n'.allMatches(text.substring(0, start)).length + 1;
-            final lastLine = '\n'.allMatches(text.substring(0, end)).length + 1;
-            _lineStartController.text = '$firstLine';
-            _lineEndController.text = '$lastLine';
-            onUpdate(
-              isWholeDocument: false,
-              lineStart: firstLine,
-              lineEnd: lastLine,
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-/// Small caption showing the file's real page/line count (or that it
-/// couldn't be determined), so the user picks a range against a known
-/// length instead of guessing.
-class _TotalCountLabel extends StatelessWidget {
-  const _TotalCountLabel({required this.text});
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Text(
-      text,
-      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-        color: scheme.onSurface.withValues(alpha: 0.6),
-        fontStyle: FontStyle.italic,
       ),
     );
   }

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:certifications/core/utils/app_localizations.dart';
 
 /// Step-aware loading screen shown while the wizard runs its async pipeline
-/// (create → upload → ingest → generate). Each step is passed in by the
+/// (prepare draft → upload → generate). Each step is passed in by the
 /// caller so the UI always reflects what is *actually* happening, not a
 /// timer-driven guess.
 class FuturisticLoading extends StatelessWidget {

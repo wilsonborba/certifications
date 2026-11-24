@@ -20,6 +20,8 @@ class OnQuizWizardScreen extends StatefulWidget {
     this.studyId,
     this.initialName,
     this.initialStep = 0,
+    this.apiService,
+    this.draft,
   });
 
   /// Called after the study is created and the quiz session is finished, so
@@ -40,18 +42,30 @@ class OnQuizWizardScreen extends StatefulWidget {
   /// was left on.
   final int initialStep;
 
+  /// Optional service and draft seams for isolated review and contract tests.
+  final StudyApiService? apiService;
+  final QuizWizardData? draft;
+
   @override
   State<OnQuizWizardScreen> createState() => _OnQuizWizardScreenState();
 }
 
 class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
-  final _api = StudyApiService();
+  late final _api = widget.apiService ?? StudyApiService();
 
-  late final wizardData = QuizWizardData()
-    ..name = widget.initialName ?? ''
-    ..currentStep = widget.initialStep.clamp(0, 3);
+  late final wizardData =
+      widget.draft ??
+      (QuizWizardData()
+        ..name = widget.initialName ?? ''
+        ..currentStep = widget.initialStep.clamp(0, 3));
 
   bool _generating = false;
+  bool _analyzingSources = false;
+  bool _analysisComplete = false;
+  String? _analysisStatus;
+  int _inspectedSources = 0;
+  int _inspectedPages = 0;
+  int _inspectedCharacters = 0;
   String? _activeStudyId;
   int _generateStep = 0; // tracks which pipeline step is currently running
   String? _generateError;
@@ -63,16 +77,15 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
   int _chunksTotal = 0;
   double? _uploadProgress;
   int _uploadFileIndex = 0;
+  Future<void>? _draftPreparation;
 
   @override
   void initState() {
     super.initState();
     _activeStudyId = widget.studyId;
+    wizardData.addListener(_persistDraftState);
     if (widget.studyId != null) {
-      wizardData.addListener(_persistDraftState);
       _loadExistingStudy(widget.studyId!);
-    } else {
-      _loadAccountQuota();
     }
   }
 
@@ -83,29 +96,41 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
       wizardData.setAccountQuota(
         usedBytes: study.accountUsedBytes,
         maxBytes: study.accountMaxBytes,
+        fileLimitBytes: study.maxFileBytes,
+        studyLimitBytes: study.maxStudyBytes,
       );
+      wizardData.setExistingSources(study.sources);
     } catch (_) {
       // Keep quota explicitly unavailable when the backend cannot provide it.
     }
   }
 
-  Future<void> _loadAccountQuota() async {
-    try {
-      final studies = await _api.list();
-      Study? quota;
-      for (final study in studies) {
-        if (study.accountUsedBytes != null && study.accountMaxBytes != null) {
-          quota = study;
-          break;
-        }
-      }
-      if (!mounted || quota == null) return;
+  Future<void> _ensureStudyDraft() async {
+    if (_activeStudyId != null) return;
+    final pending = _draftPreparation;
+    if (pending != null) return pending;
+    final operation = () async {
+      final study = await _api.create(wizardData.name);
+      if (!mounted) return;
+      _activeStudyId = study.id;
       wizardData.setAccountQuota(
-        usedBytes: quota.accountUsedBytes,
-        maxBytes: quota.accountMaxBytes,
+        usedBytes: study.accountUsedBytes,
+        maxBytes: study.accountMaxBytes,
+        fileLimitBytes: study.maxFileBytes,
+        studyLimitBytes: study.maxStudyBytes,
       );
-    } catch (_) {
-      // The limit remains unknown when the backend cannot supply it.
+      wizardData.setExistingSources(study.sources);
+      DraftProgressStore.instance.saveStep(study.id, wizardData.currentStep);
+      DraftProgressStore.instance.saveVisibility(
+        study.id,
+        wizardData.visibility,
+      );
+    }();
+    _draftPreparation = operation;
+    try {
+      await operation;
+    } finally {
+      if (identical(_draftPreparation, operation)) _draftPreparation = null;
     }
   }
 
@@ -158,35 +183,26 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
     }
   }
 
-  /// Maps a supported file extension to the backend source kind.
-  String _apiKind(String ext) {
-    switch (ext.toLowerCase()) {
-      case 'pdf':
-        return 'pdf';
-      case 'docx':
-        return 'docx';
-      case 'csv':
-        return 'csv';
-      case 'mp3':
-      case 'wav':
-      case 'm4a':
-        return 'audio';
-      case 'txt':
-      case 'md':
-      default:
-        return 'text';
-    }
-  }
-
-  /// Returns the MIME type for an [AttachedFile.kind] string (raw extension).
+  /// Matches the Rust API's content-type allowlist for uploaded sources.
   String _mimeType(String kind) {
     switch (kind.toLowerCase()) {
       case 'pdf':
         return 'application/pdf';
       case 'docx':
         return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      case 'xlsx':
+        return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
       case 'csv':
         return 'text/csv';
+      case 'md':
+        return 'text/markdown';
+      case 'png':
+        return 'image/png';
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'webp':
+        return 'image/webp';
       case 'mp3':
         return 'audio/mpeg';
       case 'wav':
@@ -194,80 +210,140 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
       case 'm4a':
         return 'audio/mp4';
       case 'txt':
-      case 'md':
       default:
         return 'text/plain';
     }
   }
 
-  /// Converts an [AttachedFile]'s range fields into the selection map the
-  /// backend expects, keyed by kind: pdf → page_start/page_end, audio →
-  /// audio_start_ms/audio_end_ms, text/other → line_start/line_end.
-  Map<String, int> _rangeSelection(AttachedFile file) {
-    switch (file.kind.toLowerCase()) {
-      case 'pdf':
-        return {'page_start': file.pageStart, 'page_end': file.pageEnd};
-      case 'mp3':
-      case 'wav':
-      case 'm4a':
-        return {
-          'audio_start_ms': file.audioStartMs,
-          'audio_end_ms': file.audioEndMs,
-        };
-      default:
-        return {'line_start': file.lineStart, 'line_end': file.lineEnd};
+  Future<void> _uploadAttachedFiles(String studyId) async {
+    for (var index = 0; index < wizardData.attachedFiles.length; index++) {
+      final file = wizardData.attachedFiles[index];
+      setState(() {
+        _uploadFileIndex = index;
+        _uploadProgress = null;
+      });
+      final source = file.remoteSourceId == null
+          ? await _api.upload(
+              studyId: studyId,
+              filename: file.name,
+              bytes: file.bytes,
+              mimeType: _mimeType(file.kind),
+              onProgress: (progress) {
+                if (!mounted) return;
+                setState(() => _uploadProgress = progress);
+              },
+            )
+          : await _api.getSource(studyId, file.remoteSourceId!);
+      file.remoteSourceId = source.id;
+      // The current backend stores selection specs without enforcing their
+      // meaning. Until the producer contract is available, new uploads keep
+      // the backend's default whole-source selection and send no guessed spec.
+      wizardData.addExistingSource(source);
+      final refreshed = await _api.get(studyId);
+      wizardData.setAccountQuota(
+        usedBytes: refreshed.accountUsedBytes,
+        maxBytes: refreshed.accountMaxBytes,
+        fileLimitBytes: refreshed.maxFileBytes,
+        studyLimitBytes: refreshed.maxStudyBytes,
+      );
+    }
+  }
+
+  Future<void> _inspectSources() async {
+    if (_analyzingSources || _generating) return;
+    setState(() {
+      _analyzingSources = true;
+      _analysisComplete = false;
+      _analysisStatus = context.tr('sourceInspectionStarting');
+      _inspectedSources = 0;
+      _inspectedPages = 0;
+      _inspectedCharacters = 0;
+    });
+    try {
+      await _ensureStudyDraft();
+      final studyId = _activeStudyId;
+      if (studyId == null)
+        throw const FormatException('Study draft unavailable');
+      await _uploadAttachedFiles(studyId);
+      await _api.streamAnalysis(
+        studyId,
+        onEvent: (event) {
+          if (!mounted) return;
+          switch (event.name) {
+            case 'stage':
+              setState(
+                () => _analysisStatus = context.tr('sourceInspectionRunning'),
+              );
+              break;
+            case 'source_inspected':
+              setState(() {
+                _inspectedSources++;
+                _inspectedPages +=
+                    (event.data['page_count'] as num?)?.toInt() ?? 0;
+                _inspectedCharacters +=
+                    (event.data['text_char_count'] as num?)?.toInt() ?? 0;
+                _analysisStatus = context.tr('sourceInspectionRunning');
+              });
+              break;
+            case 'error':
+              setState(
+                () => _analysisStatus = context.tr('sourceInspectionError'),
+              );
+              break;
+            case 'complete':
+              setState(() {
+                _analysisComplete = true;
+                _analysisStatus = context.trParams('sourceInspectionComplete', {
+                  'count':
+                      '${event.data['inspected_sources'] ?? _inspectedSources}',
+                  'pages': '$_inspectedPages',
+                  'characters': '$_inspectedCharacters',
+                });
+              });
+              break;
+          }
+        },
+      );
+      if (!_analysisComplete && mounted) {
+        setState(() => _analysisStatus = context.tr('sourceInspectionError'));
+      }
+    } on StudyApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _analysisStatus = error.statusCode == 404 || error.statusCode == 405
+            ? context.tr('sourceInspectionUnavailable')
+            : context.tr('sourceInspectionError');
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _analysisStatus = context.tr('sourceInspectionError'));
+    } finally {
+      if (mounted) setState(() => _analyzingSources = false);
     }
   }
 
   Future<void> _generate() async {
+    if (_analyzingSources) return;
     setState(() {
       _generating = true;
-      _generateStep = 0; // step 0: creating study
+      _generateStep = 0; // step 0: preparing the saved study
       _generateError = null;
     });
 
     try {
-      // 1. Create study — skip when resuming an existing draft (studyId known).
-      final studyId = widget.studyId ?? (await _api.create(wizardData.name)).id;
+      // 1. Reuse the draft opened before source selection, or create one as a
+      // fallback when generation is started directly.
+      final studyId = _activeStudyId ?? (await _api.create(wizardData.name)).id;
       _activeStudyId = studyId;
 
       setState(() => _generateStep = 1); // step 1: uploading files
 
-      // 2. Upload each attached file, then apply granular range if configured.
-      for (var index = 0; index < wizardData.attachedFiles.length; index++) {
-        final file = wizardData.attachedFiles[index];
-        setState(() {
-          _uploadFileIndex = index;
-          _uploadProgress = null;
-        });
-        final source = await _api.upload(
-          studyId: studyId,
-          kind: _apiKind(file.kind),
-          filename: file.name,
-          bytes: file.bytes,
-          mimeType: _mimeType(file.kind),
-          onProgress: (progress) {
-            if (!mounted) return;
-            setState(() => _uploadProgress = progress);
-          },
-        );
-
-        if (!file.isWholeDocument) {
-          await _api.select(
-            studyId: studyId,
-            sourceId: source.id,
-            selection: _rangeSelection(file),
-          );
-        }
-        // Ingest must always run — it extracts text and flips the source to
-        // SourceStatus.ready. Without it, generate returns 422 because no
-        // ready source is available, even for whole-document uploads.
-        setState(() => _generateStep = 2); // step 2: processing content
-        await _api.ingest(studyId, source.id);
-      }
+      // 2. Upload each local source once, reusing persisted draft sources on
+      // retries or after an optional source inspection.
+      await _uploadAttachedFiles(studyId);
 
       setState(() {
-        _generateStep = 3; // step 3: generating questions with AI
+        _generateStep = 2; // step 2: generating questions with AI
         _questionsGenerated = 0;
         _chunksDone = 0;
         _chunksTotal = 0;
@@ -431,10 +507,9 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
             messages: [
               context.tr('loadingCreatingStudy'),
               context.tr('loadingUploadingFiles'),
-              context.tr('loadingProcessingContent'),
               context.tr('loadingAlmostReady'),
             ],
-            questionsGenerated: _generateStep == 3 ? _questionsGenerated : null,
+            questionsGenerated: _generateStep == 2 ? _questionsGenerated : null,
             questionsTarget: _questionsTarget,
             chunksDone: _chunksDone,
             chunksTotal: _chunksTotal,
@@ -454,11 +529,21 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
           child: isDesktop
               ? DesktopQuizWizard(
                   wizardData: wizardData,
+                  onPrepareSources: _ensureStudyDraft,
+                  onInspectSources: _inspectSources,
+                  isInspectingSources: _analyzingSources,
+                  inspectionStatus: _analysisStatus,
+                  uploadProgress: _analyzingSources ? _uploadProgress : null,
                   onGenerate: _generate,
                   generateError: _generateError,
                 )
               : MobileQuizWizard(
                   wizardData: wizardData,
+                  onPrepareSources: _ensureStudyDraft,
+                  onInspectSources: _inspectSources,
+                  isInspectingSources: _analyzingSources,
+                  inspectionStatus: _analysisStatus,
+                  uploadProgress: _analyzingSources ? _uploadProgress : null,
                   onGenerate: _generate,
                   generateError: _generateError,
                 ),

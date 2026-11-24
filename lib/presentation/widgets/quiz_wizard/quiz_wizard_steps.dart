@@ -14,9 +14,14 @@ import 'package:syncfusion_flutter_pdf/pdf.dart';
 const uploadAllowedExtensions = [
   'pdf',
   'docx',
+  'xlsx',
   'csv',
   'txt',
   'md',
+  'png',
+  'jpg',
+  'jpeg',
+  'webp',
   'mp3',
   'wav',
   'm4a',
@@ -111,10 +116,12 @@ class Step2SourceView extends StatefulWidget {
     super.key,
     required this.wizardData,
     required this.isDesktop,
+    required this.onPrepareSources,
   });
 
   final QuizWizardData wizardData;
   final bool isDesktop;
+  final Future<void> Function() onPrepareSources;
 
   @override
   State<Step2SourceView> createState() => _Step2SourceViewState();
@@ -122,6 +129,22 @@ class Step2SourceView extends StatefulWidget {
 
 class _Step2SourceViewState extends State<Step2SourceView> {
   int? _expandedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      try {
+        await widget.onPrepareSources();
+      } catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(context.tr('errorGeneric'))));
+      }
+    });
+  }
 
   Future<void> _pickFiles() async {
     final wizardData = widget.wizardData;
@@ -134,16 +157,30 @@ class _Step2SourceViewState extends State<Step2SourceView> {
     if (result == null) return;
 
     var blocked = false;
+    var unsupported = false;
     for (final picked in result.files) {
       final bytes = picked.bytes;
       if (bytes == null) continue;
-      if (wizardData.wouldExceedAccountQuota(bytes.length)) {
+      final kind = picked.extension?.toLowerCase() ?? 'pdf';
+      if (!const {'txt', 'md', 'csv'}.contains(kind)) {
+        unsupported = true;
+        continue;
+      }
+      List<int> normalizedBytes;
+      try {
+        normalizedBytes = _normalizeTextBytes(bytes);
+      } on FormatException {
+        unsupported = true;
+        continue;
+      }
+      if (wizardData.wouldExceedAccountQuota(normalizedBytes.length) ||
+          wizardData.wouldExceedStudyQuota(normalizedBytes.length) ||
+          wizardData.wouldExceedFileLimit(normalizedBytes.length)) {
         blocked = true;
         continue;
       }
-      final kind = picked.extension?.toLowerCase() ?? 'pdf';
       final file = AttachedFile(
-        bytes: bytes,
+        bytes: normalizedBytes,
         name: picked.name,
         kind: kind,
         totalPages: kind == 'pdf' ? _countPdfPages(bytes) : null,
@@ -168,6 +205,20 @@ class _Step2SourceViewState extends State<Step2SourceView> {
         SnackBar(content: Text(context.tr('accountQuotaExceededWarning'))),
       );
     }
+    if (unsupported && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.tr('binarySourceUnavailable'))),
+      );
+    }
+  }
+
+  List<int> _normalizeTextBytes(List<int> bytes) {
+    final text = utf8
+        .decode(bytes)
+        .replaceFirst(RegExp(r'^\uFEFF'), '')
+        .replaceAll('\r\n', '\n')
+        .replaceAll('\r', '\n');
+    return utf8.encode(text);
   }
 
   /// Real page count so the range selector can show/enforce it instead of a
@@ -186,7 +237,7 @@ class _Step2SourceViewState extends State<Step2SourceView> {
 
   int? _countLines(List<int> bytes) {
     try {
-      final text = utf8.decode(bytes, allowMalformed: true);
+      final text = utf8.decode(bytes);
       if (text.isEmpty) return 0;
       return '\n'.allMatches(text).length + 1;
     } catch (_) {
@@ -329,6 +380,13 @@ class _Step2SourceViewState extends State<Step2SourceView> {
                   ],
                 ),
               const SizedBox(height: 18),
+              Text(
+                context.tr('preparedNotesUnavailable'),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurface.withValues(alpha: 0.65),
+                ),
+              ),
+              const SizedBox(height: 12),
               _CapUsageBar(
                 usedBytes: usedBytes,
                 capBytes: capBytes,
@@ -343,7 +401,32 @@ class _Step2SourceViewState extends State<Step2SourceView> {
         const SizedBox(height: 20),
 
         // Attached Files Section
-        if (wizardData.attachedFiles.isEmpty)
+        if (wizardData.existingSources.isNotEmpty) ...[
+          Text(
+            context.tr('preparedSourcesLabel'),
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: scheme.onSurface.withValues(alpha: 0.65),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          for (final source in wizardData.existingSources)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.check_circle_outline),
+              title: Text(
+                source.filename,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              subtitle: Text(
+                '${formatFileSize(source.sizeBytes)} · ${source.status}',
+              ),
+            ),
+          const SizedBox(height: 8),
+        ],
+        if (wizardData.attachedFiles.isEmpty &&
+            wizardData.existingSources.isEmpty)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
@@ -394,25 +477,6 @@ class _Step2SourceViewState extends State<Step2SourceView> {
               key: ValueKey('range_$_expandedIndex'),
               file: wizardData.attachedFiles[_expandedIndex!],
               isDesktop: widget.isDesktop,
-              onUpdate:
-                  ({
-                    bool? isWholeDocument,
-                    int? pageStart,
-                    int? pageEnd,
-                    int? lineStart,
-                    int? lineEnd,
-                    int? audioStartMs,
-                    int? audioEndMs,
-                  }) => wizardData.updateFileRange(
-                    _expandedIndex!,
-                    isWholeDocument: isWholeDocument,
-                    pageStart: pageStart,
-                    pageEnd: pageEnd,
-                    lineStart: lineStart,
-                    lineEnd: lineEnd,
-                    audioStartMs: audioStartMs,
-                    audioEndMs: audioEndMs,
-                  ),
             ),
           ],
         ],
@@ -712,11 +776,19 @@ class Step4ReviewView extends StatelessWidget {
     super.key,
     required this.wizardData,
     required this.onGenerate,
+    required this.onInspectSources,
+    required this.isInspectingSources,
+    this.inspectionStatus,
+    this.uploadProgress,
     this.generateError,
   });
 
   final QuizWizardData wizardData;
   final VoidCallback onGenerate;
+  final VoidCallback onInspectSources;
+  final bool isInspectingSources;
+  final String? inspectionStatus;
+  final double? uploadProgress;
 
   /// When non-null, displayed as an inline error above the generate button so
   /// the user knows the previous attempt failed without leaving Step 4.
@@ -740,11 +812,15 @@ class Step4ReviewView extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isPublic = wizardData.visibility == QuizVisibility.public;
-    final filesValue = wizardData.attachedFiles.isEmpty
+    final fileNames = [
+      ...wizardData.existingSources.map((source) => source.filename),
+      ...wizardData.attachedFiles.map((file) => file.name),
+    ];
+    final filesValue = fileNames.isEmpty
         ? context.tr('noFilesAddedYet')
         : context.trParams('reviewFilesCountLabel', {
-            'count': '${wizardData.attachedFiles.length}',
-            'names': wizardData.attachedFiles.map((f) => f.name).join(', '),
+            'count': '${fileNames.length}',
+            'names': fileNames.join(', '),
           });
 
     return Column(
@@ -852,6 +928,33 @@ class Step4ReviewView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 32),
+        OutlinedButton.icon(
+          onPressed: isInspectingSources ? null : onInspectSources,
+          icon: isInspectingSources
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.fact_check_outlined),
+          label: Text(context.tr('inspectSources')),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          context.tr('sourceInspectionDescription'),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: scheme.onSurface.withValues(alpha: 0.68),
+          ),
+        ),
+        if (uploadProgress != null) ...[
+          const SizedBox(height: 8),
+          LinearProgressIndicator(value: uploadProgress),
+        ],
+        if (inspectionStatus != null) ...[
+          const SizedBox(height: 8),
+          Text(inspectionStatus!, style: Theme.of(context).textTheme.bodySmall),
+        ],
+        const SizedBox(height: 16),
         if (generateError != null) ...[
           Container(
             padding: const EdgeInsets.all(12),
@@ -885,7 +988,9 @@ class Step4ReviewView extends StatelessWidget {
           width: double.infinity,
           height: 56,
           child: ElevatedButton.icon(
-            onPressed: wizardData.isStep4Valid ? onGenerate : null,
+            onPressed: wizardData.isStep4Valid && !isInspectingSources
+                ? onGenerate
+                : null,
             icon: const Icon(Icons.auto_awesome),
             label: Text(
               context.tr('generateQuizNow'),

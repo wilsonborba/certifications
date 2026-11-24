@@ -67,11 +67,21 @@ class AppLocalizations {
       'errorGeneric': 'Something went wrong. Please try again.',
       'errorPaymentRequired':
           'You have reached your plan limit. Please upgrade to continue.',
-      'loadingCreatingStudy': 'Creating your study…',
+      'loadingCreatingStudy': 'Preparing your study…',
       'loadingUploadingFiles': 'Uploading your files…',
       'uploadFileLabel': 'File',
       'loadingProcessingContent': 'Processing content…',
       'loadingAlmostReady': 'Almost ready, generating questions…',
+      'inspectSources': 'Inspect sources (optional)',
+      'sourceInspectionDescription':
+          'Checks available page, duration, and text metadata. It does not create a study summary; you can skip it and start.',
+      'sourceInspectionStarting': 'Preparing sources for inspection…',
+      'sourceInspectionRunning': 'Inspecting selected sources…',
+      'sourceInspectionComplete':
+          'Inspected {count} source(s): {pages} pages and {characters} text characters.',
+      'sourceInspectionError': 'Source inspection could not be completed.',
+      'sourceInspectionUnavailable':
+          'Source inspection is not available right now. You can still start.',
       'retry': 'Retry',
       'loading': 'Loading…',
       'question': 'Question',
@@ -223,19 +233,27 @@ class AppLocalizations {
           'This clears all your progress and returns to Step 1. This cannot be undone.',
       'wizardTitle': 'Create New Quiz',
       'studyNameHint': 'e.g. Software Architecture / Cell Biology',
-      'sourceUploadHint': 'PDF, DOCX, CSV, TXT, MD, MP3, WAV, M4A, MP4, MOV',
+      'sourceUploadHint':
+          'Text files (TXT, MD, CSV) are available now. Other formats require the file producer.',
+      'binarySourceUnavailable':
+          'This file format is not available yet. Text files (TXT, MD, CSV) can be uploaded now.',
+      'preparedNotesUnavailable':
+          'Prepared Notes are unavailable until the trusted Notes source bridge is ready.',
       'difficultyLabel': 'Difficulty:',
       'reviewThemeLabel': 'Topic:',
       'reviewSourceLabel': 'Source:',
       'reviewLevelLabel': 'Level:',
       'reviewVisibilityLabel': 'Visibility:',
       'reviewFilesCountLabel': '{count} file(s): {names}',
+      'preparedSourcesLabel': 'Already prepared sources',
       'totalPagesLabel': 'Total pages in document: {count}',
       'totalPagesUnknown': 'Total page count unavailable for this file type',
       'totalLinesLabel': 'Total lines in file: {count}',
       'totalLinesUnknown': 'Total line count unavailable for this file',
       'sourcesLabel': 'Sources',
-      'rangeSelectorTitle': 'Which part do you want to use?',
+      'sourcePreviewTitle': 'Source preview',
+      'narrowSelectionUnavailable':
+          'Narrow selection is unavailable right now. The whole source will be used.',
       'pageStartLabel': 'Start Page',
       'pageEndLabel': 'End Page',
       'rangeUntil': 'to',
@@ -251,7 +269,7 @@ class AppLocalizations {
       'accountQuotaExceededWarning':
           'This selection exceeds the available account allowance.',
       'wholeDocumentOnly':
-          'This source uses the whole document. Page selection is available for PDFs.',
+          'Narrow selection is unavailable right now. The whole source will be used.',
       'passageSelectionHint':
           'Select text to use only that passage. The saved selection uses its source line range.',
       'audioRangeUnavailable':
@@ -259,7 +277,7 @@ class AppLocalizations {
       'capExceededWarning':
           'This selection exceeds the available account allowance.',
       'tapFileToConfigureHint':
-          'Tap a file to select a specific range instead of the whole document.',
+          'Tap a file to preview it. The whole source will be used for now.',
       'noFilesAddedYet': 'No files added yet. Tap Add files to get started.',
       'mvpLocalOllamaDisclaimer':
           'Note: This may take some time because this MVP is running on a local Ollama machine for testing purposes.',
@@ -430,11 +448,22 @@ class AppLocalizations {
       'errorGeneric': 'Algo deu errado. Tente novamente.',
       'errorPaymentRequired':
           'Você atingiu o limite do seu plano. Faça upgrade para continuar.',
-      'loadingCreatingStudy': 'Criando seu estudo…',
+      'loadingCreatingStudy': 'Preparando seu estudo…',
       'loadingUploadingFiles': 'Enviando seus arquivos…',
       'uploadFileLabel': 'Arquivo',
       'loadingProcessingContent': 'Processando conteúdo…',
       'loadingAlmostReady': 'Quase pronto, gerando perguntas…',
+      'inspectSources': 'Inspecionar fontes (opcional)',
+      'sourceInspectionDescription':
+          'Verifica páginas, duração e metadados de texto disponíveis. Não cria um resumo do estudo; você pode pular e começar.',
+      'sourceInspectionStarting': 'Preparando fontes para inspeção…',
+      'sourceInspectionRunning': 'Inspecionando fontes selecionadas…',
+      'sourceInspectionComplete':
+          '{count} fonte(s) inspecionada(s): {pages} páginas e {characters} caracteres de texto.',
+      'sourceInspectionError':
+          'Não foi possível concluir a inspeção das fontes.',
+      'sourceInspectionUnavailable':
+          'A inspeção das fontes não está disponível agora. Você ainda pode começar.',
       'retry': 'Tentar novamente',
       'loading': 'Carregando…',
       'question': 'Pergunta',
@@ -588,20 +617,28 @@ class AppLocalizations {
           'Isso apaga todo o seu progresso e volta para a Etapa 1. Essa ação não pode ser desfeita.',
       'wizardTitle': 'Criar Novo Quiz',
       'studyNameHint': 'ex: Arquitetura de Software / Biologia Celular',
-      'sourceUploadHint': 'PDF, DOCX, CSV, TXT, MD, MP3, WAV, M4A, MP4, MOV',
+      'sourceUploadHint':
+          'Arquivos de texto (TXT, MD, CSV) estão disponíveis. Outros formatos aguardam o serviço de arquivos.',
+      'binarySourceUnavailable':
+          'Este formato ainda não está disponível. Arquivos de texto (TXT, MD, CSV) podem ser enviados.',
+      'preparedNotesUnavailable':
+          'As Notas preparadas estarão disponíveis quando a integração confiável estiver pronta.',
       'difficultyLabel': 'Dificuldade:',
       'reviewThemeLabel': 'Tema:',
       'reviewSourceLabel': 'Fonte:',
       'reviewLevelLabel': 'Nível:',
       'reviewVisibilityLabel': 'Visibilidade:',
       'reviewFilesCountLabel': '{count} arquivo(s): {names}',
+      'preparedSourcesLabel': 'Fontes já preparadas',
       'totalPagesLabel': 'Total de páginas no documento: {count}',
       'totalPagesUnknown':
           'Total de páginas indisponível para este tipo de arquivo',
       'totalLinesLabel': 'Total de linhas no arquivo: {count}',
       'totalLinesUnknown': 'Total de linhas indisponível para este arquivo',
       'sourcesLabel': 'Fontes',
-      'rangeSelectorTitle': 'Qual trecho você deseja utilizar?',
+      'sourcePreviewTitle': 'Prévia da fonte',
+      'narrowSelectionUnavailable':
+          'A seleção de trechos ainda não está disponível. A fonte inteira será usada.',
       'pageStartLabel': 'Página Inicial',
       'pageEndLabel': 'Página Final',
       'rangeUntil': 'até',
@@ -617,14 +654,14 @@ class AppLocalizations {
       'accountQuotaExceededWarning':
           'Esta seleção excede a cota disponível da conta.',
       'wholeDocumentOnly':
-          'Esta fonte usa o documento inteiro. A seleção de páginas está disponível para PDFs.',
+          'A seleção de trechos ainda não está disponível. A fonte inteira será usada.',
       'passageSelectionHint':
           'Selecione o texto para usar apenas esse trecho. A seleção salva usa as linhas correspondentes na fonte.',
       'audioRangeUnavailable':
           'A duração do áudio não está disponível; esta fonte usa o arquivo inteiro.',
       'capExceededWarning': 'Esta seleção excede a cota disponível da conta.',
       'tapFileToConfigureHint':
-          'Toque em um arquivo para selecionar um trecho específico em vez do documento inteiro.',
+          'Toque em um arquivo para visualizá-lo. A fonte inteira será usada por enquanto.',
       'noFilesAddedYet':
           'Nenhum arquivo adicionado ainda. Toque em Adicionar arquivos para começar.',
       'mvpLocalOllamaDisclaimer':
@@ -795,11 +832,21 @@ class AppLocalizations {
       'errorGeneric': 'เกิดข้อผิดพลาด โปรดลองอีกครั้ง',
       'errorPaymentRequired':
           'คุณถึงขีดจำกัดของแผนแล้ว กรุณาอัปเกรดเพื่อดำเนินการต่อ',
-      'loadingCreatingStudy': 'กำลังสร้างการศึกษาของคุณ…',
+      'loadingCreatingStudy': 'กำลังเตรียมการศึกษาของคุณ…',
       'loadingUploadingFiles': 'กำลังอัปโหลดไฟล์…',
       'uploadFileLabel': 'ไฟล์',
       'loadingProcessingContent': 'กำลังประมวลผลเนื้อหา…',
       'loadingAlmostReady': 'เกือบพร้อมแล้ว กำลังสร้างคำถาม…',
+      'inspectSources': 'ตรวจสอบแหล่งข้อมูล (ไม่บังคับ)',
+      'sourceInspectionDescription':
+          'ตรวจสอบจำนวนหน้า ระยะเวลา และข้อมูลข้อความที่มีอยู่ การตรวจนี้ไม่สร้างสรุปการศึกษา คุณข้ามและเริ่มได้',
+      'sourceInspectionStarting': 'กำลังเตรียมแหล่งข้อมูลเพื่อตรวจสอบ…',
+      'sourceInspectionRunning': 'กำลังตรวจสอบแหล่งข้อมูลที่เลือก…',
+      'sourceInspectionComplete':
+          'ตรวจสอบ {count} แหล่งแล้ว: {pages} หน้า และข้อความ {characters} ตัวอักษร',
+      'sourceInspectionError': 'ตรวจสอบแหล่งข้อมูลไม่สำเร็จ',
+      'sourceInspectionUnavailable':
+          'ขณะนี้ตรวจสอบแหล่งข้อมูลไม่ได้ แต่คุณยังเริ่มได้',
       'retry': 'ลองอีกครั้ง',
       'loading': 'กำลังโหลด…',
       'question': 'คำถาม',
@@ -947,19 +994,27 @@ class AppLocalizations {
           'การดำเนินการนี้จะล้างความคืบหน้าทั้งหมดและกลับไปที่ขั้นตอนที่ 1 ไม่สามารถย้อนกลับได้',
       'wizardTitle': 'สร้างแบบทดสอบใหม่',
       'studyNameHint': 'เช่น สถาปัตยกรรมซอฟต์แวร์ / ชีววิทยาของเซลล์',
-      'sourceUploadHint': 'PDF, DOCX, CSV, TXT, MD, MP3, WAV, M4A, MP4, MOV',
+      'sourceUploadHint':
+          'รองรับไฟล์ข้อความ TXT, MD และ CSV แล้ว รูปแบบอื่นต้องรอระบบไฟล์',
+      'binarySourceUnavailable':
+          'ยังไม่รองรับรูปแบบนี้ อัปโหลดไฟล์ข้อความ TXT, MD และ CSV ได้ในตอนนี้',
+      'preparedNotesUnavailable':
+          'โน้ตที่เตรียมไว้จะใช้ได้เมื่อการเชื่อมต่อ Notes ที่เชื่อถือได้พร้อมใช้งาน',
       'difficultyLabel': 'ระดับความยาก:',
       'reviewThemeLabel': 'หัวข้อ:',
       'reviewSourceLabel': 'แหล่งข้อมูล:',
       'reviewLevelLabel': 'ระดับ:',
       'reviewVisibilityLabel': 'การมองเห็น:',
       'reviewFilesCountLabel': '{count} ไฟล์: {names}',
+      'preparedSourcesLabel': 'แหล่งข้อมูลที่เตรียมไว้แล้ว',
       'totalPagesLabel': 'จำนวนหน้าทั้งหมดในเอกสาร: {count}',
       'totalPagesUnknown': 'ไม่สามารถระบุจำนวนหน้าทั้งหมดสำหรับไฟล์ประเภทนี้',
       'totalLinesLabel': 'จำนวนบรรทัดทั้งหมดในไฟล์: {count}',
       'totalLinesUnknown': 'ไม่สามารถระบุจำนวนบรรทัดทั้งหมดสำหรับไฟล์นี้',
       'sourcesLabel': 'แหล่งที่มา',
-      'rangeSelectorTitle': 'คุณต้องการใช้ส่วนใด?',
+      'sourcePreviewTitle': 'ตัวอย่างแหล่งข้อมูล',
+      'narrowSelectionUnavailable':
+          'ยังไม่สามารถเลือกบางส่วนได้ ระบบจะใช้แหล่งข้อมูลทั้งหมด',
       'pageStartLabel': 'หน้าเริ่มต้น',
       'pageEndLabel': 'หน้าสิ้นสุด',
       'rangeUntil': 'ถึง',
@@ -974,12 +1029,13 @@ class AppLocalizations {
           'ไม่มีข้อมูลโควตาบัญชี; เลือกไว้ {pending} MiB',
       'accountQuotaExceededWarning': 'ไฟล์ที่เลือกเกินโควตาบัญชีที่เหลืออยู่',
       'wholeDocumentOnly':
-          'แหล่งข้อมูลนี้ใช้ทั้งเอกสาร การเลือกหน้าใช้ได้กับ PDF',
+          'ยังไม่สามารถเลือกบางส่วนได้ ระบบจะใช้แหล่งข้อมูลทั้งหมด',
       'passageSelectionHint':
           'เลือกข้อความเพื่อใช้เฉพาะช่วงนั้น ระบบจะบันทึกช่วงบรรทัดของแหล่งข้อมูล',
       'audioRangeUnavailable':
           'ไม่มีข้อมูลความยาวเสียง แหล่งข้อมูลนี้จะใช้ทั้งไฟล์',
-      'tapFileToConfigureHint': 'แตะไฟล์เพื่อเลือกช่วงเฉพาะแทนเอกสารทั้งหมด',
+      'tapFileToConfigureHint':
+          'แตะไฟล์เพื่อดูตัวอย่าง ระบบจะใช้แหล่งข้อมูลทั้งหมดในตอนนี้',
       'noFilesAddedYet': 'ยังไม่มีไฟล์ที่เพิ่ม แตะเพิ่มไฟล์เพื่อเริ่มต้น',
       'mvpLocalOllamaDisclaimer':
           'หมายเหตุ: การดำเนินการนี้อาจใช้เวลาสักครู่ เนื่องจาก MVP นี้ทำงานบนเครื่องภายในผ่าน Ollama สำหรับการทดสอบ',

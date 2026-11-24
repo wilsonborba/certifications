@@ -11,12 +11,22 @@ class MobileQuizWizard extends StatelessWidget {
   const MobileQuizWizard({
     super.key,
     required this.wizardData,
+    required this.onPrepareSources,
     required this.onGenerate,
+    required this.onInspectSources,
+    required this.isInspectingSources,
+    this.inspectionStatus,
+    this.uploadProgress,
     this.generateError,
   });
 
   final QuizWizardData wizardData;
+  final Future<void> Function() onPrepareSources;
   final VoidCallback onGenerate;
+  final VoidCallback onInspectSources;
+  final bool isInspectingSources;
+  final String? inspectionStatus;
+  final double? uploadProgress;
 
   /// When set, an error message is shown above the generate button in Step 4.
   final String? generateError;
@@ -61,13 +71,21 @@ class MobileQuizWizard extends StatelessWidget {
       case 0:
         return Step1ThemeView(wizardData: wizardData, isDesktop: false);
       case 1:
-        return Step2SourceView(wizardData: wizardData, isDesktop: false);
+        return Step2SourceView(
+          wizardData: wizardData,
+          isDesktop: false,
+          onPrepareSources: onPrepareSources,
+        );
       case 2:
         return Step3FormatView(wizardData: wizardData, isDesktop: false);
       case 3:
         return Step4ReviewView(
           wizardData: wizardData,
           onGenerate: onGenerate,
+          onInspectSources: onInspectSources,
+          isInspectingSources: isInspectingSources,
+          inspectionStatus: inspectionStatus,
+          uploadProgress: uploadProgress,
           generateError: generateError,
         );
       default:
@@ -85,7 +103,9 @@ class MobileQuizWizard extends StatelessWidget {
             width: double.infinity,
             height: 52,
             child: ElevatedButton.icon(
-              onPressed: _isCurrentStepValid ? () => wizardData.nextStep() : null,
+              onPressed: _isCurrentStepValid
+                  ? () => wizardData.nextStep()
+                  : null,
               icon: const Icon(Icons.arrow_forward),
               label: Text(context.tr('next')),
             ),

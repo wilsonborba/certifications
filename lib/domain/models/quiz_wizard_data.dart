@@ -1,4 +1,5 @@
 import 'package:certifications/domain/models/quiz.dart';
+import 'package:certifications/domain/models/study.dart';
 import 'package:flutter/foundation.dart';
 
 /// Upload is the only real content source: general "AI generates it for me"
@@ -52,6 +53,7 @@ class AttachedFile {
   /// Real line count for text-based files (txt/md/csv), same reasoning as
   /// [totalPages].
   int? totalLines;
+  String? remoteSourceId;
 
   int get sizeBytes => bytes.length;
 }
@@ -61,6 +63,7 @@ class QuizWizardData extends ChangeNotifier {
   String name = '';
   SourceType sourceType = SourceType.uploadFile;
   final List<AttachedFile> attachedFiles = [];
+  final List<StudySource> existingSources = [];
   DifficultyLevel difficulty = DifficultyLevel.easy;
   int questionCount = 10;
 
@@ -74,9 +77,12 @@ class QuizWizardData extends ChangeNotifier {
   bool useWeb = false;
   int? accountUsedBytes;
   int? accountMaxBytes;
+  int? maxFileBytes;
+  int? maxStudyBytes;
 
-  int get totalAttachedBytes =>
-      attachedFiles.fold(0, (sum, f) => sum + f.sizeBytes);
+  int get totalAttachedBytes => attachedFiles
+      .where((file) => file.remoteSourceId == null)
+      .fold(0, (sum, file) => sum + file.sizeBytes);
 
   /// Whether the known backend account allowance would be exceeded by the
   /// selected, not-yet-uploaded files. Unknown allowance is not treated as 0.
@@ -86,17 +92,35 @@ class QuizWizardData extends ChangeNotifier {
       accountUsedBytes! + totalAttachedBytes + additionalBytes >
           accountMaxBytes!;
 
+  bool wouldExceedFileLimit(int bytes) =>
+      maxFileBytes != null && bytes > maxFileBytes!;
+
+  bool wouldExceedStudyQuota(int additionalBytes) =>
+      maxStudyBytes != null &&
+      existingSources.fold<int>(0, (sum, s) => sum + s.sizeBytes) +
+              totalAttachedBytes +
+              additionalBytes >
+          maxStudyBytes!;
+
   int? get projectedAccountUsageBytes =>
       accountUsedBytes == null ? null : accountUsedBytes! + totalAttachedBytes;
 
-  void setAccountQuota({required int? usedBytes, required int? maxBytes}) {
+  void setAccountQuota({
+    required int? usedBytes,
+    required int? maxBytes,
+    int? fileLimitBytes,
+    int? studyLimitBytes,
+  }) {
     accountUsedBytes = usedBytes;
     accountMaxBytes = maxBytes;
+    maxFileBytes = fileLimitBytes;
+    maxStudyBytes = studyLimitBytes;
     notifyListeners();
   }
 
   bool get isStep1Valid => name.trim().isNotEmpty;
-  bool get isStep2Valid => attachedFiles.isNotEmpty;
+  bool get isStep2Valid =>
+      attachedFiles.isNotEmpty || existingSources.isNotEmpty;
   bool get isStep3Valid => true;
   bool get isStep4Valid => isStep1Valid && isStep2Valid && isStep3Valid;
 
@@ -150,6 +174,19 @@ class QuizWizardData extends ChangeNotifier {
   /// only when the backend account allowance is known and would be exceeded.
   void addFile(AttachedFile file) {
     attachedFiles.add(file);
+    notifyListeners();
+  }
+
+  void setExistingSources(Iterable<StudySource> sources) {
+    existingSources
+      ..clear()
+      ..addAll(sources);
+    notifyListeners();
+  }
+
+  void addExistingSource(StudySource source) {
+    if (existingSources.any((item) => item.id == source.id)) return;
+    existingSources.add(source);
     notifyListeners();
   }
 

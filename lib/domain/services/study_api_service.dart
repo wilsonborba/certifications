@@ -3,7 +3,6 @@ import 'package:certifications/core/settings.dart';
 import 'package:certifications/dal/remote/api_adapter.dart';
 import 'package:certifications/domain/models/quiz.dart';
 import 'package:certifications/domain/models/study.dart';
-import 'package:http_parser/http_parser.dart';
 
 class StudyApiException implements Exception {
   const StudyApiException(this.statusCode, {this.message, this.requestId});
@@ -29,53 +28,59 @@ class StudyApiService {
     return _list(response.body, response.statusCode);
   }
 
-  Future<Study> create(String name) async => _study(
-    await _adapter.post(
+  Future<Study> create(String name) async {
+    final response = await _adapter.post(
       Uri.parse(_base),
       headers: const {'Content-Type': 'application/json'},
-      body: jsonEncode({'name': name}),
-    ),
-  );
+      body: jsonEncode({'title': name}),
+    );
+    final summary = _study(response);
+    return get(summary.id);
+  }
+
   Future<Study> get(String id) async =>
       _study(await _adapter.get(Uri.parse('$_base/$id')));
 
-  /// Renames a study. Follows the same PATCH-a-sub-resource shape used by
-  /// [select] below, applied to the study itself.
+  /// Renames a study using the Rust API's title field.
   Future<Study> rename(String studyId, String name) async => _study(
     await _adapter.patch(
       Uri.parse('$_base/$studyId'),
       headers: const {'Content-Type': 'application/json'},
-      body: jsonEncode({'name': name}),
+      body: jsonEncode({'title': name}),
     ),
   );
 
   Future<void> delete(String studyId) async {
     final response = await _adapter.delete(Uri.parse('$_base/$studyId'));
-    if (response.statusCode != 204 &&
-        (response.statusCode < 200 || response.statusCode >= 300)) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
       throw StudyApiException(response.statusCode);
     }
   }
 
   Future<StudySource> upload({
     required String studyId,
-    required String kind,
     required String filename,
     required List<int> bytes,
     required String mimeType,
     void Function(double progress)? onProgress,
   }) async {
-    final response = await _adapter.postMultipart(
+    if (!const {'text/plain', 'text/markdown', 'text/csv'}.contains(mimeType)) {
+      throw UnsupportedError(
+        'The Certifications source API accepts text content only; binary upload requires its file producer.',
+      );
+    }
+    final decoded = utf8.decode(bytes);
+    final normalized = decoded
+        .replaceFirst(RegExp(r'^\uFEFF'), '')
+        .replaceAll('\r\n', '\n')
+        .replaceAll('\r', '\n');
+    final response = await _adapter.postJsonWithProgress(
       url: Uri.parse('$_base/$studyId/sources'),
-      queryParams: {'kind': kind},
-      files: [
-        MultipartFileData(
-          field: 'file',
-          bytes: bytes,
-          filename: filename,
-          contentType: MediaType.parse(mimeType),
-        ),
-      ],
+      body: {
+        'filename': filename,
+        'mime_type': mimeType,
+        'content_text': normalized,
+      },
       onProgress: onProgress,
     );
     return StudySource.fromJson(_data(response));
@@ -84,36 +89,66 @@ class StudyApiService {
   Future<StudySource> select({
     required String studyId,
     required String sourceId,
-    required Map<String, int> selection,
+    required String kind,
+    required String spec,
   }) async => StudySource.fromJson(
     _data(
       await _adapter.patch(
         Uri.parse('$_base/$studyId/sources/$sourceId/selection'),
         headers: const {'Content-Type': 'application/json'},
-        body: jsonEncode({'selection': selection}),
+        body: jsonEncode({'kind': kind, 'spec': spec}),
       ),
     ),
   );
-  Future<StudySource> ingest(String studyId, String sourceId) async =>
+
+  Future<StudySource> getSource(String studyId, String sourceId) async =>
       StudySource.fromJson(
         _data(
-          await _adapter.post(
-            Uri.parse('$_base/$studyId/sources/$sourceId/ingest'),
-          ),
+          await _adapter.get(Uri.parse('$_base/$studyId/sources/$sourceId')),
         ),
       );
+
+  Future<StudySourcePreview> previewSource(
+    String studyId,
+    String sourceId,
+  ) async => StudySourcePreview.fromJson(
+    _data(
+      await _adapter.get(
+        Uri.parse('$_base/$studyId/sources/$sourceId/preview'),
+      ),
+    ),
+  );
+
+  Future<void> streamAnalysis(
+    String studyId, {
+    required void Function(StudyAnalysisEvent event) onEvent,
+  }) async {
+    final response = await _adapter.postEventStream(
+      url: Uri.parse('$_base/$studyId/analysis/stream'),
+      onEvent: (name, data) {
+        final decoded = jsonDecode(data);
+        if (decoded is Map<String, dynamic>) {
+          onEvent(StudyAnalysisEvent(name, decoded));
+        }
+      },
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw _parseException(response);
+    }
+  }
+
   Future<void> deleteSource(String studyId, String sourceId) async {
     final response = await _adapter.delete(
       Uri.parse('$_base/$studyId/sources/$sourceId'),
     );
-    if (response.statusCode != 204) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
       throw StudyApiException(response.statusCode);
     }
   }
 
   Future<void> deleteStudy(String studyId) async {
     final response = await _adapter.delete(Uri.parse('$_base/$studyId'));
-    if (response.statusCode != 204) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
       throw StudyApiException(response.statusCode);
     }
   }
@@ -217,17 +252,23 @@ class StudyApiService {
   List<Study> _list(String body, int code) {
     if (code < 200 || code >= 300) throw StudyApiException(code);
     final payload = jsonDecode(body) as Map<String, dynamic>;
-    return (payload['data'] as List)
-        .cast<Map<String, dynamic>>()
-        .map(Study.fromJson)
-        .toList();
+    final items = payload['items'] ?? payload['data'];
+    if (items is! List) {
+      throw const FormatException('Studies response is missing items');
+    }
+    return items.cast<Map<String, dynamic>>().map(Study.fromJson).toList();
   }
 
   Map<String, dynamic> _data(dynamic response) {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw _parseException(response);
     }
-    return (jsonDecode(response.body) as Map<String, dynamic>)['data']
-        as Map<String, dynamic>;
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      throw const FormatException('Expected a JSON object response');
+    }
+    final data = decoded['data'];
+    if (data is Map<String, dynamic>) return data;
+    return decoded;
   }
 }

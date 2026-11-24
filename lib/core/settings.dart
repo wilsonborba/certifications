@@ -13,11 +13,17 @@ class Settings {
 
   /// Non-secret frontend behavior belongs in settings, not in an environment
   /// file or compiler flag. Switch this only when preparing a production build.
-  static const bool _envDev = bool.fromEnvironment('DEVELOPMENT_MODE', defaultValue: false);
+  static const bool _envDev = bool.fromEnvironment(
+    'DEVELOPMENT_MODE',
+    defaultValue: false,
+  );
   final bool developmentMode = _envDev;
 
   /// Build / deployment timestamp displayed in footers and info views
-  static const String buildVersion = String.fromEnvironment('BUILD_TIMESTAMP', defaultValue: '2026-09-08 13:36 +07');
+  static const String buildVersion = String.fromEnvironment(
+    'BUILD_TIMESTAMP',
+    defaultValue: '2026-09-08 13:36 +07',
+  );
 
   // ASODYA URLS
 
@@ -61,8 +67,6 @@ class Settings {
     quartaryColor: null,
     createdAt: DateTime.now().toIso8601String(),
   ).toJson();
-
-  final int userTotalStorageBytes = 500 * 1024 * 1024; // 500 MB
 
   static final Settings _instance = Settings._internal();
 
