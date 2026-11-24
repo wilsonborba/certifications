@@ -28,6 +28,7 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
   late final GenerationApiService _api = widget._api ?? GenerationApiService();
   final DraftProgressStore _store = DraftProgressStore.instance;
   GenerationJob? _job;
+  late String _activeJobId;
   GenerationEstimate? _estimate;
   final List<GenerationEvent> _events = [];
   Object? _loadError;
@@ -40,6 +41,7 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
   @override
   void initState() {
     super.initState();
+    _activeJobId = widget.jobId;
     unawaited(_refresh(initial: true));
     _refreshTimer = Timer.periodic(const Duration(seconds: 3), (_) {
       unawaited(_refresh());
@@ -50,6 +52,7 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
   void didUpdateWidget(covariant GenerationProgressScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.jobId != widget.jobId) {
+      _activeJobId = widget.jobId;
       _events.clear();
       _estimate = null;
       _job = null;
@@ -68,7 +71,7 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
     _busy = true;
     if (initial && mounted) setState(() => _loading = true);
     try {
-      final job = await _api.get(widget.jobId);
+      final job = await _api.get(_activeJobId);
       final after = _events.isEmpty ? 0 : _events.last.seq;
       try {
         final newEvents = await _api.events(jobId: job.id, after: after);
@@ -142,7 +145,11 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
         _loadError = null;
       });
       if (mounted) setState(() => _busy = false);
-      await _refresh();
+      _activeJobId = resumed.id;
+      await Navigator.pushReplacementNamed(
+        context,
+        '/v1/generations/${Uri.encodeComponent(resumed.id)}',
+      );
     } catch (error) {
       if (!mounted) return;
       setState(() => _loadError = error);

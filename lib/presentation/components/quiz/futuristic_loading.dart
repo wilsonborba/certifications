@@ -480,14 +480,18 @@ class _StepIcon extends StatefulWidget {
 
 class _StepIconState extends State<_StepIcon>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _pulse = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 900),
-  );
+  late final AnimationController _pulse;
 
   @override
   void initState() {
     super.initState();
+    // Initialize even for inactive icons: dispose always releases the
+    // controller, and lazily creating it there would look up TickerMode after
+    // this State has already been detached from the widget tree.
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
     if (widget.isActive) _pulse.repeat(reverse: true);
   }
 

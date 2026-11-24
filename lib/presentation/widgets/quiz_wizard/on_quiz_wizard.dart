@@ -21,6 +21,8 @@ class OnQuizWizardScreen extends StatefulWidget {
     this.initialName,
     this.initialStep = 0,
     this.apiService,
+    this.generationApi,
+    this.progressStore,
     this.draft,
   });
 
@@ -43,6 +45,8 @@ class OnQuizWizardScreen extends StatefulWidget {
 
   /// Optional service and draft seams for isolated review and contract tests.
   final StudyApiService? apiService;
+  final GenerationApiService? generationApi;
+  final DraftProgressStore? progressStore;
   final QuizWizardData? draft;
 
   @override
@@ -51,7 +55,9 @@ class OnQuizWizardScreen extends StatefulWidget {
 
 class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
   late final _api = widget.apiService ?? StudyApiService();
-  final _generationApi = GenerationApiService();
+  late final _generationApi = widget.generationApi ?? GenerationApiService();
+  late final _progressStore =
+      widget.progressStore ?? DraftProgressStore.instance;
 
   late final wizardData =
       widget.draft ??
@@ -115,11 +121,8 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
         studyLimitBytes: study.maxStudyBytes,
       );
       wizardData.setExistingSources(study.sources);
-      DraftProgressStore.instance.saveStep(study.id, wizardData.currentStep);
-      DraftProgressStore.instance.saveVisibility(
-        study.id,
-        wizardData.visibility,
-      );
+      _progressStore.saveStep(study.id, wizardData.currentStep);
+      _progressStore.saveVisibility(study.id, wizardData.visibility);
     }();
     _draftPreparation = operation;
     try {
@@ -132,11 +135,8 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
   void _persistDraftState() {
     final studyId = _activeStudyId;
     if (studyId != null) {
-      DraftProgressStore.instance.saveStep(studyId, wizardData.currentStep);
-      DraftProgressStore.instance.saveVisibility(
-        studyId,
-        wizardData.visibility,
-      );
+      _progressStore.saveStep(studyId, wizardData.currentStep);
+      _progressStore.saveVisibility(studyId, wizardData.visibility);
     }
   }
 
@@ -302,9 +302,7 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
 
       // A browser refresh or navigation back must resume the existing server
       // job instead of creating a second generation request.
-      final savedJobId = await DraftProgressStore.instance.getGenerationJobId(
-        studyId,
-      );
+      final savedJobId = await _progressStore.getGenerationJobId(studyId);
       if (savedJobId != null && savedJobId.isNotEmpty) {
         try {
           await _generationApi.get(savedJobId);
@@ -312,7 +310,7 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
           return;
         } on GenerationApiException catch (error) {
           if (error.statusCode != 404) rethrow;
-          await DraftProgressStore.instance.clearGenerationJobId(studyId);
+          await _progressStore.clearGenerationJobId(studyId);
         }
       }
 
@@ -321,11 +319,12 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
       setState(() => _generateStep = 2);
 
       // Persist before POST so a network timeout retries with the same key.
-      var idempotencyKey = await DraftProgressStore.instance
-          .getGenerationIdempotencyKey(studyId);
+      var idempotencyKey = await _progressStore.getGenerationIdempotencyKey(
+        studyId,
+      );
       if (idempotencyKey == null || idempotencyKey.isEmpty) {
         idempotencyKey = '${DateTime.now().microsecondsSinceEpoch}-generation';
-        await DraftProgressStore.instance.saveGenerationIdempotencyKey(
+        await _progressStore.saveGenerationIdempotencyKey(
           studyId,
           idempotencyKey,
         );
@@ -343,9 +342,9 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
           idempotencyKey: idempotencyKey,
         ),
       );
-      await DraftProgressStore.instance.saveGenerationJobId(studyId, job.id);
-      await DraftProgressStore.instance.clearGenerationIdempotencyKey(studyId);
-      await DraftProgressStore.instance.touch(studyId);
+      await _progressStore.saveGenerationJobId(studyId, job.id);
+      await _progressStore.clearGenerationIdempotencyKey(studyId);
+      await _progressStore.touch(studyId);
       await _openGeneration(studyId, job.id);
     } on StudyApiException catch (e, stack) {
       _showGenerateError(e.message, e.statusCode, e.requestId, stack);
@@ -372,7 +371,7 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
 
   Future<void> _openGeneration(String studyId, String jobId) async {
     if (!mounted) return;
-    await DraftProgressStore.instance.touch(studyId);
+    await _progressStore.touch(studyId);
     if (!mounted) return;
     widget.onGenerate();
     await Navigator.pushReplacementNamed(
