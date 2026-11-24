@@ -106,14 +106,16 @@ class StudyApiService {
     final response = await _adapter.delete(
       Uri.parse('$_base/$studyId/sources/$sourceId'),
     );
-    if (response.statusCode != 204)
+    if (response.statusCode != 204) {
       throw StudyApiException(response.statusCode);
+    }
   }
 
   Future<void> deleteStudy(String studyId) async {
     final response = await _adapter.delete(Uri.parse('$_base/$studyId'));
-    if (response.statusCode != 204)
+    if (response.statusCode != 204) {
       throw StudyApiException(response.statusCode);
+    }
   }
 
   Future<List<StudyQuestion>> generateQuestions({
@@ -135,8 +137,9 @@ class StudyApiService {
         'question_count': questionCount,
       }),
     );
-    if (response.statusCode < 200 || response.statusCode >= 300)
+    if (response.statusCode < 200 || response.statusCode >= 300) {
       throw StudyApiException(response.statusCode);
+    }
     return ((jsonDecode(response.body) as Map<String, dynamic>)['data'] as List)
         .cast<Map<String, dynamic>>()
         .map(StudyQuestion.fromJson)
