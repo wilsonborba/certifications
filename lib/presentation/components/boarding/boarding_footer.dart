@@ -50,7 +50,8 @@ class BoardingFooter extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    Settings.buildVersion,
+                    'Build ${Settings.buildLabel}',
+                    key: const Key('footer-build'),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: scheme.onSurface.withValues(alpha: 0.5),
                     ),

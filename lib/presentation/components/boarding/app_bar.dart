@@ -96,13 +96,29 @@ class BoardingAppBar extends StatelessWidget implements PreferredSizeWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxHeight: 50,
-                ),
-                child: Image.asset(
-                  logoAsset,
-                  fit: BoxFit.contain,
-                  semanticLabel: logoSemanticLabel,
+                constraints: const BoxConstraints(maxHeight: 50),
+                // The shared Asodya logo with the application name
+                // (title rule 8bbf2e77), like Annotations.
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      logoAsset,
+                      fit: BoxFit.contain,
+                      semanticLabel: logoSemanticLabel,
+                    ),
+                    if (MediaQuery.sizeOf(context).width >= 360) ...[
+                      const SizedBox(width: 10),
+                      Text(
+                        context.tr('appName'),
+                        key: const Key('bar-app-name'),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -.3,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),
@@ -170,9 +186,7 @@ class _InlineDesktopPreferences extends StatelessWidget {
           decoration: BoxDecoration(
             color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: scheme.outline.withValues(alpha: 0.3),
-            ),
+            border: Border.all(color: scheme.outline.withValues(alpha: 0.3)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -230,7 +244,9 @@ class _LangChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-            color: selected ? scheme.onPrimary : scheme.onSurface.withValues(alpha: 0.75),
+            color: selected
+                ? scheme.onPrimary
+                : scheme.onSurface.withValues(alpha: 0.75),
           ),
         ),
       ),
@@ -259,11 +275,16 @@ class _UserProfileButton extends StatelessWidget {
           value: 'profile',
           child: Row(
             children: [
-              Icon(Icons.person_outline, color: scheme.onSurface.withValues(alpha: 0.6)),
+              Icon(
+                Icons.person_outline,
+                color: scheme.onSurface.withValues(alpha: 0.6),
+              ),
               const SizedBox(width: 12),
               Text(
                 context.tr('profile'),
-                style: TextStyle(color: scheme.onSurface.withValues(alpha: 0.6)),
+                style: TextStyle(
+                  color: scheme.onSurface.withValues(alpha: 0.6),
+                ),
               ),
             ],
           ),
@@ -284,7 +305,10 @@ class _UserProfileButton extends StatelessWidget {
               const SizedBox(width: 12),
               Text(
                 context.tr('logout'),
-                style: TextStyle(color: scheme.error, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: scheme.error,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -320,8 +344,12 @@ class _DesktopActions extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final isLoggedIn = readCsrfToken() != null && readCsrfToken()!.isNotEmpty;
 
-    void _defaultAbout() => redirectToUrl('https://${app_settings.ASODYA_MAIN_DOMAIN}', replace: false);
-    void _defaultHome() => NavigationService.pushReplacement(const SessionGate());
+    void _defaultAbout() => redirectToUrl(
+      'https://${app_settings.ASODYA_MAIN_DOMAIN}',
+      replace: false,
+    );
+    void _defaultHome() =>
+        NavigationService.pushReplacement(const SessionGate());
     void _defaultPlans() => NavigationService.push(const OnPlansScreen());
 
     final textStyle = TextStyle(
@@ -505,8 +533,12 @@ class MobileSideMenu extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final isLoggedIn = readCsrfToken() != null && readCsrfToken()!.isNotEmpty;
 
-    void _defaultAbout() => redirectToUrl('https://${app_settings.ASODYA_MAIN_DOMAIN}', replace: false);
-    void _defaultHome() => NavigationService.pushReplacement(const SessionGate());
+    void _defaultAbout() => redirectToUrl(
+      'https://${app_settings.ASODYA_MAIN_DOMAIN}',
+      replace: false,
+    );
+    void _defaultHome() =>
+        NavigationService.pushReplacement(const SessionGate());
     void _defaultPlans() => NavigationService.push(const OnPlansScreen());
 
     void _close() => Navigator.of(context).maybePop();

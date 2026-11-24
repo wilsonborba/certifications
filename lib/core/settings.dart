@@ -13,11 +13,26 @@ class Settings {
 
   /// Non-secret frontend behavior belongs in settings, not in an environment
   /// file or compiler flag. Switch this only when preparing a production build.
-  static const bool _envDev = bool.fromEnvironment('DEVELOPMENT_MODE', defaultValue: false);
+  static const bool _envDev = bool.fromEnvironment(
+    'DEVELOPMENT_MODE',
+    defaultValue: false,
+  );
   final bool developmentMode = _envDev;
 
   /// Build / deployment timestamp displayed in footers and info views
-  static const String buildVersion = String.fromEnvironment('BUILD_TIMESTAMP', defaultValue: '2026-09-08 13:36 +07');
+  static const String buildVersion = String.fromEnvironment(
+    'BUILD_TIMESTAMP',
+    defaultValue: 'development',
+  );
+
+  /// Build name, such as `1.0.0`, set by the build script.
+  static const String buildName = String.fromEnvironment(
+    'BUILD_NAME',
+    defaultValue: '1.0.0',
+  );
+
+  /// The build label of the footer, as Annotations shows it.
+  static String get buildLabel => '$buildName ($buildVersion)';
 
   // ASODYA URLS
 

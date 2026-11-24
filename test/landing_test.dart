@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:certifications/core/routes.dart';
+import 'package:certifications/core/settings.dart';
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/core/utils/landing_copy.dart';
 import 'package:certifications/core/utils/my_background.dart';
@@ -341,7 +342,7 @@ void main() {
       tester,
     ) async {
       await open(tester);
-      final card = find.byKey(const Key('card-lpCardTopics'));
+      final card = find.byKey(const Key('card-lpCardFiles'));
       await tester.ensureVisible(card);
       await tester.pumpAndSettle();
       Finder body() => find.descendant(
@@ -361,7 +362,7 @@ void main() {
       await mouse.addPointer(location: tester.getCenter(card));
       await tester.pumpAndSettle();
       expect(body(), findsOneWidget);
-      expect(find.text(translate('valPropTile1Desc')), findsOneWidget);
+      expect(find.text(translate('lpCardFilesBody')), findsOneWidget);
       await mouse.moveTo(const Offset(1, 1));
       await tester.pumpAndSettle();
       expect(body(), findsNothing);
@@ -372,7 +373,7 @@ void main() {
         tester.element(
           find.descendant(
             of: card,
-            matching: find.byIcon(Icons.search_rounded),
+            matching: find.byIcon(Icons.upload_file_rounded),
           ),
         ),
       ).requestFocus();
@@ -436,6 +437,90 @@ void main() {
       'lib/core/utils/app_localizations.dart',
     ).readAsStringSync();
     expect(copy.contains('\u2014') || copy.contains('\u2013'), isFalse);
+  });
+
+  group('Send-back 92cd88ca', () {
+    test('the five topic colours are clearly different hues', () {
+      final hues = [
+        for (final t in landingTopics) HSVColor.fromColor(t.color).hue,
+      ];
+      for (var i = 0; i < hues.length; i++) {
+        for (var j = i + 1; j < hues.length; j++) {
+          final d = (hues[i] - hues[j]).abs();
+          expect(
+            d > 180 ? 360 - d : d,
+            greaterThanOrEqualTo(40),
+            reason: '${landingTopics[i].id} ${landingTopics[j].id}',
+          );
+        }
+      }
+    });
+
+    test('file types match the backend SourceKind in every language', () {
+      // certifications_api SourceKind: pdf, docx, csv, text, audio, video.
+      for (final lang in ['en', 'pt', 'th']) {
+        final copy = landingCopy[lang]!;
+        for (final key in ['lpSources1', 'lpCardFilesBody']) {
+          for (final kind in ['PDF', 'Word', 'CSV']) {
+            expect(copy[key], contains(kind), reason: '$lang $key');
+          }
+        }
+      }
+      expect(landingCopy['en']!['lpSources1'], contains('audio'));
+      expect(landingCopy['en']!['lpSources1'], contains('video'));
+      expect(landingCopy['en']!['lpSources1'], contains('text'));
+      // The backend limits.
+      expect(landingCopy['en']!['lpSources2'], contains('100 MB'));
+      expect(landingCopy['en']!['lpSources2'], contains('150 MB'));
+      expect(landingCopy['en']!['lpSources2'], contains('500 MB'));
+    });
+
+    testWidgets('no filler, no PDF-only wording, no old claims', (
+      tester,
+    ) async {
+      await open(tester);
+      final shown = [
+        for (final e in find.byType(Text).evaluate())
+          (e.widget as Text).data ?? '',
+      ].join('\n');
+      for (final bad in [
+        'Four simple steps',
+        'maximum efficiency',
+        'Attach a PDF',
+        'Attach your PDF',
+        'compete on',
+        'Official Leaderboard',
+        'suggestion list',
+      ]) {
+        expect(shown.contains(bad), isFalse, reason: bad);
+      }
+      expect(find.text(translate('lpHeroSub')), findsOneWidget);
+      expect(find.text(translate('lpStepFiles')), findsOneWidget);
+    });
+
+    test('the footer shows the build, not an old timestamp', () {
+      expect(Settings.buildLabel, '1.0.0 (development)');
+      expect(Settings.buildLabel.contains('2026-09-08'), isFalse);
+    });
+
+    testWidgets('each topic page has its drawn composition and facts', (
+      tester,
+    ) async {
+      for (final topic in landingTopics) {
+        // A fresh app: the initial route applies only to a new navigator.
+        await tester.pumpWidget(const SizedBox());
+        await open(tester, initial: '/learn/${topic.id}');
+        expect(find.byKey(Key('learn-art-${topic.id}')), findsOneWidget);
+        expect(topic.body, hasLength(3));
+        expect(topic.extras, hasLength(3));
+        for (final key in topic.body) {
+          expect(find.byKey(Key('learn-fact-$key')), findsOneWidget);
+          // A fact of the page, never the card text again.
+          expect(landingCards.map((c) => c.$3), isNot(contains(key)));
+        }
+        expect(find.byType(Image), findsNothing);
+      }
+    });
   });
 }
 

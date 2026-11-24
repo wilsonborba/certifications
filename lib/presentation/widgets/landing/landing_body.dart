@@ -16,6 +16,9 @@ abstract final class AsodyaPalette {
   static const cyan = Color(0xFF00E5FF);
   static const orange = Color(0xFFFF9100);
   static const mint = Color(0xFF00E676);
+
+  /// A magenta bubble hue (HSV 330, .75, 1), far from the other four.
+  static const magenta = Color(0xFFFF409F);
   static const night = Color(0xFF0B0C10);
 }
 
@@ -28,6 +31,7 @@ class LandingTopic {
     this.label,
     this.title,
     this.body,
+    this.extras,
   );
 
   /// The page path segment: `/learn/<id>`.
@@ -36,8 +40,11 @@ class LandingTopic {
   final Color color;
   final String label, title;
 
-  /// The body paragraphs, as string keys.
+  /// The facts of the topic page, as string keys (from the release only).
   final List<String> body;
+
+  /// Three small icons around the main tile on the topic page.
+  final List<IconData> extras;
 }
 
 const landingTopics = <LandingTopic>[
@@ -47,7 +54,12 @@ const landingTopics = <LandingTopic>[
     AsodyaPalette.green,
     'lpSourcesLabel',
     'lpSourcesTitle',
-    ['valPropTile2Desc', 'privacyBody'],
+    ['lpSources1', 'lpSources2', 'lpSources3'],
+    [
+      Icons.picture_as_pdf_outlined,
+      Icons.audiotrack_rounded,
+      Icons.movie_outlined,
+    ],
   ),
   LandingTopic(
     'questions',
@@ -55,7 +67,12 @@ const landingTopics = <LandingTopic>[
     AsodyaPalette.purple,
     'lpQuestionsLabel',
     'lpQuestionsTitle',
-    ['valPropTile1Desc', 'verifyBeforePublish'],
+    ['lpQuestions1', 'lpQuestions2', 'lpQuestions3'],
+    [
+      Icons.format_quote_rounded,
+      Icons.functions_rounded,
+      Icons.account_tree_outlined,
+    ],
   ),
   LandingTopic(
     'resume',
@@ -63,7 +80,8 @@ const landingTopics = <LandingTopic>[
     AsodyaPalette.cyan,
     'lpResumeLabel',
     'lpResumeTitle',
-    ['valPropTile4Desc', 'valPropTile3Desc'],
+    ['lpResume1', 'lpResume2', 'lpResume3'],
+    [Icons.edit_note_rounded, Icons.save_outlined, Icons.play_arrow_rounded],
   ),
   LandingTopic(
     'certificates',
@@ -71,26 +89,32 @@ const landingTopics = <LandingTopic>[
     AsodyaPalette.orange,
     'lpCertificatesLabel',
     'lpCertificatesTitle',
-    ['heroSub', 'valPropTile5Desc'],
+    ['lpCertificates1', 'lpCertificates2', 'lpCertificates3'],
+    [Icons.verified_outlined, Icons.link_rounded, Icons.leaderboard_outlined],
   ),
   LandingTopic(
     'privacy',
     Icons.lock_outline_rounded,
-    AsodyaPalette.mint,
+    AsodyaPalette.magenta,
     'lpPrivacyLabel',
     'lpPrivacyTitle',
-    ['privacyBody', 'trustBody'],
+    ['lpPrivacy1', 'lpPrivacy2', 'lpPrivacy3'],
+    [
+      Icons.inventory_2_outlined,
+      Icons.delete_outline_rounded,
+      Icons.key_off_outlined,
+    ],
   ),
 ];
 
 /// The feature cards: icon, title and the text they reveal.
 const landingCards = <(IconData, String, String)>[
-  (Icons.search_rounded, 'lpCardTopics', 'valPropTile1Desc'),
-  (Icons.description_outlined, 'lpCardMaterial', 'valPropTile2Desc'),
-  (Icons.linear_scale_rounded, 'lpCardSteps', 'valPropTile3Desc'),
-  (Icons.play_circle_outline_rounded, 'lpCardResume', 'valPropTile4Desc'),
-  (Icons.leaderboard_outlined, 'lpCardShare', 'valPropTile5Desc'),
-  (Icons.emoji_events_outlined, 'lpCardPlayful', 'playfulBody'),
+  (Icons.upload_file_rounded, 'lpCardFiles', 'lpCardFilesBody'),
+  (Icons.content_cut_rounded, 'lpCardPart', 'lpCardPartBody'),
+  (Icons.format_quote_rounded, 'lpCardCited', 'lpCardCitedBody'),
+  (Icons.functions_rounded, 'lpCardVisual', 'lpCardVisualBody'),
+  (Icons.play_circle_outline_rounded, 'lpCardResume', 'lpCardResumeBody'),
+  (Icons.link_rounded, 'lpCardShare', 'lpCardShareBody'),
 ];
 
 const landingMaxWidth = 1200.0;
@@ -354,7 +378,7 @@ class LandingHero extends StatelessWidget {
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 620),
                 child: Text(
-                  context.tr('heroSub'),
+                  context.tr('lpHeroSub'),
                   textAlign: TextAlign.center,
                   style: text.titleMedium!.copyWith(height: 1.5),
                 ),
@@ -718,7 +742,7 @@ class StepsSection extends StatelessWidget {
   const StepsSection({super.key});
 
   static const steps = [
-    (Icons.upload_file_rounded, 'attachPdf'),
+    (Icons.upload_file_rounded, 'lpStepFiles'),
     (Icons.quiz_outlined, 'takeQuiz'),
     (Icons.ios_share_rounded, 'shareCertification'),
   ];
@@ -955,15 +979,7 @@ class LearnBody extends StatelessWidget {
               if (topic == null)
                 Text(context.tr('lpNotFound'), style: text.titleLarge)
               else ...[
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: topic.color,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Icon(topic.icon, size: 34, color: AsodyaPalette.night),
-                ),
+                TopicComposition(topic: topic),
                 const SizedBox(height: 28),
                 Semantics(
                   header: true,
@@ -977,15 +993,32 @@ class LearnBody extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
+                // The facts of the release, one per row with a check mark.
                 for (final key in topic.body)
                   Padding(
+                    key: Key('learn-fact-$key'),
                     padding: const EdgeInsets.only(bottom: 16),
-                    child: Text(
-                      context.tr(key),
-                      style: text.bodyLarge!.copyWith(
-                        height: 1.6,
-                        color: scheme.onSurface,
-                      ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 3, right: 12),
+                          child: Icon(
+                            Icons.check_circle_rounded,
+                            size: 20,
+                            color: scheme.primary,
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            context.tr(key),
+                            style: text.bodyLarge!.copyWith(
+                              height: 1.6,
+                              color: scheme.onSurface,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 const SizedBox(height: 16),
@@ -1001,4 +1034,99 @@ class LearnBody extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The drawn icon composition of a topic page: the topic tile in its own
+/// colour with three small related icons around it, in tinted circles and
+/// joined by thin lines. Icons and shapes only, no photo.
+class TopicComposition extends StatelessWidget {
+  const TopicComposition({super.key, required this.topic});
+
+  final LandingTopic topic;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    const spots = [Offset(150, 8), Offset(176, 74), Offset(122, 120)];
+    return ExcludeSemantics(
+      child: SizedBox(
+        key: Key('learn-art-${topic.id}'),
+        width: 220,
+        height: 160,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _LinksPainter(
+                  from: const Offset(48, 80),
+                  to: [for (final s in spots) s + const Offset(20, 20)],
+                  color: topic.color.withValues(alpha: .7),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 8,
+              top: 40,
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: topic.color,
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: Icon(topic.icon, size: 38, color: AsodyaPalette.night),
+              ),
+            ),
+            for (var i = 0; i < spots.length; i++)
+              Positioned(
+                left: spots[i].dx,
+                top: spots[i].dy,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: topic.color.withValues(alpha: .22),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: topic.color, width: 1.5),
+                  ),
+                  child: Icon(
+                    topic.extras[i],
+                    size: 20,
+                    color: scheme.onSurface,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LinksPainter extends CustomPainter {
+  _LinksPainter({required this.from, required this.to, required this.color});
+
+  final Offset from;
+  final List<Offset> to;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+    for (final end in to) {
+      final mid = Offset((from.dx + end.dx) / 2, from.dy);
+      canvas.drawPath(
+        Path()
+          ..moveTo(from.dx, from.dy)
+          ..quadraticBezierTo(mid.dx, mid.dy, end.dx, end.dy),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_LinksPainter old) => old.color != color;
 }
