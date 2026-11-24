@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
 class AppLocalizations {
   const AppLocalizations(this.locale);
@@ -288,6 +289,16 @@ class AppLocalizations {
       'quickInfo': 'Quick info',
       'addFile': 'Add file',
       'startQuiz': 'Start quiz',
+      'attemptMonitoringBeforeStart':
+          'When you return, the app records that this page was hidden and the known time away. If you close or refresh while away, that duration may be missing. It does not monitor other tabs or devices.',
+      'attemptTitle': 'Quiz attempt',
+      'attemptQuestionPosition': 'Question {current} of {total}',
+      'attemptSubmitTitle': 'Submit attempt?',
+      'attemptSubmitConfirmation':
+          'Your saved answers will be submitted. You cannot change them after submission.',
+      'attemptSubmitted': 'Your attempt was submitted.',
+      'attemptNoQuestions': 'No questions are available for this attempt.',
+      'previous': 'Previous',
       'cortexConnected': 'AI Cortex Connected',
       'studyNotebooksLabel': 'Study Notebooks',
       'storageUsedLabel': 'Storage Used',
@@ -673,6 +684,16 @@ class AppLocalizations {
       'quickInfo': 'Info rápida',
       'addFile': 'Adicionar arquivo',
       'startQuiz': 'Iniciar quiz',
+      'attemptMonitoringBeforeStart':
+          'Quando você retorna, o app registra que esta página ficou oculta e o tempo conhecido fora dela. Se você fechar ou atualizar a página enquanto estiver ausente, essa duração pode não ser registrada. Ele não monitora outras abas ou dispositivos.',
+      'attemptTitle': 'Tentativa do quiz',
+      'attemptQuestionPosition': 'Pergunta {current} de {total}',
+      'attemptSubmitTitle': 'Enviar tentativa?',
+      'attemptSubmitConfirmation':
+          'Suas respostas salvas serão enviadas. Não será possível alterá-las depois do envio.',
+      'attemptSubmitted': 'Sua tentativa foi enviada.',
+      'attemptNoQuestions': 'Não há perguntas disponíveis nesta tentativa.',
+      'previous': 'Anterior',
       'cortexConnected': 'Cortex IA Conectado',
       'studyNotebooksLabel': 'Cadernos de Estudo',
       'storageUsedLabel': 'Espaço Usado',
@@ -1046,6 +1067,16 @@ class AppLocalizations {
       'quickInfo': 'ข้อมูลด่วน',
       'addFile': 'เพิ่มไฟล์',
       'startQuiz': 'เริ่มแบบทดสอบ',
+      'attemptMonitoringBeforeStart':
+          'เมื่อคุณกลับมา แอปจะบันทึกว่าหน้านี้ถูกซ่อนและระยะเวลาที่ทราบ หากปิดหรือรีเฟรชขณะที่ไม่อยู่ ระยะเวลาดังกล่าวอาจไม่ถูกบันทึก แอปจะไม่ติดตามแท็บหรืออุปกรณ์อื่น',
+      'attemptTitle': 'การทำแบบทดสอบ',
+      'attemptQuestionPosition': 'ข้อ {current} จาก {total}',
+      'attemptSubmitTitle': 'ส่งคำตอบหรือไม่',
+      'attemptSubmitConfirmation':
+          'คำตอบที่บันทึกไว้จะถูกส่ง และคุณจะไม่สามารถแก้ไขได้หลังจากส่ง',
+      'attemptSubmitted': 'ส่งคำตอบแล้ว',
+      'attemptNoQuestions': 'ไม่มีคำถามสำหรับแบบทดสอบนี้',
+      'previous': 'ก่อนหน้า',
       'cortexConnected': 'เชื่อมต่อ AI Cortex แล้ว',
       'studyNotebooksLabel': 'สมุดการเรียน',
       'storageUsedLabel': 'พื้นที่จัดเก็บที่ใช้',
@@ -1162,6 +1193,24 @@ class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
       AppLocalizations(locale);
   @override
   bool shouldReload(AppLocalizationsDelegate old) => false;
+}
+
+/// Fallback for the few built-in Cupertino strings that are not part of the
+/// app's own copy. Certifications uses its translated strings for attempt UI;
+/// this keeps default platform widgets available for every supported locale.
+class FallbackCupertinoLocalizationsDelegate
+    extends LocalizationsDelegate<CupertinoLocalizations> {
+  const FallbackCupertinoLocalizationsDelegate();
+
+  @override
+  bool isSupported(Locale locale) => true;
+
+  @override
+  Future<CupertinoLocalizations> load(Locale locale) async =>
+      const DefaultCupertinoLocalizations();
+
+  @override
+  bool shouldReload(FallbackCupertinoLocalizationsDelegate old) => false;
 }
 
 extension Translation on BuildContext {
