@@ -4,6 +4,7 @@ import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/core/utils/my_theme.dart';
 import 'package:certifications/dal/remote/api_adapter.dart';
 import 'package:certifications/domain/models/quiz_wizard_data.dart';
+import 'package:certifications/domain/models/study.dart';
 import 'package:certifications/domain/services/study_api_service.dart';
 import 'package:certifications/presentation/widgets/quiz_wizard/on_quiz_wizard.dart';
 import 'package:flutter/material.dart';
@@ -68,6 +69,10 @@ http.StreamedResponse _response(Object body, int statusCode) {
   );
 }
 
+List<int> _samplePdf() => base64Decode(
+  'JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUiA2IDAgUl0gL0NvdW50IDIgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA1OTUgODQyXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA0IDAgUiA+PiA+PiAvQ29udGVudHMgNSAwIFIgPj4KZW5kb2JqCjQgMCBvYmoKPDwgL1R5cGUgL0ZvbnQgL1N1YnR5cGUgL1R5cGUxIC9CYXNlRm9udCAvSGVsdmV0aWNhID4+CmVuZG9iago1IDAgb2JqCjw8IC9MZW5ndGggNjMgPj4Kc3RyZWFtCkJUIC9GMSAyMCBUZiAzNiA3ODAgVGQgKFN5bnRoZXRpYyBzdHVkeSBtYXRlcmlhbCwgcGFnZSAxKSBUaiBFVAplbmRzdHJlYW0KZW5kb2JqCjYgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA1OTUgODQyXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA0IDAgUiA+PiA+PiAvQ29udGVudHMgNyAwIFIgPj4KZW5kb2JqCjcgMCBvYmoKPDwgL0xlbmd0aCA2MyA+PgpzdHJlYW0KQlQgL0YxIDIwIFRmIDM2IDc4MCBUZCAoU3ludGhldGljIHN0dWR5IG1hdGVyaWFsLCBwYWdlIDIpIFRqIEVUCmVuZHN0cmVhbQplbmRvYmoKeHJlZgowIDgKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDA5IDAwMDAwIG4gCjAwMDAwMDAwNTggMDAwMDAgbiAKMDAwMDAwMDEyMSAwMDAwMCBuIAowMDAwMDAwMjQ3IDAwMDAwIG4gCjAwMDAwMDAzMTcgMDAwMDAgbiAKMDAwMDAwMDQzMCAwMDAwMCBuIAowMDAwMDAwNTU2IDAwMDAwIG4gCnRyYWlsZXIKPDwgL1NpemUgOCAvUm9vdCAxIDAgUiA+PgpzdGFydHhyZWYKNjY5CiUlRU9GCg==',
+);
+
 void main() {
   final query = Uri.base.queryParameters;
   final locale = Locale(query['locale'] ?? 'en');
@@ -78,13 +83,40 @@ void main() {
     ..addFile(
       AttachedFile(
         bytes: utf8.encode(
-          'Study source preview\n\nThis sample is shown from the live Certifications source screen.\nNarrow selection is not sent until its API contract is ready.',
+          'Study source preview\n\nUTF-16 offsets preserve emoji such as 😀.\nThe selected passage is validated and saved with the source.',
         ),
         name: 'sample-notes.txt',
         kind: 'txt',
         totalLines: 4,
+        isWholeDocument: false,
+        selectionKind: 'passages',
+        selectionSpec: 'p1:0-25',
       ),
-    );
+    )
+    ..addFile(
+      AttachedFile(
+        bytes: _samplePdf(),
+        name: 'sample-reading.pdf',
+        kind: 'pdf',
+        totalPages: 2,
+        isWholeDocument: false,
+        selectionKind: 'pages',
+        selectionSpec: '1-2',
+      ),
+    )
+    ..setExistingSources([
+      StudySource.fromJson({
+        'id': 'prepared-note-source',
+        'filename': 'prepared-note.txt',
+        'mime_type': 'text/plain',
+        'size_bytes': 128,
+        'sha256': 'fixture-sha256',
+        'source_kind': 'upload',
+        'status': 'ready',
+        'selection_kind': 'passages',
+        'selection_spec': 'p1:0-25',
+      }),
+    ]);
   final service = StudyApiService(
     adapter: ApiAdapter(
       client: _fixtureClient(),

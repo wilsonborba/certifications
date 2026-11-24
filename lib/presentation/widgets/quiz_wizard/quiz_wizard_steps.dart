@@ -161,17 +161,21 @@ class _Step2SourceViewState extends State<Step2SourceView> {
     for (final picked in result.files) {
       final bytes = picked.bytes;
       if (bytes == null) continue;
-      final kind = picked.extension?.toLowerCase() ?? 'pdf';
-      if (!const {'txt', 'md', 'csv'}.contains(kind)) {
+      final kind = picked.extension?.toLowerCase();
+      if (kind == null || !uploadAllowedExtensions.contains(kind)) {
         unsupported = true;
         continue;
       }
       List<int> normalizedBytes;
-      try {
-        normalizedBytes = _normalizeTextBytes(bytes);
-      } on FormatException {
-        unsupported = true;
-        continue;
+      if (const {'txt', 'md', 'csv'}.contains(kind)) {
+        try {
+          normalizedBytes = _normalizeTextBytes(bytes);
+        } on FormatException {
+          unsupported = true;
+          continue;
+        }
+      } else {
+        normalizedBytes = bytes;
       }
       if (wizardData.wouldExceedAccountQuota(normalizedBytes.length) ||
           wizardData.wouldExceedStudyQuota(normalizedBytes.length) ||
@@ -185,7 +189,7 @@ class _Step2SourceViewState extends State<Step2SourceView> {
         kind: kind,
         totalPages: kind == 'pdf' ? _countPdfPages(bytes) : null,
         totalLines: (kind == 'txt' || kind == 'md' || kind == 'csv')
-            ? _countLines(bytes)
+            ? _countLines(normalizedBytes)
             : null,
       );
       // The default range (page/line 1-10) was picked blind; clamp it now
@@ -386,6 +390,13 @@ class _Step2SourceViewState extends State<Step2SourceView> {
                   color: scheme.onSurface.withValues(alpha: 0.65),
                 ),
               ),
+              const SizedBox(height: 6),
+              Text(
+                context.tr('sourceStorageNotice'),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurface.withValues(alpha: 0.65),
+                ),
+              ),
               const SizedBox(height: 12),
               _CapUsageBar(
                 usedBytes: usedBytes,
@@ -420,7 +431,10 @@ class _Step2SourceViewState extends State<Step2SourceView> {
                 overflow: TextOverflow.ellipsis,
               ),
               subtitle: Text(
-                '${formatFileSize(source.sizeBytes)} · ${source.status}',
+                '${formatFileSize(source.sizeBytes)} · ${source.status} · '
+                '${source.selectionKind == 'all' ? context.tr('wholeDocumentOnly') : '${source.selectionKind}: ${source.selectionSpec}'}',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           const SizedBox(height: 8),

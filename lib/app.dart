@@ -86,6 +86,15 @@ class _AppState extends State<App> {
             builder: (_) => OnSharedQuizScreen(shareToken: route.id!),
           );
         }
+        if (route.screen == CertificationsScreen.studyNew) {
+          final preparedStudyId = route.preparedStudyId;
+          if (preparedStudyId != null) {
+            return MaterialPageRoute(
+              settings: const RouteSettings(name: '/v1/studies/new'),
+              builder: (_) => SessionGate(preparedStudyId: preparedStudyId),
+            );
+          }
+        }
         return MaterialPageRoute(
           settings: RouteSettings(name: route.routeTemplate),
           builder: (_) => const SessionGate(),

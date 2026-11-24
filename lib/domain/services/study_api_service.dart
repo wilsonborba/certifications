@@ -3,6 +3,8 @@ import 'package:certifications/core/settings.dart';
 import 'package:certifications/dal/remote/api_adapter.dart';
 import 'package:certifications/domain/models/quiz.dart';
 import 'package:certifications/domain/models/study.dart';
+import 'package:certifications/domain/models/study_selection.dart';
+import 'package:http_parser/http_parser.dart';
 
 class StudyApiException implements Exception {
   const StudyApiException(this.statusCode, {this.message, this.requestId});
@@ -64,25 +66,34 @@ class StudyApiService {
     required String mimeType,
     void Function(double progress)? onProgress,
   }) async {
-    if (!const {'text/plain', 'text/markdown', 'text/csv'}.contains(mimeType)) {
-      throw UnsupportedError(
-        'The Certifications source API accepts text content only; binary upload requires its file producer.',
-      );
-    }
-    final decoded = utf8.decode(bytes);
-    final normalized = decoded
-        .replaceFirst(RegExp(r'^\uFEFF'), '')
-        .replaceAll('\r\n', '\n')
-        .replaceAll('\r', '\n');
-    final response = await _adapter.postJsonWithProgress(
-      url: Uri.parse('$_base/$studyId/sources'),
-      body: {
-        'filename': filename,
-        'mime_type': mimeType,
-        'content_text': normalized,
-      },
-      onProgress: onProgress,
-    );
+    final isText = const {
+      'text/plain',
+      'text/markdown',
+      'text/csv',
+    }.contains(mimeType.toLowerCase().split(';').first.trim());
+    final response = isText
+        ? await _adapter.postJsonWithProgress(
+            url: Uri.parse('$_base/$studyId/sources'),
+            body: {
+              'filename': filename,
+              'mime_type': mimeType,
+              'content_text': StudySelection.normalizeText(utf8.decode(bytes)),
+            },
+            onProgress: onProgress,
+          )
+        : await _adapter.postMultipart(
+            url: Uri.parse('$_base/$studyId/sources'),
+            fields: {'filename': filename, 'mime_type': mimeType},
+            files: [
+              MultipartFileData(
+                field: 'file',
+                bytes: bytes,
+                filename: filename,
+                contentType: MediaType.parse(mimeType),
+              ),
+            ],
+            onProgress: onProgress,
+          );
     return StudySource.fromJson(_data(response));
   }
 

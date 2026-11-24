@@ -320,7 +320,7 @@ extension ApiAdapterMultipart on ApiAdapter {
     final resolvedUrl = (queryParams == null || queryParams.isEmpty)
         ? url
         : url.replace(queryParameters: _stringQueryParams(queryParams));
-    if (onProgress != null) {
+    if (onProgress != null && _client is BrowserClient) {
       return _postMultipartWithProgress(
         resolvedUrl,
         headers: fullHeaders,
@@ -343,7 +343,11 @@ extension ApiAdapterMultipart on ApiAdapter {
         ),
       );
     }
-    return http.Response.fromStream(await _client.send(request));
+    final response = await http.Response.fromStream(
+      await _client.send(request),
+    );
+    onProgress?.call(1);
+    return response;
   }
 
   Future<http.Response> _postMultipartWithProgress(
@@ -380,6 +384,7 @@ extension ApiAdapterMultipart on ApiAdapter {
     }).toJS;
     request.onload = ((web.ProgressEvent _) {
       if (result.isCompleted) return;
+      onProgress(1);
       final responseHeaders = <String, String>{};
       for (final line in request.getAllResponseHeaders().split(
         RegExp(r'\r?\n'),

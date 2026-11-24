@@ -44,6 +44,15 @@ class CertificationsRoute {
     _ => false,
   };
 
+  /// Study identifier returned by the trusted prepared-source handoff.
+  /// The value is never copied to route telemetry or treated as authority.
+  String? get preparedStudyId {
+    final value = queryParameters['prepared_study_id'];
+    return value != null && RegExp(r'^[A-Za-z0-9_-]{1,128}$').hasMatch(value)
+        ? value
+        : null;
+  }
+
   static CertificationsRoute parse(Uri uri) {
     final segs = uri.pathSegments.where((s) => s.isNotEmpty).toList();
     final qp = uri.queryParameters;

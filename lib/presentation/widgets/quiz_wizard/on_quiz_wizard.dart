@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/quiz_wizard_data.dart';
 import 'package:certifications/domain/models/study.dart';
+import 'package:certifications/domain/models/study_selection.dart';
 import 'package:certifications/domain/services/client_telemetry_service.dart';
 import 'package:certifications/domain/services/draft_progress_store.dart';
 import 'package:certifications/domain/services/study_api_service.dart';
@@ -93,6 +95,9 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
     try {
       final study = await _api.get(studyId);
       if (!mounted) return;
+      if (wizardData.name.isEmpty && study.name.isNotEmpty) {
+        wizardData.name = study.name;
+      }
       wizardData.setAccountQuota(
         usedBytes: study.accountUsedBytes,
         maxBytes: study.accountMaxBytes,
@@ -222,7 +227,14 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
         _uploadFileIndex = index;
         _uploadProgress = null;
       });
-      final source = file.remoteSourceId == null
+      final selectionKind = file.isWholeDocument ? 'all' : file.selectionKind;
+      final selectionSpec = file.isWholeDocument
+          ? ''
+          : _canonicalSelection(file);
+      if (!file.isWholeDocument && selectionSpec.isEmpty) {
+        throw const FormatException('Invalid source selection');
+      }
+      var source = file.remoteSourceId == null
           ? await _api.upload(
               studyId: studyId,
               filename: file.name,
@@ -235,9 +247,16 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
             )
           : await _api.getSource(studyId, file.remoteSourceId!);
       file.remoteSourceId = source.id;
-      // The current backend stores selection specs without enforcing their
-      // meaning. Until the producer contract is available, new uploads keep
-      // the backend's default whole-source selection and send no guessed spec.
+      if (source.selectionKind != selectionKind ||
+          source.selectionSpec != selectionSpec) {
+        source = await _api.select(
+          studyId: studyId,
+          sourceId: source.id,
+          kind: selectionKind,
+          spec: selectionSpec,
+        );
+      }
+      file.remoteSourceId = source.id;
       wizardData.addExistingSource(source);
       final refreshed = await _api.get(studyId);
       wizardData.setAccountQuota(
@@ -246,6 +265,28 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
         fileLimitBytes: refreshed.maxFileBytes,
         studyLimitBytes: refreshed.maxStudyBytes,
       );
+      wizardData.setExistingSources(refreshed.sources);
+    }
+  }
+
+  String _canonicalSelection(AttachedFile file) {
+    switch (file.selectionKind) {
+      case 'pages':
+        return StudySelection.pages(
+              file.selectionSpec,
+              pageCount: file.totalPages,
+            ) ??
+            '';
+      case 'passages':
+        return StudySelection.passage(
+              file.selectionSpec,
+              StudySelection.normalizeText(utf8.decode(file.bytes)),
+            ) ??
+            '';
+      case 'intervals':
+        return StudySelection.audio(file.selectionSpec) ?? '';
+      default:
+        return '';
     }
   }
 
@@ -262,8 +303,9 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
     try {
       await _ensureStudyDraft();
       final studyId = _activeStudyId;
-      if (studyId == null)
+      if (studyId == null) {
         throw const FormatException('Study draft unavailable');
+      }
       await _uploadAttachedFiles(studyId);
       await _api.streamAnalysis(
         studyId,

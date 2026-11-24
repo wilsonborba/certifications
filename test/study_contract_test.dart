@@ -4,6 +4,7 @@ import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/dal/remote/api_adapter.dart';
 import 'package:certifications/domain/models/quiz_wizard_data.dart';
 import 'package:certifications/domain/models/study.dart';
+import 'package:certifications/domain/models/study_selection.dart';
 import 'package:certifications/domain/services/study_api_service.dart';
 import 'package:certifications/presentation/components/quiz/granular_range_selector.dart';
 import 'package:certifications/presentation/widgets/quiz_wizard/on_quiz_wizard.dart';
@@ -240,24 +241,51 @@ void main() {
   });
 
   test(
-    'binary source upload stays unavailable on the text-only route',
+    'binary source upload uses the existing multipart file contract',
     () async {
+      final progress = <double>[];
       final client = MockClient((request) async {
-        fail('Binary source must not be sent to the text upload route');
+        expect(request.method, 'POST');
+        expect(request.url.path, endsWith('/studies/study-5/sources'));
+        expect(
+          request.headers['content-type'],
+          startsWith('multipart/form-data;'),
+        );
+        expect(request.body, contains('name="file"; filename="slides.pdf"'));
+        expect(request.body, contains('name="filename"'));
+        expect(request.body, contains('slides.pdf'));
+        expect(request.body, contains('name="mime_type"'));
+        expect(request.body, contains('application/pdf'));
+        expect(request.bodyBytes, containsAll([0x25, 0x50, 0x44, 0x46]));
+        return http.Response(
+          jsonEncode({
+            'id': 'source-pdf',
+            'filename': 'slides.pdf',
+            'mime_type': 'application/pdf',
+            'size_bytes': 4,
+            'sha256': 'hash',
+            'source_kind': 'upload',
+            'status': 'ready',
+            'selection_kind': 'all',
+            'selection_spec': '',
+          }),
+          201,
+        );
       });
       final service = StudyApiService(
         adapter: ApiAdapter(client: client, csrfTokenProvider: () => null),
       );
 
-      await expectLater(
-        service.upload(
-          studyId: 'study-5',
-          filename: 'slides.pdf',
-          bytes: [0x25, 0x50, 0x44, 0x46],
-          mimeType: 'application/pdf',
-        ),
-        throwsUnsupportedError,
+      final source = await service.upload(
+        studyId: 'study-5',
+        filename: 'slides.pdf',
+        bytes: [0x25, 0x50, 0x44, 0x46],
+        mimeType: 'application/pdf',
+        onProgress: progress.add,
       );
+
+      expect(source.id, 'source-pdf');
+      expect(progress, [1]);
       client.close();
     },
   );
@@ -321,7 +349,38 @@ void main() {
     data.dispose();
   });
 
-  testWidgets('narrow source selection stays unavailable without a contract', (
+  test('selection strings enforce the accepted canonical bounds and units', () {
+    expect(StudySelection.pages('1-3,5', pageCount: 5), '1-3,5');
+    expect(StudySelection.pages('1-50,51-100', pageCount: 100), '1-50,51-100');
+    expect(StudySelection.pages('1-50,51-101', pageCount: 101), isNull);
+    expect(StudySelection.pages('1-3,3-5', pageCount: 5), isNull);
+    expect(
+      StudySelection.audio('ms:0-12500,30000-45000'),
+      'ms:0-12500,30000-45000',
+    );
+    expect(StudySelection.audio('ms:0-100,ms:200-300'), isNull);
+    expect(StudySelection.audio('ms:300-400,0-100'), isNull);
+    expect(StudySelection.passage('p1:0-4', 'A😀B'), 'p1:0-4');
+    expect(StudySelection.passage('p1:0-5', 'A😀B'), isNull);
+    expect(StudySelection.passage('p1:1-1', 'abc'), isNull);
+    expect(
+      StudySelection.passage('p1:0-4,4-5', '\uFEFFA\r\n😀B'),
+      'p1:0-4,4-5',
+    );
+    expect(StudySelection.passage('p1:0-6', '\uFEFFA\r\n😀B'), isNull);
+    final tooManyPageRanges = List.generate(
+      65,
+      (i) => '${i * 2 + 1}',
+    ).join(',');
+    expect(StudySelection.pages(tooManyPageRanges, pageCount: 200), isNull);
+    final tooManyAudioRanges = List.generate(
+      65,
+      (i) => '${i * 20}-${i * 20 + 10}',
+    ).join(',');
+    expect(StudySelection.audio('ms:$tooManyAudioRanges'), isNull);
+  });
+
+  testWidgets('text source selector exposes validated UTF-16 range controls', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -345,13 +404,22 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Source preview'), findsOneWidget);
+    expect(find.byType(SelectableText), findsOneWidget);
+    final wholeSource = find.byType(CheckboxListTile);
+    expect(wholeSource, findsOneWidget);
+    await tester.tap(wholeSource);
+    await tester.pumpAndSettle();
+    expect(find.byType(TextField), findsOneWidget);
     expect(
-      find.textContaining('Narrow selection is unavailable'),
+      find.text('Enter a valid selection within this source.'),
       findsOneWidget,
     );
-    expect(find.byType(SelectableText), findsOneWidget);
-    expect(find.byType(TextField), findsNothing);
-    expect(find.byType(SegmentedButton<bool>), findsNothing);
+    await tester.enterText(find.byType(TextField), 'p1:0-10');
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Enter a valid selection within this source.'),
+      findsNothing,
+    );
   });
 
   testWidgets('source wizard has no horizontal overflow at phone width', (
@@ -417,6 +485,7 @@ void main() {
       expect(copy.text('errorGeneric'), isNotEmpty);
       expect(copy.text('generate'), isNotEmpty);
       expect(copy.text('preparedSourcesLabel'), isNotEmpty);
+      expect(copy.text('sourceStorageNotice'), isNotEmpty);
       expect(copy.text('sourcePreviewTitle'), isNotEmpty);
       expect(copy.text('narrowSelectionUnavailable'), isNotEmpty);
     }

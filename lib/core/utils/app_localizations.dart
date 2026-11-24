@@ -234,11 +234,13 @@ class AppLocalizations {
       'wizardTitle': 'Create New Quiz',
       'studyNameHint': 'e.g. Software Architecture / Cell Biology',
       'sourceUploadHint':
-          'Text files (TXT, MD, CSV) are available now. Other formats require the file producer.',
+          'Add PDF, DOCX, XLSX, CSV, TXT, MD, image, or audio files.',
       'binarySourceUnavailable':
-          'This file format is not available yet. Text files (TXT, MD, CSV) can be uploaded now.',
+          'A selected text file could not be read as valid UTF-8.',
       'preparedNotesUnavailable':
-          'Prepared Notes are unavailable until the trusted Notes source bridge is ready.',
+          'Prepared Notes arrive ready. Their sources are not uploaded again.',
+      'sourceStorageNotice':
+          'This storage is not an archive. Keep your own copy of each original.',
       'difficultyLabel': 'Difficulty:',
       'reviewThemeLabel': 'Topic:',
       'reviewSourceLabel': 'Source:',
@@ -268,8 +270,11 @@ class AppLocalizations {
           'Account allowance unavailable; {pending} MiB selected',
       'accountQuotaExceededWarning':
           'This selection exceeds the available account allowance.',
-      'wholeDocumentOnly':
-          'Narrow selection is unavailable right now. The whole source will be used.',
+      'wholeDocumentOnly': 'Use the whole source',
+      'selectionPagesLabel': 'PDF page ranges (maximum 100 pages)',
+      'selectionPassageLabel': 'Text passage using UTF-16 offsets',
+      'selectionAudioLabel': 'Audio intervals in milliseconds',
+      'selectionInvalid': 'Enter a valid selection within this source.',
       'passageSelectionHint':
           'Select text to use only that passage. The saved selection uses its source line range.',
       'audioRangeUnavailable':
@@ -277,7 +282,7 @@ class AppLocalizations {
       'capExceededWarning':
           'This selection exceeds the available account allowance.',
       'tapFileToConfigureHint':
-          'Tap a file to preview it. The whole source will be used for now.',
+          'Tap a file to preview it and adjust its selection.',
       'noFilesAddedYet': 'No files added yet. Tap Add files to get started.',
       'mvpLocalOllamaDisclaimer':
           'Note: This may take some time because this MVP is running on a local Ollama machine for testing purposes.',
@@ -618,11 +623,13 @@ class AppLocalizations {
       'wizardTitle': 'Criar Novo Quiz',
       'studyNameHint': 'ex: Arquitetura de Software / Biologia Celular',
       'sourceUploadHint':
-          'Arquivos de texto (TXT, MD, CSV) estão disponíveis. Outros formatos aguardam o serviço de arquivos.',
+          'Adicione arquivos PDF, DOCX, XLSX, CSV, TXT, MD, imagens ou áudio.',
       'binarySourceUnavailable':
-          'Este formato ainda não está disponível. Arquivos de texto (TXT, MD, CSV) podem ser enviados.',
+          'Não foi possível ler um arquivo de texto selecionado como UTF-8 válido.',
       'preparedNotesUnavailable':
-          'As Notas preparadas estarão disponíveis quando a integração confiável estiver pronta.',
+          'As Notas preparadas chegam prontas. As fontes não são enviadas novamente.',
+      'sourceStorageNotice':
+          'Este armazenamento não é um arquivo permanente. Guarde sua própria cópia dos originais.',
       'difficultyLabel': 'Dificuldade:',
       'reviewThemeLabel': 'Tema:',
       'reviewSourceLabel': 'Fonte:',
@@ -653,15 +660,19 @@ class AppLocalizations {
           'Cota da conta indisponível; {pending} MiB selecionados',
       'accountQuotaExceededWarning':
           'Esta seleção excede a cota disponível da conta.',
-      'wholeDocumentOnly':
-          'A seleção de trechos ainda não está disponível. A fonte inteira será usada.',
+      'wholeDocumentOnly': 'Usar a fonte inteira',
+      'selectionPagesLabel':
+          'Intervalos de páginas PDF (máximo de 100 páginas)',
+      'selectionPassageLabel': 'Trecho de texto usando posições UTF-16',
+      'selectionAudioLabel': 'Intervalos de áudio em milissegundos',
+      'selectionInvalid': 'Insira uma seleção válida dentro desta fonte.',
       'passageSelectionHint':
           'Selecione o texto para usar apenas esse trecho. A seleção salva usa as linhas correspondentes na fonte.',
       'audioRangeUnavailable':
           'A duração do áudio não está disponível; esta fonte usa o arquivo inteiro.',
       'capExceededWarning': 'Esta seleção excede a cota disponível da conta.',
       'tapFileToConfigureHint':
-          'Toque em um arquivo para visualizá-lo. A fonte inteira será usada por enquanto.',
+          'Toque em um arquivo para visualizá-lo e ajustar a seleção.',
       'noFilesAddedYet':
           'Nenhum arquivo adicionado ainda. Toque em Adicionar arquivos para começar.',
       'mvpLocalOllamaDisclaimer':
@@ -995,11 +1006,13 @@ class AppLocalizations {
       'wizardTitle': 'สร้างแบบทดสอบใหม่',
       'studyNameHint': 'เช่น สถาปัตยกรรมซอฟต์แวร์ / ชีววิทยาของเซลล์',
       'sourceUploadHint':
-          'รองรับไฟล์ข้อความ TXT, MD และ CSV แล้ว รูปแบบอื่นต้องรอระบบไฟล์',
+          'เพิ่มไฟล์ PDF, DOCX, XLSX, CSV, TXT, MD รูปภาพ หรือเสียงได้',
       'binarySourceUnavailable':
-          'ยังไม่รองรับรูปแบบนี้ อัปโหลดไฟล์ข้อความ TXT, MD และ CSV ได้ในตอนนี้',
+          'ไม่สามารถอ่านไฟล์ข้อความที่เลือกเป็น UTF-8 ที่ถูกต้องได้',
       'preparedNotesUnavailable':
-          'โน้ตที่เตรียมไว้จะใช้ได้เมื่อการเชื่อมต่อ Notes ที่เชื่อถือได้พร้อมใช้งาน',
+          'โน้ตที่เตรียมไว้พร้อมใช้งานแล้ว และจะไม่อัปโหลดแหล่งข้อมูลซ้ำ',
+      'sourceStorageNotice':
+          'พื้นที่นี้ไม่ใช่ที่เก็บถาวร โปรดเก็บสำเนาไฟล์ต้นฉบับไว้ด้วย',
       'difficultyLabel': 'ระดับความยาก:',
       'reviewThemeLabel': 'หัวข้อ:',
       'reviewSourceLabel': 'แหล่งข้อมูล:',
@@ -1028,14 +1041,16 @@ class AppLocalizations {
       'accountQuotaUnavailableLabel':
           'ไม่มีข้อมูลโควตาบัญชี; เลือกไว้ {pending} MiB',
       'accountQuotaExceededWarning': 'ไฟล์ที่เลือกเกินโควตาบัญชีที่เหลืออยู่',
-      'wholeDocumentOnly':
-          'ยังไม่สามารถเลือกบางส่วนได้ ระบบจะใช้แหล่งข้อมูลทั้งหมด',
+      'wholeDocumentOnly': 'ใช้แหล่งข้อมูลทั้งหมด',
+      'selectionPagesLabel': 'ช่วงหน้า PDF (สูงสุด 100 หน้า)',
+      'selectionPassageLabel': 'ช่วงข้อความโดยใช้ตำแหน่ง UTF-16',
+      'selectionAudioLabel': 'ช่วงเสียงหน่วยมิลลิวินาที',
+      'selectionInvalid': 'ระบุช่วงที่ถูกต้องภายในแหล่งข้อมูลนี้',
       'passageSelectionHint':
           'เลือกข้อความเพื่อใช้เฉพาะช่วงนั้น ระบบจะบันทึกช่วงบรรทัดของแหล่งข้อมูล',
       'audioRangeUnavailable':
           'ไม่มีข้อมูลความยาวเสียง แหล่งข้อมูลนี้จะใช้ทั้งไฟล์',
-      'tapFileToConfigureHint':
-          'แตะไฟล์เพื่อดูตัวอย่าง ระบบจะใช้แหล่งข้อมูลทั้งหมดในตอนนี้',
+      'tapFileToConfigureHint': 'แตะไฟล์เพื่อดูตัวอย่างและปรับช่วงที่เลือก',
       'noFilesAddedYet': 'ยังไม่มีไฟล์ที่เพิ่ม แตะเพิ่มไฟล์เพื่อเริ่มต้น',
       'mvpLocalOllamaDisclaimer':
           'หมายเหตุ: การดำเนินการนี้อาจใช้เวลาสักครู่ เนื่องจาก MVP นี้ทำงานบนเครื่องภายในผ่าน Ollama สำหรับการทดสอบ',

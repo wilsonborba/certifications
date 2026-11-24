@@ -110,6 +110,20 @@ void main() {
     },
   );
 
+  test('prepared Notes continuation accepts only a study identifier query', () {
+    final route = CertificationsRoute.parse(
+      Uri.parse('/v1/studies/new?prepared_study_id=study_42'),
+    );
+    expect(route.screen, CertificationsScreen.studyNew);
+    expect(route.requiresAuth, isTrue);
+    expect(route.queryParameters['prepared_study_id'], 'study_42');
+
+    final unsafe = CertificationsRoute.parse(
+      Uri.parse('/v1/studies/new?prepared_study_id=study%2F42'),
+    );
+    expect(unsafe.preparedStudyId, isNull);
+  });
+
   testWidgets(
     'ScreenTrailObserver records template view and opening Area 10 routes performs no mutation',
     (tester) async {

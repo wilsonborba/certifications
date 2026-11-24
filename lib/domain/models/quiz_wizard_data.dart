@@ -27,6 +27,8 @@ class AttachedFile {
     this.lineEnd = 50,
     this.audioStartMs = 0,
     this.audioEndMs = 300000, // 5 minutes default
+    this.selectionKind = 'all',
+    this.selectionSpec = '',
     this.totalPages,
     this.totalLines,
   });
@@ -42,6 +44,8 @@ class AttachedFile {
   int lineEnd;
   int audioStartMs;
   int audioEndMs;
+  String selectionKind;
+  String selectionSpec;
 
   /// Real page count for PDFs, computed client-side right after picking the
   /// file so the range selector can show it and clamp its defaults instead
