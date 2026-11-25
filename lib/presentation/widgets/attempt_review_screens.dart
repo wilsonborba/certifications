@@ -749,7 +749,7 @@ class _QuizStatisticsScreenState extends State<_QuizStatisticsScreen> {
         final data = snapshot.data!;
         return Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 820),
+            constraints: const BoxConstraints(maxWidth: 1100),
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
@@ -757,10 +757,12 @@ class _QuizStatisticsScreenState extends State<_QuizStatisticsScreen> {
                   label: context.tr('completedAttempts'),
                   value: '${data.completedAttemptCount}',
                 ),
+                const SizedBox(height: 8),
                 _Metric(
                   label: context.tr('distinctParticipants'),
                   value: '${data.distinctParticipants}',
                 ),
+                const SizedBox(height: 8),
                 _Metric(
                   label: context.tr('averageScore'),
                   value:
@@ -769,6 +771,7 @@ class _QuizStatisticsScreenState extends State<_QuizStatisticsScreen> {
                       ? context.tr('noScoreSample')
                       : '${data.averageScorePct!.toStringAsFixed(1)}% · n=${data.averageScoreDenominator}',
                 ),
+                const SizedBox(height: 8),
                 _Metric(
                   label: context.tr('averageDuration'),
                   value:
@@ -796,11 +799,12 @@ class _QuizStatisticsScreenState extends State<_QuizStatisticsScreen> {
                         binding: reportView.binding,
                         title: reportView.template.title,
                         mode: ChartFrameMode.embed,
-                        height: 320,
+                        height: 380,
                         showAxisTitles: true,
                       ),
-                    ),
-                  _ScoreDistributionTable(bands: data.scoreDistribution),
+                    )
+                  else
+                    _ScoreDistributionTable(bands: data.scoreDistribution),
                   Text('n=${data.scoreDistributionDenominator}'),
                 ],
                 const SizedBox(height: 16),
