@@ -91,6 +91,18 @@ class CertificationsRoute {
       );
     }
 
+    // Certificate artifacts use this public, stable URL in their QR code.
+    // Keep the existing v1 route as a compatibility alias, while normalizing
+    // both paths to the same safe telemetry template.
+    if (segs.length == 2 && segs[0] == 'certificates') {
+      return CertificationsRoute(
+        screen: CertificationsScreen.certificate,
+        routeTemplate: '/v1/certificates/:certificate_code',
+        id: segs[1],
+        queryParameters: qp,
+      );
+    }
+
     if (segs[0] == 'v1') {
       if (segs.length == 2) {
         switch (segs[1]) {

@@ -5,6 +5,7 @@ import 'package:certifications/core/utils/app_preferences.dart';
 import 'package:certifications/core/utils/my_nagivation.dart';
 import 'package:certifications/core/utils/my_router_parser.dart';
 import 'package:certifications/core/utils/my_theme.dart';
+import 'package:certifications/domain/services/certificate_verification_api_service.dart';
 import 'package:certifications/domain/services/client_telemetry_service.dart';
 import 'package:certifications/presentation/components/auth/auth_artifact_params.dart';
 import 'package:certifications/presentation/components/auth/session_gate.dart';
@@ -21,7 +22,13 @@ import 'package:certifications/presentation/widgets/boarding/on_boarding.dart';
 import 'package:flutter/material.dart';
 
 class App extends StatefulWidget {
-  const App({super.key});
+  const App({this.initialRoute, this.certificateService, super.key});
+
+  /// Optional initial route and certificate service keep route-level app tests
+  /// on the same public routing and API path as a scanned certificate QR code.
+  final String? initialRoute;
+  final CertificateVerificationApiService? certificateService;
+
   @override
   State<App> createState() => _AppState();
 }
@@ -45,6 +52,7 @@ class _AppState extends State<App> {
     animation: preferences,
     builder: (_, __) => MaterialApp(
       debugShowCheckedModeBanner: false,
+      initialRoute: widget.initialRoute,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: preferences.themeMode,
@@ -66,7 +74,9 @@ class _AppState extends State<App> {
         ScreenTrailObserver(ClientTelemetryService.instance.tracker),
       ],
       onGenerateRoute: (settings) {
-        final currentUri = Uri.tryParse(getLocationHref());
+        final currentUri = Uri.tryParse(
+          widget.initialRoute ?? getLocationHref(),
+        );
         final currentScreen = currentUri == null
             ? null
             : CertificationsRoute.parse(currentUri).screen;
@@ -74,7 +84,8 @@ class _AppState extends State<App> {
         if (currentScreen == CertificationsScreen.certificate &&
             (segmentPath == '/' ||
                 segmentPath == '/v1' ||
-                segmentPath == '/v1/certificates')) {
+                segmentPath == '/v1/certificates' ||
+                segmentPath == '/certificates')) {
           // Flutter's default deep-link stack traverses intermediate paths.
           // Keep those placeholders from invoking the signed-in dashboard
           // while a public certificate link is being opened.
@@ -165,7 +176,10 @@ class _AppState extends State<App> {
           return MaterialPageRoute(
             settings: RouteSettings(name: route.routeTemplate),
             builder: (_) => _AuthenticatedContent(
-              child: AttemptResultsScreen(attemptId: route.id!),
+              child: AttemptResultsScreen(
+                attemptId: route.id!,
+                certificateService: widget.certificateService,
+              ),
             ),
           );
         }
@@ -189,7 +203,10 @@ class _AppState extends State<App> {
             route.id != null) {
           return MaterialPageRoute(
             settings: RouteSettings(name: route.routeTemplate),
-            builder: (_) => CertificateVerificationScreen(code: route.id!),
+            builder: (_) => CertificateVerificationScreen(
+              code: route.id!,
+              service: widget.certificateService,
+            ),
           );
         }
         return MaterialPageRoute(
