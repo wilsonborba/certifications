@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - *(release)* Sync release/v1.0.0 back to feature/main ([`689130b`](https://github.com/wilsonborba/certifications/commit/689130b27a11b02f5455f18ff6af556a7a619843))
 - *(settings)* Dynamically resolve build timestamp from environment ([`02ad3f1`](https://github.com/wilsonborba/certifications/commit/02ad3f102d65a59649ea8fd654f5dfaac4ce560d))
 - Remove deprecated legacy tokenized query parameter ([`d8e9cbc`](https://github.com/wilsonborba/certifications/commit/d8e9cbcbc1da3372c439699a3c5817f08ac3a567))
+- Remove cookie consent snackbar ([`64ba6e2`](https://github.com/wilsonborba/certifications/commit/64ba6e211c0d516c47e9fddafa97763004c0720f))
 
 ## [1.0.0] - 2026-09-08
 
