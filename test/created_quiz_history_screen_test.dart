@@ -45,9 +45,17 @@ class _HistoryApi extends StudyHistoryApiService {
   }
 }
 
-Widget _app(Widget child) => MaterialApp(
+Widget _app(
+  Widget child, {
+  Locale locale = const Locale('en'),
+  double textScale = 1,
+}) => MaterialApp(
+  locale: locale,
   builder: (context, child) => MediaQuery(
-    data: const MediaQueryData(size: Size(390, 844)),
+    data: MediaQuery.of(context).copyWith(
+      size: const Size(390, 844),
+      textScaler: TextScaler.linear(textScale),
+    ),
     child: child!,
   ),
   localizationsDelegates: const [
@@ -70,6 +78,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Created quiz 1'), findsOneWidget);
     expect(find.text('1-20 of 55'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey('created-history-advanced-filters')),
+    );
+    await tester.pumpAndSettle();
 
     final search = find.widgetWithText(
       TextField,
@@ -130,6 +143,42 @@ void main() {
     expect(api.queries.last.quizId, isNull);
     expect(api.queries.last.status, isNull);
     expect(api.queries.last.tag, isNull);
+  });
+
+  testWidgets('phone shows the full localized title and keeps search visible', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        CreatedQuizHistoryScreen(api: _HistoryApi()),
+        locale: const Locale('pt'),
+        textScale: 1.3,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final title = find.text('Histórico de questionários criados');
+    expect(title, findsOneWidget);
+    final titleRect = tester.getRect(title);
+    expect(titleRect.left, greaterThanOrEqualTo(0));
+    expect(titleRect.right, lessThanOrEqualTo(390));
+    expect(
+      find.text('Buscar títulos de estudos e questionários'),
+      findsOneWidget,
+    );
+    expect(find.text('ID do questionário'), findsNothing);
+    expect(find.text('Created quiz 1'), findsOneWidget);
+    expect(find.text('1-20 de 55'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(
+      find.byKey(const ValueKey('created-history-advanced-filters')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('ID do questionário'), findsOneWidget);
+    expect(find.text('Criado a partir de: Escolher data'), findsOneWidget);
+    expect(find.text('Aplicar filtros'), findsOneWidget);
+    expect(find.text('Limpar filtros'), findsOneWidget);
   });
 
   testWidgets('history request errors retry and empty results are distinct', (

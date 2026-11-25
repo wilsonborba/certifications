@@ -104,6 +104,112 @@ class _CreatedQuizHistoryScreenState extends State<CreatedQuizHistoryScreen> {
     });
   }
 
+  Widget _searchField(double width) => SizedBox(
+    width: width,
+    child: TextField(
+      controller: _search,
+      decoration: InputDecoration(
+        labelText: context.tr('createdHistorySearch'),
+        prefixIcon: const Icon(Icons.search),
+      ),
+      onSubmitted: (_) => _apply(),
+    ),
+  );
+
+  List<Widget> _advancedFilterFields() => [
+    SizedBox(
+      width: 190,
+      child: TextField(
+        controller: _quizId,
+        decoration: InputDecoration(labelText: context.tr('quizIdFilter')),
+        onSubmitted: (_) => _apply(),
+      ),
+    ),
+    SizedBox(
+      width: 210,
+      child: DropdownButtonFormField<String?>(
+        key: ValueKey('study-history-status-$_status'),
+        initialValue: _status,
+        isExpanded: true,
+        decoration: InputDecoration(
+          labelText: context.tr('createdHistoryStatus'),
+        ),
+        items: [
+          DropdownMenuItem<String?>(
+            value: null,
+            child: Text(context.tr('allStatuses')),
+          ),
+          for (final status in ['draft', 'active', 'expired'])
+            DropdownMenuItem<String?>(
+              value: status,
+              child: Text(context.tr('studyStatus_$status')),
+            ),
+        ],
+        onChanged: (value) => setState(() => _status = value),
+      ),
+    ),
+    SizedBox(
+      width: 200,
+      child: FutureBuilder<StudyHistoryPage>(
+        future: _future,
+        builder: (context, snapshot) {
+          final tags = snapshot.data?.availableTags ?? const [];
+          return DropdownButtonFormField<String?>(
+            key: ValueKey('study-history-tag-$_tag'),
+            initialValue: _tag,
+            isExpanded: true,
+            decoration: InputDecoration(labelText: context.tr('tagFilter')),
+            items: [
+              DropdownMenuItem<String?>(
+                value: null,
+                child: Text(context.tr('allTags')),
+              ),
+              for (final tag in tags)
+                DropdownMenuItem<String?>(
+                  value: tag.slug,
+                  child: Text(tag.label),
+                ),
+            ],
+            onChanged: (value) => setState(() => _tag = value),
+          );
+        },
+      ),
+    ),
+    OutlinedButton.icon(
+      onPressed: () => _pickDate(start: true),
+      icon: const Icon(Icons.calendar_today_outlined),
+      label: Text(_dateLabel(_createdFrom, start: true)),
+    ),
+    OutlinedButton.icon(
+      onPressed: () => _pickDate(start: false),
+      icon: const Icon(Icons.event_outlined),
+      label: Text(_dateLabel(_createdTo, start: false)),
+    ),
+    FilledButton(onPressed: _apply, child: Text(context.tr('applyFilters'))),
+    TextButton(onPressed: _clear, child: Text(context.tr('clearFilters'))),
+  ];
+
+  Widget _advancedFilterWrap({bool includeSearch = false}) => Wrap(
+    spacing: 10,
+    runSpacing: 8,
+    crossAxisAlignment: WrapCrossAlignment.center,
+    children: [
+      if (includeSearch) _searchField(240),
+      ..._advancedFilterFields(),
+    ],
+  );
+
+  Widget _dateRangeError() => Align(
+    alignment: Alignment.centerLeft,
+    child: Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Text(
+        context.tr('invalidDateRange'),
+        style: TextStyle(color: Theme.of(context).colorScheme.error),
+      ),
+    ),
+  );
+
   @override
   void dispose() {
     _search.dispose();
@@ -113,7 +219,11 @@ class _CreatedQuizHistoryScreenState extends State<CreatedQuizHistoryScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AttachmentAppBar(title: context.tr('createdQuizHistoryTitle')),
+    appBar: AttachmentAppBar(
+      title: MediaQuery.sizeOf(context).width < 600
+          ? ''
+          : context.tr('createdQuizHistoryTitle'),
+    ),
     endDrawer: const AttachmentSideMenu(currentTab: 'studies'),
     body: SafeArea(
       child: Center(
@@ -122,118 +232,34 @@ class _CreatedQuizHistoryScreenState extends State<CreatedQuizHistoryScreen> {
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
+              crossAxisAlignment: MediaQuery.sizeOf(context).width < 600
+                  ? CrossAxisAlignment.stretch
+                  : CrossAxisAlignment.center,
               children: [
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 240,
-                      child: TextField(
-                        controller: _search,
-                        decoration: InputDecoration(
-                          labelText: context.tr('createdHistorySearch'),
-                          prefixIcon: const Icon(Icons.search),
-                        ),
-                        onSubmitted: (_) => _apply(),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 190,
-                      child: TextField(
-                        controller: _quizId,
-                        decoration: InputDecoration(
-                          labelText: context.tr('quizIdFilter'),
-                        ),
-                        onSubmitted: (_) => _apply(),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 210,
-                      child: DropdownButtonFormField<String?>(
-                        key: ValueKey('study-history-status-$_status'),
-                        initialValue: _status,
-                        isExpanded: true,
-                        decoration: InputDecoration(
-                          labelText: context.tr('createdHistoryStatus'),
-                        ),
-                        items: [
-                          DropdownMenuItem<String?>(
-                            value: null,
-                            child: Text(context.tr('allStatuses')),
-                          ),
-                          for (final status in ['draft', 'active', 'expired'])
-                            DropdownMenuItem<String?>(
-                              value: status,
-                              child: Text(context.tr('studyStatus_$status')),
-                            ),
-                        ],
-                        onChanged: (value) => setState(() => _status = value),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 200,
-                      child: FutureBuilder<StudyHistoryPage>(
-                        future: _future,
-                        builder: (context, snapshot) {
-                          final tags = snapshot.data?.availableTags ?? const [];
-                          return DropdownButtonFormField<String?>(
-                            key: ValueKey('study-history-tag-$_tag'),
-                            initialValue: _tag,
-                            isExpanded: true,
-                            decoration: InputDecoration(
-                              labelText: context.tr('tagFilter'),
-                            ),
-                            items: [
-                              DropdownMenuItem<String?>(
-                                value: null,
-                                child: Text(context.tr('allTags')),
-                              ),
-                              for (final tag in tags)
-                                DropdownMenuItem<String?>(
-                                  value: tag.slug,
-                                  child: Text(tag.label),
-                                ),
-                            ],
-                            onChanged: (value) => setState(() => _tag = value),
-                          );
-                        },
-                      ),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () => _pickDate(start: true),
-                      icon: const Icon(Icons.calendar_today_outlined),
-                      label: Text(_dateLabel(_createdFrom, start: true)),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () => _pickDate(start: false),
-                      icon: const Icon(Icons.event_outlined),
-                      label: Text(_dateLabel(_createdTo, start: false)),
-                    ),
-                    FilledButton(
-                      onPressed: _apply,
-                      child: Text(context.tr('applyFilters')),
-                    ),
-                    TextButton(
-                      onPressed: _clear,
-                      child: Text(context.tr('clearFilters')),
-                    ),
-                  ],
-                ),
-                if (_invalidDateRange)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        context.tr('invalidDateRange'),
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
+                if (MediaQuery.sizeOf(context).width < 600) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      context.tr('createdQuizHistoryTitle'),
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
                   ),
+                  _searchField(double.infinity),
+                  const SizedBox(height: 4),
+                  ExpansionTile(
+                    key: const ValueKey('created-history-advanced-filters'),
+                    tilePadding: EdgeInsets.zero,
+                    title: Text(context.tr('createdHistoryFilters')),
+                    children: [
+                      _advancedFilterWrap(),
+                      if (_invalidDateRange) _dateRangeError(),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                ] else ...[
+                  _advancedFilterWrap(includeSearch: true),
+                  if (_invalidDateRange) _dateRangeError(),
+                ],
                 const SizedBox(height: 12),
                 Expanded(
                   child: FutureBuilder<StudyHistoryPage>(
