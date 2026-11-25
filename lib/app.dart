@@ -11,6 +11,7 @@ import 'package:certifications/presentation/components/auth/session_gate.dart';
 import 'package:certifications/presentation/widgets/auth/on_sync_auth.dart';
 import 'package:certifications/presentation/widgets/plans/on_plans.dart';
 import 'package:certifications/presentation/widgets/quiz/on_shared_quiz.dart';
+import 'package:certifications/presentation/widgets/generation_progress_screen.dart';
 import 'package:flutter/material.dart';
 
 class App extends StatefulWidget {
@@ -86,7 +87,7 @@ class _AppState extends State<App> {
             builder: (_) => OnSharedQuizScreen(shareToken: route.id!),
           );
         }
-        if (route.screen == CertificationsScreen.studyNew) {
+if (route.screen == CertificationsScreen.studyNew) {
           final preparedStudyId = route.preparedStudyId;
           if (preparedStudyId != null) {
             return MaterialPageRoute(
@@ -94,6 +95,17 @@ class _AppState extends State<App> {
               builder: (_) => SessionGate(preparedStudyId: preparedStudyId),
             );
           }
+        }
+        if (route.screen == CertificationsScreen.generation &&
+            route.id != null) {
+          return MaterialPageRoute(
+            settings: RouteSettings(
+              name: '/v1/generations/${Uri.encodeComponent(route.id!)}',
+            ),
+            builder: (_) => SessionGate(
+              authenticatedChild: GenerationProgressScreen(jobId: route.id!),
+            ),
+          );
         }
         return MaterialPageRoute(
           settings: RouteSettings(name: route.routeTemplate),

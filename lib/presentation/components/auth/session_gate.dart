@@ -6,9 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:certifications/core/utils/app_localizations.dart';
 
 class SessionGate extends StatelessWidget {
-  const SessionGate({super.key, this.preparedStudyId});
+const SessionGate({super.key, this.preparedStudyId, this.authenticatedChild});
 
   final String? preparedStudyId;
+  final Widget? authenticatedChild;
 
   Future<bool> _check() async {
     try {
@@ -40,7 +41,7 @@ class SessionGate extends StatelessWidget {
 
         final hasSession = snap.data == true;
         return hasSession
-            ? OnAttachmentScreen(preparedStudyId: preparedStudyId)
+? authenticatedChild ?? OnAttachmentScreen(preparedStudyId: preparedStudyId)
             : const OnBoardingScreen();
       },
     );

@@ -7,10 +7,11 @@ import 'package:certifications/domain/models/study.dart';
 import 'package:certifications/domain/models/study_selection.dart';
 import 'package:certifications/domain/services/client_telemetry_service.dart';
 import 'package:certifications/domain/services/draft_progress_store.dart';
+import 'package:certifications/domain/models/generation.dart';
+import 'package:certifications/domain/services/generation_api_service.dart';
 import 'package:certifications/domain/services/study_api_service.dart';
 import 'package:certifications/presentation/components/attachment/app_bar.dart';
 import 'package:certifications/presentation/components/quiz/futuristic_loading.dart';
-import 'package:certifications/presentation/widgets/question_session.dart';
 import 'package:certifications/presentation/widgets/quiz_wizard/desktop_quiz_wizard.dart';
 import 'package:certifications/presentation/widgets/quiz_wizard/mobile_quiz_wizard.dart';
 import 'package:flutter/material.dart';
@@ -23,12 +24,13 @@ class OnQuizWizardScreen extends StatefulWidget {
     this.initialName,
     this.initialStep = 0,
     this.apiService,
+    this.generationApi,
+    this.progressStore,
     this.draft,
   });
 
-  /// Called after the study is created and the quiz session is finished, so
-  /// the caller (dashboard) can reload its list. This is now a post-success
-  /// hook only — the actual generate work happens inside this screen.
+  /// Called after a generation job is durably created or resumed so the
+  /// caller (dashboard) can reload its study list.
   final VoidCallback onGenerate;
 
   /// The draft study being resumed, if any. When set the wizard's current
@@ -46,6 +48,8 @@ class OnQuizWizardScreen extends StatefulWidget {
 
   /// Optional service and draft seams for isolated review and contract tests.
   final StudyApiService? apiService;
+  final GenerationApiService? generationApi;
+  final DraftProgressStore? progressStore;
   final QuizWizardData? draft;
 
   @override
@@ -54,6 +58,9 @@ class OnQuizWizardScreen extends StatefulWidget {
 
 class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
   late final _api = widget.apiService ?? StudyApiService();
+  late final _generationApi = widget.generationApi ?? GenerationApiService();
+  late final _progressStore =
+      widget.progressStore ?? DraftProgressStore.instance;
 
   late final wizardData =
       widget.draft ??
@@ -72,11 +79,6 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
   int _generateStep = 0; // tracks which pipeline step is currently running
   String? _generateError;
 
-  Timer? _progressTimer;
-  int _questionsGenerated = 0;
-  int? _questionsTarget;
-  int _chunksDone = 0;
-  int _chunksTotal = 0;
   double? _uploadProgress;
   int _uploadFileIndex = 0;
   Future<void>? _draftPreparation;
@@ -128,11 +130,8 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
         studyLimitBytes: study.maxStudyBytes,
       );
       wizardData.setExistingSources(study.sources);
-      DraftProgressStore.instance.saveStep(study.id, wizardData.currentStep);
-      DraftProgressStore.instance.saveVisibility(
-        study.id,
-        wizardData.visibility,
-      );
+      _progressStore.saveStep(study.id, wizardData.currentStep);
+      _progressStore.saveVisibility(study.id, wizardData.visibility);
     }();
     _draftPreparation = operation;
     try {
@@ -146,50 +145,16 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
   void _persistDraftState() {
     final studyId = _activeStudyId;
     if (studyId != null) {
-      DraftProgressStore.instance.saveStep(studyId, wizardData.currentStep);
-      DraftProgressStore.instance.saveVisibility(
-        studyId,
-        wizardData.visibility,
-      );
+      _progressStore.saveStep(studyId, wizardData.currentStep);
+      _progressStore.saveVisibility(studyId, wizardData.visibility);
     }
   }
 
   @override
   void dispose() {
-    _progressTimer?.cancel();
     wizardData.removeListener(_persistDraftState);
     wizardData.dispose();
     super.dispose();
-  }
-
-  /// Polls the backend for real "questions generated so far" progress while
-  /// the AI generation step runs, instead of leaving the loading screen on a
-  /// static message. Cancelled as soon as [_generate] moves past step 3.
-  void _startProgressPolling(String studyId) {
-    _progressTimer?.cancel();
-    _pollProgressOnce(studyId); // don't wait 5s for the first update
-    // Polled, not pushed: every 5s is frequent enough to feel live without
-    // hammering the backend on a loading screen users may sit on for a while.
-    _progressTimer = Timer.periodic(
-      const Duration(seconds: 5),
-      (_) => _pollProgressOnce(studyId),
-    );
-  }
-
-  Future<void> _pollProgressOnce(String studyId) async {
-    try {
-      final progress = await _api.getGenerationProgress(studyId);
-      if (!mounted) return;
-      setState(() {
-        _questionsGenerated = progress.questionsGenerated;
-        _questionsTarget = progress.questionsTarget;
-        _chunksDone = progress.chunksDone;
-        _chunksTotal = progress.chunksTotal;
-      });
-    } catch (_) {
-      // Best-effort: a missed poll just means the count doesn't tick this
-      // round, the loading screen still shows the last known progress.
-    }
   }
 
   /// Matches the Rust API's content-type allowlist for uploaded sources.
@@ -370,171 +335,122 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
 
   Future<void> _generate() async {
     if (_analyzingSources) return;
+    final locale = Localizations.localeOf(context).languageCode;
     setState(() {
       _generating = true;
-      _generateStep = 0; // step 0: preparing the saved study
+      _generateStep = 0;
       _generateError = null;
     });
 
     try {
-      // 1. Reuse the draft opened before source selection, or create one as a
-      // fallback when generation is started directly.
       final studyId = _activeStudyId ?? (await _api.create(wizardData.name)).id;
       _activeStudyId = studyId;
 
-      setState(() => _generateStep = 1); // step 1: uploading files
-
-      // 2. Upload each local source once, reusing persisted draft sources on
-      // retries or after an optional source inspection.
-      await _uploadAttachedFiles(studyId);
-
-      setState(() {
-        _generateStep = 2; // step 2: generating questions with AI
-        _questionsGenerated = 0;
-        _chunksDone = 0;
-        _chunksTotal = 0;
-        _questionsTarget = wizardData.questionCount;
-      });
-      _startProgressPolling(studyId);
-
-      List<StudyQuestion> questions;
-      try {
-        questions = await _api.generateQuestions(
-          studyId: studyId,
-          difficulty: wizardData.difficulty.name,
-          useWeb: wizardData.useWeb,
-          idempotencyKey: '${DateTime.now().microsecondsSinceEpoch}-question',
-          questionCount: wizardData.questionCount,
-        );
-      } catch (e) {
-        // Immediate client/auth/quota errors should not enter recovery loop
-        if (e is StudyApiException &&
-            (e.statusCode == 400 ||
-                e.statusCode == 401 ||
-                e.statusCode == 402 ||
-                e.statusCode == 403 ||
-                e.statusCode == 404 ||
-                e.statusCode == 422 ||
-                e.statusCode == 429)) {
-          rethrow;
-        }
-
-        // If the HTTP connection dropped or timed out on client while server continued
-        // (e.g. Cloudflare 100s proxy timeout 524, 504 Gateway Timeout, or network drop),
-        // poll until generation completes on the server or fails.
-        List<StudyQuestion> recovered = [];
-        final deadline = DateTime.now().add(const Duration(minutes: 6));
-        while (DateTime.now().isBefore(deadline)) {
-          await Future.delayed(const Duration(seconds: 4));
-          if (!mounted) return;
-          try {
-            final progress = await _api.getGenerationProgress(studyId);
-            if (mounted) {
-              setState(() {
-                _questionsGenerated = progress.questionsGenerated;
-                _questionsTarget = progress.questionsTarget;
-                _chunksDone = progress.chunksDone;
-                _chunksTotal = progress.chunksTotal;
-              });
-            }
-            if (progress.status == 'error') {
-              rethrow;
-            }
-            if (progress.status == 'ready' || progress.questionsGenerated > 0) {
-              final list = await _api.getQuestions(studyId);
-              if (list.isNotEmpty &&
-                  (progress.status == 'ready' ||
-                      list.length >= wizardData.questionCount)) {
-                recovered = list;
-                break;
-              }
-            }
-          } catch (pollErr) {
-            if (pollErr is StudyApiException && pollErr.statusCode == 404) {
-              rethrow;
-            }
-            // Direct check for questions
-            final list = await _api
-                .getQuestions(studyId)
-                .catchError((_) => <StudyQuestion>[]);
-            if (list.isNotEmpty) {
-              recovered = list;
-              break;
-            }
-          }
-        }
-        if (recovered.isNotEmpty) {
-          questions = recovered;
-        } else {
-          rethrow;
+      // A browser refresh or navigation back must resume the existing server
+      // job instead of creating a second generation request.
+      final savedJobId = await _progressStore.getGenerationJobId(studyId);
+      if (savedJobId != null && savedJobId.isNotEmpty) {
+        try {
+          await _generationApi.get(savedJobId);
+          await _openGeneration(studyId, savedJobId);
+          return;
+        } on GenerationApiException catch (error) {
+          if (error.statusCode != 404) rethrow;
+          await _progressStore.clearGenerationJobId(studyId);
         }
       }
-      _progressTimer?.cancel();
 
-      // 3. Record last-opened time for the draft-resume hero card.
-      await DraftProgressStore.instance.touch(studyId);
+      setState(() => _generateStep = 1);
+      await _uploadAttachedFiles(studyId);
+      setState(() => _generateStep = 2);
 
-      if (!mounted) return;
-
-      // 4. Navigate to the question session with pre-generated questions.
-      // We replace the wizard route with QuestionSession so that the wizard
-      // is completely unmounted and does not attempt to pop afterwards.
-      widget.onGenerate();
-      await Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => QuestionSession(
-            studyId: studyId,
-            studyName: wizardData.name,
-            difficulty: wizardData.difficulty.name,
-            useWeb: wizardData.useWeb,
-            questionCount: wizardData.questionCount,
-            initialQuestions: questions,
-          ),
+      // Persist before POST so a network timeout retries with the same key.
+      var idempotencyKey = await _progressStore.getGenerationIdempotencyKey(
+        studyId,
+      );
+      if (idempotencyKey == null || idempotencyKey.isEmpty) {
+        idempotencyKey = '${DateTime.now().microsecondsSinceEpoch}-generation';
+        await _progressStore.saveGenerationIdempotencyKey(
+          studyId,
+          idempotencyKey,
+        );
+      }
+      final language = switch (locale) {
+        'pt' => 'pt-BR',
+        'th' => 'th',
+        _ => 'en',
+      };
+      final job = await _generationApi.start(
+        studyId,
+        StartGenerationRequest(
+          language: language,
+          count: wizardData.questionCount,
+          idempotencyKey: idempotencyKey,
         ),
       );
+      await _progressStore.saveGenerationJobId(studyId, job.id);
+      await _progressStore.clearGenerationIdempotencyKey(studyId);
+      await _progressStore.touch(studyId);
+      await _openGeneration(studyId, job.id);
     } on StudyApiException catch (e, stack) {
-      _progressTimer?.cancel();
-      ClientTelemetryService.instance.reportHandledError(
-        title: 'Quiz Wizard API Failure (${e.statusCode})',
-        error: e.message ?? e.toString(),
-        stackTrace: stack,
-        errorCode: 'STUDY_API_${e.statusCode}',
-        requestId: e.requestId,
-        route: '/quiz_wizard',
-        details: {
-          'status_code': e.statusCode,
-          'message': e.message,
-          'study_id': widget.studyId,
-        },
-      );
-      if (!mounted) return;
-      setState(() {
-        _generating = false;
-        _generateStep = 0;
-        _generateError = e.statusCode == 402
-            ? context.tr('errorPaymentRequired')
-            : (e.message != null && e.message!.isNotEmpty
-                  ? e.message
-                  : context.tr('errorGeneric'));
-      });
+      _showGenerateError(e.message, e.statusCode, e.requestId, stack);
+    } on GenerationApiException catch (e, stack) {
+      _showGenerateError(e.message, e.statusCode, null, stack);
     } catch (e, stack) {
-      _progressTimer?.cancel();
       ClientTelemetryService.instance.reportHandledError(
         title: 'Quiz Wizard Unhandled Error',
         error: e.toString(),
         stackTrace: stack,
         errorCode: 'WIZARD_EXCEPTION',
         route: '/quiz_wizard',
-        details: {'study_id': widget.studyId},
+        details: {'study_id': _activeStudyId},
       );
-      if (!mounted) return;
-      setState(() {
-        _generating = false;
-        _generateStep = 0;
-        _generateError = context.tr('errorGeneric');
-      });
+      if (mounted) {
+        setState(() {
+          _generating = false;
+          _generateStep = 0;
+          _generateError = context.tr('errorGeneric');
+        });
+      }
     }
+  }
+
+  Future<void> _openGeneration(String studyId, String jobId) async {
+    if (!mounted) return;
+    await _progressStore.touch(studyId);
+    if (!mounted) return;
+    widget.onGenerate();
+    await Navigator.pushReplacementNamed(
+      context,
+      '/v1/generations/${Uri.encodeComponent(jobId)}',
+    );
+  }
+
+  void _showGenerateError(
+    String? message,
+    int statusCode,
+    String? requestId,
+    StackTrace stack,
+  ) {
+    ClientTelemetryService.instance.reportHandledError(
+      title: 'Quiz Wizard Generation API Failure ($statusCode)',
+      error: message ?? 'Generation request failed',
+      stackTrace: stack,
+      errorCode: 'GENERATION_API_$statusCode',
+      requestId: requestId,
+      route: '/quiz_wizard',
+      details: {'status_code': statusCode, 'study_id': _activeStudyId},
+    );
+    if (!mounted) return;
+    setState(() {
+      _generating = false;
+      _generateStep = 0;
+      _generateError = statusCode == 402
+          ? context.tr('errorPaymentRequired')
+          : (message != null && message.isNotEmpty
+                ? message
+                : context.tr('errorGeneric'));
+    });
   }
 
   @override
@@ -553,12 +469,8 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
             messages: [
               context.tr('loadingCreatingStudy'),
               context.tr('loadingUploadingFiles'),
-              context.tr('loadingAlmostReady'),
+              context.tr('generationStarting'),
             ],
-            questionsGenerated: _generateStep == 2 ? _questionsGenerated : null,
-            questionsTarget: _questionsTarget,
-            chunksDone: _chunksDone,
-            chunksTotal: _chunksTotal,
             uploadProgress: _generateStep == 1 ? _uploadProgress : null,
             uploadFileIndex: _uploadFileIndex,
             uploadFileCount: wizardData.attachedFiles.length,

@@ -1022,24 +1022,11 @@ class Step3FormatView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 28),
-        SwitchListTile.adaptive(
-          contentPadding: EdgeInsets.zero,
-          title: Text(
-            context.tr('useWeb'),
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+        Text(
+          context.tr('generationWebResearchUnavailable'),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
-          subtitle: Text(
-            context.tr('useWebDescription'),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.6),
-            ),
-          ),
-          value: wizardData.useWeb,
-          onChanged: wizardData.setUseWeb,
         ),
       ],
     );
