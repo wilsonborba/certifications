@@ -251,9 +251,20 @@ class _CreatedQuizHistoryScreenState extends State<CreatedQuizHistoryScreen> {
                     tilePadding: EdgeInsets.zero,
                     title: Text(context.tr('createdHistoryFilters')),
                     children: [
-                      _advancedFilterWrap(),
-                      if (_invalidDateRange) _dateRangeError(),
-                      const SizedBox(height: 8),
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: MediaQuery.sizeOf(context).height * 0.4,
+                        ),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              _advancedFilterWrap(),
+                              if (_invalidDateRange) _dateRangeError(),
+                              const SizedBox(height: 8),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ] else ...[
