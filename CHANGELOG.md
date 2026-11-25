@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - *(build)* Keep image below 4.11.0 for the web build (#61) ([`b0daad0`](https://github.com/wilsonborba/certifications/commit/b0daad08da8f39b417bc5b5579715e0ec0e1ab06))
 - *(core)* Fix Area 12 privacy, ScreenTrailObserver, Area 11 routes, and pubspec.lock (#51) ([`4e3c23f`](https://github.com/wilsonborba/certifications/commit/4e3c23f57b248f5999147647c0aba8af9999098d))
 - *(study)* Keep audio selection on whole source ([`ca1b48b`](https://github.com/wilsonborba/certifications/commit/ca1b48b5158ad857bf8abc1c9212b7acec57fa31))
+- Render Reports charts and complete certificate UI states ([`698aeb5`](https://github.com/wilsonborba/certifications/commit/698aeb5e04b96f846a464ec0d0c62e40fac00b4d))
 
 ### 💼 Other Changes
 
