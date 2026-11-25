@@ -54,8 +54,11 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
     Study? mostRecent;
     DateTime? mostRecentAt;
     for (final study in standby) {
-      final touchedAt = await DraftProgressStore.instance.getLastOpenedAt(study.id);
-      if (touchedAt != null && (mostRecentAt == null || touchedAt.isAfter(mostRecentAt))) {
+      final touchedAt = await DraftProgressStore.instance.getLastOpenedAt(
+        study.id,
+      );
+      if (touchedAt != null &&
+          (mostRecentAt == null || touchedAt.isAfter(mostRecentAt))) {
         mostRecent = study;
         mostRecentAt = touchedAt;
       }
@@ -124,7 +127,9 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(context.tr('delete')),
-        content: Text(context.trParams('deleteSelectedConfirm', {'count': '$count'})),
+        content: Text(
+          context.trParams('deleteSelectedConfirm', {'count': '$count'}),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -155,9 +160,9 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
       _selectionMode = false;
       _selectedIds.clear();
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.tr('studyDeletedSuccess'))),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.tr('studyDeletedSuccess'))));
     _reload();
   }
 
@@ -167,16 +172,17 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
     final isDesktop = width >= 768;
 
     return Scaffold(
-      appBar: AttachmentAppBar(title: context.tr('myStudiesTitle'), currentTab: 'studies'),
+      appBar: AttachmentAppBar(
+        title: context.tr('myStudiesTitle'),
+        currentTab: 'studies',
+      ),
       endDrawer: const AttachmentSideMenu(currentTab: 'studies'),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => OnQuizWizardScreen(
-                onGenerate: _reload,
-              ),
+              builder: (_) => OnQuizWizardScreen(onGenerate: _reload),
             ),
           );
         },
@@ -192,14 +198,23 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
             }
             final data = snapshot.data;
             final studies = data?.studies ?? [];
-            final allStandby = studies.where((s) => s.status != 'completed').toList();
+            final allStandby = studies
+                .where((s) => s.status != 'completed')
+                .toList();
             final standby = _searchQuery.isEmpty
                 ? allStandby
                 : allStandby
-                      .where((s) => s.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+                      .where(
+                        (s) => s.name.toLowerCase().contains(
+                          _searchQuery.toLowerCase(),
+                        ),
+                      )
                       .toList();
-            final totalBytes = studies.fold<int>(0, (sum, s) => sum + s.activeSizeBytes);
-            final completedCount = data?.completedQuizzes.length ??
+            final totalBytes = studies.any((s) => s.activeSizeBytes == null)
+                ? null
+                : studies.fold<int>(0, (sum, s) => sum + s.activeSizeBytes!);
+            final completedCount =
+                data?.completedQuizzes.length ??
                 studies.where((s) => s.status == 'completed').length;
 
             return SingleChildScrollView(
@@ -221,12 +236,11 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                       const SizedBox(height: 8),
                       Text(
                         context.tr('myStudiesSubtitle'),
-                        style: Theme.of(context).textTheme.bodyLarge
-                            ?.copyWith(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withValues(alpha: .72),
-                            ),
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: .72),
+                        ),
                       ),
                       const SizedBox(height: 24),
                       CompletedMetricsBanner(
@@ -236,14 +250,14 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                         completedQuizzesCount: completedCount,
                         activityDates: [
                           ...studies
-                              .map((study) => study.createdAt == null
-                                  ? null
-                                  : DateTime.tryParse(study.createdAt!))
+                              .map((study) => study.createdAt)
                               .whereType<DateTime>(),
                           ...(data?.completedQuizzes ?? [])
-                              .map((quiz) => quiz.createdAt.isEmpty
-                                  ? null
-                                  : DateTime.tryParse(quiz.createdAt))
+                              .map(
+                                (quiz) => quiz.createdAt.isEmpty
+                                    ? null
+                                    : DateTime.tryParse(quiz.createdAt),
+                              )
                               .whereType<DateTime>(),
                         ],
                         isDesktop: isDesktop,
@@ -265,18 +279,26 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                       const SizedBox(height: 28),
                       Row(
                         children: [
-                          Icon(Icons.workspace_premium_outlined, color: Theme.of(context).colorScheme.primary),
+                          Icon(
+                            Icons.workspace_premium_outlined,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             context.tr('yourCertificatesLabel'),
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const Spacer(),
                           TextButton.icon(
-                            onPressed: () => setState(() => _dashboardExpanded = !_dashboardExpanded),
-                            icon: Icon(_dashboardExpanded ? Icons.expand_less : Icons.expand_more),
+                            onPressed: () => setState(
+                              () => _dashboardExpanded = !_dashboardExpanded,
+                            ),
+                            icon: Icon(
+                              _dashboardExpanded
+                                  ? Icons.expand_less
+                                  : Icons.expand_more,
+                            ),
                             label: Text(
                               _dashboardExpanded
                                   ? context.tr('collapseDashboard')
@@ -292,20 +314,24 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                         child: _dashboardExpanded
                             ? Padding(
                                 padding: const EdgeInsets.only(top: 12),
-                                child: CertificateMiniListCard(isDesktop: isDesktop),
+                                child: CertificateMiniListCard(
+                                  isDesktop: isDesktop,
+                                ),
                               )
                             : const SizedBox(width: double.infinity),
                       ),
                       const SizedBox(height: 28),
                       Row(
                         children: [
-                          Icon(Icons.hourglass_top, color: Theme.of(context).colorScheme.primary),
+                          Icon(
+                            Icons.hourglass_top,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             context.tr('standbyStudies'),
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const Spacer(),
                           if (allStandby.isNotEmpty)
@@ -313,7 +339,9 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                               onPressed: _selectionMode
                                   ? _exitSelectionMode
                                   : () => setState(() => _selectionMode = true),
-                              icon: Icon(_selectionMode ? Icons.close : Icons.checklist),
+                              icon: Icon(
+                                _selectionMode ? Icons.close : Icons.checklist,
+                              ),
                               label: Text(
                                 _selectionMode
                                     ? context.tr('cancel')
@@ -326,7 +354,8 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                         const SizedBox(height: 12),
                         LiveSearchField(
                           hintText: context.tr('searchStudiesHint'),
-                          onChanged: (value) => setState(() => _searchQuery = value),
+                          onChanged: (value) =>
+                              setState(() => _searchQuery = value),
                         ),
                       ],
                       if (_selectionMode) ...[
@@ -334,7 +363,9 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                         _SelectionActionBar(
                           count: _selectedIds.length,
                           busy: _bulkDeleting,
-                          onDeleteAll: _selectedIds.isEmpty ? null : _deleteSelected,
+                          onDeleteAll: _selectedIds.isEmpty
+                              ? null
+                              : _deleteSelected,
                         ),
                       ],
                       const SizedBox(height: 16),
@@ -364,8 +395,10 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                                   onOpen: () => _resumeStudy(study),
                                   selectionMode: _selectionMode,
                                   selected: _selectedIds.contains(study.id),
-                                  onToggleSelected: () => _toggleSelected(study.id),
-                                  onEnterSelectionMode: () => _enterSelectionMode(study.id),
+                                  onToggleSelected: () =>
+                                      _toggleSelected(study.id),
+                                  onEnterSelectionMode: () =>
+                                      _enterSelectionMode(study.id),
                                 ),
                               )
                               .toList(),
@@ -374,9 +407,12 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                       Center(
                         child: Text(
                           'Certifications ${Settings.buildVersion}',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
-                          ),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.4),
+                              ),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -420,9 +456,9 @@ class _SelectionActionBar extends StatelessWidget {
         children: [
           Text(
             context.trParams('selectedCountLabel', {'count': '$count'}),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           const Spacer(),
           ElevatedButton.icon(
@@ -432,7 +468,10 @@ class _SelectionActionBar extends StatelessWidget {
                 ? const SizedBox(
                     width: 14,
                     height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
                 : const Icon(Icons.delete_outline, size: 18),
             label: Text(context.tr('deleteSelectedAction')),
@@ -456,7 +495,10 @@ class _StandbyEmptyState extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: isDesktop ? 48 : 32, horizontal: 24),
+      padding: EdgeInsets.symmetric(
+        vertical: isDesktop ? 48 : 32,
+        horizontal: 24,
+      ),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(20),
@@ -464,11 +506,17 @@ class _StandbyEmptyState extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(Icons.auto_stories_outlined, size: 48, color: scheme.onSurface.withValues(alpha: 0.35)),
+          Icon(
+            Icons.auto_stories_outlined,
+            size: 48,
+            color: scheme.onSurface.withValues(alpha: 0.35),
+          ),
           const SizedBox(height: 14),
           Text(
             context.tr('noStudies'),
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
           Text(
@@ -497,7 +545,11 @@ class _NoSearchResultsState extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 32),
       child: Column(
         children: [
-          Icon(Icons.search_off, size: 40, color: scheme.onSurface.withValues(alpha: 0.35)),
+          Icon(
+            Icons.search_off,
+            size: 40,
+            color: scheme.onSurface.withValues(alpha: 0.35),
+          ),
           const SizedBox(height: 10),
           Text(
             context.trParams('noSearchResultsLabel', {'query': query}),
@@ -539,7 +591,8 @@ class _StandbyGrid extends StatelessWidget {
       builder: (context, constraints) {
         final columns = constraints.maxWidth >= 1400 ? 3 : 2;
         const spacing = 16.0;
-        final cardWidth = (constraints.maxWidth - spacing * (columns - 1)) / columns;
+        final cardWidth =
+            (constraints.maxWidth - spacing * (columns - 1)) / columns;
 
         return Wrap(
           spacing: spacing,

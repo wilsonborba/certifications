@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:certifications/core/utils/app_localizations.dart';
 
 /// Step-aware loading screen shown while the wizard runs its async pipeline
-/// (create → upload → ingest → generate). Each step is passed in by the
+/// (prepare draft → upload → generate). Each step is passed in by the
 /// caller so the UI always reflects what is *actually* happening, not a
 /// timer-driven guess.
 class FuturisticLoading extends StatelessWidget {
@@ -20,6 +20,9 @@ class FuturisticLoading extends StatelessWidget {
     this.questionsTarget,
     this.chunksDone = 0,
     this.chunksTotal = 0,
+    this.uploadProgress,
+    this.uploadFileIndex = 0,
+    this.uploadFileCount = 0,
   });
 
   /// Ordered list of step labels, e.g. ['Creating study', 'Uploading files', …]
@@ -42,6 +45,11 @@ class FuturisticLoading extends StatelessWidget {
   /// "0" for the whole generation call.
   final int chunksDone;
   final int chunksTotal;
+
+  /// Fraction reported by the browser's multipart upload progress event.
+  final double? uploadProgress;
+  final int uploadFileIndex;
+  final int uploadFileCount;
 
   // Ignored — kept for backward compat.
   final bool isActive;
@@ -80,9 +88,7 @@ class FuturisticLoading extends StatelessWidget {
                   Image.asset(imageAsset!, height: 64, fit: BoxFit.contain),
                   const SizedBox(height: 28),
                 ] else ...[
-                  Center(
-                    child: _FuturisticOrb(color: scheme.primary),
-                  ),
+                  Center(child: _FuturisticOrb(color: scheme.primary)),
                   const SizedBox(height: 32),
                 ],
 
@@ -123,10 +129,14 @@ class FuturisticLoading extends StatelessWidget {
                                           ? FontWeight.w700
                                           : FontWeight.w400,
                                       color: isPending
-                                          ? scheme.onSurface.withValues(alpha: .35)
+                                          ? scheme.onSurface.withValues(
+                                              alpha: .35,
+                                            )
                                           : isDone
-                                              ? scheme.onSurface.withValues(alpha: .6)
-                                              : scheme.onSurface,
+                                          ? scheme.onSurface.withValues(
+                                              alpha: .6,
+                                            )
+                                          : scheme.onSurface,
                                     ),
                               ),
                               if (isActive && i == total - 1) ...[
@@ -140,6 +150,23 @@ class FuturisticLoading extends StatelessWidget {
                                       )
                                     : const _DynamicSubStatusText(),
                               ],
+                              if (isActive &&
+                                  i == 1 &&
+                                  uploadFileCount > 0) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  uploadProgress == null
+                                      ? '${AppLocalizations.of(context).text('uploadFileLabel')} ${uploadFileIndex + 1}/$uploadFileCount'
+                                      : '${AppLocalizations.of(context).text('uploadFileLabel')} ${uploadFileIndex + 1}/$uploadFileCount · ${(uploadProgress! * 100).round()}%',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                                if (uploadProgress != null) ...[
+                                  const SizedBox(height: 6),
+                                  LinearProgressIndicator(
+                                    value: uploadProgress,
+                                  ),
+                                ],
+                              ],
                             ],
                           ),
                         ),
@@ -149,8 +176,10 @@ class FuturisticLoading extends StatelessWidget {
                 }),
                 const SizedBox(height: 24),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: scheme.surfaceContainerHigh.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(10),
@@ -169,11 +198,14 @@ class FuturisticLoading extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          AppLocalizations.of(context)
-                              .text('mvpLocalOllamaDisclaimer'),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant
-                                    .withValues(alpha: 0.85),
+                          AppLocalizations.of(
+                            context,
+                          ).text('mvpLocalOllamaDisclaimer'),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: scheme.onSurfaceVariant.withValues(
+                                  alpha: 0.85,
+                                ),
                                 height: 1.35,
                                 fontSize: 11.5,
                               ),
@@ -271,13 +303,13 @@ class _RealProgressText extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final label = generated > 0
         ? (target != null
-            ? 'Generating question $generated of $target…'
-            : 'Generating questions… $generated so far')
+              ? 'Generating question $generated of $target…'
+              : 'Generating questions… $generated so far')
         // No question parsed yet: still show real movement (which part of
         // the source material is being processed) instead of sitting idle.
         : (chunksTotal > 0
-            ? 'Reading part ${(chunksDone + 1).clamp(1, chunksTotal)} of $chunksTotal…'
-            : 'Analyzing document concepts…');
+              ? 'Reading part ${(chunksDone + 1).clamp(1, chunksTotal)} of $chunksTotal…'
+              : 'Analyzing document concepts…');
 
     return Container(
       margin: const EdgeInsets.only(top: 4),
@@ -419,9 +451,7 @@ class _SegmentedProgressBar extends StatelessWidget {
             height: 4,
             margin: EdgeInsets.only(right: i < total - 1 ? 4 : 0),
             decoration: BoxDecoration(
-              color: filled
-                  ? color
-                  : color.withValues(alpha: .18),
+              color: filled ? color : color.withValues(alpha: .18),
               borderRadius: BorderRadius.circular(4),
             ),
           ),
@@ -481,8 +511,7 @@ class _StepIconState extends State<_StepIcon>
   @override
   Widget build(BuildContext context) {
     if (widget.isDone) {
-      return Icon(Icons.check_circle_rounded,
-          size: 22, color: widget.color);
+      return Icon(Icons.check_circle_rounded, size: 22, color: widget.color);
     }
     if (widget.isActive) {
       return AnimatedBuilder(
@@ -517,10 +546,7 @@ class _StepIconState extends State<_StepIcon>
       height: 22,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(
-          color: widget.color.withValues(alpha: .2),
-          width: 2,
-        ),
+        border: Border.all(color: widget.color.withValues(alpha: .2), width: 2),
       ),
     );
   }

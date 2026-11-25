@@ -84,9 +84,9 @@ class _StandbyStudyCardState extends State<StandbyStudyCard> {
     } catch (_) {
       if (mounted) {
         setState(() => isDeleting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.tr('errorGeneric'))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(context.tr('errorGeneric'))));
       }
     }
   }
@@ -94,7 +94,8 @@ class _StandbyStudyCardState extends State<StandbyStudyCard> {
   Future<void> _openEditModal() async {
     final updated = await showDialog<bool>(
       context: context,
-      builder: (context) => _QuickEditStudyDialog(study: widget.study, api: api),
+      builder: (context) =>
+          _QuickEditStudyDialog(study: widget.study, api: api),
     );
     if (updated == true) widget.onUpdated();
   }
@@ -117,7 +118,9 @@ class _StandbyStudyCardState extends State<StandbyStudyCard> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final study = widget.study;
-    final sizeMb = (study.activeSizeBytes / (1024 * 1024)).toStringAsFixed(1);
+    final sizeMb = study.activeSizeBytes == null
+        ? '—'
+        : (study.activeSizeBytes! / (1024 * 1024)).toStringAsFixed(1);
 
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 300),
@@ -176,7 +179,10 @@ class _StandbyStudyCardState extends State<StandbyStudyCard> {
                                 color: scheme.primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(14),
                               ),
-                              child: Icon(Icons.folder_special, color: scheme.primary),
+                              child: Icon(
+                                Icons.folder_special,
+                                color: scheme.primary,
+                              ),
                             ),
                           const SizedBox(width: 14),
                           Expanded(
@@ -185,9 +191,8 @@ class _StandbyStudyCardState extends State<StandbyStudyCard> {
                               children: [
                                 Text(
                                   study.name,
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(height: 4),
                                 Wrap(
@@ -196,9 +201,14 @@ class _StandbyStudyCardState extends State<StandbyStudyCard> {
                                   runSpacing: 4,
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: Colors.amber.withValues(alpha: 0.15),
+                                        color: Colors.amber.withValues(
+                                          alpha: 0.15,
+                                        ),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
@@ -212,17 +222,27 @@ class _StandbyStudyCardState extends State<StandbyStudyCard> {
                                     ),
                                     Text(
                                       '$sizeMb ${context.tr('mbUsedLabel')}',
-                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        color: scheme.onSurface.withValues(alpha: 0.6),
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: scheme.onSurface.withValues(
+                                              alpha: 0.6,
+                                            ),
+                                          ),
                                     ),
                                     Text(
                                       context.trParams('attachedSourcesLabel', {
                                         'count': '${study.sources.length}',
                                       }),
-                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        color: scheme.onSurface.withValues(alpha: 0.6),
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: scheme.onSurface.withValues(
+                                              alpha: 0.6,
+                                            ),
+                                          ),
                                     ),
                                   ],
                                 ),
@@ -242,20 +262,29 @@ class _StandbyStudyCardState extends State<StandbyStudyCard> {
                         runSpacing: 8,
                         children: [
                           OutlinedButton.icon(
-                            onPressed: () => setState(() => isExpanded = !isExpanded),
+                            onPressed: () =>
+                                setState(() => isExpanded = !isExpanded),
                             icon: Icon(
-                              isExpanded ? Icons.expand_less : Icons.visibility_outlined,
+                              isExpanded
+                                  ? Icons.expand_less
+                                  : Icons.visibility_outlined,
                               size: 16,
                             ),
                             label: Text(context.tr('quickInfo')),
                           ),
                           OutlinedButton.icon(
                             onPressed: _openEditModal,
-                            icon: const Icon(Icons.drive_file_rename_outline, size: 16),
+                            icon: const Icon(
+                              Icons.drive_file_rename_outline,
+                              size: 16,
+                            ),
                             label: Text(context.tr('editStudy')),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              color: Colors.redAccent,
+                            ),
                             tooltip: context.tr('delete'),
                             onPressed: _deleteStudy,
                           ),
@@ -289,20 +318,10 @@ class _QuickInfoDetail extends StatelessWidget {
   final Study study;
 
   String _formatSelection(BuildContext context, StudySource source) {
-    final sel = source.selection;
-    if (sel == null || sel.isEmpty) return context.tr('wholeDocument');
-    if (sel.containsKey('page_start')) {
-      return '${context.tr('pageStartLabel')} ${sel['page_start']} ${context.tr('rangeUntil')} ${sel['page_end']}';
+    if (source.selectionKind == 'all' || source.selectionSpec.isEmpty) {
+      return context.tr('wholeDocument');
     }
-    if (sel.containsKey('line_start')) {
-      return '${context.tr('lineStartLabel')} ${sel['line_start']} ${context.tr('rangeUntil')} ${sel['line_end']}';
-    }
-    if (sel.containsKey('audio_start_ms')) {
-      final startMin = ((sel['audio_start_ms'] as num) / 60000).floor();
-      final endMin = ((sel['audio_end_ms'] as num? ?? 0) / 60000).floor();
-      return '${context.tr('timeRangeLabel')} ${startMin}min ${context.tr('rangeUntil')} ${endMin}min';
-    }
-    return context.tr('wholeDocument');
+    return '${source.selectionKind}: ${source.selectionSpec}';
   }
 
   IconData _fileIcon(String kind) {
@@ -343,7 +362,11 @@ class _QuickInfoDetail extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Row(
                   children: [
-                    Icon(Icons.history, size: 16, color: scheme.onSurface.withValues(alpha: 0.5)),
+                    Icon(
+                      Icons.history,
+                      size: 16,
+                      color: scheme.onSurface.withValues(alpha: 0.5),
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       context.trParams('lastOpenedLabel', {
@@ -360,10 +383,12 @@ class _QuickInfoDetail extends StatelessWidget {
             },
           ),
           Text(
-            context.trParams('attachedSourcesLabel', {'count': '${study.sources.length}'}),
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            context.trParams('attachedSourcesLabel', {
+              'count': '${study.sources.length}',
+            }),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
           if (study.sources.isEmpty)
@@ -379,18 +404,28 @@ class _QuickInfoDetail extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(_fileIcon(src.kind), size: 18, color: scheme.onSurface.withValues(alpha: 0.7)),
+                      Icon(
+                        _fileIcon(src.kind),
+                        size: 18,
+                        color: scheme.onSurface.withValues(alpha: 0.7),
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(src.filename, style: Theme.of(context).textTheme.bodyMedium),
+                            Text(
+                              src.filename,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
                             Text(
                               '${(src.sizeBytes / 1024).toStringAsFixed(0)} KB · ${_formatSelection(context, src)}',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: scheme.onSurface.withValues(alpha: 0.6),
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: scheme.onSurface.withValues(
+                                      alpha: 0.6,
+                                    ),
+                                  ),
                             ),
                           ],
                         ),
@@ -419,8 +454,9 @@ class _QuickEditStudyDialog extends StatefulWidget {
 }
 
 class _QuickEditStudyDialogState extends State<_QuickEditStudyDialog> {
-  late final TextEditingController _nameController =
-      TextEditingController(text: widget.study.name);
+  late final TextEditingController _nameController = TextEditingController(
+    text: widget.study.name,
+  );
   bool _saving = false;
   String? _error;
 

@@ -1,4 +1,3 @@
-import 'package:certifications/core/settings.dart';
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/presentation/components/premium_hover_card.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +21,7 @@ class CompletedMetricsBanner extends StatelessWidget {
   final int totalStudies;
   final int standbyCount;
   final int completedQuizzesCount;
-  final int totalSizeBytes;
+  final int? totalSizeBytes;
 
   /// When each study was created, used to plot studies-per-day.
   final List<DateTime> activityDates;
@@ -73,11 +72,16 @@ class CompletedMetricsBanner extends StatelessWidget {
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.green.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: Colors.green.withValues(alpha: 0.4)),
+                  border: Border.all(
+                    color: Colors.green.withValues(alpha: 0.4),
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -108,10 +112,9 @@ class CompletedMetricsBanner extends StatelessWidget {
   }
 
   Widget _buildPopulated(BuildContext context, ColorScheme scheme) {
-    final sizeMb = (totalSizeBytes / (1024 * 1024)).toStringAsFixed(1);
-    final quotaMb = (app_settings.userTotalStorageBytes / (1024 * 1024)).toStringAsFixed(0);
-    final availableBytes = (app_settings.userTotalStorageBytes - totalSizeBytes).clamp(0, app_settings.userTotalStorageBytes);
-    final availableMb = (availableBytes / (1024 * 1024)).toStringAsFixed(1);
+    final sizeMb = totalSizeBytes == null
+        ? '—'
+        : '${(totalSizeBytes! / (1024 * 1024)).toStringAsFixed(1)} MB';
 
     final metricTiles = [
       _MetricTile(
@@ -123,9 +126,8 @@ class CompletedMetricsBanner extends StatelessWidget {
       _MetricTile(
         icon: Icons.sd_storage,
         label: context.tr('storageUsedLabel'),
-        value: '$sizeMb / $quotaMb MB',
+        value: sizeMb,
         isDesktop: isDesktop,
-        tooltip: context.trParams('storageAvailableTooltip', {'available': availableMb, 'total': quotaMb}),
       ),
       _MetricTile(
         icon: Icons.assignment_turned_in,
@@ -140,11 +142,7 @@ class CompletedMetricsBanner extends StatelessWidget {
     ];
 
     final Widget tilesLayout = isDesktop
-        ? Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: metricTiles,
-          )
+        ? Wrap(spacing: 12, runSpacing: 12, children: metricTiles)
         : LayoutBuilder(
             builder: (context, constraints) {
               final itemWidth = (constraints.maxWidth - 10) / 2;
@@ -228,8 +226,11 @@ class _ActivityBarChartState extends State<_ActivityBarChart> {
   List<_DayBucket> _buckets() {
     final span = _daySpan;
     final today = DateTime.now();
-    final startDay = DateTime(today.year, today.month, today.day)
-        .subtract(Duration(days: span - 1));
+    final startDay = DateTime(
+      today.year,
+      today.month,
+      today.day,
+    ).subtract(Duration(days: span - 1));
     final counts = List<int>.filled(span, 0);
     for (final date in widget.dates) {
       final day = DateTime(date.year, date.month, date.day);
@@ -238,14 +239,27 @@ class _ActivityBarChartState extends State<_ActivityBarChart> {
     }
     return [
       for (var i = 0; i < span; i++)
-        _DayBucket(day: startDay.add(Duration(days: i)), count: counts[i]),
+        _DayBucket(
+          day: startDay.add(Duration(days: i)),
+          count: counts[i],
+        ),
     ];
   }
 
   String _shortDate(DateTime day) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[day.month - 1]} ${day.day}';
   }
@@ -335,7 +349,9 @@ class _BarColumn extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: hovered ? scheme.primary : scheme.onSurface.withValues(alpha: 0.7),
+                    color: hovered
+                        ? scheme.primary
+                        : scheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               const SizedBox(height: 4),
@@ -351,8 +367,12 @@ class _BarColumn extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: hovered
                             ? scheme.primary
-                            : scheme.primary.withValues(alpha: bucket.count == 0 ? 0.08 : 0.55),
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                            : scheme.primary.withValues(
+                                alpha: bucket.count == 0 ? 0.08 : 0.55,
+                              ),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(4),
+                        ),
                       ),
                     ),
                   ),
@@ -437,7 +457,11 @@ class _MetricTile extends StatelessWidget {
           ),
           if (onTap != null) ...[
             const SizedBox(width: 6),
-            Icon(Icons.chevron_right, size: 16, color: scheme.onSurface.withValues(alpha: 0.4)),
+            Icon(
+              Icons.chevron_right,
+              size: 16,
+              color: scheme.onSurface.withValues(alpha: 0.4),
+            ),
           ],
         ],
       ),

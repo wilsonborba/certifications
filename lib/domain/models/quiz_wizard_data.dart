@@ -1,4 +1,5 @@
 import 'package:certifications/domain/models/quiz.dart';
+import 'package:certifications/domain/models/study.dart';
 import 'package:flutter/foundation.dart';
 
 /// Upload is the only real content source: general "AI generates it for me"
@@ -26,6 +27,8 @@ class AttachedFile {
     this.lineEnd = 50,
     this.audioStartMs = 0,
     this.audioEndMs = 300000, // 5 minutes default
+    this.selectionKind = 'all',
+    this.selectionSpec = '',
     this.totalPages,
     this.totalLines,
   });
@@ -41,6 +44,8 @@ class AttachedFile {
   int lineEnd;
   int audioStartMs;
   int audioEndMs;
+  String selectionKind;
+  String selectionSpec;
 
   /// Real page count for PDFs, computed client-side right after picking the
   /// file so the range selector can show it and clamp its defaults instead
@@ -52,18 +57,17 @@ class AttachedFile {
   /// Real line count for text-based files (txt/md/csv), same reasoning as
   /// [totalPages].
   int? totalLines;
+  String? remoteSourceId;
 
   int get sizeBytes => bytes.length;
 }
 
 class QuizWizardData extends ChangeNotifier {
-  /// Per-study attached-files size cap, mirrors the backend's 150MB limit.
-  static const int maxTotalAttachedBytes = 150 * 1024 * 1024;
-
   int currentStep = 0;
   String name = '';
   SourceType sourceType = SourceType.uploadFile;
   final List<AttachedFile> attachedFiles = [];
+  final List<StudySource> existingSources = [];
   DifficultyLevel difficulty = DifficultyLevel.easy;
   int questionCount = 10;
 
@@ -75,17 +79,52 @@ class QuizWizardData extends ChangeNotifier {
   /// Whether the backend should augment question generation with a live web
   /// search. Defaults to false (source material only).
   bool useWeb = false;
+  int? accountUsedBytes;
+  int? accountMaxBytes;
+  int? maxFileBytes;
+  int? maxStudyBytes;
 
-  int get totalAttachedBytes =>
-      attachedFiles.fold(0, (sum, f) => sum + f.sizeBytes);
+  int get totalAttachedBytes => attachedFiles
+      .where((file) => file.remoteSourceId == null)
+      .fold(0, (sum, file) => sum + file.sizeBytes);
 
-  /// Whether adding a file of [additionalBytes] would push the study over
-  /// the per-study cap.
-  bool wouldExceedCap(int additionalBytes) =>
-      totalAttachedBytes + additionalBytes > maxTotalAttachedBytes;
+  /// Whether the known backend account allowance would be exceeded by the
+  /// selected, not-yet-uploaded files. Unknown allowance is not treated as 0.
+  bool wouldExceedAccountQuota(int additionalBytes) =>
+      accountUsedBytes != null &&
+      accountMaxBytes != null &&
+      accountUsedBytes! + totalAttachedBytes + additionalBytes >
+          accountMaxBytes!;
+
+  bool wouldExceedFileLimit(int bytes) =>
+      maxFileBytes != null && bytes > maxFileBytes!;
+
+  bool wouldExceedStudyQuota(int additionalBytes) =>
+      maxStudyBytes != null &&
+      existingSources.fold<int>(0, (sum, s) => sum + s.sizeBytes) +
+              totalAttachedBytes +
+              additionalBytes >
+          maxStudyBytes!;
+
+  int? get projectedAccountUsageBytes =>
+      accountUsedBytes == null ? null : accountUsedBytes! + totalAttachedBytes;
+
+  void setAccountQuota({
+    required int? usedBytes,
+    required int? maxBytes,
+    int? fileLimitBytes,
+    int? studyLimitBytes,
+  }) {
+    accountUsedBytes = usedBytes;
+    accountMaxBytes = maxBytes;
+    maxFileBytes = fileLimitBytes;
+    maxStudyBytes = studyLimitBytes;
+    notifyListeners();
+  }
 
   bool get isStep1Valid => name.trim().isNotEmpty;
-  bool get isStep2Valid => attachedFiles.isNotEmpty;
+  bool get isStep2Valid =>
+      attachedFiles.isNotEmpty || existingSources.isNotEmpty;
   bool get isStep3Valid => true;
   bool get isStep4Valid => isStep1Valid && isStep2Valid && isStep3Valid;
 
@@ -135,11 +174,23 @@ class QuizWizardData extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Adds a newly picked file to the attached-files list. Does not enforce
-  /// the size cap itself: callers should check [wouldExceedCap] first so
-  /// they can surface a proper warning instead of silently rejecting it.
+  /// Adds a newly picked file to the attached-files list. Callers may block
+  /// only when the backend account allowance is known and would be exceeded.
   void addFile(AttachedFile file) {
     attachedFiles.add(file);
+    notifyListeners();
+  }
+
+  void setExistingSources(Iterable<StudySource> sources) {
+    existingSources
+      ..clear()
+      ..addAll(sources);
+    notifyListeners();
+  }
+
+  void addExistingSource(StudySource source) {
+    if (existingSources.any((item) => item.id == source.id)) return;
+    existingSources.add(source);
     notifyListeners();
   }
 
