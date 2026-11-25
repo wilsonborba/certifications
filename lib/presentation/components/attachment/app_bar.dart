@@ -20,7 +20,7 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
   const AttachmentAppBar({
     super.key,
     this.title = 'Certifications',
-    this.maxActionLayoutWidth = 800,
+    this.maxActionLayoutWidth = 1280,
     this.currentTab = 'studies',
     this.onCertificates,
     this.onPlans,
@@ -53,7 +53,7 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     return LayoutBuilder(
       builder: (ctx, constraints) {
-        final wide = MediaQuery.sizeOf(ctx).width >= maxActionLayoutWidth;
+        final wide = constraints.maxWidth >= maxActionLayoutWidth;
 
         return AppBar(
           automaticallyImplyLeading: false, // no back arrow
@@ -308,8 +308,9 @@ class _AttachmentDesktopActions extends StatelessWidget {
             ? Theme.of(context).colorScheme.onSurface
             : Theme.of(context).colorScheme.onSurface.withValues(alpha: .72),
       ),
-      textStyle: WidgetStateProperty.resolveWith(
-        (s) => TextStyle(
+      textStyle: WidgetStateProperty.resolveWith((s) {
+        final inherited = Theme.of(context).textTheme.labelLarge!;
+        return inherited.copyWith(
           fontSize: s.contains(WidgetState.hovered) ? 16 : 15,
           fontWeight: s.contains(WidgetState.hovered)
               ? FontWeight.w600
@@ -317,8 +318,8 @@ class _AttachmentDesktopActions extends StatelessWidget {
           decoration: s.contains(WidgetState.hovered)
               ? TextDecoration.underline
               : TextDecoration.none,
-        ),
-      ),
+        );
+      }),
     );
   }
 
@@ -452,60 +453,68 @@ class AttachmentSideMenu extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (currentTab != 'studies')
-                _tile(
-                  context,
-                  Icons.school_outlined,
-                  context.tr('studies'),
-                  defaultStudies,
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (currentTab != 'studies')
+                        _tile(
+                          context,
+                          Icons.school_outlined,
+                          context.tr('studies'),
+                          defaultStudies,
+                        ),
+                      if (currentTab != 'dashboard')
+                        _tile(
+                          context,
+                          Icons.dashboard_outlined,
+                          context.tr('reviewDashboard'),
+                          openDashboard,
+                        ),
+                      if (currentTab != 'history')
+                        _tile(
+                          context,
+                          Icons.history,
+                          context.tr('attemptHistory'),
+                          openHistory,
+                        ),
+                      if (currentTab != 'certificates')
+                        _tile(
+                          context,
+                          Icons.workspace_premium_outlined,
+                          context.tr('certificates'),
+                          onCertificates ?? defaultCertificates,
+                        ),
+                      if (currentTab != 'plans')
+                        _tile(
+                          context,
+                          Icons.stacked_line_chart_outlined,
+                          context.tr('plans'),
+                          onPlans ?? defaultPlans,
+                        ),
+                      if (currentTab != 'support')
+                        _tile(
+                          context,
+                          Icons.support_agent_outlined,
+                          context.tr('support'),
+                          onSupport ?? defaultSupport,
+                        ),
+                      if (currentTab != 'about')
+                        _tile(
+                          context,
+                          Icons.info_outline,
+                          context.tr('about'),
+                          onAbout ?? defaultAbout,
+                        ),
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 16, 16, 16),
+                        child: AppPreferencesPanel(),
+                      ),
+                    ],
+                  ),
                 ),
-              if (currentTab != 'dashboard')
-                _tile(
-                  context,
-                  Icons.dashboard_outlined,
-                  context.tr('reviewDashboard'),
-                  openDashboard,
-                ),
-              if (currentTab != 'history')
-                _tile(
-                  context,
-                  Icons.history,
-                  context.tr('attemptHistory'),
-                  openHistory,
-                ),
-              if (currentTab != 'certificates')
-                _tile(
-                  context,
-                  Icons.workspace_premium_outlined,
-                  context.tr('certificates'),
-                  onCertificates ?? defaultCertificates,
-                ),
-              if (currentTab != 'plans')
-                _tile(
-                  context,
-                  Icons.stacked_line_chart_outlined,
-                  context.tr('plans'),
-                  onPlans ?? defaultPlans,
-                ),
-              if (currentTab != 'support')
-                _tile(
-                  context,
-                  Icons.support_agent_outlined,
-                  context.tr('support'),
-                  onSupport ?? defaultSupport,
-                ),
-              if (currentTab != 'about')
-                _tile(
-                  context,
-                  Icons.info_outline,
-                  context.tr('about'),
-                  onAbout ?? defaultAbout,
-                ),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: AppPreferencesPanel(),
               ),
-              const Spacer(),
               const Divider(height: 1),
               _tile(context, Icons.person_outline, context.tr('profile'), null),
               ListTile(

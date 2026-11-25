@@ -69,6 +69,7 @@ class _CertificateVerificationScreenState
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AttachmentAppBar(title: context.tr('certificateVerification')),
+    endDrawer: const AttachmentSideMenu(),
     body: FutureBuilder<CertificateVerification>(
       future: _verification,
       builder: (context, snapshot) {

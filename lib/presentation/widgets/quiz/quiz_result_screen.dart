@@ -52,6 +52,7 @@ class QuizResultScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AttachmentAppBar(title: context.tr('quizResultTitle')),
+      endDrawer: const AttachmentSideMenu(),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),

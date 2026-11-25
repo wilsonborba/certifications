@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:certifications/core/utils/app_localizations.dart';
+import 'package:certifications/core/utils/app_preferences.dart';
 import 'package:certifications/core/utils/my_theme.dart';
 import 'package:certifications/dal/remote/api_adapter.dart';
 import 'package:certifications/domain/models/public_quiz_statistics.dart';
@@ -129,6 +130,97 @@ void main() {
       'Quiz score distribution',
     );
     expect(stats.scoreDistributionView?.page.rows, isEmpty);
+  });
+
+  testWidgets('public and owner statistics use accurate page titles', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final paths = <String>[];
+    final client = MockClient((request) async {
+      paths.add(request.url.path);
+      return http.Response(
+        jsonEncode({
+          'quiz_id': 'quiz-1',
+          'completed_attempt_count': 0,
+          'distinct_participants': 0,
+          'average_score_pct': null,
+          'average_score_denominator': 0,
+          'typical_duration_sec': null,
+          'duration_denominator': 0,
+          'basis': 'all_completed_attempts',
+          'score_distribution_denominator': 0,
+          'score_distribution': [],
+          'score_distribution_report_view': {},
+          'question_provenance': {},
+        }),
+        200,
+      );
+    });
+    final service = PublicQuizStatisticsApiService(
+      adapter: ApiAdapter(client: client, csrfTokenProvider: () => null),
+    );
+    final preferences = AppPreferences()..locale = const Locale('en');
+    Widget host(Widget child) => MaterialApp(
+      theme: AppTheme.light(),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizationsDelegate(),
+        FallbackCupertinoLocalizationsDelegate(),
+        FallbackMaterialLocalizationsDelegate(),
+        DefaultWidgetsLocalizations.delegate,
+        DefaultMaterialLocalizations.delegate,
+      ],
+      home: AppPreferencesScope(preferences: preferences, child: child),
+      routes: {
+        '/v1/dashboard': (_) => const Scaffold(body: Text('dashboard reached')),
+        '/v1/history': (_) => const Scaffold(body: Text('history reached')),
+      },
+    );
+
+    await tester.pumpWidget(
+      host(PublicQuizStatisticsScreen(quizId: 'quiz-1', api: service)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Public score distribution'), findsNWidgets(2));
+
+    await tester.pumpWidget(
+      host(OwnedQuizStatisticsScreen(quizId: 'quiz-1', api: service)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Your quiz statistics'), findsNWidgets(2));
+    expect(paths, [
+      '/apps/certifications/v1/quizzes/quiz-1/statistics',
+      '/apps/certifications/v1/me/quizzes/quiz-1/statistics',
+    ]);
+
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pumpWidget(
+      host(PublicQuizStatisticsScreen(quizId: 'quiz-1', api: service)),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Menu'));
+    await tester.pumpAndSettle();
+    expect(find.text('My learning dashboard'), findsOneWidget);
+    expect(find.text('Attempt history'), findsOneWidget);
+    expect(find.text('Dark theme'), findsOneWidget);
+    expect(find.text('English'), findsNWidgets(2));
+    await tester.ensureVisible(find.text('Dark theme'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(SwitchListTile));
+    await tester.pumpAndSettle();
+    expect(preferences.themeMode, ThemeMode.dark);
+    await tester.ensureVisible(find.text('My learning dashboard'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('My learning dashboard'));
+    await tester.pumpAndSettle();
+    expect(find.text('dashboard reached'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    client.close();
   });
 
   test('public statistics retain the server denominator basis', () async {

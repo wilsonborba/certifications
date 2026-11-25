@@ -465,6 +465,7 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
     if (_generating) {
       return Scaffold(
         appBar: AttachmentAppBar(title: context.tr('wizardTitle')),
+        endDrawer: const AttachmentSideMenu(),
         body: SafeArea(
           child: FuturisticLoading(
             currentStep: _generateStep,
@@ -483,6 +484,7 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
 
     return Scaffold(
       appBar: AttachmentAppBar(title: context.tr('wizardTitle')),
+      endDrawer: const AttachmentSideMenu(),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),

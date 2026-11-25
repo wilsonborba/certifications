@@ -724,7 +724,13 @@ class _QuizStatisticsScreenState extends State<_QuizStatisticsScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AttachmentAppBar(title: context.tr('scoreDistribution')),
+    appBar: AttachmentAppBar(
+      currentTab: 'statistics',
+      title: context.tr(
+        widget.ownerOnly ? 'ownedQuizStatisticsTitle' : 'scoreDistribution',
+      ),
+    ),
+    endDrawer: const AttachmentSideMenu(currentTab: 'statistics'),
     body: FutureBuilder<PublicQuizStatistics>(
       future: _future,
       builder: (context, snapshot) {
@@ -781,7 +787,11 @@ class _QuizStatisticsScreenState extends State<_QuizStatisticsScreen> {
                       : '${data.typicalDurationSec} s · n=${data.durationDenominator}',
                 ),
                 Text(
-                  context.tr('scoreDistribution'),
+                  context.tr(
+                    widget.ownerOnly
+                        ? 'ownedQuizStatisticsTitle'
+                        : 'scoreDistribution',
+                  ),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 if (data.scoreDistributionDenominator == 0)
