@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - *(quiz)* Add saved attempt flow (#57) ([`11d25d9`](https://github.com/wilsonborba/certifications/commit/11d25d97675557203c048ecd87b0563708850cf5))
 - *(58)* Add results history and dashboard views ([`d7fd918`](https://github.com/wilsonborba/certifications/commit/d7fd918b0e9698ed75ad1f35d7ce469975325a5b))
+- *(59)* Add holder confirmation and verification UI ([`fab39e9`](https://github.com/wilsonborba/certifications/commit/fab39e94eeddfbffb251a6701693f8bb63f61ba1))
 
 ### 🐛 Bug Fixes
 

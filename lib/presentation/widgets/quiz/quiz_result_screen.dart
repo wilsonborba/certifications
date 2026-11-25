@@ -1,6 +1,7 @@
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/quiz.dart';
 import 'package:certifications/presentation/components/attachment/app_bar.dart';
+import 'package:certifications/presentation/components/certificates/certificate_issue_card.dart';
 import 'package:certifications/presentation/components/premium_hover_card.dart';
 import 'package:certifications/presentation/components/quiz/quiz_leaderboard_view.dart';
 import 'package:flutter/material.dart';
@@ -28,6 +29,7 @@ class QuizResultScreen extends StatelessWidget {
     required this.grade,
     required this.questions,
     this.quizId,
+    this.completedAttemptId,
     this.isDesktop = false,
   });
 
@@ -38,12 +40,15 @@ class QuizResultScreen extends StatelessWidget {
   /// When set, a "View leaderboard" action is offered for this completed
   /// quiz's id.
   final String? quizId;
+  /// Supplied by the authenticated saved-attempt completion flow only.
+  final String? completedAttemptId;
   final bool isDesktop;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final quizId = this.quizId;
+    final completedAttemptId = this.completedAttemptId;
 
     return Scaffold(
       appBar: AttachmentAppBar(title: context.tr('quizResultTitle')),
@@ -72,25 +77,17 @@ class QuizResultScreen extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             decoration: BoxDecoration(
-                              color: grade.score >= 70
-                                  ? Colors.green.withValues(alpha: 0.15)
-                                  : (grade.score >= 50
-                                      ? Colors.amber.withValues(alpha: 0.15)
-                                      : Colors.redAccent.withValues(alpha: 0.15)),
+                              color: scheme.primaryContainer,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: grade.score >= 70
-                                    ? Colors.green
-                                    : (grade.score >= 50 ? Colors.amber : Colors.redAccent),
+                                color: scheme.primary,
                                 width: 1.5,
                               ),
                             ),
                             child: Text(
                               '${grade.score.toStringAsFixed(0)}%',
                               style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                                color: grade.score >= 70
-                                    ? Colors.green
-                                    : (grade.score >= 50 ? Colors.amber : Colors.redAccent),
+                                color: scheme.onPrimaryContainer,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -111,16 +108,9 @@ class QuizResultScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  grade.score >= 70
-                                      ? (context.tr('certificateEarned') != 'certificateEarned'
-                                          ? context.tr('certificateEarned')
-                                          : 'Achievement Certificate Earned!')
-                                      : (context.tr('completedPractice') != 'completedPractice'
-                                          ? context.tr('completedPractice')
-                                          : 'Practice Quiz Completed'),
+                                  context.tr('completedPractice'),
                                   style: TextStyle(
-                                    color: grade.score >= 70 ? Colors.green : scheme.onSurface.withValues(alpha: 0.7),
-                                    fontWeight: grade.score >= 70 ? FontWeight.bold : FontWeight.normal,
+                                    color: scheme.onSurface.withValues(alpha: 0.7),
                                   ),
                                 ),
                               ],
@@ -128,57 +118,6 @@ class QuizResultScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      if (grade.score >= 70) ...[
-                        const SizedBox(height: 20),
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                scheme.primaryContainer.withValues(alpha: 0.7),
-                                scheme.secondaryContainer.withValues(alpha: 0.5),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: scheme.primary.withValues(alpha: 0.4)),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.workspace_premium_rounded, size: 44, color: Colors.amber),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'CERTIFICATE OF COMPLETION',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 1.2,
-                                        color: scheme.primary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      title,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                    ),
-                                    Text(
-                                      'Issued on ${DateTime.now().toLocal().toString().split(' ')[0]} • Score: ${grade.score.toStringAsFixed(0)}%',
-                                      style: Theme.of(context).textTheme.bodySmall,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
                       if (quizId != null) ...[
                         const SizedBox(height: 16),
                         SizedBox(
@@ -202,6 +141,10 @@ class QuizResultScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (completedAttemptId != null) ...[
+                  const SizedBox(height: 16),
+                  CertificateIssueCard(attemptId: completedAttemptId),
+                ],
                 const SizedBox(height: 24),
                 Text(
                   context.tr('quizReviewTitle'),
