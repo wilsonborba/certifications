@@ -61,7 +61,7 @@ void main() {
                 'id': 'event-1',
                 'event_kind': 'page_hidden',
                 'duration_ms': 0,
-                'occurred_at': 1760000001,
+                'occurred_at': 1759996400,
               },
             ],
           },
@@ -96,12 +96,30 @@ void main() {
     expect(find.textContaining('cheat'), findsNothing);
     expect(find.text('Download PDF'), findsOneWidget);
     expect(find.text('Download image'), findsOneWidget);
+    final localizations = MaterialLocalizations.of(
+      tester.element(find.text('Issued')),
+    );
+    final issuedAt = DateTime.fromMillisecondsSinceEpoch(
+      1760000000 * 1000,
+    ).toLocal();
+    final issuedDate = localizations.formatFullDate(issuedAt);
+    expect(issuedDate, contains('2025'));
+    expect(issuedDate, isNot(localizations.formatMediumDate(issuedAt)));
+    expect(find.text(issuedDate), findsOneWidget);
 
     await tester.tap(find.text('Recorded browser activity'));
     await tester.pumpAndSettle();
     expect(find.text('Observed browser activity only.'), findsOneWidget);
     expect(find.textContaining('partial'), findsOneWidget);
     expect(find.text('Unknown gaps'), findsOneWidget);
+    final eventAt = DateTime.fromMillisecondsSinceEpoch(
+      1759996400 * 1000,
+    ).toLocal();
+    final eventDateTime =
+        '${localizations.formatFullDate(eventAt)} '
+        '${localizations.formatTimeOfDay(TimeOfDay.fromDateTime(eventAt))}';
+    expect(eventDateTime, isNot(localizations.formatMediumDate(eventAt)));
+    expect(find.text(eventDateTime), findsOneWidget);
     expect(paths, ['/apps/certifications/v1/certificates/CODE-1']);
   });
 }

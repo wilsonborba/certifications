@@ -96,6 +96,7 @@ class _CertificateVerificationScreenState
           );
         }
         final scheme = Theme.of(context).colorScheme;
+        final dateLocalizations = MaterialLocalizations.of(context);
         final activity = value.activitySummary;
         final issued = DateTime.fromMillisecondsSinceEpoch(
           value.issuedAt * 1000,
@@ -151,9 +152,7 @@ class _CertificateVerificationScreenState
                           ),
                           _Fact(
                             label: context.tr('certificateIssued'),
-                            value: MaterialLocalizations.of(
-                              context,
-                            ).formatMediumDate(issued),
+                            value: dateLocalizations.formatFullDate(issued),
                           ),
                           _Fact(
                             label: context.tr('certificateCode'),
@@ -242,24 +241,24 @@ class _CertificateVerificationScreenState
                         ),
                         if (activity.events.isNotEmpty) ...[
                           const Divider(),
-                          for (final event in activity.events)
-                            ListTile(
+                          ...activity.events.map((event) {
+                            final occurredAt =
+                                DateTime.fromMillisecondsSinceEpoch(
+                                  event.occurredAt * 1000,
+                                ).toLocal();
+                            return ListTile(
                               dense: true,
                               contentPadding: EdgeInsets.zero,
                               title: Text(event.eventKind),
                               subtitle: Text(
-                                MaterialLocalizations.of(
-                                  context,
-                                ).formatMediumDate(
-                                  DateTime.fromMillisecondsSinceEpoch(
-                                    event.occurredAt * 1000,
-                                  ).toLocal(),
-                                ),
+                                '${dateLocalizations.formatFullDate(occurredAt)} '
+                                '${dateLocalizations.formatTimeOfDay(TimeOfDay.fromDateTime(occurredAt))}',
                               ),
                               trailing: event.durationMs > 0
                                   ? Text(_duration(event.durationMs))
                                   : null,
-                            ),
+                            );
+                          }),
                         ],
                       ],
                     ),
