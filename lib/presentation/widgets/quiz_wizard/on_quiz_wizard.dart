@@ -3,7 +3,6 @@ import 'dart:convert';
 
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/quiz_wizard_data.dart';
-import 'package:certifications/domain/models/study.dart';
 import 'package:certifications/domain/models/study_selection.dart';
 import 'package:certifications/domain/services/client_telemetry_service.dart';
 import 'package:certifications/domain/services/draft_progress_store.dart';

@@ -72,6 +72,10 @@ void main() {
   testWidgets('returning to the wizard reopens the saved job without POSTing', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     const studyId = 'resume-study-fixture';
     const jobId = 'saved-job-fixture';
     final store = DraftProgressStore.instance;

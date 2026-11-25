@@ -58,6 +58,11 @@ class _AttemptScreenState extends State<AttemptScreen>
         _submitted = attempt.status != 'in_progress';
         _loading = false;
       });
+      if (attempt.status == 'completed') {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _openResults();
+        });
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -179,12 +184,20 @@ class _AttemptScreenState extends State<AttemptScreen>
     });
     try {
       await _api.submitAttempt(attempt.id);
-      if (mounted) setState(() => _submitted = true);
+      if (mounted) await _openResults();
     } catch (_) {
       if (mounted) setState(() => _error = context.tr('errorGeneric'));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  Future<void> _openResults() async {
+    final attempt = _attempt;
+    if (attempt == null || !mounted) return;
+    await Navigator.of(context).pushReplacementNamed(
+      '/v1/attempts/${Uri.encodeComponent(attempt.id)}/results',
+    );
   }
 
   @override

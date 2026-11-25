@@ -13,6 +13,10 @@ void main() {
   testWidgets('renders factual certificate status and online activity only', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     final paths = <String>[];
     final client = MockClient((request) async {
       paths.add(request.url.path);

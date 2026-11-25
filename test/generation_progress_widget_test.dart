@@ -2,6 +2,10 @@ import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/core/utils/my_theme.dart';
 import 'package:certifications/domain/models/generation.dart';
 import 'package:certifications/domain/services/generation_api_service.dart';
+import 'package:certifications/domain/models/study.dart';
+import 'package:certifications/domain/models/authoring.dart';
+import 'package:certifications/domain/services/study_api_service.dart';
+import 'package:certifications/domain/services/question_authoring_service.dart';
 import 'package:certifications/presentation/widgets/generation_progress_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -94,6 +98,19 @@ class _FixtureGenerationApi implements GenerationApiService {
   ) async => _job('queued');
 }
 
+class _FixtureStudyApi extends StudyApiService {
+  @override
+  Future<Study> get(String id) async => Study.fromJson({
+    'study': {'id': id, 'title': 'Cell biology'},
+    'sources': <dynamic>[],
+  });
+}
+
+class _FixtureAuthoringApi extends QuestionAuthoringService {
+  @override
+  Future<List<AuthoringQuestion>> list(String studyId) async => const [];
+}
+
 Future<void> _pumpScreen(
   WidgetTester tester, {
   required String status,
@@ -101,6 +118,8 @@ Future<void> _pumpScreen(
   GenerationApiService? api,
   bool failEvents = false,
   bool failEstimate = false,
+  StudyApiService? studyApi,
+  QuestionAuthoringService? questionAuthoringService,
 }) async {
   final resolvedApi =
       api ??
@@ -125,10 +144,19 @@ Future<void> _pumpScreen(
         DefaultMaterialLocalizations.delegate,
       ],
       routes: {
-        '/v1/generations/job-2': (_) =>
-            GenerationProgressScreen(jobId: 'job-2', api: resolvedApi),
+        '/v1/generations/job-2': (_) => GenerationProgressScreen(
+          jobId: 'job-2',
+          api: resolvedApi,
+          studyApi: studyApi,
+          questionAuthoringService: questionAuthoringService,
+        ),
       },
-      home: GenerationProgressScreen(jobId: 'job-1', api: resolvedApi),
+      home: GenerationProgressScreen(
+        jobId: 'job-1',
+        api: resolvedApi,
+        studyApi: studyApi,
+        questionAuthoringService: questionAuthoringService,
+      ),
     ),
   );
   await tester.pump(const Duration(milliseconds: 100));
@@ -173,6 +201,33 @@ void main() {
     await _pumpScreen(tester, status: 'completed', size: const Size(1300, 860));
     expect(find.text('Generation completed'), findsWidgets);
     expect(find.text('Stop safely'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('completed generation opens owner question review', (
+    tester,
+  ) async {
+    await _pumpScreen(
+      tester,
+      status: 'completed',
+      size: const Size(390, 844),
+      studyApi: _FixtureStudyApi(),
+      questionAuthoringService: _FixtureAuthoringApi(),
+    );
+
+    expect(find.text('Review your questions'), findsOneWidget);
+    await tester.tap(find.text('Review your questions'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump();
+
+    expect(find.text('Cell biology'), findsOneWidget);
+    expect(
+      find.text(
+        'Check each question, its choices, answer, and explanation before publishing.',
+      ),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 

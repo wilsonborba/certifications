@@ -4,6 +4,9 @@ import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/generation.dart';
 import 'package:certifications/domain/services/draft_progress_store.dart';
 import 'package:certifications/domain/services/generation_api_service.dart';
+import 'package:certifications/domain/services/study_api_service.dart';
+import 'package:certifications/domain/services/question_authoring_service.dart';
+import 'package:certifications/presentation/widgets/quiz_wizard/question_authoring_screen.dart';
 import 'package:flutter/material.dart';
 
 class GenerationProgressScreen extends StatefulWidget {
@@ -12,12 +15,18 @@ class GenerationProgressScreen extends StatefulWidget {
     required this.jobId,
     GenerationApiService? api,
     DraftProgressStore? progressStore,
+    StudyApiService? studyApi,
+    QuestionAuthoringService? questionAuthoringService,
   }) : _api = api,
-       _progressStore = progressStore;
+       _progressStore = progressStore,
+       _studyApi = studyApi,
+       _questionAuthoringService = questionAuthoringService;
 
   final String jobId;
   final GenerationApiService? _api;
   final DraftProgressStore? _progressStore;
+  final StudyApiService? _studyApi;
+  final QuestionAuthoringService? _questionAuthoringService;
 
   @override
   State<GenerationProgressScreen> createState() =>
@@ -125,6 +134,35 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
     } catch (error) {
       if (!mounted) return;
       setState(() => _loadError = error);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _reviewQuestions(GenerationJob job) async {
+    if (job.status != 'completed' || _busy) return;
+    setState(() {
+      _busy = true;
+      _loadError = null;
+    });
+    try {
+      final study = await (widget._studyApi ?? StudyApiService()).get(
+        job.studyId,
+      );
+      if (!mounted) return;
+      await Navigator.pushReplacement(
+        context,
+        MaterialPageRoute<void>(
+          builder: (_) => QuestionAuthoringScreen(
+            studyId: job.studyId,
+            studyTitle: study.name,
+            onPublished: () {},
+            authoringService: widget._questionAuthoringService,
+          ),
+        ),
+      );
+    } catch (error) {
+      if (mounted) setState(() => _loadError = error);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -413,6 +451,14 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
                             onPressed: _busy ? null : _stop,
                             icon: const Icon(Icons.stop_circle_outlined),
                             label: Text(context.tr('generationStop')),
+                          ),
+                        if (job.status == 'completed')
+                          FilledButton.icon(
+                            onPressed: _busy
+                                ? null
+                                : () => _reviewQuestions(job),
+                            icon: const Icon(Icons.rate_review_outlined),
+                            label: Text(context.tr('questionReviewTitle')),
                           ),
                         if (job.canResume)
                           FilledButton.icon(

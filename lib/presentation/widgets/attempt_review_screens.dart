@@ -4,6 +4,8 @@ import 'package:certifications/domain/services/attempt_review_api_service.dart';
 import 'package:certifications/domain/models/public_quiz_statistics.dart';
 import 'package:certifications/domain/services/public_quiz_statistics_api_service.dart';
 import 'package:certifications/presentation/components/attachment/app_bar.dart';
+import 'package:certifications/domain/services/certificate_verification_api_service.dart';
+import 'package:certifications/presentation/components/certificates/certificate_issue_card.dart';
 import 'package:flutter/material.dart';
 
 class AttemptHistoryScreen extends StatefulWidget {
@@ -243,15 +245,22 @@ class _HistoryRow extends StatelessWidget {
 }
 
 class AttemptResultsScreen extends StatefulWidget {
-  const AttemptResultsScreen({required this.attemptId, super.key});
+  const AttemptResultsScreen({
+    required this.attemptId,
+    this.api,
+    this.certificateService,
+    super.key,
+  });
   final String attemptId;
+  final AttemptReviewApiService? api;
+  final CertificateVerificationApiService? certificateService;
   @override
   State<AttemptResultsScreen> createState() => _AttemptResultsScreenState();
 }
 
 class _AttemptResultsScreenState extends State<AttemptResultsScreen> {
-  late final Future<AttemptResults> _future = AttemptReviewApiService()
-      .getResults(widget.attemptId);
+  late final Future<AttemptResults> _future =
+      (widget.api ?? AttemptReviewApiService()).getResults(widget.attemptId);
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AttachmentAppBar(title: context.tr('resultsReview')),
@@ -279,6 +288,13 @@ class _AttemptResultsScreenState extends State<AttemptResultsScreen> {
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 Text('${result.scoreCorrect} / ${result.scoreTotal}'),
+                if (result.status == 'completed') ...[
+                  const SizedBox(height: 16),
+                  CertificateIssueCard(
+                    attemptId: widget.attemptId,
+                    service: widget.certificateService,
+                  ),
+                ],
                 _ResultStats(values: result.stats),
                 const SizedBox(height: 20),
                 for (var i = 0; i < result.questions.length; i++)

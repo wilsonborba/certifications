@@ -126,7 +126,7 @@ class _AppState extends State<App> {
             builder: (_) => OnSharedQuizScreen(shareToken: route.id!),
           );
         }
-if (route.screen == CertificationsScreen.studyNew) {
+        if (route.screen == CertificationsScreen.studyNew) {
           final preparedStudyId = route.preparedStudyId;
           if (preparedStudyId != null) {
             return MaterialPageRoute(
@@ -135,7 +135,8 @@ if (route.screen == CertificationsScreen.studyNew) {
             );
           }
         }
-        if (route.screen == CertificationsScreen.generation && route.id != null) {
+        if (route.screen == CertificationsScreen.generation &&
+            route.id != null) {
           return MaterialPageRoute(
             settings: RouteSettings(
               name: '/v1/generations/${Uri.encodeComponent(route.id!)}',
@@ -148,16 +149,19 @@ if (route.screen == CertificationsScreen.studyNew) {
         if (route.screen == CertificationsScreen.dashboard) {
           return MaterialPageRoute(
             settings: RouteSettings(name: route.routeTemplate),
-            builder: (_) => const _AuthenticatedContent(child: AttemptDashboardScreen()),
+            builder: (_) =>
+                const _AuthenticatedContent(child: AttemptDashboardScreen()),
           );
         }
         if (route.screen == CertificationsScreen.history) {
           return MaterialPageRoute(
             settings: RouteSettings(name: route.routeTemplate),
-            builder: (_) => const _AuthenticatedContent(child: AttemptHistoryScreen()),
+            builder: (_) =>
+                const _AuthenticatedContent(child: AttemptHistoryScreen()),
           );
         }
-        if (route.screen == CertificationsScreen.attemptResults && route.id != null) {
+        if (route.screen == CertificationsScreen.attemptResults &&
+            route.id != null) {
           return MaterialPageRoute(
             settings: RouteSettings(name: route.routeTemplate),
             builder: (_) => _AuthenticatedContent(
@@ -165,18 +169,18 @@ if (route.screen == CertificationsScreen.studyNew) {
             ),
           );
         }
-        if (route.screen == CertificationsScreen.publicQuizStatistics && route.id != null) {
+        if (route.screen == CertificationsScreen.publicQuizStatistics &&
+            route.id != null) {
           return MaterialPageRoute(
             settings: RouteSettings(name: route.routeTemplate),
             builder: (_) => PublicQuizStatisticsScreen(quizId: route.id!),
           );
         }
-        if (route.screen == CertificationsScreen.certificate && route.id != null) {
+        if (route.screen == CertificationsScreen.certificate &&
+            route.id != null) {
           return MaterialPageRoute(
             settings: RouteSettings(name: route.routeTemplate),
             builder: (_) => CertificateVerificationScreen(code: route.id!),
-          );
-        }
           );
         }
         return MaterialPageRoute(

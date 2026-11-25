@@ -108,6 +108,24 @@ void main() {
     },
   );
 
+  test('submit posts to the saved attempt without client score data', () async {
+    late http.Request seen;
+    final client = MockClient((request) async {
+      seen = request;
+      return http.Response('{"status":"completed"}', 200);
+    });
+    final service = AttemptApiService(
+      adapter: ApiAdapter(client: client, csrfTokenProvider: () => null),
+    );
+
+    final response = await service.submitAttempt('attempt-1');
+
+    expect(response, {'status': 'completed'});
+    expect(seen.method, 'POST');
+    expect(seen.url.path, '/apps/certifications/v1/attempts/attempt-1/submit');
+    expect(seen.body, isEmpty);
+  });
+
   test('only explicit start operation creates an attempt', () async {
     late http.Request seen;
     final client = MockClient((request) async {

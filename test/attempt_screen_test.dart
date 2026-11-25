@@ -10,6 +10,7 @@ class _AttemptApi extends AttemptApiService {
   int getCalls = 0;
   int startCalls = 0;
   int submitCalls = 0;
+  bool completed = false;
   final saves = <String, String>{};
   final events = <AttemptActivityEvent>[];
 
@@ -53,7 +54,7 @@ class _AttemptApi extends AttemptApiService {
     id: 'attempt-1',
     quizId: 'quiz-1',
     quizVersionId: 'version-1',
-    status: 'in_progress',
+    status: completed ? 'completed' : 'in_progress',
     startedAt: 1760000000,
     monitoringNotice: 'This page visibility may be recorded.',
     questions: [
@@ -83,18 +84,26 @@ class _RouteRecorder extends NavigatorObserver {
   }
 }
 
-Widget _app(AttemptApiService api, {Key? key}) => MaterialApp(
-  key: key,
-  localizationsDelegates: const [
-    AppLocalizationsDelegate(),
-    FallbackCupertinoLocalizationsDelegate(),
-    FallbackMaterialLocalizationsDelegate(),
-    DefaultWidgetsLocalizations.delegate,
-    DefaultMaterialLocalizations.delegate,
-  ],
-  supportedLocales: AppLocalizations.supportedLocales,
-  home: AttemptScreen(attemptId: 'attempt-1', api: api),
-);
+Widget _app(AttemptApiService api, {Key? key, NavigatorObserver? observer}) =>
+    MaterialApp(
+      key: key,
+      navigatorObservers: [if (observer != null) observer],
+      onGenerateRoute: (settings) => MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => settings.name?.endsWith('/results') == true
+            ? const Scaffold(body: Text('Authoritative result route'))
+            : AttemptScreen(attemptId: 'attempt-1', api: api),
+      ),
+      localizationsDelegates: const [
+        AppLocalizationsDelegate(),
+        FallbackCupertinoLocalizationsDelegate(),
+        FallbackMaterialLocalizationsDelegate(),
+        DefaultWidgetsLocalizations.delegate,
+        DefaultMaterialLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: AttemptScreen(attemptId: 'attempt-1', api: api),
+    );
 
 void main() {
   testWidgets('shows the activity notice before any attempt is started', (
@@ -193,11 +202,12 @@ void main() {
     },
   );
 
-  testWidgets('submit requires confirmation and then shows submitted state', (
+  testWidgets('submit requires confirmation then opens results by saved id', (
     tester,
   ) async {
     final api = _AttemptApi();
-    await tester.pumpWidget(_app(api));
+    final routes = _RouteRecorder();
+    await tester.pumpWidget(_app(api, observer: routes));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Next'));
@@ -217,7 +227,23 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(api.submitCalls, 1);
-    expect(find.text('Your attempt was submitted.'), findsOneWidget);
+    expect(routes.replacedRouteName, '/v1/attempts/attempt-1/results');
+    expect(find.text('Authoritative result route'), findsOneWidget);
+  });
+
+  testWidgets('opening a completed saved attempt resumes to GET results', (
+    tester,
+  ) async {
+    final api = _AttemptApi()..completed = true;
+    final routes = _RouteRecorder();
+    await tester.pumpWidget(_app(api, observer: routes));
+    await tester.pumpAndSettle();
+
+    expect(api.getCalls, 1);
+    expect(api.startCalls, 0);
+    expect(api.submitCalls, 0);
+    expect(routes.replacedRouteName, '/v1/attempts/attempt-1/results');
+    expect(find.text('Authoritative result route'), findsOneWidget);
   });
 
   testWidgets('records a deduplicated hidden and return observation', (
