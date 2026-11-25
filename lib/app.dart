@@ -14,6 +14,9 @@ import 'package:certifications/presentation/widgets/quiz/on_shared_quiz.dart';
 import 'package:certifications/presentation/widgets/generation_progress_screen.dart';
 import 'package:certifications/presentation/widgets/quiz/attempt_screen.dart';
 import 'package:certifications/presentation/widgets/quiz/attempt_start_screen.dart';
+import 'package:certifications/presentation/widgets/attempt_review_screens.dart';
+import 'package:certifications/presentation/components/auth/verify_session.dart';
+import 'package:certifications/presentation/widgets/boarding/on_boarding.dart';
 import 'package:flutter/material.dart';
 
 class App extends StatefulWidget {
@@ -105,7 +108,7 @@ class _AppState extends State<App> {
             builder: (_) => OnSharedQuizScreen(shareToken: route.id!),
           );
         }
-        if (route.screen == CertificationsScreen.studyNew) {
+if (route.screen == CertificationsScreen.studyNew) {
           final preparedStudyId = route.preparedStudyId;
           if (preparedStudyId != null) {
             return MaterialPageRoute(
@@ -114,8 +117,7 @@ class _AppState extends State<App> {
             );
           }
         }
-        if (route.screen == CertificationsScreen.generation &&
-            route.id != null) {
+        if (route.screen == CertificationsScreen.generation && route.id != null) {
           return MaterialPageRoute(
             settings: RouteSettings(
               name: '/v1/generations/${Uri.encodeComponent(route.id!)}',
@@ -125,11 +127,60 @@ class _AppState extends State<App> {
             ),
           );
         }
+        if (route.screen == CertificationsScreen.dashboard) {
+          return MaterialPageRoute(
+            settings: RouteSettings(name: route.routeTemplate),
+            builder: (_) => const _AuthenticatedContent(child: AttemptDashboardScreen()),
+          );
+        }
+        if (route.screen == CertificationsScreen.history) {
+          return MaterialPageRoute(
+            settings: RouteSettings(name: route.routeTemplate),
+            builder: (_) => const _AuthenticatedContent(child: AttemptHistoryScreen()),
+          );
+        }
+        if (route.screen == CertificationsScreen.attemptResults && route.id != null) {
+          return MaterialPageRoute(
+            settings: RouteSettings(name: route.routeTemplate),
+            builder: (_) => _AuthenticatedContent(
+              child: AttemptResultsScreen(attemptId: route.id!),
+            ),
+          );
+        }
+        if (route.screen == CertificationsScreen.publicQuizStatistics && route.id != null) {
+          return MaterialPageRoute(
+            settings: RouteSettings(name: route.routeTemplate),
+            builder: (_) => PublicQuizStatisticsScreen(quizId: route.id!),
+          );
+        }
         return MaterialPageRoute(
           settings: RouteSettings(name: route.routeTemplate),
           builder: (_) => const SessionGate(),
         );
       },
     ),
+  );
+}
+
+class _AuthenticatedContent extends StatefulWidget {
+  const _AuthenticatedContent({required this.child});
+  final Widget child;
+
+  @override
+  State<_AuthenticatedContent> createState() => _AuthenticatedContentState();
+}
+
+class _AuthenticatedContentState extends State<_AuthenticatedContent> {
+  late final Future<bool> _session = isThereSession();
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<bool>(
+    future: _session,
+    builder: (context, snapshot) {
+      if (snapshot.connectionState != ConnectionState.done) {
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      }
+      return snapshot.data == true ? widget.child : const OnBoardingScreen();
+    },
   );
 }

@@ -140,9 +140,7 @@ class _InlineDesktopPreferences extends StatelessWidget {
           decoration: BoxDecoration(
             color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: scheme.outline.withValues(alpha: 0.3),
-            ),
+            border: Border.all(color: scheme.outline.withValues(alpha: 0.3)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -200,7 +198,9 @@ class _LangChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-            color: selected ? scheme.onPrimary : scheme.onSurface.withValues(alpha: 0.75),
+            color: selected
+                ? scheme.onPrimary
+                : scheme.onSurface.withValues(alpha: 0.75),
           ),
         ),
       ),
@@ -229,11 +229,16 @@ class _UserProfileButton extends StatelessWidget {
           value: 'profile',
           child: Row(
             children: [
-              Icon(Icons.person_outline, color: scheme.onSurface.withValues(alpha: 0.6)),
+              Icon(
+                Icons.person_outline,
+                color: scheme.onSurface.withValues(alpha: 0.6),
+              ),
               const SizedBox(width: 12),
               Text(
                 context.tr('profile'),
-                style: TextStyle(color: scheme.onSurface.withValues(alpha: 0.6)),
+                style: TextStyle(
+                  color: scheme.onSurface.withValues(alpha: 0.6),
+                ),
               ),
             ],
           ),
@@ -254,7 +259,10 @@ class _UserProfileButton extends StatelessWidget {
               const SizedBox(width: 12),
               Text(
                 context.tr('logout'),
-                style: TextStyle(color: scheme.error, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: scheme.error,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -326,26 +334,41 @@ class _AttachmentDesktopActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    void _defaultAbout() => redirectToUrl('https://${app_settings.ASODYA_MAIN_DOMAIN}', replace: false);
-    void _defaultPlans() => NavigationService.push(const OnPlansScreen());
-    void _defaultStudies() => NavigationService.pushReplacement(const SessionGate());
-    void _defaultCertificates() => NavigationService.push(const OnCertificatesScreen());
-    void _defaultSupport() => NavigationService.push(const OnSupportScreen());
+    void defaultAbout() => redirectToUrl(
+      'https://${app_settings.ASODYA_MAIN_DOMAIN}',
+      replace: false,
+    );
+    void defaultPlans() => NavigationService.push(const OnPlansScreen());
+    void defaultStudies() =>
+        NavigationService.pushReplacement(const SessionGate());
+    void openDashboard() => Navigator.of(context).pushNamed('/v1/dashboard');
+    void openHistory() => Navigator.of(context).pushNamed('/v1/history');
+    void defaultCertificates() =>
+        NavigationService.push(const OnCertificatesScreen());
+    void defaultSupport() => NavigationService.push(const OnSupportScreen());
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         const _InlineDesktopPreferences(),
         if (currentTab != 'studies')
-          _item(context, context.tr('studies'), _defaultStudies),
+          _item(context, context.tr('studies'), defaultStudies),
+        if (currentTab != 'dashboard')
+          _item(context, context.tr('reviewDashboard'), openDashboard),
+        if (currentTab != 'history')
+          _item(context, context.tr('attemptHistory'), openHistory),
         if (currentTab != 'certificates')
-          _item(context, context.tr('certificates'), onCertificates ?? _defaultCertificates),
+          _item(
+            context,
+            context.tr('certificates'),
+            onCertificates ?? defaultCertificates,
+          ),
         if (currentTab != 'plans')
-          _item(context, context.tr('plans'), onPlans ?? _defaultPlans),
+          _item(context, context.tr('plans'), onPlans ?? defaultPlans),
         if (currentTab != 'support')
-          _item(context, context.tr('support'), onSupport ?? _defaultSupport),
+          _item(context, context.tr('support'), onSupport ?? defaultSupport),
         if (currentTab != 'about')
-          _item(context, context.tr('about'), onAbout ?? _defaultAbout),
+          _item(context, context.tr('about'), onAbout ?? defaultAbout),
         const SizedBox(width: 8),
         _UserProfileButton(onLogout: () async => onLogout()),
         const SizedBox(width: 8),
@@ -406,11 +429,18 @@ class AttachmentSideMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    void _defaultAbout() => redirectToUrl('https://${app_settings.ASODYA_MAIN_DOMAIN}', replace: false);
-    void _defaultPlans() => NavigationService.push(const OnPlansScreen());
-    void _defaultStudies() => NavigationService.pushReplacement(const SessionGate());
-    void _defaultCertificates() => NavigationService.push(const OnCertificatesScreen());
-    void _defaultSupport() => NavigationService.push(const OnSupportScreen());
+    void defaultAbout() => redirectToUrl(
+      'https://${app_settings.ASODYA_MAIN_DOMAIN}',
+      replace: false,
+    );
+    void defaultPlans() => NavigationService.push(const OnPlansScreen());
+    void defaultStudies() =>
+        NavigationService.pushReplacement(const SessionGate());
+    void openDashboard() => Navigator.of(context).pushNamed('/v1/dashboard');
+    void openHistory() => Navigator.of(context).pushNamed('/v1/history');
+    void defaultCertificates() =>
+        NavigationService.push(const OnCertificatesScreen());
+    void defaultSupport() => NavigationService.push(const OnSupportScreen());
 
     return Drawer(
       backgroundColor: scheme.surface,
@@ -427,43 +457,57 @@ class AttachmentSideMenu extends StatelessWidget {
                   context,
                   Icons.school_outlined,
                   context.tr('studies'),
-                  _defaultStudies,
+                  defaultStudies,
+                ),
+              if (currentTab != 'dashboard')
+                _tile(
+                  context,
+                  Icons.dashboard_outlined,
+                  context.tr('reviewDashboard'),
+                  openDashboard,
+                ),
+              if (currentTab != 'history')
+                _tile(
+                  context,
+                  Icons.history,
+                  context.tr('attemptHistory'),
+                  openHistory,
                 ),
               if (currentTab != 'certificates')
                 _tile(
                   context,
                   Icons.workspace_premium_outlined,
                   context.tr('certificates'),
-                  onCertificates ?? _defaultCertificates,
+                  onCertificates ?? defaultCertificates,
                 ),
               if (currentTab != 'plans')
                 _tile(
                   context,
                   Icons.stacked_line_chart_outlined,
                   context.tr('plans'),
-                  onPlans ?? _defaultPlans,
+                  onPlans ?? defaultPlans,
                 ),
               if (currentTab != 'support')
                 _tile(
                   context,
                   Icons.support_agent_outlined,
                   context.tr('support'),
-                  onSupport ?? _defaultSupport,
+                  onSupport ?? defaultSupport,
                 ),
               if (currentTab != 'about')
-                _tile(context, Icons.info_outline, context.tr('about'), onAbout ?? _defaultAbout),
+                _tile(
+                  context,
+                  Icons.info_outline,
+                  context.tr('about'),
+                  onAbout ?? defaultAbout,
+                ),
               const Padding(
                 padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
                 child: AppPreferencesPanel(),
               ),
               const Spacer(),
               const Divider(height: 1),
-              _tile(
-                context,
-                Icons.person_outline,
-                context.tr('profile'),
-                null,
-              ),
+              _tile(context, Icons.person_outline, context.tr('profile'), null),
               ListTile(
                 leading: Icon(Icons.logout, color: scheme.onSurface),
                 title: Text(

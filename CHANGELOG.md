@@ -10,11 +10,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🚀 Features
 
 - *(quiz)* Add saved attempt flow (#57) ([`11d25d9`](https://github.com/wilsonborba/certifications/commit/11d25d97675557203c048ecd87b0563708850cf5))
-
+- *(58)* Add results history and dashboard views ([`d7fd918`](https://github.com/wilsonborba/certifications/commit/d7fd918b0e9698ed75ad1f35d7ce469975325a5b))
 
 ### 🐛 Bug Fixes
 
-- *(build)* Keep image below 4.11.0 so the web release build resolves with the archive that pdf allows (#61)
+- *(wizard)* Fix docx selection payload and detect docx page count ([`8c0b6db`](https://github.com/wilsonborba/certifications/commit/8c0b6dbd7a2bb70aad84b8233ec044bd26438c7f))
+- *(deploy)* Handle eventual consistency 404 in deployment status polling ([`82127c8`](https://github.com/wilsonborba/certifications/commit/82127c82d2cac5e30404725604f399bf2fad41c4))
+- Remove unlimited (Max) question count option ([`3561247`](https://github.com/wilsonborba/certifications/commit/35612475bc29aa93f35555252c46fe83cb1ad281))
+- *(build)* Keep image below 4.11.0 for the web build (#61) ([`b0daad0`](https://github.com/wilsonborba/certifications/commit/b0daad08da8f39b417bc5b5579715e0ec0e1ab06))
+- *(core)* Fix Area 12 privacy, ScreenTrailObserver, Area 11 routes, and pubspec.lock (#51) ([`4e3c23f`](https://github.com/wilsonborba/certifications/commit/4e3c23f57b248f5999147647c0aba8af9999098d))
+- *(study)* Keep audio selection on whole source ([`ca1b48b`](https://github.com/wilsonborba/certifications/commit/ca1b48b5158ad857bf8abc1c9212b7acec57fa31))
+
+### 💼 Other Changes
+
+- Merge branch 'fix/docx-selection-payload' into feature/main ([`96002a4`](https://github.com/wilsonborba/certifications/commit/96002a44edcefc1487190ca3e4eb6afcac9f312d))
+- Merge branch 'fix/remove-max-question-count' into feature/main ([`5e7920e`](https://github.com/wilsonborba/certifications/commit/5e7920ec5bf78447b853a4cfa8fe8b2c6de86e30))
+- Keep image below 4.11.0 for the web build (#61) ([`3c40dcc`](https://github.com/wilsonborba/certifications/commit/3c40dcc12a26dd65ceffea292a7a2c22ecffcdb7))
+- *(ui)* Optimized moving bubbles (#52) ([`956b96c`](https://github.com/wilsonborba/certifications/commit/956b96c24d2171b422473c3381cb8f4bbf2dea65))
+- Merge feature/51-core into feature/main (#51) ([`f3c5292`](https://github.com/wilsonborba/certifications/commit/f3c5292cbd824558053ef7bf024712e21ab05bf0))
+- Merge fix/51-sendback into feature/main (#51) ([`57b7fd1`](https://github.com/wilsonborba/certifications/commit/57b7fd18e594d70a9ccff739862fea30f43520ce))
+- Merge remote-tracking branch 'origin/feature/main' into feature/52-design-system ([`3c31934`](https://github.com/wilsonborba/certifications/commit/3c319346f79438fdc876668510f1668c53ceacb5))
+- Design system on Visa Nova tokens with Ubuntu Sans and optimized bubbles (#52) ([`14abd1f`](https://github.com/wilsonborba/certifications/commit/14abd1f4e605ec1a2b3811cf4bbc5a5ecc36046a))
+- Implement Certifications study source flow ([`dbc13c2`](https://github.com/wilsonborba/certifications/commit/dbc13c28869171e47a8df7213cd53fa9a43e95b3))
+- Add public question reuse API hooks ([`ad5b77a`](https://github.com/wilsonborba/certifications/commit/ad5b77acb6f115e7e6710a76342580e571490fa2))
+- Add durable attempt API hooks ([`1e9d48f`](https://github.com/wilsonborba/certifications/commit/1e9d48f1cf14b42a7c20c11148b9a6b8c8b654d6))
+- Add public quiz statistics API hook ([`4414201`](https://github.com/wilsonborba/certifications/commit/441420117667dbca88f9e97f76fe6ac12259d6a3))
+
+### 🚜 Refactor
+
+- *(telemetry)* Update client error reporting to /apps/api/v1/client-error ([`357cf02`](https://github.com/wilsonborba/certifications/commit/357cf02692e352355c39549421d98e927f353263))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(release)* Sync release/v1.0.0 back to feature/main ([`689130b`](https://github.com/wilsonborba/certifications/commit/689130b27a11b02f5455f18ff6af556a7a619843))
+- *(settings)* Dynamically resolve build timestamp from environment ([`02ad3f1`](https://github.com/wilsonborba/certifications/commit/02ad3f102d65a59649ea8fd654f5dfaac4ce560d))
+- Remove deprecated legacy tokenized query parameter ([`d8e9cbc`](https://github.com/wilsonborba/certifications/commit/d8e9cbcbc1da3372c439699a3c5817f08ac3a567))
 
 ## [1.0.0] - 2026-09-08
 
