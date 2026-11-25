@@ -148,6 +148,10 @@ void main() {
   testWidgets('phone shows the full localized title and keeps search visible', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       _app(
         CreatedQuizHistoryScreen(api: _HistoryApi()),
