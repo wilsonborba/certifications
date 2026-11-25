@@ -90,7 +90,7 @@ void main() {
     await tester.tap(
       find.descendant(
         of: find.byType(AlertDialog),
-        matching: find.widgetWithText(FilledButton, 'Preview and confirm name'),
+        matching: find.byType(FilledButton),
       ),
     );
     await tester.pumpAndSettle();
@@ -132,14 +132,28 @@ void main() {
     await tester.pumpWidget(_issueCardApp(service));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Issue completion certificate'));
+    final issueButton = find.descendant(
+      of: find.byType(CertificateIssueCard),
+      matching: find.widgetWithText(
+        FilledButton,
+        'Issue completion certificate',
+      ),
+    );
+    expect(issueButton, findsOneWidget);
+    await tester.tap(issueButton);
     await tester.pumpAndSettle();
 
     expect(
       find.text('This attempt does not meet the certificate requirements.'),
       findsOneWidget,
     );
-    expect(find.text('Issue completion certificate'), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byType(CertificateIssueCard),
+        matching: find.byType(FilledButton),
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets('temporary issuance failure offers a retry', (tester) async {
@@ -184,12 +198,14 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField), 'Ana Silva');
+    await tester.pump();
     await tester.tap(find.text('Preview and confirm name'));
     await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
     await tester.tap(
       find.descendant(
         of: find.byType(AlertDialog),
-        matching: find.widgetWithText(FilledButton, 'Preview and confirm name'),
+        matching: find.byType(FilledButton),
       ),
     );
     await tester.pumpAndSettle();
@@ -197,7 +213,12 @@ void main() {
       find.text('The certificate service is unavailable. Try again.'),
       findsOneWidget,
     );
-    await tester.tap(find.text('Retry certificate issue'));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(CertificateIssueCard),
+        matching: find.widgetWithText(FilledButton, 'Retry certificate issue'),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(issueCalls, 2);
