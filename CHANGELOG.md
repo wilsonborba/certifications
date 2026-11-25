@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### 🚀 Features
+
+- *(quiz)* Add saved attempt flow (#57) ([`11d25d9`](https://github.com/wilsonborba/certifications/commit/11d25d97675557203c048ecd87b0563708850cf5))
+
+
 ### 🐛 Bug Fixes
 
 - *(build)* Keep image below 4.11.0 so the web release build resolves with the archive that pdf allows (#61)

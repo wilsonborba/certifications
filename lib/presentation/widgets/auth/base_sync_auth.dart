@@ -8,6 +8,7 @@ import 'package:certifications/presentation/components/auth/verify_session.dart'
 import 'package:certifications/presentation/components/quiz/futuristic_loading.dart';
 import 'package:certifications/presentation/widgets/attachment/on_attachment.dart';
 import 'package:certifications/presentation/widgets/quiz/on_shared_quiz.dart';
+import 'package:certifications/presentation/widgets/quiz/attempt_start_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:web/web.dart' as web;
@@ -99,9 +100,8 @@ abstract class BaseSyncAuthState<T extends BaseSyncAuth> extends State<T> {
     if (shareToken != null) {
       return OnSharedQuizScreen(shareToken: shareToken, resumed: true);
     }
-    // A pending intent captured by quiz id (found while browsing, not via a
-    // share link) has no dedicated resume screen yet; land on the normal
-    // logged-in home rather than guessing a destination.
+    final quizId = intent?.quizId;
+    if (quizId != null) return AttemptStartScreen(quizId: quizId);
     return const OnAttachmentScreen();
   }
 
@@ -129,13 +129,13 @@ abstract class BaseSyncAuthState<T extends BaseSyncAuth> extends State<T> {
   void cleanUrlAfterNav({String path = '/'}) {
     if (!kIsWeb) return;
 
-    void _setViaHistory() {
+    void setViaHistory() {
       final loc = web.window.location;
       web.window.history.replaceState(null, '', '${loc.origin}$path');
     }
 
     // 1) Do it now…
-    _setViaHistory();
+    setViaHistory();
 
     // 2) …and once the next frame lands, also tell Flutter’s Router.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -148,7 +148,7 @@ abstract class BaseSyncAuthState<T extends BaseSyncAuth> extends State<T> {
         debug('routeInformationUpdated failed (non-router app?): $e');
       }
       // belt-and-suspenders in case a rebuild reverts it again
-      _setViaHistory();
+      setViaHistory();
     });
   }
 

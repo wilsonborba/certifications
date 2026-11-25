@@ -12,6 +12,8 @@ import 'package:certifications/presentation/widgets/auth/on_sync_auth.dart';
 import 'package:certifications/presentation/widgets/plans/on_plans.dart';
 import 'package:certifications/presentation/widgets/quiz/on_shared_quiz.dart';
 import 'package:certifications/presentation/widgets/generation_progress_screen.dart';
+import 'package:certifications/presentation/widgets/quiz/attempt_screen.dart';
+import 'package:certifications/presentation/widgets/quiz/attempt_start_screen.dart';
 import 'package:flutter/material.dart';
 
 class App extends StatefulWidget {
@@ -46,6 +48,7 @@ class _AppState extends State<App> {
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [
         AppLocalizationsDelegate(),
+        FallbackCupertinoLocalizationsDelegate(),
         FallbackMaterialLocalizationsDelegate(),
         DefaultWidgetsLocalizations.delegate,
         DefaultMaterialLocalizations.delegate,
@@ -78,6 +81,21 @@ class _AppState extends State<App> {
             builder: (_) => const OnPlansScreen(),
           );
         }
+        if (route.screen == CertificationsScreen.attempt && route.id != null) {
+          return MaterialPageRoute(
+            settings: RouteSettings(
+              name: '/v1/attempts/${Uri.encodeComponent(route.id!)}',
+            ),
+            builder: (_) => AttemptScreen(attemptId: route.id!),
+          );
+        }
+        if (route.screen == CertificationsScreen.quizDetail &&
+            route.id != null) {
+          return MaterialPageRoute(
+            settings: RouteSettings(name: route.routeTemplate),
+            builder: (_) => AttemptStartScreen(quizId: route.id!),
+          );
+        }
         // Quiz share links (#40): anonymous-friendly preview, auth-gated
         // only at the point of actually starting the quiz.
         if (route.screen == CertificationsScreen.sharedQuiz &&
@@ -87,7 +105,7 @@ class _AppState extends State<App> {
             builder: (_) => OnSharedQuizScreen(shareToken: route.id!),
           );
         }
-if (route.screen == CertificationsScreen.studyNew) {
+        if (route.screen == CertificationsScreen.studyNew) {
           final preparedStudyId = route.preparedStudyId;
           if (preparedStudyId != null) {
             return MaterialPageRoute(
