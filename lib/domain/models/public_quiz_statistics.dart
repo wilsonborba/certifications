@@ -54,6 +54,76 @@ class PublicQuizStatistics {
             json['score_distribution_report_view'] as Map<String, dynamic>,
         questionProvenance: json['question_provenance'] as Map<String, dynamic>,
       );
+
+  ScoreDistributionTemplate? get scoreDistributionTemplate =>
+      ScoreDistributionTemplate.tryParse(scoreDistributionReportView);
+}
+
+/// The Reports VisualTemplate v1 descriptor supplied by the statistics API.
+/// Keep the descriptor and binding paired; a binding alone is not enough to
+/// select or construct a chart.
+class ScoreDistributionTemplate {
+  const ScoreDistributionTemplate({
+    required this.title,
+    required this.bucketField,
+    required this.attemptsField,
+  });
+
+  final String title;
+  final String bucketField;
+  final String attemptsField;
+
+  static ScoreDistributionTemplate? tryParse(Map<String, dynamic> reportView) {
+    final definition = reportView['template_definition'];
+    final binding = reportView['visual'];
+    if (definition is! Map || binding is! Map) return null;
+    final descriptor = definition.cast<String, dynamic>();
+    final visual = binding.cast<String, dynamic>();
+    final slots = descriptor['slots'];
+    final mapping = visual['mapping'];
+    if (descriptor['template_id'] != 'cert-score-distribution' ||
+        descriptor['version'] != 1 ||
+        descriptor['kind'] != 'chart' ||
+        descriptor['visual'] != 'bar' ||
+        visual['template'] != 'cert-score-distribution' ||
+        visual['version'] != 1 ||
+        descriptor['title'] is! String ||
+        slots is! List ||
+        mapping is! Map) {
+      return null;
+    }
+    final slotsByName = <String, Map<String, dynamic>>{};
+    for (final rawSlot in slots) {
+      if (rawSlot is Map && rawSlot['slot_name'] is String) {
+        slotsByName[rawSlot['slot_name'] as String] = rawSlot
+            .cast<String, dynamic>();
+      }
+    }
+    final bucket = slotsByName['bucket'];
+    final attempts = slotsByName['attempts'];
+    final mapped = mapping.cast<String, dynamic>();
+    final bucketFields = mapped['bucket'];
+    final attemptFields = mapped['attempts'];
+    if (bucket == null ||
+        attempts == null ||
+        bucket['role'] != 'dimension' ||
+        attempts['role'] != 'measure' ||
+        bucket['is_required'] != true ||
+        attempts['is_required'] != true ||
+        bucketFields is! List ||
+        bucketFields.length != 1 ||
+        bucketFields.single != 'score_band' ||
+        attemptFields is! List ||
+        attemptFields.isEmpty ||
+        attemptFields.any((field) => field != 'attempt_count')) {
+      return null;
+    }
+    return ScoreDistributionTemplate(
+      title: descriptor['title'] as String,
+      bucketField: bucketFields.single as String,
+      attemptsField: attemptFields.first as String,
+    );
+  }
 }
 
 class ScoreDistributionBand {

@@ -637,6 +637,15 @@ class _PublicQuizStatisticsScreenState
                   context.tr('scoreDistribution'),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
+                if (data.scoreDistributionTemplate case final template?
+                    when data.scoreDistributionDenominator > 0)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: _ScoreDistributionTemplateView(
+                      template: template,
+                      bands: data.scoreDistribution,
+                    ),
+                  ),
                 if (data.scoreDistributionDenominator == 0)
                   Padding(
                     padding: const EdgeInsets.all(16),
@@ -674,4 +683,58 @@ class _PublicQuizStatisticsScreenState
       },
     ),
   );
+}
+
+class _ScoreDistributionTemplateView extends StatelessWidget {
+  const _ScoreDistributionTemplateView({
+    required this.template,
+    required this.bands,
+  });
+
+  final ScoreDistributionTemplate template;
+  final List<ScoreDistributionBand> bands;
+
+  @override
+  Widget build(BuildContext context) {
+    final maxCount = bands.fold<int>(
+      0,
+      (maximum, band) => band.count > maximum ? band.count : maximum,
+    );
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              template.title,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            for (final band in bands) ...[
+              Row(
+                children: [
+                  SizedBox(width: 90, child: Text(band.label)),
+                  Expanded(
+                    child: Semantics(
+                      label: '${band.label}: ${band.count}',
+                      child: LinearProgressIndicator(
+                        value: maxCount == 0 ? 0 : band.count / maxCount,
+                        minHeight: 16,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 42,
+                    child: Text('${band.count}', textAlign: TextAlign.end),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 }

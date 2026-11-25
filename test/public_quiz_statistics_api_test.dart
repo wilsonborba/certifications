@@ -48,6 +48,7 @@ void main() {
             'offset': 0,
             'limit': 3,
             'total_rows': 0,
+            'template_definition': _scoreDistributionTemplate('en'),
             'visual': {
               'template': 'cert-score-distribution',
               'version': 1,
@@ -76,6 +77,7 @@ void main() {
     expect(stats.basis, 'all_completed_attempts');
     expect(stats.durationDenominator, 0);
     expect(stats.scoreDistributionReportView['total_rows'], 0);
+    expect(stats.scoreDistributionTemplate?.title, 'Quiz score distribution');
   });
 
   test('public statistics retain the server denominator basis', () async {
@@ -110,6 +112,7 @@ void main() {
             'offset': 0,
             'limit': 3,
             'total_rows': 3,
+            'template_definition': _scoreDistributionTemplate('pt'),
             'visual': {
               'template': 'cert-score-distribution',
               'version': 1,
@@ -137,5 +140,35 @@ void main() {
     expect(stats.scoreDistributionDenominator, 3);
     expect(stats.scoreDistribution.map((band) => band.count), [1, 1, 1]);
     expect(stats.basis, 'all_completed_attempts');
+    expect(stats.scoreDistributionTemplate?.attemptsField, 'attempt_count');
   });
 }
+
+Map<String, dynamic> _scoreDistributionTemplate(String language) => {
+  'template_id': 'cert-score-distribution',
+  'version': 1,
+  'kind': 'chart',
+  'visual': 'bar',
+  'title': language == 'pt'
+      ? 'Distribuição de pontuações'
+      : 'Quiz score distribution',
+  'slots': [
+    {
+      'slot_name': 'bucket',
+      'role': 'dimension',
+      'is_required': true,
+      'min_count': 1,
+      'max_count': 1,
+      'accepted_types': ['string'],
+    },
+    {
+      'slot_name': 'attempts',
+      'role': 'measure',
+      'is_required': true,
+      'min_count': 1,
+      'max_count': 2,
+      'accepted_types': ['integer', 'float'],
+    },
+  ],
+  'options': [],
+};
