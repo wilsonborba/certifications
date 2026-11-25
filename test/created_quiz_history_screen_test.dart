@@ -69,7 +69,7 @@ void main() {
     await tester.pumpWidget(_app(CreatedQuizHistoryScreen(api: api)));
     await tester.pumpAndSettle();
     expect(find.text('Created quiz 1'), findsOneWidget);
-    expect(find.text('1–20 of 55'), findsOneWidget);
+    expect(find.text('1-20 of 55'), findsOneWidget);
 
     final search = find.widgetWithText(
       TextField,
@@ -121,7 +121,7 @@ void main() {
     await tester.tap(find.byTooltip('Next'));
     await tester.pumpAndSettle();
     expect(api.queries.last.offset, 40);
-    expect(find.text('41–55 of 55'), findsOneWidget);
+    expect(find.text('41-55 of 55'), findsOneWidget);
 
     await tester.tap(find.text('Clear filters'));
     await tester.pumpAndSettle();
