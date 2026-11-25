@@ -1,7 +1,10 @@
 import 'dart:convert';
 
+import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/dal/remote/api_adapter.dart';
 import 'package:certifications/domain/services/public_quiz_statistics_api_service.dart';
+import 'package:certifications/presentation/widgets/attempt_review_screens.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -141,6 +144,84 @@ void main() {
     expect(stats.scoreDistribution.map((band) => band.count), [1, 1, 1]);
     expect(stats.basis, 'all_completed_attempts');
     expect(stats.scoreDistributionTemplate?.attemptsField, 'attempt_count');
+  });
+
+  testWidgets('statistics refetch when saved interface language loads', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final languages = <String?>[];
+    final client = MockClient((request) async {
+      languages.add(request.headers['accept-language']);
+      return http.Response(
+        jsonEncode({
+          'quiz_id': 'quiz-3',
+          'completed_attempt_count': 1,
+          'distinct_participants': 1,
+          'average_score_pct': 80,
+          'average_score_denominator': 1,
+          'typical_duration_sec': 60,
+          'duration_denominator': 1,
+          'basis': 'all_completed_attempts',
+          'score_distribution_denominator': 1,
+          'score_distribution': [
+            {'score_band': '80-100%', 'attempt_count': 1},
+          ],
+          'question_provenance': {},
+          'score_distribution_report_view': {
+            'descriptor': {},
+            'rows': [],
+            'offset': 0,
+            'limit': 3,
+            'total_rows': 1,
+            'template_definition': _scoreDistributionTemplate('en'),
+            'visual': {
+              'template': 'cert-score-distribution',
+              'version': 1,
+              'mapping': {
+                'bucket': ['score_band'],
+                'attempts': ['attempt_count'],
+              },
+              'options': {},
+            },
+          },
+        }),
+        200,
+      );
+    });
+    final service = PublicQuizStatisticsApiService(
+      adapter: ApiAdapter(client: client, csrfTokenProvider: () => null),
+    );
+    var locale = const Locale('en');
+
+    Widget app() => MaterialApp(
+      locale: locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizationsDelegate(),
+        FallbackCupertinoLocalizationsDelegate(),
+        FallbackMaterialLocalizationsDelegate(),
+        DefaultWidgetsLocalizations.delegate,
+        DefaultMaterialLocalizations.delegate,
+      ],
+      home: PublicQuizStatisticsScreen(quizId: 'quiz-3', api: service),
+    );
+
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    expect(languages, ['en']);
+
+    locale = const Locale('th');
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+
+    expect(languages, ['en', 'th']);
+    expect(find.text('Quiz score distribution'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    client.close();
   });
 }
 

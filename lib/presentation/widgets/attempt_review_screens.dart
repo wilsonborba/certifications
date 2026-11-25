@@ -575,8 +575,9 @@ class _ProvenanceRow extends StatelessWidget {
 }
 
 class PublicQuizStatisticsScreen extends StatefulWidget {
-  const PublicQuizStatisticsScreen({required this.quizId, super.key});
+  const PublicQuizStatisticsScreen({required this.quizId, this.api, super.key});
   final String quizId;
+  final PublicQuizStatisticsApiService? api;
   @override
   State<PublicQuizStatisticsScreen> createState() =>
       _PublicQuizStatisticsScreenState();
@@ -584,11 +585,20 @@ class PublicQuizStatisticsScreen extends StatefulWidget {
 
 class _PublicQuizStatisticsScreenState
     extends State<PublicQuizStatisticsScreen> {
-  late final Future<PublicQuizStatistics> _future =
-      PublicQuizStatisticsApiService().getForQuiz(
-        widget.quizId,
-        language: Localizations.localeOf(context).languageCode,
-      );
+  late final PublicQuizStatisticsApiService _api =
+      widget.api ?? PublicQuizStatisticsApiService();
+  String? _loadedLanguage;
+  Future<PublicQuizStatistics>? _future;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final language = Localizations.localeOf(context).languageCode;
+    if (_loadedLanguage != language) {
+      _loadedLanguage = language;
+      _future = _api.getForQuiz(widget.quizId, language: language);
+    }
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -652,11 +662,12 @@ class _PublicQuizStatisticsScreenState
                     child: Text(context.tr('noScoreSample')),
                   )
                 else ...[
-                  for (final band in data.scoreDistribution)
-                    ListTile(
-                      title: Text(band.label),
-                      trailing: Text('${band.count}'),
-                    ),
+                  if (data.scoreDistributionTemplate == null)
+                    for (final band in data.scoreDistribution)
+                      ListTile(
+                        title: Text(band.label),
+                        trailing: Text('${band.count}'),
+                      ),
                   Text('n=${data.scoreDistributionDenominator}'),
                 ],
                 const SizedBox(height: 16),
