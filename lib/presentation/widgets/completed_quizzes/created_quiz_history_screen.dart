@@ -210,6 +210,102 @@ class _CreatedQuizHistoryScreenState extends State<CreatedQuizHistoryScreen> {
     ),
   );
 
+  Widget _historyResults() => FutureBuilder<StudyHistoryPage>(
+    future: _future,
+    builder: (context, snapshot) {
+      if (snapshot.connectionState != ConnectionState.done) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (snapshot.hasError) {
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(context.tr('errorGeneric')),
+              TextButton(
+                onPressed: () => setState(() {
+                  _future = _load();
+                }),
+                child: Text(context.tr('retry')),
+              ),
+            ],
+          ),
+        );
+      }
+      final page = snapshot.data!;
+      final hasFilters =
+          _search.text.trim().isNotEmpty ||
+          _quizId.text.trim().isNotEmpty ||
+          _createdFrom != null ||
+          _createdTo != null ||
+          _status != null ||
+          _tag != null;
+      if (page.items.isEmpty) {
+        return Center(
+          child: Text(
+            hasFilters
+                ? context.tr('noCreatedHistoryMatches')
+                : context.tr('noCreatedHistoryYet'),
+          ),
+        );
+      }
+      return Column(
+        children: [
+          Expanded(
+            child: ListView.separated(
+              itemCount: page.items.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final study = page.items[index];
+                return Card(
+                  child: ListTile(
+                    title: Text(study.name.isEmpty ? study.id : study.name),
+                    subtitle: Text(
+                      '${context.tr('studyStatus_${study.status}')} · ${study.quizId.isEmpty ? context.tr('noQuizLinked') : study.quizId}',
+                    ),
+                    trailing: study.quizId.isEmpty
+                        ? null
+                        : IconButton(
+                            tooltip: context.tr('privateStatsAction'),
+                            icon: const Icon(Icons.bar_chart_outlined),
+                            onPressed: () => Navigator.of(context).pushNamed(
+                              '/v1/me/quizzes/${Uri.encodeComponent(study.quizId)}/statistics',
+                            ),
+                          ),
+                  ),
+                );
+              },
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                tooltip: context.tr('previous'),
+                onPressed: _offset == 0 ? null : () => _move(-1),
+                icon: const Icon(Icons.chevron_left),
+              ),
+              Text(
+                context.trParams('createdHistoryRange', {
+                  'from': '${page.offset + 1}',
+                  'to': '${page.offset + page.items.length}',
+                  'total': '${page.total}',
+                }),
+              ),
+              IconButton(
+                tooltip: context.tr('next'),
+                onPressed: page.offset + page.items.length >= page.total
+                    ? null
+                    : () => _move(1),
+                icon: const Icon(Icons.chevron_right),
+              ),
+            ],
+          ),
+        ],
+      );
+    },
+  );
+
   @override
   void dispose() {
     _search.dispose();
@@ -226,167 +322,84 @@ class _CreatedQuizHistoryScreenState extends State<CreatedQuizHistoryScreen> {
     ),
     endDrawer: const AttachmentSideMenu(currentTab: 'studies'),
     body: SafeArea(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: MediaQuery.sizeOf(context).width < 600
-                  ? CrossAxisAlignment.stretch
-                  : CrossAxisAlignment.center,
-              children: [
-                if (MediaQuery.sizeOf(context).width < 600) ...[
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(
-                      context.tr('createdQuizHistoryTitle'),
-                      style: Theme.of(context).textTheme.titleLarge,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isPhone = MediaQuery.sizeOf(context).width < 600;
+          final compactPhone = isPhone && constraints.maxHeight < 600;
+          final header = <Widget>[
+            if (isPhone) ...[
+              Padding(
+                padding: EdgeInsets.only(bottom: compactPhone ? 4 : 8),
+                child: Text(
+                  context.tr('createdQuizHistoryTitle'),
+                  style: compactPhone
+                      ? Theme.of(context).textTheme.titleMedium
+                      : Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+              _searchField(double.infinity),
+              const SizedBox(height: 4),
+              ExpansionTile(
+                key: const ValueKey('created-history-advanced-filters'),
+                tilePadding: EdgeInsets.zero,
+                title: Text(context.tr('createdHistoryFilters')),
+                children: [
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: constraints.maxHeight * 0.4,
+                    ),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          _advancedFilterWrap(),
+                          if (_invalidDateRange) _dateRangeError(),
+                          const SizedBox(height: 8),
+                        ],
+                      ),
                     ),
                   ),
-                  _searchField(double.infinity),
-                  const SizedBox(height: 4),
-                  ExpansionTile(
-                    key: const ValueKey('created-history-advanced-filters'),
-                    tilePadding: EdgeInsets.zero,
-                    title: Text(context.tr('createdHistoryFilters')),
-                    children: [
-                      ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxHeight: MediaQuery.sizeOf(context).height * 0.4,
-                        ),
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: [
-                              _advancedFilterWrap(),
-                              if (_invalidDateRange) _dateRangeError(),
-                              const SizedBox(height: 8),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ] else ...[
-                  _advancedFilterWrap(includeSearch: true),
-                  if (_invalidDateRange) _dateRangeError(),
                 ],
-                const SizedBox(height: 12),
-                Expanded(
-                  child: FutureBuilder<StudyHistoryPage>(
-                    future: _future,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState != ConnectionState.done) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (snapshot.hasError) {
-                        return Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(context.tr('errorGeneric')),
-                              TextButton(
-                                onPressed: () => setState(() {
-                                  _future = _load();
-                                }),
-                                child: Text(context.tr('retry')),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-                      final page = snapshot.data!;
-                      final hasFilters =
-                          _search.text.trim().isNotEmpty ||
-                          _quizId.text.trim().isNotEmpty ||
-                          _createdFrom != null ||
-                          _createdTo != null ||
-                          _status != null ||
-                          _tag != null;
-                      if (page.items.isEmpty) {
-                        return Center(
-                          child: Text(
-                            hasFilters
-                                ? context.tr('noCreatedHistoryMatches')
-                                : context.tr('noCreatedHistoryYet'),
-                          ),
-                        );
-                      }
-                      return Column(
-                        children: [
-                          Expanded(
-                            child: ListView.separated(
-                              itemCount: page.items.length,
-                              separatorBuilder: (_, _) =>
-                                  const SizedBox(height: 8),
-                              itemBuilder: (context, index) {
-                                final study = page.items[index];
-                                return Card(
-                                  child: ListTile(
-                                    title: Text(
-                                      study.name.isEmpty
-                                          ? study.id
-                                          : study.name,
-                                    ),
-                                    subtitle: Text(
-                                      '${context.tr('studyStatus_${study.status}')} · ${study.quizId.isEmpty ? context.tr('noQuizLinked') : study.quizId}',
-                                    ),
-                                    trailing: study.quizId.isEmpty
-                                        ? null
-                                        : IconButton(
-                                            tooltip: context.tr(
-                                              'privateStatsAction',
-                                            ),
-                                            icon: const Icon(
-                                              Icons.bar_chart_outlined,
-                                            ),
-                                            onPressed: () =>
-                                                Navigator.of(context).pushNamed(
-                                                  '/v1/me/quizzes/${Uri.encodeComponent(study.quizId)}/statistics',
-                                                ),
-                                          ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              IconButton(
-                                tooltip: context.tr('previous'),
-                                onPressed: _offset == 0
-                                    ? null
-                                    : () => _move(-1),
-                                icon: const Icon(Icons.chevron_left),
-                              ),
-                              Text(
-                                context.trParams('createdHistoryRange', {
-                                  'from': '${page.offset + 1}',
-                                  'to': '${page.offset + page.items.length}',
-                                  'total': '${page.total}',
-                                }),
-                              ),
-                              IconButton(
-                                tooltip: context.tr('next'),
-                                onPressed:
-                                    page.offset + page.items.length >=
-                                        page.total
-                                    ? null
-                                    : () => _move(1),
-                                icon: const Icon(Icons.chevron_right),
-                              ),
-                            ],
-                          ),
-                        ],
-                      );
-                    },
+              ),
+            ] else ...[
+              _advancedFilterWrap(includeSearch: true),
+              if (_invalidDateRange) _dateRangeError(),
+            ],
+          ];
+          final results = _historyResults();
+          final headerColumn = Column(
+            crossAxisAlignment: isPhone
+                ? CrossAxisAlignment.stretch
+                : CrossAxisAlignment.center,
+            children: header,
+          );
+          final headerArea = isPhone
+              ? ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: constraints.maxHeight * 0.55,
                   ),
-                ),
-              ],
+                  child: SingleChildScrollView(child: headerColumn),
+                )
+              : headerColumn;
+          final bodyContent = Column(
+            crossAxisAlignment: isPhone
+                ? CrossAxisAlignment.stretch
+                : CrossAxisAlignment.center,
+            children: [
+              headerArea,
+              const SizedBox(height: 12),
+              Expanded(child: results),
+            ],
+          );
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1100),
+              child: Padding(
+                padding: EdgeInsets.all(compactPhone ? 8 : 16),
+                child: bodyContent,
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     ),
   );
