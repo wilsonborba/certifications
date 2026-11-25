@@ -18,6 +18,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     final paths = <String>[];
+    var completeness = 'partial_with_interruptions';
     final client = MockClient((request) async {
       paths.add(request.url.path);
       if (request.url.path.endsWith('/files/pdf')) {
@@ -47,23 +48,33 @@ void main() {
           'issued_at': 1760000000,
           'revoked_at': null,
           'activity_summary': {
-            'focus_lost_count': 1,
-            'page_hidden_count': 1,
-            'page_return_count': 1,
-            'known_away_ms': 1200,
+            'focus_lost_count': completeness == 'no_events_recorded' ? 0 : 1,
+            'page_hidden_count': completeness == 'no_events_recorded' ? 0 : 1,
+            'page_return_count': completeness == 'no_events_recorded' ? 0 : 1,
+            'known_away_ms': completeness == 'no_events_recorded' ? 0 : 1200,
             'reconnect_count': 0,
             'refresh_count': 0,
-            'unknown_gap_count': 1,
-            'completeness': 'partial',
+            'unknown_gap_count': completeness == 'partial_with_interruptions'
+                ? 1
+                : 0,
+            'completeness': completeness,
             'disclaimer': 'Observed browser activity only.',
-            'events': [
-              {
-                'id': 'event-1',
-                'event_kind': 'page_hidden',
-                'duration_ms': 0,
-                'occurred_at': 1759996400,
-              },
-            ],
+            'events': completeness == 'no_events_recorded'
+                ? []
+                : [
+                    {
+                      'id': 'event-1',
+                      'event_kind': 'page_hidden',
+                      'duration_ms': 0,
+                      'occurred_at': 1759996400,
+                    },
+                    {
+                      'id': 'event-2',
+                      'event_kind': 'future_internal_value',
+                      'duration_ms': 0,
+                      'occurred_at': 1759996500,
+                    },
+                  ],
           },
         }),
         200,
@@ -72,20 +83,29 @@ void main() {
     final service = CertificateVerificationApiService(
       adapter: ApiAdapter(client: client, csrfTokenProvider: () => null),
     );
+    Future<void> show(Locale locale, {Key? key}) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: locale,
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizationsDelegate(),
+            FallbackCupertinoLocalizationsDelegate(),
+            FallbackMaterialLocalizationsDelegate(),
+            DefaultWidgetsLocalizations.delegate,
+            DefaultMaterialLocalizations.delegate,
+          ],
+          home: CertificateVerificationScreen(
+            key: key,
+            code: 'CODE-1',
+            service: service,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
 
-    await tester.pumpWidget(
-      MaterialApp(
-        locale: const Locale('en'),
-        localizationsDelegates: const [
-          AppLocalizationsDelegate(),
-          FallbackMaterialLocalizationsDelegate(),
-          DefaultWidgetsLocalizations.delegate,
-          DefaultMaterialLocalizations.delegate,
-        ],
-        home: CertificateVerificationScreen(code: 'CODE-1', service: service),
-      ),
-    );
-    await tester.pumpAndSettle();
+    await show(const Locale('en'));
 
     expect(find.text('Certificate verification'), findsNWidgets(2));
     expect(find.text('Active'), findsOneWidget);
@@ -110,7 +130,14 @@ void main() {
     await tester.tap(find.text('Recorded browser activity'));
     await tester.pumpAndSettle();
     expect(find.text('Observed browser activity only.'), findsOneWidget);
-    expect(find.textContaining('partial'), findsOneWidget);
+    expect(
+      find.text('Record completeness: Partial (with interruptions)'),
+      findsOneWidget,
+    );
+    expect(find.text('Page hidden'), findsNWidgets(2));
+    expect(find.text('page_hidden'), findsNothing);
+    expect(find.text('future_internal_value'), findsNothing);
+    expect(find.text('Recorded browser activity'), findsNWidgets(2));
     expect(find.text('Unknown gaps'), findsOneWidget);
     final eventAt = DateTime.fromMillisecondsSinceEpoch(
       1759996400 * 1000,
@@ -121,5 +148,48 @@ void main() {
     expect(eventDateTime, isNot(localizations.formatMediumDate(eventAt)));
     expect(find.text(eventDateTime), findsOneWidget);
     expect(paths, ['/apps/certifications/v1/certificates/CODE-1']);
+
+    await show(const Locale('pt'));
+    expect(
+      find.text('Integridade do registro: Parcial (com interrupções)'),
+      findsOneWidget,
+    );
+    expect(find.text('Página ocultada'), findsNWidgets(2));
+    expect(find.text('page_hidden'), findsNothing);
+    expect(find.text('future_internal_value'), findsNothing);
+
+    await show(const Locale('th'));
+    expect(
+      find.text('ความครบถ้วนของบันทึก: บางส่วน (มีช่วงขาดตอน)'),
+      findsOneWidget,
+    );
+    expect(find.text('ซ่อนหน้า'), findsNWidgets(2));
+    expect(find.text('page_hidden'), findsNothing);
+    expect(find.text('future_internal_value'), findsNothing);
+
+    completeness = 'complete_observed';
+    await show(const Locale('en'), key: const ValueKey('complete'));
+    await tester.tap(find.text('Recorded browser activity').first);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Record completeness: Complete (observed)'),
+      findsOneWidget,
+    );
+
+    completeness = 'no_events_recorded';
+    await show(const Locale('en'), key: const ValueKey('no-events'));
+    await tester.tap(find.text('Recorded browser activity').first);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Record completeness: No events recorded'),
+      findsOneWidget,
+    );
+
+    completeness = 'future_completeness_value';
+    await show(const Locale('en'), key: const ValueKey('unknown'));
+    await tester.tap(find.text('Recorded browser activity').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Record completeness: Unknown'), findsOneWidget);
+    expect(find.text('future_completeness_value'), findsNothing);
   });
 }

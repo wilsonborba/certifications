@@ -36,6 +36,28 @@ class _CertificateVerificationScreenState
   bool _downloading = false;
   String? _downloadError;
 
+  String _activityEventLabel(BuildContext context, String eventKind) =>
+      switch (eventKind) {
+        'focus_lost' => context.tr('certificateFocusLoss'),
+        'page_hidden' => context.tr('certificatePageHidden'),
+        'page_return' => context.tr('certificatePageReturns'),
+        'away_duration' => context.tr('certificateKnownAway'),
+        'reconnect' => context.tr('certificateReconnects'),
+        'refresh' => context.tr('certificateRefreshes'),
+        'gap_unknown' => context.tr('certificateUnknownGaps'),
+        _ => context.tr('certificateActivity'),
+      };
+
+  String _activityCompletenessLabel(BuildContext context, String value) =>
+      switch (value) {
+        'complete_observed' => context.tr('certificateCompletenessComplete'),
+        'partial_with_interruptions' => context.tr(
+          'certificateCompletenessPartial',
+        ),
+        'no_events_recorded' => context.tr('certificateCompletenessNoEvents'),
+        _ => context.tr('certificateCompletenessUnknown'),
+      };
+
   Future<void> _download(String format) async {
     setState(() {
       _downloading = true;
@@ -202,7 +224,8 @@ class _CertificateVerificationScreenState
                       key: const PageStorageKey('certificate-activity'),
                       title: Text(context.tr('certificateActivity')),
                       subtitle: Text(
-                        '${context.tr('certificateCompleteness')}: ${activity.completeness}',
+                        '${context.tr('certificateCompleteness')}: '
+                        '${_activityCompletenessLabel(context, activity.completeness)}',
                       ),
                       childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       children: [
@@ -249,7 +272,9 @@ class _CertificateVerificationScreenState
                             return ListTile(
                               dense: true,
                               contentPadding: EdgeInsets.zero,
-                              title: Text(event.eventKind),
+                              title: Text(
+                                _activityEventLabel(context, event.eventKind),
+                              ),
                               subtitle: Text(
                                 '${dateLocalizations.formatFullDate(occurredAt)} '
                                 '${dateLocalizations.formatTimeOfDay(TimeOfDay.fromDateTime(occurredAt))}',
