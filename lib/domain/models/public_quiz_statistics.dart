@@ -1,3 +1,5 @@
+import 'package:reports_view/reports_view.dart';
+
 /// Public aggregate returned by GET /quizzes/{id}/statistics.
 /// Nullable averages stay unavailable for empty data; counts are not scores.
 class PublicQuizStatistics {
@@ -55,74 +57,98 @@ class PublicQuizStatistics {
         questionProvenance: json['question_provenance'] as Map<String, dynamic>,
       );
 
-  ScoreDistributionTemplate? get scoreDistributionTemplate =>
-      ScoreDistributionTemplate.tryParse(scoreDistributionReportView);
+  ScoreDistributionReportView? get scoreDistributionView =>
+      ScoreDistributionReportView.tryParse(
+        scoreDistributionReportView,
+        scoreDistribution,
+        scoreDistributionDenominator,
+      );
 }
 
-/// The Reports VisualTemplate v1 descriptor supplied by the statistics API.
-/// Keep the descriptor and binding paired; a binding alone is not enough to
-/// select or construct a chart.
-class ScoreDistributionTemplate {
-  const ScoreDistributionTemplate({
-    required this.title,
-    required this.bucketField,
-    required this.attemptsField,
+/// The exact backend report page and its published template and binding.
+/// A missing or malformed component disables chart rendering.
+class ScoreDistributionReportView {
+  const ScoreDistributionReportView({
+    required this.page,
+    required this.template,
+    required this.binding,
   });
 
-  final String title;
-  final String bucketField;
-  final String attemptsField;
+  final DatasetPage page;
+  final VisualTemplate template;
+  final CardVisualBinding binding;
 
-  static ScoreDistributionTemplate? tryParse(Map<String, dynamic> reportView) {
-    final definition = reportView['template_definition'];
-    final binding = reportView['visual'];
-    if (definition is! Map || binding is! Map) return null;
-    final descriptor = definition.cast<String, dynamic>();
-    final visual = binding.cast<String, dynamic>();
-    final slots = descriptor['slots'];
-    final mapping = visual['mapping'];
-    if (descriptor['template_id'] != 'cert-score-distribution' ||
-        descriptor['version'] != 1 ||
-        descriptor['kind'] != 'chart' ||
-        descriptor['visual'] != 'bar' ||
-        visual['template'] != 'cert-score-distribution' ||
-        visual['version'] != 1 ||
-        descriptor['title'] is! String ||
-        slots is! List ||
-        mapping is! Map) {
+  static ScoreDistributionReportView? tryParse(
+    Map<String, dynamic> value,
+    List<ScoreDistributionBand> bands,
+    int denominator,
+  ) {
+    final rawDescriptor = value['descriptor'];
+    final rawTemplate = value['template_definition'];
+    final rawBinding = value['visual'];
+    if (rawDescriptor is! Map || rawTemplate is! Map || rawBinding is! Map) {
       return null;
     }
-    final slotsByName = <String, Map<String, dynamic>>{};
-    for (final rawSlot in slots) {
-      if (rawSlot is Map && rawSlot['slot_name'] is String) {
-        slotsByName[rawSlot['slot_name'] as String] = rawSlot
-            .cast<String, dynamic>();
+    final descriptor = Map<String, dynamic>.from(rawDescriptor);
+    final rawRows = value['rows'];
+    if (descriptor['dataset_id'] is! String || rawRows is! List) return null;
+    final pageJson = <String, dynamic>{
+      ...descriptor,
+      'rows': rawRows,
+      'offset': value['offset'],
+      'limit': value['limit'],
+      'total_rows': value['total_rows'],
+      'visual': rawBinding,
+    };
+    try {
+      final page = DatasetPage.fromJson(pageJson);
+      final template = VisualTemplate.fromJson(
+        Map<String, dynamic>.from(rawTemplate),
+      );
+      final binding = CardVisualBinding.fromJson(
+        Map<String, dynamic>.from(rawBinding),
+      );
+      if (template.templateId != 'cert-score-distribution' ||
+          template.version != 1 ||
+          template.kind != 'chart' ||
+          template.visual != 'bar' ||
+          binding.template != template.templateId ||
+          binding.version != template.version) {
+        return null;
       }
-    }
-    final bucket = slotsByName['bucket'];
-    final attempts = slotsByName['attempts'];
-    final mapped = mapping.cast<String, dynamic>();
-    final bucketFields = mapped['bucket'];
-    final attemptFields = mapped['attempts'];
-    if (bucket == null ||
-        attempts == null ||
-        bucket['role'] != 'dimension' ||
-        attempts['role'] != 'measure' ||
-        bucket['is_required'] != true ||
-        attempts['is_required'] != true ||
-        bucketFields is! List ||
-        bucketFields.length != 1 ||
-        bucketFields.single != 'score_band' ||
-        attemptFields is! List ||
-        attemptFields.isEmpty ||
-        attemptFields.any((field) => field != 'attempt_count')) {
+      final bucketFields = binding.mapping['bucket'];
+      final countFields = binding.mapping['attempts'];
+      if (bucketFields?.length != 1 ||
+          countFields?.length != 1 ||
+          bucketFields!.single != 'score_band' ||
+          countFields!.single != 'attempt_count' ||
+          page.offset != 0 ||
+          page.totalRows != bands.length ||
+          page.rows.length != bands.length ||
+          denominator != bands.fold<int>(0, (sum, band) => sum + band.count) ||
+          !TemplateValidator.validate(
+            template,
+            binding,
+            page.descriptor,
+          ).isValid) {
+        return null;
+      }
+      for (var index = 0; index < bands.length; index++) {
+        final row = page.rows[index];
+        if (row['score_band'] != bands[index].label ||
+            row['attempt_count'] is! num ||
+            (row['attempt_count'] as num).toInt() != bands[index].count) {
+          return null;
+        }
+      }
+      return ScoreDistributionReportView(
+        page: page,
+        template: template,
+        binding: binding,
+      );
+    } on Object {
       return null;
     }
-    return ScoreDistributionTemplate(
-      title: descriptor['title'] as String,
-      bucketField: bucketFields.single as String,
-      attemptsField: attemptFields.first as String,
-    );
   }
 }
 

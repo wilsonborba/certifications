@@ -7,6 +7,7 @@ import 'package:certifications/presentation/components/attachment/app_bar.dart';
 import 'package:certifications/domain/services/certificate_verification_api_service.dart';
 import 'package:certifications/presentation/components/certificates/certificate_issue_card.dart';
 import 'package:flutter/material.dart';
+import 'package:reports_view/reports_view.dart';
 
 class AttemptHistoryScreen extends StatefulWidget {
   const AttemptHistoryScreen({super.key});
@@ -19,11 +20,11 @@ class _AttemptHistoryScreenState extends State<AttemptHistoryScreen> {
   final _search = TextEditingController();
   final _quiz = TextEditingController();
   final _tag = TextEditingController();
-  final _from = TextEditingController();
-  final _to = TextEditingController();
   static const _pageSize = 20;
   int _offset = 0;
-  bool _invalidUnix = false;
+  DateTime? _startedFrom;
+  DateTime? _startedTo;
+  bool _invalidDateRange = false;
   late Future<AttemptHistoryPage> _future = _load();
 
   Future<AttemptHistoryPage> _load() => _api.listAttempts(
@@ -31,25 +32,49 @@ class _AttemptHistoryScreenState extends State<AttemptHistoryScreen> {
       q: _search.text.trim().isEmpty ? null : _search.text.trim(),
       quizId: _quiz.text.trim().isEmpty ? null : _quiz.text.trim(),
       tag: _tag.text.trim().isEmpty ? null : _tag.text.trim(),
-      startedFrom: int.tryParse(_from.text.trim()),
-      startedTo: int.tryParse(_to.text.trim()),
+      startedFrom: AttemptHistoryQuery.startOfLocalDateSeconds(_startedFrom),
+      startedTo: AttemptHistoryQuery.endOfLocalDateSeconds(_startedTo),
       limit: _pageSize,
       offset: _offset,
     ),
   );
 
   void _apply() {
-    final fromText = _from.text.trim();
-    final toText = _to.text.trim();
-    if ((fromText.isNotEmpty && int.tryParse(fromText) == null) ||
-        (toText.isNotEmpty && int.tryParse(toText) == null)) {
-      setState(() => _invalidUnix = true);
+    if (_startedFrom != null &&
+        _startedTo != null &&
+        DateTime(
+          _startedFrom!.year,
+          _startedFrom!.month,
+          _startedFrom!.day,
+        ).isAfter(
+          DateTime(_startedTo!.year, _startedTo!.month, _startedTo!.day),
+        )) {
+      setState(() => _invalidDateRange = true);
       return;
     }
     setState(() {
-      _invalidUnix = false;
+      _invalidDateRange = false;
       _offset = 0;
       _future = _load();
+    });
+  }
+
+  Future<void> _pickDate({required bool isStart}) async {
+    final current = isStart ? _startedFrom : _startedTo;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: current ?? DateTime.now(),
+      firstDate: DateTime(1970),
+      lastDate: DateTime.now(),
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      if (isStart) {
+        _startedFrom = picked;
+      } else {
+        _startedTo = picked;
+      }
+      _invalidDateRange = false;
     });
   }
 
@@ -63,8 +88,6 @@ class _AttemptHistoryScreenState extends State<AttemptHistoryScreen> {
     _search.dispose();
     _quiz.dispose();
     _tag.dispose();
-    _from.dispose();
-    _to.dispose();
     super.dispose();
   }
 
@@ -114,25 +137,23 @@ class _AttemptHistoryScreenState extends State<AttemptHistoryScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(
-                      width: 190,
-                      child: TextField(
-                        controller: _from,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: context.tr('fromUnix'),
-                        ),
-                      ),
+                    _HistoryDateFilter(
+                      label: context.tr('historyFrom'),
+                      value: _startedFrom,
+                      onPick: () => _pickDate(isStart: true),
+                      onClear: () => setState(() {
+                        _startedFrom = null;
+                        _invalidDateRange = false;
+                      }),
                     ),
-                    SizedBox(
-                      width: 190,
-                      child: TextField(
-                        controller: _to,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: context.tr('toUnix'),
-                        ),
-                      ),
+                    _HistoryDateFilter(
+                      label: context.tr('historyThrough'),
+                      value: _startedTo,
+                      onPick: () => _pickDate(isStart: false),
+                      onClear: () => setState(() {
+                        _startedTo = null;
+                        _invalidDateRange = false;
+                      }),
                     ),
                     FilledButton(
                       onPressed: _apply,
@@ -140,12 +161,12 @@ class _AttemptHistoryScreenState extends State<AttemptHistoryScreen> {
                     ),
                   ],
                 ),
-                if (_invalidUnix)
+                if (_invalidDateRange)
                   Align(
                     alignment: AlignmentDirectional.centerStart,
                     child: Padding(
                       padding: const EdgeInsets.only(top: 8),
-                      child: Text(context.tr('invalidUnixTime')),
+                      child: Text(context.tr('invalidDateRange')),
                     ),
                   ),
                 const SizedBox(height: 16),
@@ -213,6 +234,50 @@ class _AttemptHistoryScreenState extends State<AttemptHistoryScreen> {
       ),
     ),
   );
+}
+
+class _HistoryDateFilter extends StatelessWidget {
+  const _HistoryDateFilter({
+    required this.label,
+    required this.value,
+    required this.onPick,
+    required this.onClear,
+  });
+
+  final String label;
+  final DateTime? value;
+  final VoidCallback onPick;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final dateLabel = value == null
+        ? context.tr('chooseDate')
+        : MaterialLocalizations.of(context).formatMediumDate(value!);
+    return SizedBox(
+      width: 220,
+      child: InputDecorator(
+        decoration: InputDecoration(labelText: label),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextButton.icon(
+                onPressed: onPick,
+                icon: const Icon(Icons.calendar_today_outlined),
+                label: Text(dateLabel, overflow: TextOverflow.ellipsis),
+              ),
+            ),
+            if (value != null)
+              IconButton(
+                tooltip: context.tr('clearDate'),
+                onPressed: onClear,
+                icon: const Icon(Icons.clear),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _HistoryRow extends StatelessWidget {
@@ -647,27 +712,26 @@ class _PublicQuizStatisticsScreenState
                   context.tr('scoreDistribution'),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
-                if (data.scoreDistributionTemplate case final template?
-                    when data.scoreDistributionDenominator > 0)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: _ScoreDistributionTemplateView(
-                      template: template,
-                      bands: data.scoreDistribution,
-                    ),
-                  ),
                 if (data.scoreDistributionDenominator == 0)
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Text(context.tr('noScoreSample')),
                   )
                 else ...[
-                  if (data.scoreDistributionTemplate == null)
-                    for (final band in data.scoreDistribution)
-                      ListTile(
-                        title: Text(band.label),
-                        trailing: Text('${band.count}'),
+                  if (data.scoreDistributionView case final reportView?)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: VisualChooser.buildTemplate(
+                        page: reportView.page,
+                        template: reportView.template,
+                        binding: reportView.binding,
+                        title: reportView.template.title,
+                        mode: ChartFrameMode.card,
+                        height: 320,
+                        showAxisTitles: true,
                       ),
+                    ),
+                  _ScoreDistributionTable(bands: data.scoreDistribution),
                   Text('n=${data.scoreDistributionDenominator}'),
                 ],
                 const SizedBox(height: 16),
@@ -696,53 +760,29 @@ class _PublicQuizStatisticsScreenState
   );
 }
 
-class _ScoreDistributionTemplateView extends StatelessWidget {
-  const _ScoreDistributionTemplateView({
-    required this.template,
-    required this.bands,
-  });
+class _ScoreDistributionTable extends StatelessWidget {
+  const _ScoreDistributionTable({required this.bands});
 
-  final ScoreDistributionTemplate template;
   final List<ScoreDistributionBand> bands;
 
   @override
   Widget build(BuildContext context) {
-    final maxCount = bands.fold<int>(
-      0,
-      (maximum, band) => band.count > maximum ? band.count : maximum,
-    );
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              template.title,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 12),
-            for (final band in bands) ...[
-              Row(
-                children: [
-                  SizedBox(width: 90, child: Text(band.label)),
-                  Expanded(
-                    child: Semantics(
-                      label: '${band.label}: ${band.count}',
-                      child: LinearProgressIndicator(
-                        value: maxCount == 0 ? 0 : band.count / maxCount,
-                        minHeight: 16,
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 42,
-                    child: Text('${band.count}', textAlign: TextAlign.end),
-                  ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
+          columns: [
+            DataColumn(label: Text(context.tr('scoreBand'))),
+            DataColumn(label: Text(context.tr('attemptCount')), numeric: true),
+          ],
+          rows: [
+            for (final band in bands)
+              DataRow(
+                cells: [
+                  DataCell(Text(band.label)),
+                  DataCell(Text('${band.count}')),
                 ],
               ),
-              const SizedBox(height: 10),
-            ],
           ],
         ),
       ),

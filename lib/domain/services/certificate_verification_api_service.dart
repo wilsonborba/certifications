@@ -5,8 +5,9 @@ import 'package:certifications/dal/remote/api_adapter.dart';
 import 'package:certifications/domain/models/certificate_verification.dart';
 
 class CertificateApiException implements Exception {
-  const CertificateApiException(this.statusCode);
+  const CertificateApiException(this.statusCode, {this.errorCode});
   final int statusCode;
+  final String? errorCode;
 
   @override
   String toString() => 'CertificateApiException(statusCode: $statusCode)';
@@ -111,7 +112,21 @@ class CertificateVerificationApiService {
 
   void _ensureSuccess(dynamic response) {
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw CertificateApiException(response.statusCode);
+      String? errorCode;
+      try {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map<String, dynamic> &&
+            decoded['error'] is String &&
+            decoded['message'] is String) {
+          errorCode = decoded['error'] as String;
+        }
+      } on FormatException {
+        // Keep the status code if an intermediary returns a non-JSON error.
+      }
+      throw CertificateApiException(
+        response.statusCode,
+        errorCode: errorCode,
+      );
     }
   }
 }

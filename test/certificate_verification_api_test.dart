@@ -77,6 +77,31 @@ void main() {
     },
   );
 
+  test('issuance reads only the actual backend error fields', () async {
+    final client = MockClient((request) async {
+      expect(request.method, 'POST');
+      return http.Response(
+        jsonEncode({
+          'error': 'private_quiz',
+          'message': 'Private quizzes do not issue certificates',
+        }),
+        422,
+      );
+    });
+    final service = CertificateVerificationApiService(
+      adapter: ApiAdapter(client: client, csrfTokenProvider: () => null),
+    );
+
+    await expectLater(
+      service.issueForAttempt('attempt-1'),
+      throwsA(
+        isA<CertificateApiException>()
+            .having((error) => error.statusCode, 'statusCode', 422)
+            .having((error) => error.errorCode, 'errorCode', 'private_quiz'),
+      ),
+    );
+  });
+
   test(
     'verification parses only factual status and activity summary',
     () async {

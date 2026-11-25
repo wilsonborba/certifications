@@ -7,6 +7,17 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 void main() {
+  test('local date filters map to inclusive Unix-second day bounds', () {
+    final leapDay = DateTime(2024, 2, 29, 17, 45);
+    final start = AttemptHistoryQuery.startOfLocalDateSeconds(leapDay)!;
+    final through = AttemptHistoryQuery.endOfLocalDateSeconds(leapDay)!;
+
+    expect(start, DateTime(2024, 2, 29).millisecondsSinceEpoch ~/ 1000);
+    expect(through, DateTime(2024, 3, 1).millisecondsSinceEpoch ~/ 1000 - 1);
+    expect(AttemptHistoryQuery.startOfLocalDateSeconds(null), isNull);
+    expect(AttemptHistoryQuery.endOfLocalDateSeconds(null), isNull);
+  });
+
   test(
     'history sends only the confirmed filters and bounded page fields',
     () async {

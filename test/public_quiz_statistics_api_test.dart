@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/dal/remote/api_adapter.dart';
+import 'package:certifications/domain/models/public_quiz_statistics.dart';
 import 'package:certifications/domain/services/public_quiz_statistics_api_service.dart';
 import 'package:certifications/presentation/widgets/attempt_review_screens.dart';
 import 'package:flutter/material.dart';
@@ -80,7 +81,11 @@ void main() {
     expect(stats.basis, 'all_completed_attempts');
     expect(stats.durationDenominator, 0);
     expect(stats.scoreDistributionReportView['total_rows'], 0);
-    expect(stats.scoreDistributionTemplate?.title, 'Quiz score distribution');
+    expect(
+      stats.scoreDistributionView?.template.title,
+      'Quiz score distribution',
+    );
+    expect(stats.scoreDistributionView?.page.rows.length, 3);
   });
 
   test('public statistics retain the server denominator basis', () async {
@@ -106,7 +111,14 @@ void main() {
             'combined': {'attempt_count': 0},
           },
           'score_distribution_report_view': {
-            'descriptor': {'dataset_id': 'cert:quiz:quiz-2:score-distribution'},
+            'descriptor': {
+              'dataset_id': 'cert:quiz:quiz-2:score-distribution',
+              'title': 'Quiz score distribution',
+              'fields': [
+                {'name': 'score_band', 'type': 'string', 'role': 'dimension'},
+                {'name': 'attempt_count', 'type': 'integer', 'role': 'measure'},
+              ],
+            },
             'rows': [
               {'score_band': '0-49%', 'attempt_count': 1},
               {'score_band': '50-79%', 'attempt_count': 1},
@@ -143,7 +155,48 @@ void main() {
     expect(stats.scoreDistributionDenominator, 3);
     expect(stats.scoreDistribution.map((band) => band.count), [1, 1, 1]);
     expect(stats.basis, 'all_completed_attempts');
-    expect(stats.scoreDistributionTemplate?.attemptsField, 'attempt_count');
+    expect(stats.scoreDistributionView?.binding.mapping['attempts'], [
+      'attempt_count',
+    ]);
+    final rawView = stats.scoreDistributionReportView;
+    final pageRows = rawView['rows'] as List<dynamic>;
+    final alteredRows = [
+      Map<String, dynamic>.from(pageRows.first as Map)..['attempt_count'] = 2,
+      ...pageRows.skip(1),
+    ];
+    expect(
+      ScoreDistributionReportView.tryParse(
+        {...rawView, 'rows': alteredRows},
+        stats.scoreDistribution,
+        stats.scoreDistributionDenominator,
+      ),
+      isNull,
+      reason: 'the chart must fail closed when its rows disagree with the DTO',
+    );
+    final alteredBinding = Map<String, dynamic>.from(rawView['visual'] as Map)
+      ..['mapping'] = {
+        'bucket': ['missing_field'],
+        'attempts': ['attempt_count'],
+      };
+    expect(
+      ScoreDistributionReportView.tryParse(
+        {...rawView, 'visual': alteredBinding},
+        stats.scoreDistribution,
+        stats.scoreDistributionDenominator,
+      ),
+      isNull,
+      reason:
+          'the chart must fail closed when the binding names an unknown field',
+    );
+    final alteredTemplate = Map<String, dynamic>.from(
+      rawView['template_definition'] as Map,
+    )..['title'] = 'Distribuição localizada';
+    final localizedView = ScoreDistributionReportView.tryParse(
+      {...rawView, 'template_definition': alteredTemplate},
+      stats.scoreDistribution,
+      stats.scoreDistributionDenominator,
+    );
+    expect(localizedView?.template.title, 'Distribuição localizada');
   });
 
   testWidgets('statistics refetch when saved interface language loads', (
@@ -172,7 +225,13 @@ void main() {
           ],
           'question_provenance': {},
           'score_distribution_report_view': {
-            'descriptor': {},
+            'descriptor': {
+              'dataset_id': 'cert:quiz:quiz-3:score-distribution',
+              'fields': [
+                {'name': 'score_band', 'type': 'string', 'role': 'dimension'},
+                {'name': 'attempt_count', 'type': 'integer', 'role': 'measure'},
+              ],
+            },
             'rows': [],
             'offset': 0,
             'limit': 3,

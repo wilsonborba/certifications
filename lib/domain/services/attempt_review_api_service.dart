@@ -21,12 +21,28 @@ class AttemptHistoryQuery {
   });
 
   final String? q;
+
+  /// Unix seconds, inclusive. The UI maps local calendar dates to these bounds.
   final int? startedFrom;
   final int? startedTo;
   final String? quizId;
   final String? tag;
   final int limit;
   final int offset;
+
+  /// Start of a device-local calendar day as inclusive Unix seconds.
+  static int? startOfLocalDateSeconds(DateTime? date) => date == null
+      ? null
+      : DateTime(date.year, date.month, date.day).millisecondsSinceEpoch ~/
+            1000;
+
+  /// End of a device-local calendar day as inclusive Unix seconds.
+  /// Constructing the next local midnight handles daylight-saving transitions.
+  static int? endOfLocalDateSeconds(DateTime? date) => date == null
+      ? null
+      : DateTime(date.year, date.month, date.day + 1).millisecondsSinceEpoch ~/
+                1000 -
+            1;
 
   Map<String, dynamic> toQueryParameters() => {
     if (q != null && q!.isNotEmpty) 'q': q,

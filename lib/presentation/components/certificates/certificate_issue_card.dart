@@ -29,6 +29,8 @@ class _CertificateIssueCardState extends State<CertificateIssueCard> {
   IssuedCertificate? _certificate;
   bool _busy = false;
   String? _error;
+  bool _ineligible = false;
+  bool _retryable = false;
 
   @override
   void dispose() {
@@ -75,6 +77,8 @@ class _CertificateIssueCardState extends State<CertificateIssueCard> {
     setState(() {
       _busy = true;
       _error = null;
+      _ineligible = false;
+      _retryable = false;
     });
     try {
       final identity = await _service.confirmMyIdentity(name);
@@ -83,9 +87,10 @@ class _CertificateIssueCardState extends State<CertificateIssueCard> {
           'The server did not confirm the displayed name',
         );
       }
+      _identity = Future.value(identity);
       await _issue();
-    } catch (_) {
-      if (mounted) setState(() => _error = context.tr('errorGeneric'));
+    } catch (error) {
+      _showIssueError(error);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -100,14 +105,46 @@ class _CertificateIssueCardState extends State<CertificateIssueCard> {
     setState(() {
       _busy = true;
       _error = null;
+      _ineligible = false;
+      _retryable = false;
     });
     try {
       await _issue();
-    } catch (_) {
-      if (mounted) setState(() => _error = context.tr('errorGeneric'));
+    } catch (error) {
+      _showIssueError(error);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  void _showIssueError(Object error) {
+    if (!mounted) return;
+    final code = error is CertificateApiException ? error.errorCode : null;
+    const ineligibleCodes = {
+      'attempt_not_completed',
+      'private_quiz',
+      'creator_practice_only',
+    };
+    final ineligible = ineligibleCodes.contains(code);
+    final retryable =
+        error is! CertificateApiException ||
+        error.statusCode == 429 ||
+        error.statusCode >= 500;
+    final messageKey = ineligible
+        ? 'certificateNotEligible'
+        : code == 'identity_not_confirmed'
+        ? 'certificateIdentityRequired'
+        : retryable
+        ? 'certificateTryAgain'
+        : 'errorGeneric';
+    setState(() {
+      _error = context.tr(messageKey);
+      _ineligible = ineligible;
+      _retryable = retryable;
+      if (code == 'identity_not_confirmed') {
+        _identity = _service.getMyIdentity();
+      }
+    });
   }
 
   @override
@@ -178,11 +215,16 @@ class _CertificateIssueCardState extends State<CertificateIssueCard> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 12),
-              FilledButton.icon(
-                onPressed: _busy ? null : _issueExistingName,
-                icon: const Icon(Icons.workspace_premium_outlined),
-                label: Text(context.tr('certificateIssueTitle')),
-              ),
+              if (!_ineligible)
+                FilledButton.icon(
+                  onPressed: _busy ? null : _issueExistingName,
+                  icon: const Icon(Icons.workspace_premium_outlined),
+                  label: Text(
+                    context.tr(
+                      _retryable ? 'certificateRetry' : 'certificateIssueTitle',
+                    ),
+                  ),
+                ),
             ] else ...[
               Text(
                 _certificate!.holderName,
