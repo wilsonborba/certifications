@@ -70,6 +70,7 @@ class QuizWizardData extends ChangeNotifier {
   final List<StudySource> existingSources = [];
   DifficultyLevel difficulty = DifficultyLevel.easy;
   int questionCount = 10;
+  String? generationLanguage;
 
   /// Chosen at creation time (Step 4), defaulting to private to match the
   /// backend's own default. Can still be changed later from the completed
@@ -160,7 +161,21 @@ class QuizWizardData extends ChangeNotifier {
   }
 
   void setQuestionCount(int count) {
+    if (count < 1 || count > 20) return;
     questionCount = count;
+    notifyListeners();
+  }
+
+  void setGenerationLanguage(String language) {
+    if (!const {'en', 'pt-BR', 'th'}.contains(language)) return;
+    generationLanguage = language;
+    notifyListeners();
+  }
+
+  void applyPreparedConfig(PreparedStudyConfig? config) {
+    if (config == null) return;
+    questionCount = config.count;
+    generationLanguage = config.language;
     notifyListeners();
   }
 
@@ -234,6 +249,7 @@ class QuizWizardData extends ChangeNotifier {
     attachedFiles.clear();
     difficulty = DifficultyLevel.medium;
     questionCount = 10;
+    generationLanguage = null;
     visibility = QuizVisibility.private;
     useWeb = false;
     notifyListeners();

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:certifications/core/utils/app_localizations.dart';
+import 'package:certifications/core/utils/my_theme.dart';
 import 'package:certifications/dal/remote/api_adapter.dart';
 import 'package:certifications/domain/models/public_quiz_statistics.dart';
 import 'package:certifications/domain/services/public_quiz_statistics_api_service.dart';
@@ -85,7 +86,7 @@ void main() {
       stats.scoreDistributionView?.template.title,
       'Quiz score distribution',
     );
-    expect(stats.scoreDistributionView?.page.rows.length, 3);
+    expect(stats.scoreDistributionView?.page.rows, isEmpty);
   });
 
   test('public statistics retain the server denominator basis', () async {
@@ -173,6 +174,45 @@ void main() {
       isNull,
       reason: 'the chart must fail closed when its rows disagree with the DTO',
     );
+    final fractionalRows = [
+      Map<String, dynamic>.from(pageRows.first as Map)..['attempt_count'] = 1.9,
+      ...pageRows.skip(1),
+    ];
+    expect(
+      ScoreDistributionReportView.tryParse(
+        {...rawView, 'rows': fractionalRows},
+        stats.scoreDistribution,
+        stats.scoreDistributionDenominator,
+      ),
+      isNull,
+      reason: 'fractional counts must not be truncated by the chart binding',
+    );
+    final negativeRows = [
+      Map<String, dynamic>.from(pageRows.first as Map)..['attempt_count'] = -1,
+      ...pageRows.skip(1),
+    ];
+    expect(
+      ScoreDistributionReportView.tryParse(
+        {...rawView, 'rows': negativeRows},
+        stats.scoreDistribution,
+        stats.scoreDistributionDenominator,
+      ),
+      isNull,
+    );
+    final wrongLanguageLabelRows = [
+      Map<String, dynamic>.from(pageRows.first as Map)
+        ..['score_band'] = '80–100%',
+      ...pageRows.skip(1),
+    ];
+    expect(
+      ScoreDistributionReportView.tryParse(
+        {...rawView, 'rows': wrongLanguageLabelRows},
+        stats.scoreDistribution,
+        stats.scoreDistributionDenominator,
+      ),
+      isNull,
+      reason: 'localized report rows must match the authoritative DTO labels',
+    );
     final alteredBinding = Map<String, dynamic>.from(rawView['visual'] as Map)
       ..['mapping'] = {
         'bucket': ['missing_field'],
@@ -197,6 +237,13 @@ void main() {
       stats.scoreDistributionDenominator,
     );
     expect(localizedView?.template.title, 'Distribuição localizada');
+    expect(
+      () => ScoreDistributionBand.fromJson({
+        'score_band': '80-100%',
+        'attempt_count': double.nan,
+      }),
+      throwsFormatException,
+    );
   });
 
   testWidgets('statistics refetch when saved interface language loads', (
@@ -232,7 +279,9 @@ void main() {
                 {'name': 'attempt_count', 'type': 'integer', 'role': 'measure'},
               ],
             },
-            'rows': [],
+            'rows': [
+              {'score_band': '80-100%', 'attempt_count': 1},
+            ],
             'offset': 0,
             'limit': 3,
             'total_rows': 1,
@@ -257,6 +306,11 @@ void main() {
     var locale = const Locale('en');
 
     Widget app() => MaterialApp(
+      theme: AppTheme.light(),
+      builder: (context, child) => MediaQuery(
+        data: const MediaQueryData(size: Size(390, 844)),
+        child: child!,
+      ),
       locale: locale,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [

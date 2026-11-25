@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:reports_view/reports_view.dart';
 
 /// The colour tokens of the Visa Product Design System (Nova), default and
 /// dark themes, as published in visa_nova_flutter 8.3.1 (Apache-2.0). The
@@ -198,6 +199,41 @@ abstract final class AppTheme {
       ),
       dividerTheme: DividerThemeData(color: scheme.outlineVariant),
       progressIndicatorTheme: ProgressIndicatorThemeData(color: scheme.primary),
+      extensions: [
+        ReportPalette(
+          canvas: scaffoldBg,
+          surface: scheme.surface,
+          surfaceAlt: scheme.surfaceContainerHigh,
+          border: scheme.outlineVariant,
+          textPrimary: scheme.onSurface,
+          textMuted: scheme.onSurfaceVariant,
+          accent: scheme.primary,
+          onAccent: scheme.onPrimary,
+          positive: scheme.brightness == Brightness.light
+              ? NovaColors.positiveText
+              : const Color(0xFF71C998),
+          warning: scheme.brightness == Brightness.light
+              ? const Color(0xFF9B6603)
+              : const Color(0xFFFFD166),
+          negative: scheme.error,
+          info: scheme.brightness == Brightness.light
+              ? const Color(0xFF005E8A)
+              : const Color(0xFF80D7FF),
+          caution: scheme.brightness == Brightness.light
+              ? const Color(0xFFA65300)
+              : const Color(0xFFFFAD76),
+          series: [
+            scheme.primary,
+            scheme.secondary,
+            scheme.error,
+            const Color(0xFF009D9A),
+            const Color(0xFF8A3FFC),
+            const Color(0xFFEE5396),
+            const Color(0xFF0043CE),
+            const Color(0xFF198038),
+          ],
+        ),
+      ],
     );
   }
 }

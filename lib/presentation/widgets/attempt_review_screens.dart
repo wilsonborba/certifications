@@ -10,13 +10,14 @@ import 'package:flutter/material.dart';
 import 'package:reports_view/reports_view.dart';
 
 class AttemptHistoryScreen extends StatefulWidget {
-  const AttemptHistoryScreen({super.key});
+  const AttemptHistoryScreen({this.api, super.key});
+  final AttemptReviewApiService? api;
   @override
   State<AttemptHistoryScreen> createState() => _AttemptHistoryScreenState();
 }
 
 class _AttemptHistoryScreenState extends State<AttemptHistoryScreen> {
-  final _api = AttemptReviewApiService();
+  late final _api = widget.api ?? AttemptReviewApiService();
   final _search = TextEditingController();
   final _quiz = TextEditingController();
   final _tag = TextEditingController();
@@ -178,7 +179,20 @@ class _AttemptHistoryScreenState extends State<AttemptHistoryScreen> {
                         return const Center(child: CircularProgressIndicator());
                       }
                       if (snapshot.hasError) {
-                        return Center(child: Text(context.tr('errorGeneric')));
+                        return Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(context.tr('errorGeneric')),
+                              TextButton(
+                                onPressed: () => setState(() {
+                                  _future = _load();
+                                }),
+                                child: Text(context.tr('retry')),
+                              ),
+                            ],
+                          ),
+                        );
                       }
                       final page = snapshot.data!;
                       if (page.items.isEmpty) {
@@ -324,7 +338,9 @@ class AttemptResultsScreen extends StatefulWidget {
 }
 
 class _AttemptResultsScreenState extends State<AttemptResultsScreen> {
-  late final Future<AttemptResults> _future =
+  late Future<AttemptResults> _future = _load();
+
+  Future<AttemptResults> _load() =>
       (widget.api ?? AttemptReviewApiService()).getResults(widget.attemptId);
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -337,7 +353,18 @@ class _AttemptResultsScreenState extends State<AttemptResultsScreen> {
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
-          return Center(child: Text(context.tr('errorGeneric')));
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(context.tr('errorGeneric')),
+                TextButton(
+                  onPressed: () => setState(() => _future = _load()),
+                  child: Text(context.tr('retry')),
+                ),
+              ],
+            ),
+          );
         }
         final result = snapshot.data!;
         return Center(
@@ -726,7 +753,7 @@ class _PublicQuizStatisticsScreenState
                         template: reportView.template,
                         binding: reportView.binding,
                         title: reportView.template.title,
-                        mode: ChartFrameMode.card,
+                        mode: ChartFrameMode.embed,
                         height: 320,
                         showAxisTitles: true,
                       ),

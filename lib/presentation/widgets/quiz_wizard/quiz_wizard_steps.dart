@@ -970,6 +970,14 @@ class Step3FormatView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localeLanguage = Localizations.localeOf(context).languageCode;
+    final selectedLanguage =
+        wizardData.generationLanguage ??
+        switch (localeLanguage) {
+          'pt' => 'pt-BR',
+          'th' => 'th',
+          _ => 'en',
+        };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1003,6 +1011,42 @@ class Step3FormatView extends StatelessWidget {
         ),
         const SizedBox(height: 28),
         Text(
+          context.tr('generationLanguage'),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        _maybeFullWidth(
+          DropdownButtonFormField<String>(
+            initialValue: selectedLanguage,
+            isExpanded: true,
+            decoration: InputDecoration(
+              labelText: context.tr('generationLanguage'),
+            ),
+            items: [
+              DropdownMenuItem(
+                value: 'en',
+                child: Text(context.tr('languageEnglish')),
+              ),
+              DropdownMenuItem(
+                value: 'pt-BR',
+                child: Text(context.tr('languagePortuguese')),
+              ),
+              DropdownMenuItem(
+                value: 'th',
+                child: Text(context.tr('languageThai')),
+              ),
+            ],
+            onChanged: (language) {
+              if (language != null) {
+                wizardData.setGenerationLanguage(language);
+              }
+            },
+          ),
+        ),
+        const SizedBox(height: 28),
+        Text(
           '${context.tr('questionCount')}: ${_questionCountLabel(context)}',
           style: Theme.of(
             context,
@@ -1010,15 +1054,17 @@ class Step3FormatView extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         _maybeFullWidth(
-          SegmentedButton<int>(
-            segments: const [
-              ButtonSegment(value: 5, label: Text('5')),
-              ButtonSegment(value: 10, label: Text('10')),
-              ButtonSegment(value: 15, label: Text('15')),
-              ButtonSegment(value: 20, label: Text('20')),
-            ],
-            selected: {wizardData.questionCount},
-            onSelectionChanged: (set) => wizardData.setQuestionCount(set.first),
+          Semantics(
+            label: context.tr('questionCount'),
+            value: '${wizardData.questionCount}',
+            child: Slider(
+              value: wizardData.questionCount.toDouble(),
+              min: 1,
+              max: 20,
+              divisions: 19,
+              label: '${wizardData.questionCount}',
+              onChanged: (count) => wizardData.setQuestionCount(count.round()),
+            ),
           ),
         ),
         const SizedBox(height: 28),
@@ -1079,6 +1125,21 @@ class Step4ReviewView extends StatelessWidget {
   String _questionCountLine(BuildContext context) =>
       '${wizardData.questionCount} ${context.tr('questionsSuffixLabel')}';
 
+  String _generationLanguageLabel(BuildContext context) {
+    final language =
+        wizardData.generationLanguage ??
+        switch (Localizations.localeOf(context).languageCode) {
+          'pt' => 'pt-BR',
+          'th' => 'th',
+          _ => 'en',
+        };
+    return context.tr(switch (language) {
+      'pt-BR' => 'languagePortuguese',
+      'th' => 'languageThai',
+      _ => 'languageEnglish',
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -1133,6 +1194,14 @@ class Step4ReviewView extends StatelessWidget {
                 height: 32,
                 color: scheme.outlineVariant.withValues(alpha: 0.3),
               ),
+              _ReceiptRow(
+                label: context.tr('generationLanguage'),
+                value: _generationLanguageLabel(context),
+              ),
+              Divider(
+                height: 32,
+                color: scheme.outlineVariant.withValues(alpha: 0.3),
+              ),
               Text(
                 context.tr('reviewVisibilityLabel'),
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
@@ -1142,6 +1211,7 @@ class Step4ReviewView extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               SegmentedButton<QuizVisibility>(
+                expandedInsets: EdgeInsets.zero,
                 segments: [
                   ButtonSegment(
                     value: QuizVisibility.private,

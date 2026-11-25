@@ -165,7 +165,7 @@ class StudyAnalysisEvent {
 /// Study summary or detail returned by the Rust Studies API.
 ///
 /// Detail responses nest the `study` summary and include `sources` and `quota`;
-/// create/list responses return the summary directly/in an `items` list.
+/// prepared-study detail may also include its saved generation config.
 class Study {
   Study.fromJson(Map<String, dynamic> json)
     : _study = (json['study'] as Map?)?.cast<String, dynamic>() ?? json,
@@ -174,10 +174,16 @@ class Study {
           .map(StudySource.fromJson)
           .toList(),
       _quota = (json['quota'] as Map?)?.cast<String, dynamic>(),
+      preparedConfig = json['config'] == null
+          ? null
+          : PreparedStudyConfig.fromJson(
+              (json['config'] as Map).cast<String, dynamic>(),
+            ),
       _hasSourcesField = json.containsKey('sources');
 
   final Map<String, dynamic> _study;
   final Map<String, dynamic>? _quota;
+  final PreparedStudyConfig? preparedConfig;
   final bool _hasSourcesField;
   final List<StudySource> sources;
 
@@ -220,6 +226,29 @@ class Study {
     }
     return value is String ? DateTime.tryParse(value) : null;
   }
+}
+
+/// Optional durable handoff config returned on prepared-study detail GET.
+class PreparedStudyConfig {
+  const PreparedStudyConfig({required this.language, required this.count});
+
+  factory PreparedStudyConfig.fromJson(Map<String, dynamic> json) {
+    final language = json['language'];
+    final count = json['count'];
+    if (language is! String ||
+        !const {'en', 'pt-BR', 'th'}.contains(language)) {
+      throw const FormatException('Unsupported prepared study language');
+    }
+    if (count is! int || count < 1 || count > 20) {
+      throw const FormatException(
+        'Prepared study count must be between 1 and 20',
+      );
+    }
+    return PreparedStudyConfig(language: language, count: count);
+  }
+
+  final String language;
+  final int count;
 }
 
 /// One source backing a question, either the uploaded study material or a

@@ -36,16 +36,29 @@ class PublicQuizStatistics {
   factory PublicQuizStatistics.fromJson(Map<String, dynamic> json) =>
       PublicQuizStatistics(
         quizId: json['quiz_id'] as String,
-        completedAttemptCount: (json['completed_attempt_count'] as num).toInt(),
-        distinctParticipants: (json['distinct_participants'] as num).toInt(),
+        completedAttemptCount: _nonnegativeInteger(
+          json['completed_attempt_count'],
+          'completed_attempt_count',
+        ),
+        distinctParticipants: _nonnegativeInteger(
+          json['distinct_participants'],
+          'distinct_participants',
+        ),
         averageScorePct: (json['average_score_pct'] as num?)?.toDouble(),
         typicalDurationSec: (json['typical_duration_sec'] as num?)?.toInt(),
-        durationDenominator: (json['duration_denominator'] as num).toInt(),
+        durationDenominator: _nonnegativeInteger(
+          json['duration_denominator'],
+          'duration_denominator',
+        ),
         basis: json['basis'] as String,
-        averageScoreDenominator: (json['average_score_denominator'] as num)
-            .toInt(),
-        scoreDistributionDenominator:
-            (json['score_distribution_denominator'] as num).toInt(),
+        averageScoreDenominator: _nonnegativeInteger(
+          json['average_score_denominator'],
+          'average_score_denominator',
+        ),
+        scoreDistributionDenominator: _nonnegativeInteger(
+          json['score_distribution_denominator'],
+          'score_distribution_denominator',
+        ),
         scoreDistribution: (json['score_distribution'] as List<dynamic>)
             .map(
               (item) =>
@@ -135,9 +148,13 @@ class ScoreDistributionReportView {
       }
       for (var index = 0; index < bands.length; index++) {
         final row = page.rows[index];
+        final rawCount = row['attempt_count'];
         if (row['score_band'] != bands[index].label ||
-            row['attempt_count'] is! num ||
-            (row['attempt_count'] as num).toInt() != bands[index].count) {
+            rawCount is! num ||
+            !rawCount.toDouble().isFinite ||
+            rawCount < 0 ||
+            rawCount % 1 != 0 ||
+            rawCount != bands[index].count) {
           return null;
         }
       }
@@ -161,6 +178,16 @@ class ScoreDistributionBand {
   factory ScoreDistributionBand.fromJson(Map<String, dynamic> json) =>
       ScoreDistributionBand(
         label: json['score_band'] as String,
-        count: (json['attempt_count'] as num).toInt(),
+        count: _nonnegativeInteger(json['attempt_count'], 'attempt_count'),
       );
+}
+
+int _nonnegativeInteger(Object? value, String field) {
+  if (value is! num ||
+      !value.toDouble().isFinite ||
+      value < 0 ||
+      value % 1 != 0) {
+    throw FormatException('$field must be a finite nonnegative integer');
+  }
+  return value.toInt();
 }

@@ -99,6 +99,7 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
       if (wizardData.name.isEmpty && study.name.isNotEmpty) {
         wizardData.name = study.name;
       }
+      wizardData.applyPreparedConfig(study.preparedConfig);
       wizardData.setAccountQuota(
         usedBytes: study.accountUsedBytes,
         maxBytes: study.accountMaxBytes,
@@ -374,11 +375,13 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
           idempotencyKey,
         );
       }
-      final language = switch (locale) {
-        'pt' => 'pt-BR',
-        'th' => 'th',
-        _ => 'en',
-      };
+      final language =
+          wizardData.generationLanguage ??
+          switch (locale) {
+            'pt' => 'pt-BR',
+            'th' => 'th',
+            _ => 'en',
+          };
       final job = await _generationApi.start(
         studyId,
         StartGenerationRequest(

@@ -331,15 +331,17 @@ class _RealProgressText extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: Text(
-              label,
-              key: ValueKey<String>(label),
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: scheme.primary,
+          Flexible(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: Text(
+                label,
+                key: ValueKey<String>(label),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: scheme.primary,
+                ),
               ),
             ),
           ),
@@ -410,15 +412,17 @@ class _DynamicSubStatusTextState extends State<_DynamicSubStatusText> {
             ),
           ),
           const SizedBox(width: 8),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: Text(
-              _subSteps[_currentIndex],
-              key: ValueKey<int>(_currentIndex),
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: scheme.primary,
+          Flexible(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: Text(
+                _subSteps[_currentIndex],
+                key: ValueKey<int>(_currentIndex),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: scheme.primary,
+                ),
               ),
             ),
           ),
