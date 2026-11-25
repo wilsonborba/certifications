@@ -19,6 +19,20 @@ class PublicQuizStatisticsApiService {
   Future<PublicQuizStatistics> getForQuiz(
     String quizId, {
     String language = 'en',
+  }) => _getForQuiz(quizId, language: language, ownerOnly: false);
+
+  /// Fetches statistics from the authenticated owner's private route. This is
+  /// deliberately separate from [getForQuiz], which remains the anonymous
+  /// public-catalog route and never retries through an owner endpoint.
+  Future<PublicQuizStatistics> getForOwnedQuiz(
+    String quizId, {
+    String language = 'en',
+  }) => _getForQuiz(quizId, language: language, ownerOnly: true);
+
+  Future<PublicQuizStatistics> _getForQuiz(
+    String quizId, {
+    required String language,
+    required bool ownerOnly,
   }) async {
     final acceptLanguage = switch (language) {
       'pt' => 'pt-BR',
@@ -26,7 +40,11 @@ class PublicQuizStatisticsApiService {
       _ => 'en',
     };
     final response = await _adapter.get(
-      Uri.parse('$_base/quizzes/${Uri.encodeComponent(quizId)}/statistics'),
+      Uri.parse(
+        ownerOnly
+            ? '$_base/me/quizzes/${Uri.encodeComponent(quizId)}/statistics'
+            : '$_base/quizzes/${Uri.encodeComponent(quizId)}/statistics',
+      ),
       headers: {'Accept-Language': acceptLanguage},
     );
     if (response.statusCode < 200 || response.statusCode >= 300) {

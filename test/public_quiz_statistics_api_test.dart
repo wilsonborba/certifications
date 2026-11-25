@@ -12,6 +12,48 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 void main() {
+  test(
+    'owned private statistics use only the authenticated owner route',
+    () async {
+      final client = MockClient((request) async {
+        expect(request.method, 'GET');
+        expect(
+          request.url.path,
+          '/apps/certifications/v1/me/quizzes/private-quiz/statistics',
+        );
+        expect(request.headers['accept-language'], 'th');
+        return http.Response(
+          jsonEncode({
+            'quiz_id': 'private-quiz',
+            'completed_attempt_count': 0,
+            'distinct_participants': 0,
+            'average_score_pct': null,
+            'average_score_denominator': 0,
+            'typical_duration_sec': null,
+            'duration_denominator': 0,
+            'basis': 'all_completed_attempts',
+            'score_distribution_denominator': 0,
+            'score_distribution': [],
+            'score_distribution_report_view': {},
+            'question_provenance': {},
+          }),
+          200,
+        );
+      });
+      final service = PublicQuizStatisticsApiService(
+        adapter: ApiAdapter(client: client, csrfTokenProvider: () => null),
+      );
+
+      final result = await service.getForOwnedQuiz(
+        'private-quiz',
+        language: 'th',
+      );
+
+      expect(result.quizId, 'private-quiz');
+      expect(result.completedAttemptCount, 0);
+    },
+  );
+
   test('empty public statistics preserve unavailable values', () async {
     final client = MockClient((request) async {
       expect(request.method, 'GET');

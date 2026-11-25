@@ -4,6 +4,7 @@ enum CertificationsScreen {
   catalog,
   quizDetail,
   publicQuizStatistics,
+  ownedQuizStatistics,
   dashboard,
   studies,
   studyNew,
@@ -34,6 +35,7 @@ class CertificationsRoute {
 
   bool get requiresAuth => switch (screen) {
     CertificationsScreen.dashboard ||
+    CertificationsScreen.ownedQuizStatistics ||
     CertificationsScreen.studies ||
     CertificationsScreen.studyNew ||
     CertificationsScreen.studyDetail ||
@@ -189,6 +191,16 @@ class CertificationsRoute {
             queryParameters: qp,
           );
         }
+      } else if (segs.length == 5 &&
+          segs[1] == 'me' &&
+          segs[2] == 'quizzes' &&
+          segs[4] == 'statistics') {
+        return CertificationsRoute(
+          screen: CertificationsScreen.ownedQuizStatistics,
+          routeTemplate: '/v1/me/quizzes/:quiz_id/statistics',
+          id: segs[3],
+          queryParameters: qp,
+        );
       }
     }
 

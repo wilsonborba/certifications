@@ -88,12 +88,29 @@ class CertificationsApiClient {
   }
 
   // Preparations & sources
-  Future<http.Response> listStudies({int? page, int? limit}) => _apiRequest(
+  Future<http.Response> listStudies({
+    int? page,
+    int? limit,
+    int? offset,
+    String? q,
+    int? createdFrom,
+    int? createdTo,
+    String? status,
+    String? quizId,
+    String? tag,
+  }) => _apiRequest(
     method: 'GET',
     url: endpoint('/studies'),
     queryParams: {
       if (page != null) 'page': page,
       if (limit != null) 'limit': limit,
+      if (offset != null) 'offset': offset,
+      if (q != null) 'q': q,
+      if (createdFrom != null) 'created_from': createdFrom,
+      if (createdTo != null) 'created_to': createdTo,
+      if (status != null) 'status': status,
+      if (quizId != null) 'quiz_id': quizId,
+      if (tag != null) 'tag': tag,
     },
   );
 

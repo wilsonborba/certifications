@@ -176,6 +176,15 @@ class _AppState extends State<App> {
             builder: (_) => PublicQuizStatisticsScreen(quizId: route.id!),
           );
         }
+        if (route.screen == CertificationsScreen.ownedQuizStatistics &&
+            route.id != null) {
+          return MaterialPageRoute(
+            settings: RouteSettings(name: route.routeTemplate),
+            builder: (_) => _AuthenticatedContent(
+              child: OwnedQuizStatisticsScreen(quizId: route.id!),
+            ),
+          );
+        }
         if (route.screen == CertificationsScreen.certificate &&
             route.id != null) {
           return MaterialPageRoute(

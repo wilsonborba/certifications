@@ -36,6 +36,13 @@ void main() {
           'public_quiz_statistics',
         ),
         (
+          '/v1/me/quizzes/private-q/statistics',
+          CertificationsScreen.ownedQuizStatistics,
+          'private-q',
+          true,
+          'owned_quiz_statistics',
+        ),
+        (
           '/v1/dashboard',
           CertificationsScreen.dashboard,
           null,

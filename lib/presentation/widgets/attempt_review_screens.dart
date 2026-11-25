@@ -666,17 +666,41 @@ class _ProvenanceRow extends StatelessWidget {
   }
 }
 
-class PublicQuizStatisticsScreen extends StatefulWidget {
+class PublicQuizStatisticsScreen extends StatelessWidget {
   const PublicQuizStatisticsScreen({required this.quizId, this.api, super.key});
   final String quizId;
   final PublicQuizStatisticsApiService? api;
+
   @override
-  State<PublicQuizStatisticsScreen> createState() =>
-      _PublicQuizStatisticsScreenState();
+  Widget build(BuildContext context) =>
+      _QuizStatisticsScreen(quizId: quizId, api: api, ownerOnly: false);
 }
 
-class _PublicQuizStatisticsScreenState
-    extends State<PublicQuizStatisticsScreen> {
+class OwnedQuizStatisticsScreen extends StatelessWidget {
+  const OwnedQuizStatisticsScreen({required this.quizId, this.api, super.key});
+  final String quizId;
+  final PublicQuizStatisticsApiService? api;
+
+  @override
+  Widget build(BuildContext context) =>
+      _QuizStatisticsScreen(quizId: quizId, api: api, ownerOnly: true);
+}
+
+class _QuizStatisticsScreen extends StatefulWidget {
+  const _QuizStatisticsScreen({
+    required this.quizId,
+    required this.ownerOnly,
+    this.api,
+  });
+  final String quizId;
+  final bool ownerOnly;
+  final PublicQuizStatisticsApiService? api;
+
+  @override
+  State<_QuizStatisticsScreen> createState() => _QuizStatisticsScreenState();
+}
+
+class _QuizStatisticsScreenState extends State<_QuizStatisticsScreen> {
   late final PublicQuizStatisticsApiService _api =
       widget.api ?? PublicQuizStatisticsApiService();
   String? _loadedLanguage;
@@ -688,8 +712,14 @@ class _PublicQuizStatisticsScreenState
     final language = Localizations.localeOf(context).languageCode;
     if (_loadedLanguage != language) {
       _loadedLanguage = language;
-      _future = _api.getForQuiz(widget.quizId, language: language);
+      _load(language);
     }
+  }
+
+  void _load(String language) {
+    _future = widget.ownerOnly
+        ? _api.getForOwnedQuiz(widget.quizId, language: language)
+        : _api.getForQuiz(widget.quizId, language: language);
   }
 
   @override
@@ -702,7 +732,19 @@ class _PublicQuizStatisticsScreenState
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
-          return Center(child: Text(context.tr('errorGeneric')));
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(context.tr('errorGeneric')),
+                TextButton(
+                  onPressed: () =>
+                      setState(() => _load(_loadedLanguage ?? 'en')),
+                  child: Text(context.tr('retry')),
+                ),
+              ],
+            ),
+          );
         }
         final data = snapshot.data!;
         return Center(
