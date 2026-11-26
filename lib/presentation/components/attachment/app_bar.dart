@@ -20,7 +20,7 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
   const AttachmentAppBar({
     super.key,
     this.title = 'Certifications',
-    this.maxActionLayoutWidth = 1280,
+    this.maxActionLayoutWidth = 1400,
     this.currentTab = 'studies',
     this.onCertificates,
     this.onPlans,
@@ -294,7 +294,7 @@ class _AttachmentDesktopActions extends StatelessWidget {
   ButtonStyle _textBtnStyle(BuildContext context, Color accent) {
     return ButtonStyle(
       padding: WidgetStateProperty.all(
-        const EdgeInsets.symmetric(horizontal: 16),
+        const EdgeInsets.symmetric(horizontal: 12),
       ),
       minimumSize: WidgetStateProperty.all(const Size(48, 40)),
       animationDuration: const Duration(milliseconds: 140),
