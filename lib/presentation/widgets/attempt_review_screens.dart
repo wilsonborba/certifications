@@ -517,6 +517,7 @@ class _ResultStats extends StatelessWidget {
             builder: (context) {
               final item = values[group] as Map<String, dynamic>;
               final pct = item['percentage'];
+              final correct = item['correct'];
               final denominator = (item['total'] as num?)?.toInt() ?? 0;
               return _Metric(
                 label: context.tr(switch (group) {
@@ -526,7 +527,9 @@ class _ResultStats extends StatelessWidget {
                 }),
                 value: denominator == 0 || pct == null
                     ? context.tr('noScoreSample')
-                    : '${_localizedDecimal(context, pct as num)}% · ${_localizedCount(context, (item['correct'] as num?) ?? 0)} / ${_localizedCount(context, denominator)}',
+                    : correct is! num
+                    ? context.tr('unavailable')
+                    : '${_localizedDecimal(context, pct as num)}% · ${_localizedCount(context, correct)} / ${_localizedCount(context, denominator)}',
               );
             },
           ),

@@ -9,8 +9,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 class _ResultsApi extends AttemptReviewApiService {
-  _ResultsApi(this.status);
+  _ResultsApi(this.status, {this.stats = const {}});
   final String status;
+  final Map<String, dynamic> stats;
   final requestedIds = <String>[];
 
   @override
@@ -25,7 +26,7 @@ class _ResultsApi extends AttemptReviewApiService {
       scoreTotal: 3,
       startedAt: 1760000000,
       completedAt: status == 'completed' ? 1760000060 : null,
-      stats: const {},
+      stats: stats,
       activitySummary: const {'completeness': 'partial'},
       questions: const [],
     );
@@ -167,6 +168,36 @@ void main() {
       expect(certificateApi.identityCalls, 1);
     },
   );
+
+  testWidgets('missing correct count remains unavailable for its metric', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        AttemptResultsScreen(
+          attemptId: 'attempt-missing-correct',
+          api: _ResultsApi(
+            'completed',
+            stats: const {
+              'overall': {'total': 3, 'percentage': 66.7},
+            },
+          ),
+          certificateService: _CertificateApi(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final overallMetric = find.ancestor(
+      of: find.text('Overall'),
+      matching: find.byType(Card),
+    );
+    expect(
+      find.descendant(of: overallMetric, matching: find.text('Unavailable')),
+      findsOneWidget,
+    );
+    expect(find.text('66.7% · 0 / 3'), findsNothing);
+  });
 
   testWidgets('non-completed attempt results do not offer issuance', (
     tester,
