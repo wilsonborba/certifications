@@ -443,7 +443,7 @@ class AppLocalizations {
       'selectionAudioLabel': 'Audio intervals in milliseconds',
       'selectionInvalid': 'Enter a valid selection within this source.',
       'passageSelectionHint':
-          'Select text to use only that passage. Its saved range uses UTF-16 offsets in the normalized source.',
+          'Select text, then tap Add selected text to include only that passage.',
       'audioRangeUnavailable':
           'Audio duration is unavailable, so this source uses the whole file.',
       'capExceededWarning':
@@ -1079,7 +1079,7 @@ class AppLocalizations {
       'selectionAudioLabel': 'Intervalos de áudio em milissegundos',
       'selectionInvalid': 'Insira uma seleção válida dentro desta fonte.',
       'passageSelectionHint':
-          'Selecione o texto para usar apenas esse trecho. O intervalo salvo usa posições UTF-16 no texto normalizado da fonte.',
+          'Selecione o texto e toque em Adicionar texto selecionado para incluir apenas esse trecho.',
       'audioRangeUnavailable':
           'A duração do áudio não está disponível; esta fonte usa o arquivo inteiro.',
       'capExceededWarning': 'Esta seleção excede a cota disponível da conta.',
@@ -1692,7 +1692,7 @@ class AppLocalizations {
       'selectionAudioLabel': 'ช่วงเสียงหน่วยมิลลิวินาที',
       'selectionInvalid': 'ระบุช่วงที่ถูกต้องภายในแหล่งข้อมูลนี้',
       'passageSelectionHint':
-          'เลือกข้อความเพื่อใช้เฉพาะช่วงนั้น ระบบจะบันทึกตำแหน่ง UTF-16 ในข้อความต้นฉบับที่ปรับรูปแบบแล้ว',
+          'เลือกข้อความ แล้วแตะเพิ่มข้อความที่เลือกเพื่อใช้เฉพาะช่วงนั้น',
       'audioRangeUnavailable':
           'ไม่มีข้อมูลความยาวเสียง แหล่งข้อมูลนี้จะใช้ทั้งไฟล์',
       'tapFileToConfigureHint': 'แตะไฟล์เพื่อดูตัวอย่างและปรับช่วงที่เลือก',

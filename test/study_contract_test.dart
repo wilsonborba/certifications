@@ -636,6 +636,11 @@ void main() {
       expect(copy.text('preparedSourcesLabel'), isNotEmpty);
       expect(copy.text('sourceStorageNotice'), isNotEmpty);
       expect(copy.text('sourcePreviewTitle'), isNotEmpty);
+      expect(copy.text('selectionPassageLabel'), contains('UTF-16'));
+      expect(
+        copy.text('passageSelectionHint'),
+        contains(copy.text('addSelectedText')),
+      );
       expect(copy.text('narrowSelectionUnavailable'), isNotEmpty);
       expect(copy.text('reportsSourceLabel'), isNotEmpty);
       expect(copy.text('reportPickerLabel'), isNotEmpty);
