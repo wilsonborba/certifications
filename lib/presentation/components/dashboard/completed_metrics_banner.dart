@@ -20,7 +20,7 @@ class CompletedMetricsBanner extends StatelessWidget {
 
   final int totalStudies;
   final int standbyCount;
-  final int completedQuizzesCount;
+  final int? completedQuizzesCount;
   final int? totalSizeBytes;
 
   /// When each study was created, used to plot studies-per-day.
@@ -132,7 +132,9 @@ class CompletedMetricsBanner extends StatelessWidget {
       _MetricTile(
         icon: Icons.assignment_turned_in,
         label: context.tr('completedQuizzesLabel'),
-        value: '$completedQuizzesCount',
+        value: completedQuizzesCount == null
+            ? context.tr('unavailable')
+            : '$completedQuizzesCount',
         isDesktop: isDesktop,
         onTap: onTapCompletedQuizzes,
         tooltip: onTapCompletedQuizzes == null

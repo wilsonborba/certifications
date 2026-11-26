@@ -2,76 +2,170 @@ import 'package:certifications/core/settings.dart';
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/quiz.dart';
 import 'package:certifications/domain/models/study.dart';
+import 'package:certifications/domain/models/study_history.dart';
+import 'package:certifications/domain/models/attempt_review.dart';
+import 'package:certifications/domain/services/attempt_review_api_service.dart';
 import 'package:certifications/domain/services/draft_progress_store.dart';
 import 'package:certifications/domain/services/quiz_api_service.dart';
 import 'package:certifications/domain/services/study_api_service.dart';
+import 'package:certifications/domain/services/study_history_api_service.dart';
 import 'package:certifications/presentation/components/attachment/app_bar.dart';
 import 'package:certifications/presentation/components/dashboard/certificate_mini_list_card.dart';
 import 'package:certifications/presentation/components/dashboard/completed_metrics_banner.dart';
 import 'package:certifications/presentation/components/dashboard/draft_resume_hero_card.dart';
 import 'package:certifications/presentation/components/dashboard/standby_study_card.dart';
 import 'package:certifications/presentation/components/search/live_search_field.dart';
-import 'package:certifications/presentation/widgets/completed_quizzes/on_completed_quizzes.dart';
+import 'package:certifications/presentation/widgets/completed_quizzes/created_quiz_history_screen.dart';
+import 'package:certifications/presentation/widgets/attempt_review_screens.dart';
 import 'package:certifications/presentation/widgets/quiz_wizard/on_quiz_wizard.dart';
 import 'package:flutter/material.dart';
 
 /// Studies list paired with completed quizzes and the most recently touched draft (if any),
 /// used to power the resume hero card and metrics accurately.
 class _DashboardData {
-  _DashboardData(this.studies, this.completedQuizzes, this.mostRecentDraft);
-  final List<Study> studies;
-  final List<Quiz> completedQuizzes;
+  _DashboardData(
+    this.studyPage,
+    this.attemptOverview,
+    this.completedQuizzes,
+    this.mostRecentDraft,
+  );
+  final StudyHistoryPage studyPage;
+  final AttemptOverview? attemptOverview;
+  final List<Quiz>? completedQuizzes;
   final Study? mostRecentDraft;
+
+  List<Study> get studies => studyPage.items;
 }
 
 class OnStudyDashboardScreen extends StatefulWidget {
-  const OnStudyDashboardScreen({super.key});
+  const OnStudyDashboardScreen({
+    this.studyApi,
+    this.historyApi,
+    this.quizApi,
+    this.attemptApi,
+    super.key,
+  });
+
+  final StudyApiService? studyApi;
+  final StudyHistoryApiService? historyApi;
+  final QuizApiService? quizApi;
+  final AttemptReviewApiService? attemptApi;
 
   @override
   State<OnStudyDashboardScreen> createState() => _OnStudyDashboardScreenState();
 }
 
 class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
-  final api = StudyApiService();
-  final quizApi = QuizApiService();
+  static const _studyPageSize = 20;
+  late final api = widget.studyApi ?? StudyApiService();
+  late final historyApi = widget.historyApi ?? StudyHistoryApiService();
+  late final quizApi = widget.quizApi ?? QuizApiService();
+  late final attemptApi = widget.attemptApi ?? AttemptReviewApiService();
+  late Future<List<Quiz>?> completedQuizzesFuture = _loadCompletedQuizzes();
+  late Future<AttemptOverview?> attemptOverviewFuture = _loadAttemptOverview();
   late Future<_DashboardData> future = _load();
 
   String _searchQuery = '';
+  int _studyOffset = 0;
   bool _selectionMode = false;
   final Set<String> _selectedIds = {};
   bool _bulkDeleting = false;
   bool _dashboardExpanded = true;
 
+  Future<List<Quiz>?> _loadCompletedQuizzes() async {
+    try {
+      return await quizApi.listCompleted();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<AttemptOverview?> _loadAttemptOverview() async {
+    try {
+      return await attemptApi.getOverview();
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<_DashboardData> _load() async {
+    final queryText = _searchQuery.trim();
+    final offset = _studyOffset;
     final results = await Future.wait([
-      api.list(),
-      quizApi.listCompleted().catchError((_) => <Quiz>[]),
+      historyApi.list(
+        StudyHistoryQuery(
+          q: queryText.isEmpty ? null : queryText,
+          limit: _studyPageSize,
+          offset: offset,
+        ),
+      ),
+      attemptOverviewFuture,
+      completedQuizzesFuture,
     ]);
-    final studies = results[0] as List<Study>;
-    final completedQuizzes = results[1] as List<Quiz>;
+    final studyPage = results[0] as StudyHistoryPage;
+    final studies = studyPage.items;
+    final attemptOverview = results[1] as AttemptOverview?;
+    final completedQuizzes = results[2] as List<Quiz>?;
     final standby = studies.where((s) => s.status != 'completed').toList();
 
     Study? mostRecent;
     DateTime? mostRecentAt;
-    for (final study in standby) {
-      final touchedAt = await DraftProgressStore.instance.getLastOpenedAt(
-        study.id,
-      );
-      if (touchedAt != null &&
-          (mostRecentAt == null || touchedAt.isAfter(mostRecentAt))) {
-        mostRecent = study;
-        mostRecentAt = touchedAt;
+    if (offset == 0 && queryText.isEmpty) {
+      for (final study in standby) {
+        final touchedAt = await DraftProgressStore.instance.getLastOpenedAt(
+          study.id,
+        );
+        if (touchedAt != null &&
+            (mostRecentAt == null || touchedAt.isAfter(mostRecentAt))) {
+          mostRecent = study;
+          mostRecentAt = touchedAt;
+        }
       }
+      // The API orders studies newest first, so the first row is the honest
+      // fallback when this browser has no saved activity timestamps.
+      if (standby.isNotEmpty) mostRecent ??= standby.first;
     }
-    // No locally recorded activity yet for any draft: fall back to the last
-    // entry returned by the API as a reasonable "most recent" proxy.
-    mostRecent ??= standby.isNotEmpty ? standby.last : null;
 
-    return _DashboardData(studies, completedQuizzes, mostRecent);
+    return _DashboardData(
+      studyPage,
+      attemptOverview,
+      completedQuizzes,
+      mostRecent,
+    );
   }
 
   void _reload() {
     setState(() {
+      completedQuizzesFuture = _loadCompletedQuizzes();
+      attemptOverviewFuture = _loadAttemptOverview();
+      future = _load();
+    });
+  }
+
+  void _reloadFromFirstPage() {
+    setState(() {
+      _studyOffset = 0;
+      completedQuizzesFuture = _loadCompletedQuizzes();
+      attemptOverviewFuture = _loadAttemptOverview();
+      future = _load();
+    });
+  }
+
+  void _search(String query) {
+    setState(() {
+      _searchQuery = query;
+      _studyOffset = 0;
+      _selectionMode = false;
+      _selectedIds.clear();
+      future = _load();
+    });
+  }
+
+  void _moveStudyPage(StudyHistoryPage page, int direction) {
+    setState(() {
+      _studyOffset = (page.offset + direction * page.limit).clamp(0, 1 << 30);
+      _selectionMode = false;
+      _selectedIds.clear();
       future = _load();
     });
   }
@@ -87,6 +181,7 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
           studyId: study.id,
           initialName: study.name,
           initialStep: savedStep,
+          apiService: api,
           onGenerate: _reload,
         ),
       ),
@@ -166,6 +261,38 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
     _reload();
   }
 
+  Widget _studyPageControls(StudyHistoryPage page) {
+    if (page.total <= page.limit && page.offset == 0) {
+      return const SizedBox.shrink();
+    }
+    final from = page.items.isEmpty ? 0 : page.offset + 1;
+    final to = page.offset + page.items.length;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+          tooltip: context.tr('previous'),
+          onPressed: page.offset == 0 ? null : () => _moveStudyPage(page, -1),
+          icon: const Icon(Icons.chevron_left),
+        ),
+        Text(
+          context.trParams('createdHistoryRange', {
+            'from': '$from',
+            'to': '$to',
+            'total': '${page.total}',
+          }),
+        ),
+        IconButton(
+          tooltip: context.tr('next'),
+          onPressed: page.items.isEmpty || to >= page.total
+              ? null
+              : () => _moveStudyPage(page, 1),
+          icon: const Icon(Icons.chevron_right),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
@@ -182,7 +309,10 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
           await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => OnQuizWizardScreen(onGenerate: _reload),
+              builder: (_) => OnQuizWizardScreen(
+                apiService: api,
+                onGenerate: _reloadFromFirstPage,
+              ),
             ),
           );
         },
@@ -193,29 +323,38 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
         child: FutureBuilder<_DashboardData>(
           future: future,
           builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
+            if (snapshot.connectionState != ConnectionState.done &&
+                snapshot.data == null) {
               return const Center(child: CircularProgressIndicator());
             }
-            final data = snapshot.data;
-            final studies = data?.studies ?? [];
+            if (snapshot.hasError) {
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(context.tr('errorGeneric')),
+                    TextButton(
+                      onPressed: () => setState(() {
+                        future = _load();
+                      }),
+                      child: Text(context.tr('retry')),
+                    ),
+                  ],
+                ),
+              );
+            }
+            final data = snapshot.data!;
+            final studies = data.studies;
+            final page = data.studyPage;
             final allStandby = studies
                 .where((s) => s.status != 'completed')
                 .toList();
-            final standby = _searchQuery.isEmpty
-                ? allStandby
-                : allStandby
-                      .where(
-                        (s) => s.name.toLowerCase().contains(
-                          _searchQuery.toLowerCase(),
-                        ),
-                      )
-                      .toList();
+            final standby = allStandby;
             final totalBytes = studies.any((s) => s.activeSizeBytes == null)
                 ? null
                 : studies.fold<int>(0, (sum, s) => sum + s.activeSizeBytes!);
             final completedCount =
-                data?.completedQuizzes.length ??
-                studies.where((s) => s.status == 'completed').length;
+                data.attemptOverview?.distinctQuizzesAttempted;
 
             return SingleChildScrollView(
               padding: EdgeInsets.all(isDesktop ? 24 : 16),
@@ -244,7 +383,7 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                       ),
                       const SizedBox(height: 24),
                       CompletedMetricsBanner(
-                        totalStudies: studies.length,
+                        totalStudies: page.total,
                         standbyCount: allStandby.length,
                         totalSizeBytes: totalBytes,
                         completedQuizzesCount: completedCount,
@@ -252,8 +391,8 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                           ...studies
                               .map((study) => study.createdAt)
                               .whereType<DateTime>(),
-                          ...(data?.completedQuizzes ?? [])
-                              .map(
+                          ...?data.completedQuizzes
+                              ?.map(
                                 (quiz) => quiz.createdAt.isEmpty
                                     ? null
                                     : DateTime.tryParse(quiz.createdAt),
@@ -263,15 +402,30 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                         isDesktop: isDesktop,
                         onTapCompletedQuizzes: () => Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (_) => const OnCompletedQuizzesScreen(),
+                          MaterialPageRoute<void>(
+                            builder: (_) =>
+                                AttemptHistoryScreen(api: attemptApi),
                           ),
                         ),
                       ),
-                      if (data?.mostRecentDraft != null) ...[
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  CreatedQuizHistoryScreen(api: historyApi),
+                            ),
+                          ),
+                          icon: const Icon(Icons.history),
+                          label: Text(context.tr('createdQuizHistoryTitle')),
+                        ),
+                      ),
+                      if (data.mostRecentDraft != null) ...[
                         const SizedBox(height: 20),
                         DraftResumeHeroCard(
-                          study: data!.mostRecentDraft!,
+                          study: data.mostRecentDraft!,
                           isDesktop: isDesktop,
                           onResume: () => _resumeStudy(data.mostRecentDraft!),
                         ),
@@ -316,6 +470,7 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                                 padding: const EdgeInsets.only(top: 12),
                                 child: CertificateMiniListCard(
                                   isDesktop: isDesktop,
+                                  api: quizApi,
                                 ),
                               )
                             : const SizedBox(width: double.infinity),
@@ -350,12 +505,11 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                             ),
                         ],
                       ),
-                      if (allStandby.isNotEmpty) ...[
+                      if (page.total > 0 || _searchQuery.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         LiveSearchField(
                           hintText: context.tr('searchStudiesHint'),
-                          onChanged: (value) =>
-                              setState(() => _searchQuery = value),
+                          onChanged: _search,
                         ),
                       ],
                       if (_selectionMode) ...[
@@ -369,10 +523,10 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                         ),
                       ],
                       const SizedBox(height: 16),
-                      if (allStandby.isEmpty)
-                        _StandbyEmptyState(isDesktop: isDesktop)
-                      else if (standby.isEmpty)
+                      if (standby.isEmpty && _searchQuery.isNotEmpty)
                         _NoSearchResultsState(query: _searchQuery)
+                      else if (standby.isEmpty)
+                        _StandbyEmptyState(isDesktop: isDesktop)
                       else if (isDesktop)
                         _StandbyGrid(
                           studies: standby,
@@ -403,6 +557,7 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                               )
                               .toList(),
                         ),
+                      _studyPageControls(page),
                       const SizedBox(height: 32),
                       Center(
                         child: Text(

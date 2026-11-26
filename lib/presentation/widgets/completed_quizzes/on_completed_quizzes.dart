@@ -1,6 +1,7 @@
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/quiz.dart';
 import 'package:certifications/domain/services/quiz_api_service.dart';
+import 'package:certifications/domain/services/study_history_api_service.dart';
 import 'package:certifications/presentation/components/attachment/app_bar.dart';
 import 'package:certifications/presentation/widgets/completed_quizzes/created_quiz_history_screen.dart';
 import 'package:certifications/presentation/components/quiz/quiz_leaderboard_view.dart';
@@ -13,7 +14,10 @@ import 'package:flutter/material.dart';
 /// filters by owner), replacing the previous workaround of deriving a quiz
 /// id from the studies list and treating a study id as a quiz id one-to-one.
 class OnCompletedQuizzesScreen extends StatefulWidget {
-  const OnCompletedQuizzesScreen({super.key});
+  const OnCompletedQuizzesScreen({this.api, this.historyApi, super.key});
+
+  final QuizApiService? api;
+  final StudyHistoryApiService? historyApi;
 
   @override
   State<OnCompletedQuizzesScreen> createState() =>
@@ -21,7 +25,7 @@ class OnCompletedQuizzesScreen extends StatefulWidget {
 }
 
 class _OnCompletedQuizzesScreenState extends State<OnCompletedQuizzesScreen> {
-  final _quizApi = QuizApiService();
+  late final _quizApi = widget.api ?? QuizApiService();
   late Future<List<Quiz>> _future = _quizApi.listCompleted();
   String _searchQuery = '';
 
@@ -42,8 +46,30 @@ class _OnCompletedQuizzesScreenState extends State<OnCompletedQuizzesScreen> {
             if (snapshot.connectionState != ConnectionState.done) {
               return const Center(child: CircularProgressIndicator());
             }
-            if (snapshot.hasError) {
-              return Center(child: Text(context.tr('errorGeneric')));
+            final hasError = snapshot.hasError;
+            if (hasError) {
+              return Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 900),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _historyButton(),
+                        const SizedBox(height: 24),
+                        Center(child: Text(context.tr('errorGeneric'))),
+                        Center(
+                          child: TextButton(
+                            onPressed: _reload,
+                            child: Text(context.tr('retry')),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
             }
             final quizzes = snapshot.data ?? const [];
             final filtered = _searchQuery.isEmpty
@@ -64,18 +90,7 @@ class _OnCompletedQuizzesScreenState extends State<OnCompletedQuizzesScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton.icon(
-                          onPressed: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const CreatedQuizHistoryScreen(),
-                            ),
-                          ),
-                          icon: const Icon(Icons.history),
-                          label: Text(context.tr('createdQuizHistoryTitle')),
-                        ),
-                      ),
+                      _historyButton(),
                       if (quizzes.isNotEmpty) ...[
                         LiveSearchField(
                           hintText: context.tr('searchQuizzesHint'),
@@ -132,6 +147,19 @@ class _OnCompletedQuizzesScreenState extends State<OnCompletedQuizzesScreen> {
       ),
     );
   }
+
+  Widget _historyButton() => Align(
+    alignment: Alignment.centerRight,
+    child: TextButton.icon(
+      onPressed: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => CreatedQuizHistoryScreen(api: widget.historyApi),
+        ),
+      ),
+      icon: const Icon(Icons.history),
+      label: Text(context.tr('createdQuizHistoryTitle')),
+    ),
+  );
 }
 
 class _CompletedQuizTile extends StatefulWidget {
