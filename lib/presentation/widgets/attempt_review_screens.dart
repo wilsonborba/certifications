@@ -476,28 +476,72 @@ class _OptionLine extends StatelessWidget {
 class _ActivitySummary extends StatelessWidget {
   const _ActivitySummary({required this.values});
   final Map<String, dynamic> values;
+
+  static const _metricLabels = [
+    ('focus_lost_count', 'certificateFocusLoss'),
+    ('page_hidden_count', 'certificatePageHidden'),
+    ('page_return_count', 'certificatePageReturns'),
+    ('known_away_ms', 'certificateKnownAway'),
+    ('reconnect_count', 'certificateReconnects'),
+    ('refresh_count', 'certificateRefreshes'),
+    ('unknown_gap_count', 'certificateUnknownGaps'),
+  ];
+
+  String _completenessLabel(BuildContext context) =>
+      context.tr(switch (values['completeness']) {
+        'complete_observed' => 'certificateCompletenessComplete',
+        'partial_with_interruptions' => 'certificateCompletenessPartial',
+        'no_events_recorded' => 'certificateCompletenessNoEvents',
+        _ => 'certificateCompletenessUnknown',
+      });
+
+  String _metricValue(BuildContext context, String key) {
+    final value = values[key];
+    if (value is! num || !value.isFinite || value < 0 || value % 1 != 0) {
+      return context.tr('unavailable');
+    }
+    if (key != 'known_away_ms') return _localizedCount(context, value);
+
+    final seconds = value.toInt() ~/ 1000;
+    final hours = seconds ~/ 3600;
+    final minutes = (seconds % 3600) ~/ 60;
+    final remainder = seconds % 60;
+    if (hours > 0) {
+      return context.trParams('generationDurationHours', {
+        'hours': '$hours',
+        'minutes': '$minutes',
+        'seconds': '$remainder',
+      });
+    }
+    if (minutes > 0) {
+      return context.trParams('generationDurationMinutes', {
+        'minutes': '$minutes',
+        'seconds': '$remainder',
+      });
+    }
+    return context.trParams('generationDurationSeconds', {
+      'seconds': '$remainder',
+    });
+  }
+
   @override
-  Widget build(BuildContext context) => ExpansionTile(
-    title: Text(context.tr('attemptActivity')),
-    subtitle: Text(
-      '${values['completeness'] ?? context.tr('unavailable')} · ${values['disclaimer'] ?? ''}',
-    ),
-    children: [
-      for (final key in [
-        'focus_lost_count',
-        'page_hidden_count',
-        'page_return_count',
-        'known_away_ms',
-        'reconnect_count',
-        'refresh_count',
-        'unknown_gap_count',
-      ])
-        ListTile(
-          title: Text(key.replaceAll('_', ' ')),
-          trailing: Text('${values[key] ?? context.tr('unavailable')}'),
-        ),
-    ],
-  );
+  Widget build(BuildContext context) {
+    final disclaimer = values['disclaimer'] ?? '';
+    return ExpansionTile(
+      title: Text(context.tr('attemptActivity')),
+      subtitle: Text(
+        '${context.tr('certificateCompleteness')}: '
+        '${_completenessLabel(context)} · $disclaimer',
+      ),
+      children: [
+        for (final (key, label) in _metricLabels)
+          ListTile(
+            title: Text(context.tr(label)),
+            trailing: Text(_metricValue(context, key)),
+          ),
+      ],
+    );
+  }
 }
 
 class _ResultStats extends StatelessWidget {
