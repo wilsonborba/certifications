@@ -55,9 +55,23 @@ void main() {
           quizVersionId: 'v1',
           status: 'completed',
           attemptSequence: 2,
+          scoreCorrect: 75,
+          scoreTotal: 100,
+          previousAttemptScorePct: 50,
+          scoreChangePercentagePoints: 25,
+          startedAt: 1760000000,
+        ),
+        AttemptHistoryItem(
+          id: 'zero-repeat',
+          quizId: 'zero-quiz',
+          quizTitle: 'Zero score retry',
+          quizOrigin: 'fixture',
+          quizVersionId: 'v1',
+          status: 'completed',
+          attemptSequence: 2,
           scoreCorrect: 0,
           scoreTotal: 100,
-          previousAttemptScorePct: 66.7,
+          previousAttemptScorePct: 0,
           scoreChangePercentagePoints: 0,
           startedAt: 1760000000,
         ),
@@ -89,8 +103,11 @@ void main() {
           sequenceLabel: 'Attempt ',
           sequence: 'Attempt 2',
           firstSequence: 'Attempt 1',
-          previous: 'Previous score: 66.7%',
-          change: 'Change from previous: 0.0 percentage points',
+          previous: 'Previous score: 50.0%',
+          change: 'Change from previous: 25.0 percentage points',
+          zeroPrevious: 'Previous score: 0.0%',
+          zeroChange: 'Change from previous: 0.0 percentage points',
+          scoreRepeat: '75.0%',
           scoreZero: '0.0%',
           previousLabel: 'Previous score:',
           changeLabel: 'Change from previous:',
@@ -100,8 +117,11 @@ void main() {
           sequenceLabel: 'Tentativa ',
           sequence: 'Tentativa 2',
           firstSequence: 'Tentativa 1',
-          previous: 'Pontuação anterior: 66,7%',
-          change: 'Variação em relação à anterior: 0,0 pontos percentuais',
+          previous: 'Pontuação anterior: 50,0%',
+          change: 'Variação em relação à anterior: 25,0 pontos percentuais',
+          zeroPrevious: 'Pontuação anterior: 0,0%',
+          zeroChange: 'Variação em relação à anterior: 0,0 pontos percentuais',
+          scoreRepeat: '75,0%',
           scoreZero: '0,0%',
           previousLabel: 'Pontuação anterior:',
           changeLabel: 'Variação em relação à anterior:',
@@ -111,8 +131,11 @@ void main() {
           sequenceLabel: 'ครั้งที่ ',
           sequence: 'ครั้งที่ 2',
           firstSequence: 'ครั้งที่ 1',
-          previous: 'คะแนนครั้งก่อน: 66.7%',
-          change: 'เปลี่ยนแปลงจากครั้งก่อน: 0.0 จุดเปอร์เซ็นต์',
+          previous: 'คะแนนครั้งก่อน: 50.0%',
+          change: 'เปลี่ยนแปลงจากครั้งก่อน: 25.0 จุดเปอร์เซ็นต์',
+          zeroPrevious: 'คะแนนครั้งก่อน: 0.0%',
+          zeroChange: 'เปลี่ยนแปลงจากครั้งก่อน: 0.0 จุดเปอร์เซ็นต์',
+          scoreRepeat: '75.0%',
           scoreZero: '0.0%',
           previousLabel: 'คะแนนครั้งก่อน:',
           changeLabel: 'เปลี่ยนแปลงจากครั้งก่อน:',
@@ -120,18 +143,35 @@ void main() {
       ];
 
       for (final testCase in cases) {
-        final api = _HistoryApi()..items = rows;
+        final api = _HistoryApi()..items = [rows[0], rows[1]];
         await tester.pumpWidget(
           _app(AttemptHistoryScreen(api: api), locale: testCase.locale),
         );
         await tester.pumpAndSettle();
 
-        expect(find.text(testCase.sequence), findsOneWidget);
-        expect(find.text(testCase.firstSequence), findsOneWidget);
+        expect(find.text(testCase.sequence), findsNWidgets(2));
         expect(find.text(testCase.previous), findsOneWidget);
         expect(find.text(testCase.change), findsOneWidget);
         expect(find.text(testCase.scoreZero), findsOneWidget);
-        expect(find.text('Metadata unavailable'), findsOneWidget);
+        expect(find.text(testCase.zeroPrevious), findsOneWidget);
+        expect(find.text(testCase.zeroChange), findsOneWidget);
+        expect(find.text(testCase.scoreRepeat), findsOneWidget);
+        expect(find.text('Zero score retry'), findsOneWidget);
+        final missingApi = _HistoryApi()..items = [rows[2], rows[3]];
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump();
+        await tester.pumpWidget(
+          _app(
+            AttemptHistoryScreen(
+              api: missingApi,
+              key: ValueKey('missing-${testCase.locale.languageCode}'),
+            ),
+            locale: testCase.locale,
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('First attempt'), findsOneWidget);
+        expect(find.text(testCase.firstSequence), findsOneWidget);
         final firstAttemptRow = find.ancestor(
           of: find.text('First attempt'),
           matching: find.byType(ListTile),
@@ -143,6 +183,14 @@ void main() {
           ),
           findsNothing,
         );
+        expect(
+          find.descendant(
+            of: firstAttemptRow,
+            matching: find.textContaining(testCase.changeLabel),
+          ),
+          findsNothing,
+        );
+        expect(find.text('Metadata unavailable'), findsOneWidget);
         final missingMetadataRow = find.ancestor(
           of: find.text('Metadata unavailable'),
           matching: find.byType(ListTile),
@@ -160,13 +208,6 @@ void main() {
             findsNothing,
           );
         }
-        expect(
-          find.descendant(
-            of: firstAttemptRow,
-            matching: find.textContaining(testCase.changeLabel),
-          ),
-          findsNothing,
-        );
       }
     },
   );
