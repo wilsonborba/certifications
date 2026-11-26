@@ -11,16 +11,25 @@ import 'package:flutter/material.dart';
 /// section (see [CertificateMiniListCard]'s caller), so it only mounts (and
 /// only then fetches data) once expanded.
 class CertificateMiniListCard extends StatefulWidget {
-  const CertificateMiniListCard({super.key, required this.isDesktop});
+  const CertificateMiniListCard({super.key, required this.isDesktop, this.api});
 
   final bool isDesktop;
+  final QuizApiService? api;
 
   @override
-  State<CertificateMiniListCard> createState() => _CertificateMiniListCardState();
+  State<CertificateMiniListCard> createState() =>
+      _CertificateMiniListCardState();
 }
 
 class _CertificateMiniListCardState extends State<CertificateMiniListCard> {
-  late final Future<List<Quiz>> _future = QuizApiService().listCompleted();
+  late Future<List<Quiz>> _future = (widget.api ?? QuizApiService())
+      .listCompleted();
+
+  void _reload() {
+    setState(() {
+      _future = (widget.api ?? QuizApiService()).listCompleted();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +41,21 @@ class _CertificateMiniListCardState extends State<CertificateMiniListCard> {
             return const Padding(
               padding: EdgeInsets.symmetric(vertical: 32),
               child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (snapshot.hasError) {
+            return Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(context.tr('errorGeneric')),
+                  TextButton(
+                    onPressed: _reload,
+                    child: Text(context.tr('retry')),
+                  ),
+                ],
+              ),
             );
           }
           final quizzes = snapshot.data ?? const [];
