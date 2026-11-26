@@ -82,6 +82,7 @@ class AttachmentAppBar extends StatelessWidget implements PreferredSizeWidget {
             if (wide)
               _AttachmentDesktopActions(
                 accent: accent,
+                compactNavigationLabels: constraints.maxWidth < 1700,
                 currentTab: currentTab,
                 onCertificates: onCertificates,
                 onPlans: onPlans,
@@ -275,6 +276,7 @@ class _UserProfileButton extends StatelessWidget {
 class _AttachmentDesktopActions extends StatelessWidget {
   const _AttachmentDesktopActions({
     required this.accent,
+    required this.compactNavigationLabels,
     this.currentTab,
     this.onCertificates,
     this.onPlans,
@@ -284,6 +286,7 @@ class _AttachmentDesktopActions extends StatelessWidget {
   });
 
   final Color accent;
+  final bool compactNavigationLabels;
   final String? currentTab;
   final VoidCallback? onCertificates;
   final VoidCallback? onPlans;
@@ -291,10 +294,14 @@ class _AttachmentDesktopActions extends StatelessWidget {
   final VoidCallback? onAbout;
   final Future<void> Function() onLogout;
 
-  ButtonStyle _textBtnStyle(BuildContext context, Color accent) {
+  ButtonStyle _textBtnStyle(
+    BuildContext context,
+    Color accent, {
+    required bool compact,
+  }) {
     return ButtonStyle(
       padding: WidgetStateProperty.all(
-        const EdgeInsets.symmetric(horizontal: 12),
+        EdgeInsets.symmetric(horizontal: compact ? 8 : 12),
       ),
       minimumSize: WidgetStateProperty.all(const Size(48, 40)),
       animationDuration: const Duration(milliseconds: 140),
@@ -326,9 +333,14 @@ class _AttachmentDesktopActions extends StatelessWidget {
   Widget _item(BuildContext context, String label, VoidCallback? onTap) {
     return _HoverScale(
       child: TextButton(
-        style: _textBtnStyle(context, accent),
+        style: _textBtnStyle(context, accent, compact: compactNavigationLabels),
         onPressed: onTap, // null = disabled (used for Profile)
-        child: Text(label),
+        child: compactNavigationLabels
+            ? ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 112),
+                child: Text(label, textAlign: TextAlign.center),
+              )
+            : Text(label),
       ),
     );
   }
