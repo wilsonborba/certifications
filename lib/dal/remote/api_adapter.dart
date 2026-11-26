@@ -198,7 +198,13 @@ class ApiAdapter {
   Future<http.Response> postEventStream({
     required Uri url,
     required void Function(String event, String data) onEvent,
-  }) => _eventStream(method: 'POST', url: url, onEvent: onEvent);
+    Future<void>? abortTrigger,
+  }) => _eventStream(
+    method: 'POST',
+    url: url,
+    onEvent: onEvent,
+    abortTrigger: abortTrigger,
+  );
 
   Future<http.Response> getEventStream({
     required Uri url,
@@ -209,6 +215,7 @@ class ApiAdapter {
     required String method,
     required Uri url,
     required void Function(String event, String data) onEvent,
+    Future<void>? abortTrigger,
   }) async {
     final headers = {...defaultHeaders, 'Accept': 'text/event-stream'};
     final csrfToken = csrfTokenProvider();
@@ -216,7 +223,10 @@ class ApiAdapter {
       headers.putIfAbsent('X-CSRF-Token', () => csrfToken);
       headers.putIfAbsent('X-CSRFToken', () => csrfToken);
     }
-    final request = http.Request(method, url)..headers.addAll(headers);
+    final request = abortTrigger == null
+        ? http.Request(method, url)
+        : http.AbortableRequest(method, url, abortTrigger: abortTrigger);
+    request.headers.addAll(headers);
     final streamed = await _client.send(request);
     final captured = StringBuffer();
     var eventName = 'message';

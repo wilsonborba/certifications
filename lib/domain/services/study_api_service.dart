@@ -193,9 +193,11 @@ class StudyApiService {
   Future<void> streamAnalysis(
     String studyId, {
     required void Function(StudyAnalysisEvent event) onEvent,
+    Future<void>? abortTrigger,
   }) async {
     final response = await _adapter.postEventStream(
       url: Uri.parse('$_base/$studyId/analysis/stream'),
+      abortTrigger: abortTrigger,
       onEvent: (name, data) {
         final decoded = jsonDecode(data);
         if (decoded is Map<String, dynamic>) {
