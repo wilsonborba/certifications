@@ -1,6 +1,7 @@
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/core/utils/app_preferences.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Compact controls for desktop app bars. The sheet contains the full
 /// hand-built language list and the light/dark switch shared by all routes.
@@ -36,9 +37,11 @@ class _PreferencesSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SafeArea(
     top: false,
-    child: Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
-      child: const _PreferencesContent(),
+    child: SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+        child: const _PreferencesContent(),
+      ),
     ),
   );
 }
@@ -106,9 +109,49 @@ class _PreferencesContent extends StatelessWidget {
             }).toList(),
           ),
         ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 4,
+          runSpacing: 4,
+          children: [
+            _LegalDocumentButton(
+              label: context.tr('termsOfService'),
+              url: 'https://asodya.com/terms-of-service',
+              icon: Icons.description_outlined,
+            ),
+            _LegalDocumentButton(
+              label: context.tr('privacyPolicy'),
+              url: 'https://asodya.com/privacy-policy',
+              icon: Icons.privacy_tip_outlined,
+            ),
+          ],
+        ),
       ],
     );
   }
+}
+
+class _LegalDocumentButton extends StatelessWidget {
+  const _LegalDocumentButton({
+    required this.label,
+    required this.url,
+    required this.icon,
+  });
+
+  final String label;
+  final String url;
+  final IconData icon;
+
+  Future<void> _open() async {
+    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  }
+
+  @override
+  Widget build(BuildContext context) => TextButton.icon(
+    onPressed: _open,
+    icon: Icon(icon, size: 18),
+    label: Text(label),
+  );
 }
 
 class _PreferenceShell extends StatelessWidget {

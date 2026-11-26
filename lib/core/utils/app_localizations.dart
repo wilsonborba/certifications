@@ -100,6 +100,8 @@ class AppLocalizations {
       'theme': 'Theme',
       'language': 'Language',
       'appearanceAndLanguage': 'Appearance & language',
+      'termsOfService': 'Terms of Service',
+      'privacyPolicy': 'Privacy Policy',
       'darkTheme': 'Dark theme',
       'themeDescription':
           'Switch between the light and dark monochrome themes.',
@@ -726,6 +728,8 @@ class AppLocalizations {
       'theme': 'Tema',
       'language': 'Idioma',
       'appearanceAndLanguage': 'Aparência e idioma',
+      'termsOfService': 'Termos de Serviço',
+      'privacyPolicy': 'Política de Privacidade',
       'darkTheme': 'Tema escuro',
       'themeDescription':
           'Alterne entre os temas monocromáticos claro e escuro.',
@@ -1360,6 +1364,8 @@ class AppLocalizations {
       'theme': 'ธีม',
       'language': 'ภาษา',
       'appearanceAndLanguage': 'รูปแบบและภาษา',
+      'termsOfService': 'ข้อกำหนดการให้บริการ',
+      'privacyPolicy': 'นโยบายความเป็นส่วนตัว',
       'darkTheme': 'ธีมมืด',
       'themeDescription': 'สลับระหว่างธีมขาวดำสว่างและมืด',
       'system': 'ระบบ',
