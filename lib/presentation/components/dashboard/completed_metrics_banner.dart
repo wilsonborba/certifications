@@ -102,9 +102,11 @@ class CompletedMetricsBanner extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          if (totalStudies == 0)
-            _EmptyDashboardState(isDesktop: isDesktop)
-          else
+          if (totalStudies == 0) ...[
+            _EmptyDashboardState(isDesktop: isDesktop),
+            const SizedBox(height: 12),
+            _completedQuizzesTile(context),
+          ] else
             _buildPopulated(context, scheme),
         ],
       ),
@@ -129,18 +131,7 @@ class CompletedMetricsBanner extends StatelessWidget {
         value: sizeMb,
         isDesktop: isDesktop,
       ),
-      _MetricTile(
-        icon: Icons.assignment_turned_in,
-        label: context.tr('completedQuizzesLabel'),
-        value: completedQuizzesCount == null
-            ? context.tr('unavailable')
-            : '$completedQuizzesCount',
-        isDesktop: isDesktop,
-        onTap: onTapCompletedQuizzes,
-        tooltip: onTapCompletedQuizzes == null
-            ? null
-            : context.tr('viewCompletedQuizzes'),
-      ),
+      _completedQuizzesTile(context),
     ];
 
     final Widget tilesLayout = isDesktop
@@ -167,6 +158,19 @@ class CompletedMetricsBanner extends StatelessWidget {
       ],
     );
   }
+
+  Widget _completedQuizzesTile(BuildContext context) => _MetricTile(
+    icon: Icons.assignment_turned_in,
+    label: context.tr('completedQuizzesLabel'),
+    value: completedQuizzesCount == null
+        ? context.tr('unavailable')
+        : '$completedQuizzesCount',
+    isDesktop: isDesktop,
+    onTap: onTapCompletedQuizzes,
+    tooltip: onTapCompletedQuizzes == null
+        ? null
+        : context.tr('viewCompletedQuizzes'),
+  );
 }
 
 /// Real, deliberate empty state (icon + message) shown instead of an
