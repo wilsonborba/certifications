@@ -44,14 +44,16 @@ class StudySelection {
   static String? passage(String input, String normalizedText) {
     final text = normalizeText(normalizedText);
     final spec = input.trim();
-    if (utf8.encode(spec).length > maxSelectionBytes ||
-        !spec.startsWith('p1:')) {
+    if (utf8.encode(spec).length > maxSelectionBytes) {
       return null;
     }
     final ranges = <(int, int)>[];
     var previousEnd = -1;
-    for (final item in spec.substring(3).split(',')) {
-      final match = RegExp(r'^(\d+)-(\d+)$').firstMatch(item);
+    for (final item in spec.split(',')) {
+      final part = item.trim();
+      if (!part.startsWith('p1:')) return null;
+      final range = part.substring(3);
+      final match = RegExp(r'^(\d+)-(\d+)$').firstMatch(range);
       if (match == null) return null;
       final start = int.tryParse(match.group(1)!);
       final end = int.tryParse(match.group(2)!);
@@ -69,7 +71,7 @@ class StudySelection {
       previousEnd = end;
     }
     if (ranges.isEmpty) return null;
-    return 'p1:${ranges.map((r) => '${r.$1}-${r.$2}').join(',')}';
+    return ranges.map((r) => 'p1:${r.$1}-${r.$2}').join(',');
   }
 
   static List<(int, int)>? _parseRanges(
@@ -90,8 +92,13 @@ class StudySelection {
       if (match == null) return null;
       final start = int.tryParse(match.group(1)!);
       final end = int.tryParse(match.group(2) ?? match.group(1)!);
-      if (start == null || end == null || start <= previousEnd) return null;
-      if (mergeAdjacent && result.isNotEmpty && start == previousEnd + 1) {
+      if (start == null ||
+          end == null ||
+          start < previousEnd ||
+          (!mergeAdjacent && start == previousEnd)) {
+        return null;
+      }
+      if (mergeAdjacent && result.isNotEmpty && start == previousEnd) {
         result[result.length - 1] = (result.last.$1, end);
       } else {
         result.add((start, end));
