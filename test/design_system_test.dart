@@ -22,7 +22,7 @@ Future<void> loadFonts() async {
         'IBMPlexSansThai-Bold.ttf',
       ],
     ),
-    ('Noto Emoji', ['NotoEmoji[wght].ttf']),
+    ('Noto Emoji', ['NotoEmoji-Variable.ttf']),
   ]) {
     final loader = FontLoader(family);
     for (final f in files) {
@@ -70,7 +70,7 @@ void main() {
       'UbuntuSans-LICENCE.txt',
       'IBMPlexSansThai-Regular.ttf',
       'IBMPlexSansThai-LICENSE.txt',
-      'NotoEmoji[wght].ttf',
+      'NotoEmoji-Variable.ttf',
       'NotoEmoji-OFL.txt',
     ]) {
       expect(File('lib/presentation/assets/fonts/$f').existsSync(), isTrue);
