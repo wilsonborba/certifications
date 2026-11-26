@@ -342,7 +342,10 @@ class _QuestionAuthoringScreenState extends State<QuestionAuthoringScreen> {
                           ),
                     child: Text(context.tr('previousPage')),
                   ),
-                  Text('${page.offset + 1}–${page.offset + page.items.length}'),
+                  if (page.items.isNotEmpty)
+                    Text(
+                      '${page.offset + 1}–${page.offset + page.items.length}',
+                    ),
                   TextButton(
                     onPressed: !page.hasMore || _loadingCatalog
                         ? null
@@ -534,12 +537,14 @@ class _QuestionEditorDialogState extends State<_QuestionEditorDialog> {
   late final _citation = TextEditingController(
     text: widget.question?.citationRef,
   );
-  late final List<TextEditingController> _options = List.generate(4, (index) {
-    final old = widget.question?.alternatives;
-    final id = String.fromCharCode(97 + index);
-    final existing = old?.where((item) => item.id == id).firstOrNull;
-    return TextEditingController(text: existing?.text);
-  });
+  late final List<String> _optionIds = widget.question == null
+      ? List.generate(4, (index) => String.fromCharCode(97 + index))
+      : widget.question!.alternatives.map((item) => item.id).toList();
+  late final List<TextEditingController> _options = widget.question == null
+      ? List.generate(_optionIds.length, (_) => TextEditingController())
+      : widget.question!.alternatives
+            .map((item) => TextEditingController(text: item.text))
+            .toList();
   late String _language = widget.question?.language ?? 'en';
   late String _correctId = widget.question?.correctId ?? 'a';
   String? _validation;
@@ -561,7 +566,7 @@ class _QuestionEditorDialogState extends State<_QuestionEditorDialog> {
       final text = _options[index].text.trim();
       if (text.isNotEmpty) {
         alternatives.add(
-          AuthoringAlternative(id: String.fromCharCode(97 + index), text: text),
+          AuthoringAlternative(id: _optionIds[index], text: text),
         );
       }
     }
@@ -592,7 +597,7 @@ class _QuestionEditorDialogState extends State<_QuestionEditorDialog> {
         .asMap()
         .entries
         .where((entry) => entry.value.text.trim().isNotEmpty)
-        .map((entry) => String.fromCharCode(97 + entry.key))
+        .map((entry) => _optionIds[entry.key])
         .toList();
     return AlertDialog(
       title: Text(
@@ -714,7 +719,9 @@ class _CsvImportDialogState extends State<_CsvImportDialog> {
       'en,Capital of France?,Paris,Lyon,Nice,Marseille,a,Paris is the capital,p.1';
   late final _csv = TextEditingController(text: _sample);
   CsvImportResult? _preview;
+  String? _previewCsvText;
   bool _busy = false;
+  bool _confirming = false;
 
   @override
   void dispose() {
@@ -723,15 +730,25 @@ class _CsvImportDialogState extends State<_CsvImportDialog> {
   }
 
   Future<void> _previewCsv() async {
-    setState(() => _busy = true);
+    final csvText = _csv.text;
+    setState(() {
+      _busy = true;
+      _preview = null;
+      _previewCsvText = null;
+    });
     try {
       final result = await widget.service.previewCsv(
         studyId: widget.studyId,
-        csvText: _csv.text,
+        csvText: csvText,
       );
-      if (mounted) setState(() => _preview = result);
+      if (mounted && _csv.text == csvText) {
+        setState(() {
+          _preview = result;
+          _previewCsvText = csvText;
+        });
+      }
     } on QuestionAuthoringException catch (error) {
-      if (mounted) {
+      if (mounted && _csv.text == csvText) {
         _message(
           context.trParams('csvRequestError', {
             'status': '${error.statusCode}',
@@ -739,7 +756,9 @@ class _CsvImportDialogState extends State<_CsvImportDialog> {
         );
       }
     } catch (_) {
-      if (mounted) _message(context.tr('errorGeneric'));
+      if (mounted && _csv.text == csvText) {
+        _message(context.tr('errorGeneric'));
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -747,12 +766,21 @@ class _CsvImportDialogState extends State<_CsvImportDialog> {
 
   Future<void> _confirmImport() async {
     final current = _preview;
-    if (current == null || current.invalidRows.isNotEmpty) return;
-    setState(() => _busy = true);
+    final csvText = _previewCsvText;
+    if (current == null ||
+        csvText == null ||
+        csvText != _csv.text ||
+        current.invalidRows.isNotEmpty) {
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _confirming = true;
+    });
     try {
       final result = await widget.service.confirmCsv(
         studyId: widget.studyId,
-        csvText: _csv.text,
+        csvText: csvText,
       );
       if (!mounted) return;
       if (result.previewOnly || result.invalidRows.isNotEmpty) {
@@ -771,7 +799,12 @@ class _CsvImportDialogState extends State<_CsvImportDialog> {
     } catch (_) {
       if (mounted) _message(context.tr('errorGeneric'));
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _confirming = false;
+        });
+      }
     }
   }
 
@@ -793,11 +826,15 @@ class _CsvImportDialogState extends State<_CsvImportDialog> {
             const SizedBox(height: 10),
             TextField(
               controller: _csv,
+              enabled: !_confirming,
               minLines: 7,
               maxLines: 12,
               style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
               decoration: const InputDecoration(border: OutlineInputBorder()),
-              onChanged: (_) => setState(() => _preview = null),
+              onChanged: (_) => setState(() {
+                _preview = null;
+                _previewCsvText = null;
+              }),
             ),
             if (_preview != null) ...[
               const SizedBox(height: 16),
@@ -852,6 +889,7 @@ class _CsvImportDialogState extends State<_CsvImportDialog> {
         onPressed:
             _busy ||
                 _preview == null ||
+                _previewCsvText != _csv.text ||
                 _preview!.validRows.isEmpty ||
                 _preview!.invalidRows.isNotEmpty
             ? null

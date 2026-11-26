@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/dal/remote/certifications_api_client.dart';
 import 'package:certifications/domain/models/authoring.dart';
@@ -45,6 +47,12 @@ class _FakeQuestionAuthoringService extends QuestionAuthoringService {
 
   int confirms = 0;
   int publishes = 0;
+  List<AuthoringAlternative>? updatedAlternatives;
+  String? updatedCorrectId;
+  String? updatedExplanation;
+  Completer<CsvImportResult>? previewCompleter;
+  String? previewCsvText;
+  String? confirmedCsvText;
   List<AuthoringQuestion> questions = [_question()];
   CsvImportResult preview = CsvImportResult.fromJson({
     'preview_only': true,
@@ -87,13 +95,21 @@ class _FakeQuestionAuthoringService extends QuestionAuthoringService {
     required String correctId,
     required String explanation,
     required String citationRef,
-  }) async => _question();
+  }) async {
+    updatedAlternatives = alternatives;
+    updatedCorrectId = correctId;
+    updatedExplanation = explanation;
+    return _question();
+  }
 
   @override
   Future<CsvImportResult> previewCsv({
     required String studyId,
     required String csvText,
-  }) async => preview;
+  }) async {
+    previewCsvText = csvText;
+    return previewCompleter?.future ?? preview;
+  }
 
   @override
   Future<CsvImportResult> confirmCsv({
@@ -101,6 +117,7 @@ class _FakeQuestionAuthoringService extends QuestionAuthoringService {
     required String csvText,
   }) async {
     confirms++;
+    confirmedCsvText = csvText;
     return CsvImportResult.fromJson({
       'preview_only': false,
       'imported_count': 1,
@@ -214,6 +231,166 @@ void main() {
     expect(find.text('Which option is correct?'), findsOneWidget);
     expect(find.text('A. Correct option'), findsOneWidget);
     expect(find.text('The first option is correct.'), findsOneWidget);
+  });
+
+  testWidgets('editing a question preserves all existing alternative IDs', (
+    tester,
+  ) async {
+    final service = _FakeQuestionAuthoringService();
+    final alternatives = [
+      {'id': 'answer1', 'text': 'First'},
+      {'id': 'answer2', 'text': 'Second'},
+      {'id': 'answer3', 'text': 'Third'},
+      {'id': 'answer4', 'text': 'Fourth'},
+      {'id': 'answer5', 'text': 'Fifth'},
+    ];
+    service.questions = [
+      AuthoringQuestion.fromJson({
+        'id': 'q-five',
+        'version_id': 'qv-five',
+        'version_num': 1,
+        'language': 'en',
+        'origin': 'supplied_by_creator',
+        'prompt': 'Five choices?',
+        'alternatives': alternatives,
+        'correct_id': 'answer5',
+        'explanation': 'Original explanation',
+        'citation_ref': '',
+        'visuals': [],
+      }),
+    ];
+    await tester.pumpWidget(
+      _app(
+        home: QuestionAuthoringScreen(
+          studyId: 'study1',
+          studyTitle: 'Study title',
+          onPublished: () {},
+          authoringService: service,
+          publicQuestionService: _FakePublicQuestionService(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Edit question'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TextField), findsNWidgets(9));
+    expect(find.text('ANSWER5'), findsOneWidget);
+
+    final explanation = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField && widget.decoration?.labelText == 'Explanation',
+    );
+    await tester.enterText(explanation, 'Revised explanation');
+    await tester.tap(find.text('Save question'));
+    await tester.pumpAndSettle();
+
+    expect(
+      service.updatedAlternatives
+          ?.map((alternative) => (alternative.id, alternative.text))
+          .toList(),
+      [
+        ('answer1', 'First'),
+        ('answer2', 'Second'),
+        ('answer3', 'Third'),
+        ('answer4', 'Fourth'),
+        ('answer5', 'Fifth'),
+      ],
+    );
+    expect(service.updatedCorrectId, 'answer5');
+    expect(service.updatedExplanation, 'Revised explanation');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('editing CSV during preview discards the stale result', (
+    tester,
+  ) async {
+    final service = _FakeQuestionAuthoringService()
+      ..preview = CsvImportResult.fromJson({
+        'preview_only': true,
+        'imported_count': 0,
+        'valid_rows': [
+          {
+            'row_number': 2,
+            'language': 'en',
+            'prompt': 'Valid row',
+            'correct_id': 'a',
+          },
+        ],
+        'invalid_rows': [],
+        'questions': [],
+      })
+      ..previewCompleter = Completer<CsvImportResult>();
+    await tester.pumpWidget(
+      _app(
+        home: QuestionAuthoringScreen(
+          studyId: 'study1',
+          studyTitle: 'Study title',
+          onPublished: () {},
+          authoringService: service,
+          publicQuestionService: _FakePublicQuestionService(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Import CSV'));
+    await tester.pumpAndSettle();
+    final csvField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField && widget.style?.fontFamily == 'monospace',
+    );
+    expect(csvField, findsOneWidget);
+    final previewText = tester.widget<TextField>(csvField).controller!.text;
+
+    final previewButton = find.text('Preview');
+    expect(previewButton, findsOneWidget);
+    await tester.tap(previewButton);
+    await tester.pump();
+    expect(service.previewCsvText, previewText);
+    await tester.enterText(
+      csvField,
+      '$previewText\n# edited after preview started',
+    );
+    service.previewCompleter!.complete(service.preview);
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Valid rows: 1'), findsNothing);
+    final confirmButton = find.widgetWithText(
+      FilledButton,
+      'Import valid rows',
+    );
+    expect(confirmButton, findsOneWidget);
+    expect(tester.widget<FilledButton>(confirmButton).onPressed, isNull);
+    expect(service.confirms, 0);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('empty public search shows no-results text, not a range', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        home: QuestionAuthoringScreen(
+          studyId: 'study1',
+          studyTitle: 'Study title',
+          onPublished: () {},
+          authoringService: _FakeQuestionAuthoringService(),
+          publicQuestionService: _FakePublicQuestionService(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final searchIcon = find.byIcon(Icons.search);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(tester.getRect(searchIcon).bottom, lessThanOrEqualTo(600));
+    await tester.tap(searchIcon);
+    await tester.pumpAndSettle();
+
+    expect(find.text('No public questions found.'), findsOneWidget);
+    expect(find.text('1–0'), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('invalid CSV rows stay visible and block confirmation', (
