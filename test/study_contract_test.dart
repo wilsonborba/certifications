@@ -498,6 +498,8 @@ void main() {
     expect(StudySelection.audio('ms:0-10,10-20'), 'ms:0-20');
     expect(StudySelection.audio('ms:0-10,11-20'), 'ms:0-10,11-20');
     expect(StudySelection.audio('ms:0-10,11-5'), isNull);
+    expect(StudySelection.audio('ms:0-10,10-5'), isNull);
+    expect(StudySelection.audio('ms:0-10,10-10'), isNull);
     expect(StudySelection.audio('ms:0-10,9-20'), isNull);
     expect(StudySelection.audio('ms:0-100,ms:200-300'), isNull);
     expect(StudySelection.audio('ms:300-400,0-100'), isNull);
