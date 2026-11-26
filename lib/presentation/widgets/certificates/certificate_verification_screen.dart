@@ -231,6 +231,7 @@ class _CertificateVerificationScreenState
                         '${_activityCompletenessLabel(context, activity.completeness)}',
                       ),
                       childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Align(
                           alignment: Alignment.centerLeft,

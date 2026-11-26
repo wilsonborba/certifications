@@ -94,10 +94,22 @@ void main() {
     final service = CertificateVerificationApiService(
       adapter: ApiAdapter(client: client, csrfTokenProvider: () => null),
     );
-    Future<void> show(Locale locale, {Key? key}) async {
+    Future<void> show(
+      Locale locale, {
+      Key? key,
+      Key? appKey,
+      double textScale = 1,
+    }) async {
       await tester.pumpWidget(
         MaterialApp(
+          key: appKey,
           locale: locale,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(textScale)),
+            child: child!,
+          ),
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: const [
             AppLocalizationsDelegate(),
@@ -220,5 +232,49 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Record completeness: Unknown'), findsOneWidget);
     expect(find.text('future_completeness_value'), findsNothing);
+
+    completeness = 'partial_with_interruptions';
+    for (final (width, textScale) in [(390, 1.0), (320, 1.3)]) {
+      tester.view.physicalSize = Size(width.toDouble(), 844);
+      await show(
+        const Locale('en'),
+        appKey: ValueKey('activity-app-$width'),
+        textScale: textScale,
+      );
+      final activityTitle = find.text('Recorded browser activity').first;
+      await tester.ensureVisible(activityTitle);
+      await tester.pumpAndSettle();
+      await tester.tap(activityTitle);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Observed browser activity only.'), findsOneWidget);
+      expect(find.text('0m 1s'), findsOneWidget);
+      final context = tester.element(
+        find.byType(CertificateVerificationScreen),
+      );
+      final factLabels = [
+        context.tr('certificateFocusLoss'),
+        context.tr('certificatePageHidden'),
+        context.tr('certificatePageReturns'),
+        context.tr('certificateKnownAway'),
+        context.tr('certificateReconnects'),
+        context.tr('certificateRefreshes'),
+        context.tr('certificateUnknownGaps'),
+      ];
+      final factLeftEdges = [
+        for (final label in factLabels)
+          tester.getTopLeft(find.text(label).first).dx,
+      ];
+      final leftEdgeSpread =
+          factLeftEdges.reduce((a, b) => a > b ? a : b) -
+          factLeftEdges.reduce((a, b) => a < b ? a : b);
+      expect(
+        leftEdgeSpread,
+        lessThanOrEqualTo(1),
+        reason:
+            'activity fact labels should share a left edge at ${width}px, text scale $textScale',
+      );
+      expect(tester.takeException(), isNull);
+    }
   });
 }
