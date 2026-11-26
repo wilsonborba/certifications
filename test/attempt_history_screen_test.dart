@@ -9,17 +9,24 @@ class _HistoryApi extends AttemptReviewApiService {
   int calls = 0;
   final queries = <AttemptHistoryQuery>[];
   bool failFirst = false;
+  List<AttemptHistoryItem> items = const [];
 
   @override
   Future<AttemptHistoryPage> listAttempts(AttemptHistoryQuery query) async {
     calls++;
     queries.add(query);
     if (failFirst && calls == 1) throw StateError('fixture network failure');
-    return AttemptHistoryPage(items: const [], total: 0, limit: 20, offset: 0);
+    return AttemptHistoryPage(
+      items: items,
+      total: items.length,
+      limit: 20,
+      offset: 0,
+    );
   }
 }
 
-Widget _app(Widget child) => MaterialApp(
+Widget _app(Widget child, {Locale locale = const Locale('en')}) => MaterialApp(
+  locale: locale,
   builder: (context, child) => MediaQuery(
     data: const MediaQueryData(size: Size(390, 844)),
     child: child!,
@@ -36,6 +43,134 @@ Widget _app(Widget child) => MaterialApp(
 );
 
 void main() {
+  testWidgets(
+    'history shows only producer supplied repeat metadata by locale',
+    (tester) async {
+      final rows = [
+        AttemptHistoryItem(
+          id: 'repeat',
+          quizId: 'quiz',
+          quizTitle: 'Repeated quiz',
+          quizOrigin: 'fixture',
+          quizVersionId: 'v1',
+          status: 'completed',
+          attemptSequence: 2,
+          scoreCorrect: 0,
+          scoreTotal: 100,
+          previousAttemptScorePct: 66.7,
+          scoreChangePercentagePoints: 0,
+          startedAt: 1760000000,
+        ),
+        AttemptHistoryItem(
+          id: 'first',
+          quizId: 'first-quiz',
+          quizTitle: 'First attempt',
+          quizOrigin: 'fixture',
+          quizVersionId: 'v1',
+          status: 'completed',
+          attemptSequence: 1,
+          scoreCorrect: 90,
+          scoreTotal: 100,
+          startedAt: 1760000000,
+        ),
+        const AttemptHistoryItem(
+          id: 'missing',
+          quizId: 'missing-quiz',
+          quizTitle: 'Metadata unavailable',
+          quizOrigin: 'fixture',
+          quizVersionId: 'v1',
+          status: 'completed',
+          startedAt: 1760000000,
+        ),
+      ];
+      final cases = [
+        (
+          locale: const Locale('en'),
+          sequenceLabel: 'Attempt ',
+          sequence: 'Attempt 2',
+          firstSequence: 'Attempt 1',
+          previous: 'Previous score: 66.7%',
+          change: 'Change from previous: 0.0 percentage points',
+          scoreZero: '0.0%',
+          previousLabel: 'Previous score:',
+          changeLabel: 'Change from previous:',
+        ),
+        (
+          locale: const Locale('pt'),
+          sequenceLabel: 'Tentativa ',
+          sequence: 'Tentativa 2',
+          firstSequence: 'Tentativa 1',
+          previous: 'Pontuação anterior: 66,7%',
+          change: 'Variação em relação à anterior: 0,0 pontos percentuais',
+          scoreZero: '0,0%',
+          previousLabel: 'Pontuação anterior:',
+          changeLabel: 'Variação em relação à anterior:',
+        ),
+        (
+          locale: const Locale('th'),
+          sequenceLabel: 'ครั้งที่ ',
+          sequence: 'ครั้งที่ 2',
+          firstSequence: 'ครั้งที่ 1',
+          previous: 'คะแนนครั้งก่อน: 66.7%',
+          change: 'เปลี่ยนแปลงจากครั้งก่อน: 0.0 จุดเปอร์เซ็นต์',
+          scoreZero: '0.0%',
+          previousLabel: 'คะแนนครั้งก่อน:',
+          changeLabel: 'เปลี่ยนแปลงจากครั้งก่อน:',
+        ),
+      ];
+
+      for (final testCase in cases) {
+        final api = _HistoryApi()..items = rows;
+        await tester.pumpWidget(
+          _app(AttemptHistoryScreen(api: api), locale: testCase.locale),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text(testCase.sequence), findsOneWidget);
+        expect(find.text(testCase.firstSequence), findsOneWidget);
+        expect(find.text(testCase.previous), findsOneWidget);
+        expect(find.text(testCase.change), findsOneWidget);
+        expect(find.text(testCase.scoreZero), findsOneWidget);
+        expect(find.text('Metadata unavailable'), findsOneWidget);
+        final firstAttemptRow = find.ancestor(
+          of: find.text('First attempt'),
+          matching: find.byType(ListTile),
+        );
+        expect(
+          find.descendant(
+            of: firstAttemptRow,
+            matching: find.textContaining(testCase.previousLabel),
+          ),
+          findsNothing,
+        );
+        final missingMetadataRow = find.ancestor(
+          of: find.text('Metadata unavailable'),
+          matching: find.byType(ListTile),
+        );
+        for (final label in [
+          testCase.sequenceLabel,
+          testCase.previousLabel,
+          testCase.changeLabel,
+        ]) {
+          expect(
+            find.descendant(
+              of: missingMetadataRow,
+              matching: find.textContaining(label),
+            ),
+            findsNothing,
+          );
+        }
+        expect(
+          find.descendant(
+            of: firstAttemptRow,
+            matching: find.textContaining(testCase.changeLabel),
+          ),
+          findsNothing,
+        );
+      }
+    },
+  );
+
   testWidgets('history uses calendar dates and inclusive local-day bounds', (
     tester,
   ) async {
