@@ -154,6 +154,7 @@ class _InlineDesktopPreferences extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        const AppPreferencesButton(),
         IconButton(
           tooltip: context.tr('darkTheme'),
           icon: Icon(
