@@ -182,18 +182,22 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
   Future<void> _stop() async {
     final job = _job;
     if (job == null || !job.isActive) return;
+    final jobGeneration = _jobGeneration;
+    bool isCurrentJob() =>
+        mounted && jobGeneration == _jobGeneration && _activeJobId == job.id;
     setState(() => _busy = true);
     try {
       final updated = await _api.stop(job.id);
-      if (!mounted) return;
+      if (!mounted || !isCurrentJob()) return;
       setState(() {
         _job = updated;
         _loadError = null;
       });
       if (mounted) setState(() => _busy = false);
+      if (!isCurrentJob()) return;
       await _refresh();
     } catch (error) {
-      if (!mounted) return;
+      if (!isCurrentJob()) return;
       setState(() => _loadError = error);
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -203,6 +207,9 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
 
   Future<void> _reviewQuestions(GenerationJob job) async {
     if (job.status != 'completed' || _busy) return;
+    final jobGeneration = _jobGeneration;
+    bool isCurrentJob() =>
+        mounted && jobGeneration == _jobGeneration && _activeJobId == job.id;
     setState(() {
       _busy = true;
       _loadError = null;
@@ -211,7 +218,7 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
       final study = await (widget._studyApi ?? StudyApiService()).get(
         job.studyId,
       );
-      if (!mounted) return;
+      if (!mounted || !isCurrentJob()) return;
       await Navigator.pushReplacement(
         context,
         MaterialPageRoute<void>(
@@ -224,7 +231,7 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
         ),
       );
     } catch (error) {
-      if (mounted) setState(() => _loadError = error);
+      if (isCurrentJob()) setState(() => _loadError = error);
     } finally {
       if (mounted) setState(() => _busy = false);
       _drainPendingRefresh();
@@ -234,11 +241,15 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
   Future<void> _continue() async {
     final job = _job;
     if (job == null || !job.canResume) return;
+    final jobGeneration = _jobGeneration;
+    bool isCurrentJob() =>
+        mounted && jobGeneration == _jobGeneration && _activeJobId == job.id;
     setState(() => _busy = true);
     try {
       final resumed = await _api.resume(job.id);
+      if (!isCurrentJob()) return;
       await _progressStore.saveGenerationJobId(resumed.studyId, resumed.id);
-      if (!mounted) return;
+      if (!isCurrentJob()) return;
       setState(() {
         _events.clear();
         _estimate = null;
@@ -247,12 +258,13 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
       });
       if (mounted) setState(() => _busy = false);
       _activeJobId = resumed.id;
+      if (!mounted || jobGeneration != _jobGeneration) return;
       await Navigator.pushReplacementNamed(
         context,
         '/v1/generations/${Uri.encodeComponent(resumed.id)}',
       );
     } catch (error) {
-      if (!mounted) return;
+      if (!isCurrentJob()) return;
       setState(() => _loadError = error);
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -327,17 +339,26 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
 
   String? _serverErrorText(BuildContext context, Object? error) {
     if (error is GenerationApiException) {
-      return switch (error.code) {
+      return _knownGenerationErrorText(context, error.code) ??
+          error.message ??
+          context.tr('errorGeneric');
+    }
+    return error == null ? null : context.tr('errorGeneric');
+  }
+
+  String? _knownGenerationErrorText(BuildContext context, String? code) =>
+      switch (code) {
         'cortex_outcome_unknown' || 'cannot_resume_unknown_cortex_outcome' =>
           context.tr('generationUnknownOutcome'),
         'generation_already_active' => context.tr('generationAlreadyActive'),
         'study_expired' => context.tr('generationStudyExpired'),
         'no_ready_sources' => context.tr('generationNoSources'),
-        _ => error.message ?? context.tr('errorGeneric'),
+        _ => null,
       };
-    }
-    return error == null ? null : context.tr('errorGeneric');
-  }
+
+  String _jobFailureText(BuildContext context, GenerationJob job) =>
+      _knownGenerationErrorText(context, job.errorCode) ??
+      context.tr('generationFailed');
 
   @override
   Widget build(BuildContext context) {
@@ -469,10 +490,10 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
                         ),
                       ),
                     ],
-                    if (job.errorCode.isNotEmpty) ...[
+                    if (job.status == 'failed') ...[
                       const SizedBox(height: 12),
                       Text(
-                        errorText ?? context.tr('generationFailed'),
+                        _jobFailureText(context, job),
                         style: Theme.of(
                           context,
                         ).textTheme.bodyMedium?.copyWith(color: scheme.error),

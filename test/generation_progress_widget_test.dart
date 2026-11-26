@@ -18,9 +18,12 @@ class _FixtureGenerationApi implements GenerationApiService {
     this.status, {
     this.failEvents = false,
     this.failEstimate = false,
+    this.errorCode = '',
   });
   String status;
+  final String errorCode;
   Completer<GenerationJob>? firstGetCompleter;
+  Completer<GenerationJob>? stopCompleter;
   String currentJobId = 'job-1';
   final requestedJobIds = <String>[];
   final requestedEventJobIds = <String>[];
@@ -38,7 +41,7 @@ class _FixtureGenerationApi implements GenerationApiService {
     queuePosition: value == 'queued' ? 2 : 0,
     savedCount: 4,
     stopRequested: false,
-    errorCode: '',
+    errorCode: errorCode,
     queuedAt: 1760000000,
     startedAt: value == 'queued' ? null : 1760000060,
     finishedAt: value == 'completed' ? 1760000100 : null,
@@ -50,7 +53,7 @@ class _FixtureGenerationApi implements GenerationApiService {
     if (jobId == 'job-1' && firstGetCompleter != null) {
       return firstGetCompleter!.future;
     }
-    return _job(status, id: jobId);
+    return _job(jobId == 'job-2' ? 'queued' : status, id: jobId);
   }
 
   @override
@@ -88,6 +91,7 @@ class _FixtureGenerationApi implements GenerationApiService {
   @override
   Future<GenerationJob> stop(String jobId) async {
     stopCalls++;
+    if (stopCompleter != null) return stopCompleter!.future;
     status = 'cancelled';
     return _job(status);
   }
@@ -213,6 +217,50 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('running provider phase is not shown as a terminal error', (
+    tester,
+  ) async {
+    await _pumpScreen(
+      tester,
+      status: 'running',
+      size: const Size(390, 844),
+      api: _FixtureGenerationApi(
+        'running',
+        errorCode: 'cortex_request_in_flight',
+      ),
+    );
+
+    expect(find.text('Generating questions'), findsWidgets);
+    expect(find.text('Generation did not complete.'), findsNothing);
+    expect(
+      find.text(
+        'The provider result is unknown. This job cannot be resumed safely.',
+      ),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('unknown terminal outcome explains why resume is unavailable', (
+    tester,
+  ) async {
+    await _pumpScreen(
+      tester,
+      status: 'failed',
+      size: const Size(390, 844),
+      api: _FixtureGenerationApi('failed', errorCode: 'cortex_outcome_unknown'),
+    );
+
+    expect(
+      find.text(
+        'The provider result is unknown. This job cannot be resumed safely.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Continue generation'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('terminal generation statuses stop polling', (tester) async {
     for (final status in ['completed', 'cancelled', 'failed']) {
       final api = _FixtureGenerationApi(status);
@@ -282,6 +330,53 @@ void main() {
     expect(find.text('Queue position'), findsOneWidget);
     expect(find.text('Generation completed'), findsNothing);
     expect(await store.getGenerationJobId('study-1'), 'job-2');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('old stop response cannot replace a newer job', (tester) async {
+    final api = _FixtureGenerationApi('running')
+      ..stopCompleter = Completer<GenerationJob>();
+    var jobId = 'job-1';
+    late StateSetter updateJobId;
+
+    Widget host() => MaterialApp(
+      theme: AppTheme.light(),
+      locale: const Locale('en'),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizationsDelegate(),
+        FallbackMaterialLocalizationsDelegate(),
+        DefaultWidgetsLocalizations.delegate,
+        DefaultMaterialLocalizations.delegate,
+      ],
+      home: StatefulBuilder(
+        builder: (context, setState) {
+          updateJobId = setState;
+          return GenerationProgressScreen(jobId: jobId, api: api);
+        },
+      ),
+    );
+
+    await tester.pumpWidget(host());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(api.requestedJobIds, ['job-1']);
+    expect(find.text('Stop safely'), findsOneWidget);
+
+    await tester.tap(find.text('Stop safely'));
+    await tester.pump();
+    expect(api.stopCalls, 1);
+
+    updateJobId(() => jobId = 'job-2');
+    await tester.pump();
+    api.stopCompleter!.complete(api._job('cancelled', id: 'job-1'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump();
+
+    expect(api.requestedJobIds, ['job-1', 'job-2']);
+    expect(find.text('Queue position'), findsOneWidget);
+    expect(find.text('Generation cancelled'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
