@@ -758,8 +758,11 @@ class _Step2SourceViewState extends State<Step2SourceView> {
               _expandedIndex! < wizardData.attachedFiles.length) ...[
             const SizedBox(height: 16),
             GranularRangeSelector(
-              key: ValueKey('range_$_expandedIndex'),
+              key: ValueKey(
+                'range_${_expandedIndex}_${wizardData.attachedFiles[_expandedIndex!].selectionRevision}',
+              ),
               file: wizardData.attachedFiles[_expandedIndex!],
+              wizardData: wizardData,
               isDesktop: widget.isDesktop,
             ),
           ],

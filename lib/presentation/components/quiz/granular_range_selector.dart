@@ -48,10 +48,12 @@ class GranularRangeSelector extends StatefulWidget {
   const GranularRangeSelector({
     super.key,
     required this.file,
+    required this.wizardData,
     required this.isDesktop,
   });
 
   final AttachedFile file;
+  final QuizWizardData wizardData;
   final bool isDesktop;
 
   @override
@@ -152,15 +154,21 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
               value: file.isWholeDocument,
               title: Text(context.tr('wholeDocumentOnly')),
               onChanged: (value) => setState(() {
-                file.isWholeDocument = value ?? true;
-                file.selectionKind = file.isWholeDocument
+                final wholeDocument = value ?? true;
+                final selectionKind = wholeDocument
                     ? 'all'
                     : isPdf
                     ? 'pages'
                     : isText
                     ? 'passages'
                     : 'intervals';
-                file.selectionSpec = file.isWholeDocument ? '' : _spec.text;
+                final selectionSpec = wholeDocument ? '' : _spec.text;
+                widget.wizardData.updateFileSelection(
+                  file,
+                  isWholeDocument: wholeDocument,
+                  selectionKind: selectionKind,
+                  selectionSpec: selectionSpec,
+                );
               }),
             ),
             if (!file.isWholeDocument) ...[
@@ -185,13 +193,16 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
                       : null,
                 ),
                 onChanged: (value) => setState(() {
-                  file.selectionSpec = value;
-                  file.selectionKind = isPdf
-                      ? 'pages'
-                      : isText
-                      ? 'passages'
-                      : 'intervals';
-                  file.isWholeDocument = false;
+                  widget.wizardData.updateFileSelection(
+                    file,
+                    isWholeDocument: false,
+                    selectionKind: isPdf
+                        ? 'pages'
+                        : isText
+                        ? 'passages'
+                        : 'intervals',
+                    selectionSpec: value,
+                  );
                 }),
               ),
             ],

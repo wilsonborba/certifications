@@ -58,6 +58,7 @@ class AttachedFile {
   /// [totalPages].
   int? totalLines;
   String? remoteSourceId;
+  int selectionRevision = 0;
 
   int get sizeBytes => bytes.length;
 }
@@ -207,6 +208,34 @@ class QuizWizardData extends ChangeNotifier {
     if (existingSources.any((item) => item.id == source.id)) return;
     existingSources.add(source);
     notifyListeners();
+  }
+
+  void updateFileSelection(
+    AttachedFile file, {
+    required bool isWholeDocument,
+    required String selectionKind,
+    required String selectionSpec,
+  }) {
+    if (!attachedFiles.any((item) => identical(item, file))) return;
+    file.isWholeDocument = isWholeDocument;
+    file.selectionKind = selectionKind;
+    file.selectionSpec = selectionSpec;
+    notifyListeners();
+  }
+
+  void restoreFileSelections(
+    Iterable<(AttachedFile, String, String)> selections,
+  ) {
+    var changed = false;
+    for (final (file, selectionKind, selectionSpec) in selections) {
+      if (!attachedFiles.any((item) => identical(item, file))) continue;
+      file.isWholeDocument = false;
+      file.selectionKind = selectionKind;
+      file.selectionSpec = selectionSpec;
+      file.selectionRevision++;
+      changed = true;
+    }
+    if (changed) notifyListeners();
   }
 
   void removeFileAt(int index) {

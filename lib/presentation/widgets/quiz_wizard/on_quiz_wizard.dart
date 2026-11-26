@@ -113,6 +113,13 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
   Animation<double>? _routeAnimation;
   Animation<double>? _routeCoverAnimation;
   String? _activeStudyId;
+  int _studyLoadGeneration = 0;
+  int _selectionSyncGeneration = 0;
+  bool _ownerStudyConfirmed = false;
+  bool _createdDraftInThisSession = false;
+  final Set<AttachedFile> _hydratedSelectionFiles = Set.identity();
+  final Map<AttachedFile, String> _selectionDigestCache = Map.identity();
+  Future<void> _selectionMetadataTail = Future.value();
   int _generateStep = 0; // tracks which pipeline step is currently running
   String? _generateError;
 
@@ -128,6 +135,23 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
     if (widget.studyId != null) {
       _loadExistingStudy(widget.studyId!);
     }
+  }
+
+  @override
+  void didUpdateWidget(covariant OnQuizWizardScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.studyId == widget.studyId) return;
+
+    // The same wizard State can be reused for another draft by a parent. Stop
+    // any read/metadata sync for the old id from authorizing a restore into the
+    // newly selected study.
+    _studyLoadGeneration++;
+    _selectionSyncGeneration++;
+    _ownerStudyConfirmed = false;
+    _createdDraftInThisSession = false;
+    _activeStudyId = widget.studyId;
+    _hydratedSelectionFiles.clear();
+    if (widget.studyId != null) _loadExistingStudy(widget.studyId!);
   }
 
   @override
@@ -223,9 +247,15 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
   }
 
   Future<void> _loadExistingStudy(String studyId) async {
+    final generation = ++_studyLoadGeneration;
     try {
       final study = await _api.get(studyId);
-      if (!mounted) return;
+      if (!mounted ||
+          generation != _studyLoadGeneration ||
+          _activeStudyId != studyId) {
+        return;
+      }
+      _ownerStudyConfirmed = true;
       if (wizardData.name.isEmpty && study.name.isNotEmpty) {
         wizardData.name = study.name;
       }
@@ -237,6 +267,7 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
         studyLimitBytes: study.maxStudyBytes,
       );
       wizardData.setExistingSources(study.sources);
+      _scheduleSourceSelectionSync(studyId);
     } catch (_) {
       // Keep quota explicitly unavailable when the backend cannot provide it.
     }
@@ -253,6 +284,7 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
       final study = await _api.create(wizardData.name);
       if (!mounted) return;
       _activeStudyId = study.id;
+      _createdDraftInThisSession = true;
       wizardData.setAccountQuota(
         usedBytes: study.accountUsedBytes,
         maxBytes: study.accountMaxBytes,
@@ -262,6 +294,7 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
       wizardData.setExistingSources(study.sources);
       _progressStore.saveStep(study.id, wizardData.currentStep);
       _progressStore.saveVisibility(study.id, wizardData.visibility);
+      _scheduleSourceSelectionSync(study.id);
     }();
     _draftPreparation = operation;
     try {
@@ -277,7 +310,124 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
     if (studyId != null) {
       _progressStore.saveStep(studyId, wizardData.currentStep);
       _progressStore.saveVisibility(studyId, wizardData.visibility);
+      _scheduleSourceSelectionSync(studyId);
     }
+  }
+
+  void _scheduleSourceSelectionSync(String studyId) {
+    final generation = ++_selectionSyncGeneration;
+    _selectionMetadataTail = _selectionMetadataTail
+        .then((_) => _syncSourceSelectionMetadata(studyId, generation))
+        .catchError((Object _) {});
+  }
+
+  bool _canSyncSourceSelections(String studyId, int generation) =>
+      mounted &&
+      _activeStudyId == studyId &&
+      generation == _selectionSyncGeneration &&
+      (_ownerStudyConfirmed || _createdDraftInThisSession);
+
+  Future<void> _syncSourceSelectionMetadata(
+    String studyId,
+    int generation,
+  ) async {
+    if (!_canSyncSourceSelections(studyId, generation)) return;
+
+    if (_ownerStudyConfirmed) {
+      final saved = await _progressStore.getSourceSelections(studyId);
+      if (!_canSyncSourceSelections(studyId, generation)) return;
+      final selectedFiles = wizardData.attachedFiles
+          .where((file) => file.remoteSourceId == null)
+          .toList(growable: false);
+      final digests = <AttachedFile, String>{};
+      final digestCounts = <String, int>{};
+      for (final file in selectedFiles) {
+        final digest = _selectionDigestCache.putIfAbsent(
+          file,
+          () => StudySelection.contentDigest(file.bytes, kind: file.kind),
+        );
+        digests[file] = digest;
+        digestCounts.update(digest, (count) => count + 1, ifAbsent: () => 1);
+      }
+
+      final entriesByDigest = {
+        for (final entry in saved) entry.contentDigest: entry,
+      };
+      final restore = <(AttachedFile, String, String)>[];
+      for (final file in selectedFiles) {
+        if (!_hydratedSelectionFiles.add(file)) continue;
+        // A user may open the selector and begin editing while the saved
+        // metadata read is pending. Only apply a restoration to a newly
+        // reselected file that is still at its untouched whole-document
+        // default; never overwrite an in-flight user edit.
+        if (!file.isWholeDocument ||
+            file.selectionKind != 'all' ||
+            file.selectionSpec.isNotEmpty) {
+          continue;
+        }
+        final digest = digests[file]!;
+        if (digestCounts[digest] != 1) continue;
+        final entry = entriesByDigest[digest];
+        if (entry == null) continue;
+        final expectedKind = switch (file.kind.toLowerCase()) {
+          'pdf' => 'pages',
+          'txt' || 'md' || 'csv' => 'passages',
+          'mp3' || 'wav' || 'm4a' => 'intervals',
+          _ => null,
+        };
+        if (entry.kind != expectedKind) continue;
+        final canonical = switch (entry.kind) {
+          'pages' => StudySelection.pages(
+            entry.spec,
+            pageCount: file.totalPages,
+          ),
+          'passages' => StudySelection.passage(
+            entry.spec,
+            StudySelection.normalizeText(utf8.decode(file.bytes)),
+          ),
+          'intervals' => StudySelection.audio(entry.spec),
+          _ => null,
+        };
+        if (canonical != entry.spec) continue;
+        restore.add((file, entry.kind, entry.spec));
+      }
+      if (!_canSyncSourceSelections(studyId, generation)) return;
+      wizardData.restoreFileSelections(restore);
+      // Restoring notifies the wizard listener, which schedules the next
+      // serialized sync. That pass persists the restored snapshot.
+      if (generation != _selectionSyncGeneration) return;
+    }
+
+    if (!_canSyncSourceSelections(studyId, generation)) return;
+    final files = wizardData.attachedFiles
+        .where((file) => file.remoteSourceId == null && !file.isWholeDocument)
+        .toList(growable: false);
+    final digestCounts = <String, int>{};
+    final entries = <DraftSourceSelection>[];
+    for (final file in files) {
+      final digest = _selectionDigestCache.putIfAbsent(
+        file,
+        () => StudySelection.contentDigest(file.bytes, kind: file.kind),
+      );
+      digestCounts.update(digest, (count) => count + 1, ifAbsent: () => 1);
+      final spec = _canonicalSelection(file);
+      if (spec.isNotEmpty) {
+        entries.add(
+          DraftSourceSelection(
+            contentDigest: digest,
+            kind: file.selectionKind,
+            spec: spec,
+          ),
+        );
+      }
+    }
+    // Identical content cannot safely distinguish two different selections.
+    // Leave both for explicit reselection rather than bind ranges by order.
+    final uniqueEntries = entries
+        .where((entry) => digestCounts[entry.contentDigest] == 1)
+        .toList(growable: false);
+    if (!_canSyncSourceSelections(studyId, generation)) return;
+    await _progressStore.saveSourceSelections(studyId, uniqueEntries);
   }
 
   @override

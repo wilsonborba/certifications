@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
+
 /// Canonical selection strings accepted by certifications_api #35.
 class StudySelection {
   static const maxSelectionBytes = 2000;
@@ -10,6 +12,17 @@ class StudySelection {
       .replaceFirst(RegExp(r'^\uFEFF'), '')
       .replaceAll('\r\n', '\n')
       .replaceAll('\r', '\n');
+
+  /// Identifies the exact content to which local pre-upload selections apply.
+  /// Text follows the same normalization as upload; binary sources use their
+  /// original bytes. The digest is metadata only and never stores the source.
+  static String contentDigest(List<int> bytes, {required String kind}) {
+    final normalizedBytes =
+        const {'txt', 'md', 'csv'}.contains(kind.toLowerCase())
+        ? utf8.encode(normalizeText(utf8.decode(bytes)))
+        : bytes;
+    return sha256.convert(normalizedBytes).toString();
+  }
 
   static String? pages(String input, {required int? pageCount}) {
     final ranges = _parseRanges(input, allowSingleton: true);

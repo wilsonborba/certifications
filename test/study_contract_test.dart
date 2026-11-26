@@ -527,6 +527,14 @@ void main() {
   testWidgets('text source selector exposes validated UTF-16 range controls', (
     tester,
   ) async {
+    final wizardData = QuizWizardData()
+      ..addFile(
+        AttachedFile(
+          bytes: utf8.encode('first line\nsecond line'),
+          name: 'notes.txt',
+          kind: 'txt',
+        ),
+      );
     await tester.pumpWidget(
       MaterialApp(
         localizationsDelegates: const [
@@ -535,11 +543,8 @@ void main() {
         ],
         home: Scaffold(
           body: GranularRangeSelector(
-            file: AttachedFile(
-              bytes: utf8.encode('first line\nsecond line'),
-              name: 'notes.txt',
-              kind: 'txt',
-            ),
+            file: wizardData.attachedFiles.single,
+            wizardData: wizardData,
             isDesktop: false,
           ),
         ),
