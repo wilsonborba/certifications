@@ -118,7 +118,7 @@ flutter:
           weight: 700
     - family: Noto Emoji
       fonts:
-        - asset: lib/presentation/assets/fonts/NotoEmoji[wght].ttf
+        - asset: lib/presentation/assets/fonts/NotoEmoji-Variable.ttf
 
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
