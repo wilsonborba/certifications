@@ -16,7 +16,6 @@ import 'package:certifications/presentation/components/dashboard/draft_resume_he
 import 'package:certifications/presentation/components/dashboard/standby_study_card.dart';
 import 'package:certifications/presentation/components/search/live_search_field.dart';
 import 'package:certifications/presentation/widgets/completed_quizzes/created_quiz_history_screen.dart';
-import 'package:certifications/presentation/widgets/attempt_review_screens.dart';
 import 'package:certifications/presentation/widgets/quiz_wizard/on_quiz_wizard.dart';
 import 'package:flutter/material.dart';
 
@@ -400,13 +399,8 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                               .whereType<DateTime>(),
                         ],
                         isDesktop: isDesktop,
-                        onTapCompletedQuizzes: () => Navigator.push(
-                          context,
-                          MaterialPageRoute<void>(
-                            builder: (_) =>
-                                AttemptHistoryScreen(api: attemptApi),
-                          ),
-                        ),
+                        onTapCompletedQuizzes: () =>
+                            Navigator.of(context).pushNamed('/v1/history'),
                       ),
                       Align(
                         alignment: Alignment.centerRight,

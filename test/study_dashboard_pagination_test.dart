@@ -12,6 +12,7 @@ import 'package:certifications/domain/services/study_api_service.dart';
 import 'package:certifications/domain/services/study_history_api_service.dart';
 import 'package:certifications/presentation/widgets/study_dashboard/on_study_dashboard.dart';
 import 'package:certifications/presentation/widgets/completed_quizzes/on_completed_quizzes.dart';
+import 'package:certifications/presentation/widgets/attempt_review_screens.dart';
 import 'package:certifications/presentation/components/premium_hover_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -125,22 +126,26 @@ Widget _app({
   required _StudyApi studyApi,
   QuizApiService? quizApi,
   AttemptReviewApiService? attemptApi,
-}) => MaterialApp(
-  localizationsDelegates: const [
-    AppLocalizationsDelegate(),
-    FallbackCupertinoLocalizationsDelegate(),
-    FallbackMaterialLocalizationsDelegate(),
-    DefaultWidgetsLocalizations.delegate,
-    DefaultMaterialLocalizations.delegate,
-  ],
-  supportedLocales: AppLocalizations.supportedLocales,
-  home: OnStudyDashboardScreen(
-    studyApi: studyApi,
-    historyApi: historyApi,
-    quizApi: quizApi ?? _QuizApi(),
-    attemptApi: attemptApi ?? _AttemptApi(),
-  ),
-);
+}) {
+  final attempts = attemptApi ?? _AttemptApi();
+  return MaterialApp(
+    localizationsDelegates: const [
+      AppLocalizationsDelegate(),
+      FallbackCupertinoLocalizationsDelegate(),
+      FallbackMaterialLocalizationsDelegate(),
+      DefaultWidgetsLocalizations.delegate,
+      DefaultMaterialLocalizations.delegate,
+    ],
+    supportedLocales: AppLocalizations.supportedLocales,
+    routes: {'/v1/history': (_) => AttemptHistoryScreen(api: attempts)},
+    home: OnStudyDashboardScreen(
+      studyApi: studyApi,
+      historyApi: historyApi,
+      quizApi: quizApi ?? _QuizApi(),
+      attemptApi: attempts,
+    ),
+  );
+}
 
 Widget _completedQuizzesApp({
   required _HistoryApi historyApi,
@@ -400,5 +405,35 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Unavailable'), findsOneWidget);
     expect(find.text('0'), findsNothing);
+  });
+
+  testWidgets('zero-study dashboard preserves known completed quiz history', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1440, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final historyApi = _HistoryApi(
+      (query) async => _page(total: 0, offset: query.offset, items: []),
+    );
+    await tester.pumpWidget(
+      _app(historyApi: historyApi, studyApi: _StudyApi()),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('No studies yet'), findsWidgets);
+    final completedTile = find.ancestor(
+      of: find.text('Completed Quizzes'),
+      matching: find.byType(PremiumHoverCard),
+    );
+    expect(
+      find.descendant(of: completedTile, matching: find.text('1')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byTooltip('View completed quizzes'));
+    await tester.pumpAndSettle();
+    expect(find.text('Attempt history'), findsOneWidget);
   });
 }
