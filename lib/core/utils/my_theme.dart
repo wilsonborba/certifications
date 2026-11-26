@@ -46,12 +46,12 @@ abstract final class NovaColors {
 
 /// The design system of Certifications (certifications#52): the Visa Product
 /// Design System (Nova) colours and component shapes on Material widgets,
-/// Ubuntu Sans with IBM Plex Sans Thai for Thai, and Apple-like plain
-/// surfaces without blur or glass. The colourful landing animation stays
-/// isolated in `my_background.dart`.
+/// Ubuntu Sans with IBM Plex Sans Thai for Thai and Noto Emoji for emoji, and
+/// Apple-like plain surfaces without blur or glass. The colourful landing
+/// animation stays isolated in `my_background.dart`.
 abstract final class AppTheme {
   static const fontFamily = 'Ubuntu Sans';
-  static const fontFallback = ['IBM Plex Sans Thai'];
+  static const fontFallback = ['IBM Plex Sans Thai', 'Noto Emoji'];
 
   /// Corner radii: small for inputs, large for cards and dialogs.
   static const radiusSmall = 8.0;
@@ -249,6 +249,7 @@ void registerDesignLicenses() {
     for (final (package, file) in const [
       ('Ubuntu Sans', '$base/UbuntuSans-LICENCE.txt'),
       ('IBM Plex Sans Thai', '$base/IBMPlexSansThai-LICENSE.txt'),
+      ('Noto Emoji', '$base/NotoEmoji-OFL.txt'),
     ]) {
       yield LicenseEntryWithLineBreaks([
         package,

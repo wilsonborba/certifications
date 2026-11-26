@@ -1,6 +1,6 @@
 // certifications#52: the design system. Nova colour tokens drive the Material
-// widgets, Ubuntu Sans is the type face with a Thai fallback, surfaces have
-// no blur or glass, and the gallery shows the shared logo with the title.
+// widgets, Ubuntu Sans is the type face with Thai and emoji fallbacks, surfaces
+// have no blur or glass, and the gallery shows the shared logo with the title.
 import 'dart:io';
 
 import 'package:certifications/core/utils/my_theme.dart';
@@ -22,6 +22,7 @@ Future<void> loadFonts() async {
         'IBMPlexSansThai-Bold.ttf',
       ],
     ),
+    ('Noto Emoji', ['NotoEmoji-Variable.ttf']),
   ]) {
     final loader = FontLoader(family);
     for (final f in files) {
@@ -48,7 +49,7 @@ void main() {
         theme.textTheme.labelLarge!,
       ]) {
         expect(style.fontFamily, 'Ubuntu Sans');
-        expect(style.fontFamilyFallback, ['IBM Plex Sans Thai']);
+        expect(style.fontFamilyFallback, ['IBM Plex Sans Thai', 'Noto Emoji']);
       }
       // Plain surfaces: no tint over cards, dialogs or the app bar.
       expect(theme.cardTheme.surfaceTintColor, Colors.transparent);
@@ -60,6 +61,7 @@ void main() {
     final pubspec = File('pubspec.yaml').readAsStringSync();
     expect(pubspec, contains('family: Ubuntu Sans'));
     expect(pubspec, contains('family: IBM Plex Sans Thai'));
+    expect(pubspec, contains('family: Noto Emoji'));
     expect(pubspec, isNot(contains('google_fonts')));
     // The Nova package cannot build on Linux (see NovaColors).
     expect(pubspec, isNot(contains('visa_nova_flutter')));
@@ -68,6 +70,8 @@ void main() {
       'UbuntuSans-LICENCE.txt',
       'IBMPlexSansThai-Regular.ttf',
       'IBMPlexSansThai-LICENSE.txt',
+      'NotoEmoji-Variable.ttf',
+      'NotoEmoji-OFL.txt',
     ]) {
       expect(File('lib/presentation/assets/fonts/$f').existsSync(), isTrue);
     }
