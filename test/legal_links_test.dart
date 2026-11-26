@@ -1,6 +1,8 @@
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/core/utils/app_preferences.dart';
 import 'package:certifications/presentation/components/preferences/app_preferences_controls.dart';
+import 'package:certifications/presentation/components/attachment/app_bar.dart';
+import 'package:certifications/presentation/components/boarding/app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -119,4 +121,54 @@ void main() {
     expect(find.text('Terms of Service'), findsOneWidget);
     expect(find.text('Privacy Policy'), findsOneWidget);
   });
+
+  final List<({String name, PreferredSizeWidget Function() appBar})>
+  appBarCases = [
+    (
+      name: 'attachment',
+      appBar: () => const AttachmentAppBar(currentTab: 'studies'),
+    ),
+    (
+      name: 'boarding',
+      appBar: () => const BoardingAppBar(
+        logoAsset: 'lib/presentation/assets/img/temp_logo.png',
+      ),
+    ),
+  ];
+  for (final appBarCase in appBarCases) {
+    testWidgets('${appBarCase.name} desktop app bar reaches legal links', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1440, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final preferences = AppPreferences();
+      addTearDown(preferences.dispose);
+
+      await tester.pumpWidget(
+        _localizedApp(
+          const Locale('en'),
+          preferences,
+          Scaffold(appBar: appBarCase.appBar(), body: const SizedBox.expand()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip('Dark theme'), findsOneWidget);
+      expect(find.text('EN'), findsOneWidget);
+      expect(find.text('PT'), findsOneWidget);
+      expect(find.text('TH'), findsOneWidget);
+      expect(find.byTooltip('Appearance & language'), findsOneWidget);
+      await tester.tap(find.byTooltip('Appearance & language'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Terms of Service'), findsOneWidget);
+      expect(find.text('Privacy Policy'), findsOneWidget);
+      await tester.tap(find.text('Terms of Service'));
+      await tester.pumpAndSettle();
+      expect(launches, ['https://asodya.com/terms-of-service']);
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
