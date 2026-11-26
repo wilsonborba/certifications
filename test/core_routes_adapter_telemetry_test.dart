@@ -327,7 +327,8 @@ void main() {
       await client.uploadStudySourceMultipart(
         's1',
         bytes: [1, 2],
-        filename: 'notes.pdf',
+        filename: 'notes.txt',
+        mimeType: 'text/plain',
       );
       await client.getSource('s1', 'src1');
       await client.previewSource('s1', 'src1');

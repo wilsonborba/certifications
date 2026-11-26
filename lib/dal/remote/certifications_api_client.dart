@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:certifications/core/settings.dart';
+import 'package:certifications/dal/remote/default_http_transport.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 typedef ApiRequestFn =
     Future<http.Response> Function({
@@ -20,12 +22,25 @@ class CertificationsApiClient {
   final http.Client _httpClient;
   final String _baseUrl;
 
-  CertificationsApiClient({
+  factory CertificationsApiClient({
     ApiRequestFn? request,
     http.Client? client,
     String? baseUrl,
-  }) : _httpClient = client ?? http.Client(),
-       _request = request ?? _defaultRequest(client ?? http.Client()),
+  }) {
+    final effectiveClient = client ?? createDefaultHttpClient();
+    return CertificationsApiClient._(
+      client: effectiveClient,
+      request: request ?? _defaultRequest(effectiveClient),
+      baseUrl: baseUrl,
+    );
+  }
+
+  CertificationsApiClient._({
+    required http.Client client,
+    required ApiRequestFn request,
+    String? baseUrl,
+  }) : _httpClient = client,
+       _request = request,
        _baseUrl =
            (baseUrl ?? '${app_settings.ASODYA_API_URL}/apps/certifications/v1')
                .replaceAll(RegExp(r'/+$'), '');
@@ -53,6 +68,11 @@ class CertificationsApiClient {
         if (encoded != null) 'Content-Type': 'application/json',
         ...?headers,
       };
+      final csrfToken = readDefaultCsrfToken();
+      if (csrfToken != null && csrfToken.isNotEmpty) {
+        mergedHeaders.putIfAbsent('X-CSRF-Token', () => csrfToken);
+        mergedHeaders.putIfAbsent('X-CSRFToken', () => csrfToken);
+      }
       return switch (method.toUpperCase()) {
         'GET' => client.get(resolved, headers: mergedHeaders),
         'POST' => client.post(resolved, headers: mergedHeaders, body: encoded),
@@ -149,12 +169,23 @@ class CertificationsApiClient {
     String studyId, {
     required List<int> bytes,
     required String filename,
+    required String mimeType,
   }) async {
     final req =
         http.MultipartRequest('POST', endpoint('/studies/$studyId/sources'))
           ..files.add(
-            http.MultipartFile.fromBytes('file', bytes, filename: filename),
+            http.MultipartFile.fromBytes(
+              'file',
+              bytes,
+              filename: filename,
+              contentType: MediaType.parse(mimeType),
+            ),
           );
+    final csrfToken = readDefaultCsrfToken();
+    if (csrfToken != null && csrfToken.isNotEmpty) {
+      req.headers.putIfAbsent('X-CSRF-Token', () => csrfToken);
+      req.headers.putIfAbsent('X-CSRFToken', () => csrfToken);
+    }
     final streamed = await _httpClient.send(req);
     return http.Response.fromStream(streamed);
   }
