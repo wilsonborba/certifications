@@ -593,6 +593,10 @@ class AppLocalizations {
       'createdHistoryRange': '{from}-{to} of {total}',
       'attemptCompleted': 'Completed',
       'attemptInProgress': 'In progress',
+      'attemptSequenceNumber': 'Attempt {sequence}',
+      'attemptPreviousScore': 'Previous score: {score}%',
+      'attemptScoreChangePoints':
+          'Change from previous: {change} percentage points',
       'distinctParticipants': 'Distinct participants',
       'averageDuration': 'Typical duration',
       'distinctQuizzesAttempted': 'Distinct quizzes attempted',
@@ -1225,6 +1229,10 @@ class AppLocalizations {
       'createdHistoryRange': '{from}-{to} de {total}',
       'attemptCompleted': 'Concluída',
       'attemptInProgress': 'Em andamento',
+      'attemptSequenceNumber': 'Tentativa {sequence}',
+      'attemptPreviousScore': 'Pontuação anterior: {score}%',
+      'attemptScoreChangePoints':
+          'Variação em relação à anterior: {change} pontos percentuais',
       'distinctParticipants': 'Participantes distintos',
       'averageDuration': 'Duração típica',
       'distinctQuizzesAttempted': 'Questionários distintos respondidos',
@@ -1828,6 +1836,10 @@ class AppLocalizations {
       'createdHistoryRange': '{from}-{to} จาก {total}',
       'attemptCompleted': 'ทำเสร็จแล้ว',
       'attemptInProgress': 'กำลังทำ',
+      'attemptSequenceNumber': 'ครั้งที่ {sequence}',
+      'attemptPreviousScore': 'คะแนนครั้งก่อน: {score}%',
+      'attemptScoreChangePoints':
+          'เปลี่ยนแปลงจากครั้งก่อน: {change} จุดเปอร์เซ็นต์',
       'distinctParticipants': 'ผู้เข้าร่วมที่ไม่ซ้ำกัน',
       'averageDuration': 'ระยะเวลาโดยทั่วไป',
       'distinctQuizzesAttempted': 'แบบทดสอบที่ทำไม่ซ้ำกัน',

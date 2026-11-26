@@ -311,8 +311,37 @@ class _HistoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ListTile(
     title: Text(item.quizTitle),
-    subtitle: Text(
-      '${DateTime.fromMillisecondsSinceEpoch(item.startedAt * 1000).toLocal()} · ${_localizedStatus(context, item.status)}',
+    subtitle: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '${DateTime.fromMillisecondsSinceEpoch(item.startedAt * 1000).toLocal()} · ${_localizedStatus(context, item.status)}',
+        ),
+        if (item.attemptSequence != null)
+          Text(
+            context.trParams('attemptSequenceNumber', {
+              'sequence': _localizedCount(context, item.attemptSequence!),
+            }),
+          ),
+        if (item.previousAttemptScorePct != null)
+          Text(
+            context.trParams('attemptPreviousScore', {
+              'score': _localizedDecimal(
+                context,
+                item.previousAttemptScorePct!,
+              ),
+            }),
+          ),
+        if (item.scoreChangePercentagePoints != null)
+          Text(
+            context.trParams('attemptScoreChangePoints', {
+              'change': _localizedDecimal(
+                context,
+                item.scoreChangePercentagePoints!,
+              ),
+            }),
+          ),
+      ],
     ),
     trailing: Text(
       item.scorePct == null
