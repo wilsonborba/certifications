@@ -37,7 +37,13 @@ class StudyApiService {
       body: jsonEncode({'title': name}),
     );
     final summary = _study(response);
-    return get(summary.id);
+    try {
+      return await get(summary.id);
+    } catch (_) {
+      // A successful create already supplies the durable draft identity.
+      // Detail quota and source data remain unavailable until a later read.
+      return summary;
+    }
   }
 
   Future<Study> get(String id) async =>
