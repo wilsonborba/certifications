@@ -21,8 +21,9 @@ String _localizedCount(BuildContext context, num value) =>
     ).format(value);
 
 class AttemptHistoryScreen extends StatefulWidget {
-  const AttemptHistoryScreen({this.api, super.key});
+  const AttemptHistoryScreen({this.api, this.initialStatus, super.key});
   final AttemptReviewApiService? api;
+  final AttemptHistoryStatus? initialStatus;
   @override
   State<AttemptHistoryScreen> createState() => _AttemptHistoryScreenState();
 }
@@ -34,6 +35,7 @@ class _AttemptHistoryScreenState extends State<AttemptHistoryScreen> {
   final _tag = TextEditingController();
   static const _pageSize = 20;
   int _offset = 0;
+  late AttemptHistoryStatus? _status = widget.initialStatus;
   DateTime? _startedFrom;
   DateTime? _startedTo;
   bool _invalidDateRange = false;
@@ -42,6 +44,7 @@ class _AttemptHistoryScreenState extends State<AttemptHistoryScreen> {
   Future<AttemptHistoryPage> _load() => _api.listAttempts(
     AttemptHistoryQuery(
       q: _search.text.trim().isEmpty ? null : _search.text.trim(),
+      status: _status,
       quizId: _quiz.text.trim().isEmpty ? null : _quiz.text.trim(),
       tag: _tag.text.trim().isEmpty ? null : _tag.text.trim(),
       startedFrom: AttemptHistoryQuery.startOfLocalDateSeconds(_startedFrom),
@@ -95,6 +98,14 @@ class _AttemptHistoryScreenState extends State<AttemptHistoryScreen> {
     _future = _load();
   });
 
+  void _setCompletedFilter(bool selected) {
+    setState(() {
+      _status = selected ? AttemptHistoryStatus.completed : null;
+      _offset = 0;
+      _future = _load();
+    });
+  }
+
   @override
   void dispose() {
     _search.dispose();
@@ -122,6 +133,11 @@ class _AttemptHistoryScreenState extends State<AttemptHistoryScreen> {
                   spacing: 12,
                   runSpacing: 10,
                   children: [
+                    FilterChip(
+                      label: Text(context.tr('completedAttempts')),
+                      selected: _status == AttemptHistoryStatus.completed,
+                      onSelected: _setCompletedFilter,
+                    ),
                     SizedBox(
                       width: 220,
                       child: TextField(

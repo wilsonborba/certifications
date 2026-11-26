@@ -6,6 +6,7 @@ import 'package:certifications/core/utils/my_nagivation.dart';
 import 'package:certifications/core/utils/my_router_parser.dart';
 import 'package:certifications/core/utils/my_theme.dart';
 import 'package:certifications/domain/services/certificate_verification_api_service.dart';
+import 'package:certifications/domain/services/attempt_review_api_service.dart';
 import 'package:certifications/domain/services/client_telemetry_service.dart';
 import 'package:certifications/presentation/components/auth/auth_artifact_params.dart';
 import 'package:certifications/presentation/components/auth/session_gate.dart';
@@ -167,8 +168,13 @@ class _AppState extends State<App> {
         if (route.screen == CertificationsScreen.history) {
           return MaterialPageRoute(
             settings: RouteSettings(name: route.routeTemplate),
-            builder: (_) =>
-                const _AuthenticatedContent(child: AttemptHistoryScreen()),
+            builder: (_) => _AuthenticatedContent(
+              child: AttemptHistoryScreen(
+                initialStatus: AttemptHistoryStatus.fromQueryValue(
+                  route.queryParameters['status'],
+                ),
+              ),
+            ),
           );
         }
         if (route.screen == CertificationsScreen.attemptResults &&

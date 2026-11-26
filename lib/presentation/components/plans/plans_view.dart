@@ -96,8 +96,10 @@ class _FreePlanCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          OverflowBar(
+            alignment: MainAxisAlignment.spaceBetween,
+            spacing: 8,
+            overflowSpacing: 8,
             children: [
               _PlanBadge(
                 label: context.tr('planFree'),
