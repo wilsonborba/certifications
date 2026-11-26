@@ -59,8 +59,11 @@ class _FakeAuthoring extends QuestionAuthoringService {
   final List<AuthoringQuestion> questions = [_question()];
   int prepareCalls = 0;
   int uploadCalls = 0;
+  bool loseFirstUploadResponse = false;
   Map<String, Object?>? preparedArguments;
   List<int>? uploadedPng;
+  final List<String> uploadedJobIds = [];
+  final List<List<int>> uploadedPngAttempts = [];
 
   @override
   Future<List<AuthoringQuestion>> list(String studyId) async => questions;
@@ -108,12 +111,20 @@ class _FakeAuthoring extends QuestionAuthoringService {
   }) async {
     uploadCalls++;
     uploadedPng = List<int>.from(pngBytes);
+    uploadedJobIds.add(job.jobId);
+    uploadedPngAttempts.add(List<int>.from(pngBytes));
     final visual = const QuestionVisual(
       id: 'vis_render-job-9',
       mimeType: 'image/png',
       createdAt: 1760000000,
     );
-    questions[0] = _question(visuals: [visual]);
+    if (!questions.single.visuals.any((existing) => existing.id == visual.id)) {
+      questions[0] = _question(visuals: [visual]);
+    }
+    if (loseFirstUploadResponse) {
+      loseFirstUploadResponse = false;
+      throw http.ClientException('response lost after durable save');
+    }
     return visual;
   }
 }
@@ -387,6 +398,76 @@ void main() {
     expect(save.onPressed, isNull);
     expect(authoring.prepareCalls, 0);
     expect(authoring.uploadCalls, 0);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('retries an uncertain PNG upload with the same job and bytes', (
+    tester,
+  ) async {
+    final authoring = _FakeAuthoring()..loseFirstUploadResponse = true;
+    tester.view.physicalSize = const Size(1200, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        locale: const Locale('en'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: const [
+          AppLocalizationsDelegate(),
+          FallbackMaterialLocalizationsDelegate(),
+          DefaultWidgetsLocalizations.delegate,
+          DefaultMaterialLocalizations.delegate,
+        ],
+        home: QuestionAuthoringScreen(
+          studyId: 'study-1',
+          studyTitle: 'Visual study',
+          onPublished: () {},
+          authoringService: authoring,
+          publicQuestionService: _FakePublicQuestions(),
+          studyApiService: _FakeStudyApi(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add Reports visual'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButtonFormField<ReportPickerItem>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Monthly report · project-a/report-a').last);
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byType(DropdownButtonFormField<ReportDatasetPickerItem>),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Monthly counts · counts').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Save visual to question'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Could not save this visual. Nothing was confirmed as saved.'),
+      findsOneWidget,
+    );
+    expect(authoring.prepareCalls, 1);
+    expect(authoring.uploadCalls, 1);
+    expect(authoring.questions.single.visuals, hasLength(1));
+
+    await tester.tap(find.text('Save visual to question'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(authoring.prepareCalls, 1);
+    expect(authoring.uploadCalls, 2);
+    expect(authoring.uploadedJobIds, ['render-job-9', 'render-job-9']);
+    expect(authoring.uploadedPngAttempts, hasLength(2));
+    expect(authoring.uploadedPngAttempts[1], authoring.uploadedPngAttempts[0]);
+    expect(authoring.questions.single.visuals, hasLength(1));
+    expect(find.text('Saved visuals: 1'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

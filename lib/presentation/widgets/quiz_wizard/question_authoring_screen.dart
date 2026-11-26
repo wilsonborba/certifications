@@ -573,6 +573,8 @@ class _QuestionVisualDialogState extends State<_QuestionVisualDialog> {
   ReportDatasetPickerItem? _dataset;
   reports.DatasetPage? _page;
   reports.VisualTemplate? _template;
+  PreparedQuestionVisualJob? _pendingVisualJob;
+  Uint8List? _pendingVisualPng;
   bool _loading = true;
   bool _saving = false;
   String? _error;
@@ -613,6 +615,7 @@ class _QuestionVisualDialogState extends State<_QuestionVisualDialog> {
 
   Future<void> _selectReport(ReportPickerItem? report) async {
     if (report == null) return;
+    _discardPendingVisualUpload();
     setState(() {
       _report = report;
       _datasets = const [];
@@ -634,9 +637,13 @@ class _QuestionVisualDialogState extends State<_QuestionVisualDialog> {
     }
   }
 
-  Future<void> _selectDataset(ReportDatasetPickerItem? dataset) async {
+  Future<void> _selectDataset(
+    ReportDatasetPickerItem? dataset, {
+    bool preservePendingUpload = false,
+  }) async {
     final report = _report;
     if (dataset == null || report == null) return;
+    if (!preservePendingUpload) _discardPendingVisualUpload();
     setState(() {
       _dataset = dataset;
       _page = null;
@@ -696,9 +703,13 @@ class _QuestionVisualDialogState extends State<_QuestionVisualDialog> {
   }
 
   void _retry() {
+    if (_pendingVisualJob != null && _pendingVisualPng != null) {
+      _save();
+      return;
+    }
     final dataset = _dataset;
     if (dataset != null) {
-      _selectDataset(dataset);
+      _selectDataset(dataset, preservePendingUpload: true);
       return;
     }
     final report = _report;
@@ -707,6 +718,11 @@ class _QuestionVisualDialogState extends State<_QuestionVisualDialog> {
       return;
     }
     _loadReports();
+  }
+
+  void _discardPendingVisualUpload() {
+    _pendingVisualJob = null;
+    _pendingVisualPng = null;
   }
 
   Future<void> _save() async {
@@ -722,55 +738,66 @@ class _QuestionVisualDialogState extends State<_QuestionVisualDialog> {
     });
     ui.Image? image;
     try {
-      final job = await widget.authoring.prepareVisualJob(
-        studyId: widget.studyId,
-        question: widget.question,
-        templateId: template.templateId,
-        templateVersion: template.version,
-        mapping: binding.mapping,
-        config: binding.options,
-        rows: page.rows,
-      );
-      await Future<void>.delayed(const Duration(milliseconds: 1800));
-      await WidgetsBinding.instance.endOfFrame;
-      final renderObject = _previewKey.currentContext?.findRenderObject();
-      if (renderObject is! RenderRepaintBoundary || !renderObject.hasSize) {
-        throw const FormatException('Reports preview is not ready to capture');
-      }
-      final capturedImage = await renderObject.toImage(
-        pixelRatio: job.scale.toDouble(),
-      );
-      image = capturedImage;
-      if (capturedImage.width != job.width * job.scale ||
-          capturedImage.height != job.height * job.scale) {
-        throw const FormatException('Reports preview dimensions do not match');
-      }
-      final data = await capturedImage.toByteData(
-        format: ui.ImageByteFormat.png,
-      );
-      if (data == null) {
-        throw const FormatException('Reports PNG is unavailable');
-      }
-      final bytes = data.buffer.asUint8List(
-        data.offsetInBytes,
-        data.lengthInBytes,
-      );
-      if (bytes.length > 4 * 1024 * 1024) {
-        throw const FormatException('Reports PNG exceeds the upload limit');
-      }
-      final pngHeader = ByteData.sublistView(bytes);
-      if (bytes.length < 24 ||
-          bytes[0] != 137 ||
-          bytes[1] != 80 ||
-          bytes[2] != 78 ||
-          bytes[3] != 71 ||
-          bytes[4] != 13 ||
-          bytes[5] != 10 ||
-          bytes[6] != 26 ||
-          bytes[7] != 10 ||
-          pngHeader.getUint32(16) != capturedImage.width ||
-          pngHeader.getUint32(20) != capturedImage.height) {
-        throw const FormatException('Reports output is not a valid PNG');
+      var job = _pendingVisualJob;
+      var bytes = _pendingVisualPng;
+      if (job == null || bytes == null) {
+        job = await widget.authoring.prepareVisualJob(
+          studyId: widget.studyId,
+          question: widget.question,
+          templateId: template.templateId,
+          templateVersion: template.version,
+          mapping: binding.mapping,
+          config: binding.options,
+          rows: page.rows,
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 1800));
+        await WidgetsBinding.instance.endOfFrame;
+        final renderObject = _previewKey.currentContext?.findRenderObject();
+        if (renderObject is! RenderRepaintBoundary || !renderObject.hasSize) {
+          throw const FormatException(
+            'Reports preview is not ready to capture',
+          );
+        }
+        final capturedImage = await renderObject.toImage(
+          pixelRatio: job.scale.toDouble(),
+        );
+        image = capturedImage;
+        if (capturedImage.width != job.width * job.scale ||
+            capturedImage.height != job.height * job.scale) {
+          throw const FormatException(
+            'Reports preview dimensions do not match',
+          );
+        }
+        final data = await capturedImage.toByteData(
+          format: ui.ImageByteFormat.png,
+        );
+        if (data == null) {
+          throw const FormatException('Reports PNG is unavailable');
+        }
+        final capturedBytes = data.buffer.asUint8List(
+          data.offsetInBytes,
+          data.lengthInBytes,
+        );
+        if (capturedBytes.length > 4 * 1024 * 1024) {
+          throw const FormatException('Reports PNG exceeds the upload limit');
+        }
+        final pngHeader = ByteData.sublistView(capturedBytes);
+        if (capturedBytes.length < 24 ||
+            capturedBytes[0] != 137 ||
+            capturedBytes[1] != 80 ||
+            capturedBytes[2] != 78 ||
+            capturedBytes[3] != 71 ||
+            capturedBytes[4] != 13 ||
+            capturedBytes[5] != 10 ||
+            capturedBytes[6] != 26 ||
+            capturedBytes[7] != 10 ||
+            pngHeader.getUint32(16) != capturedImage.width ||
+            pngHeader.getUint32(20) != capturedImage.height) {
+          throw const FormatException('Reports output is not a valid PNG');
+        }
+        bytes = Uint8List.fromList(capturedBytes);
+        _pendingVisualJob = job;
+        _pendingVisualPng = bytes;
       }
       await widget.authoring.uploadVisual(
         studyId: widget.studyId,
@@ -778,7 +805,10 @@ class _QuestionVisualDialogState extends State<_QuestionVisualDialog> {
         job: job,
         pngBytes: bytes,
       );
-      if (mounted) Navigator.of(context).pop(true);
+      if (mounted) {
+        _discardPendingVisualUpload();
+        Navigator.of(context).pop(true);
+      }
     } catch (_) {
       if (mounted) {
         setState(() => _error = context.tr('questionVisualSaveError'));
