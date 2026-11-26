@@ -7,6 +7,7 @@ import 'package:certifications/domain/services/certificate_verification_api_serv
 import 'package:certifications/presentation/components/attachment/app_bar.dart';
 import 'package:certifications/presentation/components/premium_hover_card.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:web/web.dart' as web;
 
 /// Public, factual certificate lookup. Activity details are shown online only;
@@ -118,7 +119,7 @@ class _CertificateVerificationScreenState
           );
         }
         final scheme = Theme.of(context).colorScheme;
-        final dateLocalizations = MaterialLocalizations.of(context);
+        final dateLocale = Localizations.localeOf(context).languageCode;
         final activity = value.activitySummary;
         final issued = DateTime.fromMillisecondsSinceEpoch(
           value.issuedAt * 1000,
@@ -174,7 +175,9 @@ class _CertificateVerificationScreenState
                           ),
                           _Fact(
                             label: context.tr('certificateIssued'),
-                            value: dateLocalizations.formatFullDate(issued),
+                            value: DateFormat.yMMMMEEEEd(
+                              dateLocale,
+                            ).format(issued),
                           ),
                           _Fact(
                             label: context.tr('certificateCode'),
@@ -276,8 +279,8 @@ class _CertificateVerificationScreenState
                                 _activityEventLabel(context, event.eventKind),
                               ),
                               subtitle: Text(
-                                '${dateLocalizations.formatFullDate(occurredAt)} '
-                                '${dateLocalizations.formatTimeOfDay(TimeOfDay.fromDateTime(occurredAt))}',
+                                '${DateFormat.yMMMMEEEEd(dateLocale).format(occurredAt)} '
+                                '${DateFormat.jm(dateLocale).format(occurredAt)}',
                               ),
                               trailing: event.durationMs > 0
                                   ? Text(_duration(event.durationMs))

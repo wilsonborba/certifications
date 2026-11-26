@@ -8,8 +8,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 
 void main() {
+  setUpAll(() => initializeDateFormatting());
+
   testWidgets('renders factual certificate status and online activity only', (
     tester,
   ) async {
@@ -17,6 +21,8 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    final issuedAtLocal = DateTime(2025, 10, 9, 12);
+    final eventAtLocal = DateTime(2025, 10, 9, 10, 30);
     final paths = <String>[];
     var completeness = 'partial_with_interruptions';
     final client = MockClient((request) async {
@@ -45,7 +51,7 @@ void main() {
           'quiz_title': 'Sample quiz',
           'score_correct': 1,
           'score_total': 3,
-          'issued_at': 1760000000,
+          'issued_at': issuedAtLocal.millisecondsSinceEpoch ~/ 1000,
           'revoked_at': null,
           'activity_summary': {
             'focus_lost_count': completeness == 'no_events_recorded' ? 0 : 1,
@@ -66,13 +72,18 @@ void main() {
                       'id': 'event-1',
                       'event_kind': 'page_hidden',
                       'duration_ms': 0,
-                      'occurred_at': 1759996400,
+                      'occurred_at':
+                          eventAtLocal.millisecondsSinceEpoch ~/ 1000,
                     },
                     {
                       'id': 'event-2',
                       'event_kind': 'future_internal_value',
                       'duration_ms': 0,
-                      'occurred_at': 1759996500,
+                      'occurred_at':
+                          eventAtLocal
+                              .add(const Duration(minutes: 5))
+                              .millisecondsSinceEpoch ~/
+                          1000,
                     },
                   ],
           },
@@ -116,15 +127,11 @@ void main() {
     expect(find.textContaining('cheat'), findsNothing);
     expect(find.text('Download PDF'), findsOneWidget);
     expect(find.text('Download image'), findsOneWidget);
-    final localizations = MaterialLocalizations.of(
-      tester.element(find.text('Issued')),
-    );
-    final issuedAt = DateTime.fromMillisecondsSinceEpoch(
-      1760000000 * 1000,
-    ).toLocal();
-    final issuedDate = localizations.formatFullDate(issuedAt);
+    final issuedAt = issuedAtLocal;
+    final issuedDate = DateFormat.yMMMMEEEEd('en').format(issuedAt);
+    expect(issuedDate, contains('Thursday'));
+    expect(issuedDate, contains('October'));
     expect(issuedDate, contains('2025'));
-    expect(issuedDate, isNot(localizations.formatMediumDate(issuedAt)));
     expect(find.text(issuedDate), findsOneWidget);
 
     await tester.tap(find.text('Recorded browser activity'));
@@ -139,26 +146,48 @@ void main() {
     expect(find.text('future_internal_value'), findsNothing);
     expect(find.text('Recorded browser activity'), findsNWidgets(2));
     expect(find.text('Unknown gaps'), findsOneWidget);
-    final eventAt = DateTime.fromMillisecondsSinceEpoch(
-      1759996400 * 1000,
-    ).toLocal();
+    final eventAt = eventAtLocal;
     final eventDateTime =
-        '${localizations.formatFullDate(eventAt)} '
-        '${localizations.formatTimeOfDay(TimeOfDay.fromDateTime(eventAt))}';
-    expect(eventDateTime, isNot(localizations.formatMediumDate(eventAt)));
+        '${DateFormat.yMMMMEEEEd('en').format(eventAt)} '
+        '${DateFormat.jm('en').format(eventAt)}';
+    expect(eventDateTime, contains('2025'));
     expect(find.text(eventDateTime), findsOneWidget);
     expect(paths, ['/apps/certifications/v1/certificates/CODE-1']);
 
     await show(const Locale('pt'));
+    final portugueseDate = DateFormat.yMMMMEEEEd('pt').format(issuedAt);
+    expect(portugueseDate, contains('quinta-feira'));
+    expect(portugueseDate, contains('outubro'));
+    expect(portugueseDate, contains('2025'));
+    expect(find.text(portugueseDate), findsOneWidget);
     expect(
       find.text('Integridade do registro: Parcial (com interrupções)'),
       findsOneWidget,
     );
+    final portugueseEventDateTime =
+        '${DateFormat.yMMMMEEEEd('pt').format(eventAt)} '
+        '${DateFormat.jm('pt').format(eventAt)}';
+    expect(portugueseEventDateTime, contains('quinta-feira'));
+    expect(portugueseEventDateTime, contains('outubro'));
+    expect(portugueseEventDateTime, contains('2025'));
+    expect(find.text(portugueseEventDateTime), findsOneWidget);
     expect(find.text('Página ocultada'), findsNWidgets(2));
     expect(find.text('page_hidden'), findsNothing);
     expect(find.text('future_internal_value'), findsNothing);
 
     await show(const Locale('th'));
+    final thaiDate = DateFormat.yMMMMEEEEd('th').format(issuedAt);
+    expect(thaiDate, contains('พฤหัสบดี'));
+    expect(thaiDate, contains('ตุลาคม'));
+    expect(thaiDate, contains('2025'));
+    expect(find.text(thaiDate), findsOneWidget);
+    final thaiEventDateTime =
+        '${DateFormat.yMMMMEEEEd('th').format(eventAt)} '
+        '${DateFormat.jm('th').format(eventAt)}';
+    expect(thaiEventDateTime, contains('พฤหัสบดี'));
+    expect(thaiEventDateTime, contains('ตุลาคม'));
+    expect(thaiEventDateTime, contains('2025'));
+    expect(find.text(thaiEventDateTime), findsOneWidget);
     expect(
       find.text('ความครบถ้วนของบันทึก: บางส่วน (มีช่วงขาดตอน)'),
       findsOneWidget,
