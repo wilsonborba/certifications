@@ -6,6 +6,7 @@ import 'package:certifications/domain/services/certificate_verification_api_serv
 import 'package:certifications/presentation/widgets/attempt_review_screens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 class _ResultsApi extends AttemptReviewApiService {
   _ResultsApi(this.status);
@@ -139,6 +140,8 @@ Widget _app(Widget child) => MaterialApp(
 );
 
 void main() {
+  setUpAll(() => initializeDateFormatting());
+
   testWidgets(
     'completed result uses GET payload and offers issuance by saved id',
     (tester) async {
