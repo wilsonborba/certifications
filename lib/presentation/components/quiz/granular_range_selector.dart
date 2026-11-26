@@ -66,7 +66,9 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
   late final TextEditingController _spec = TextEditingController(
     text: widget.file.selectionSpec,
   );
-  String? _selectionGestureBaseSpec;
+  final ValueNotifier<TextSelection?> _pendingPassageSelection = ValueNotifier(
+    null,
+  );
   String? _pdfViewType;
   String? _pdfObjectUrl;
 
@@ -148,30 +150,27 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
     return TextSpan(children: spans);
   }
 
-  void _handleTextSelection(
-    TextSelection selection,
-    SelectionChangedCause? cause,
-  ) {
+  void _handleTextSelection(TextSelection selection, SelectionChangedCause? _) {
     if (!mounted || selection.isCollapsed) return;
+    // Updating the rich text here would recreate SelectableText's controller
+    // and clear the native selection before the user can commit it.
+    _pendingPassageSelection.value = selection;
+  }
+
+  void _commitPassageSelection() {
+    final selection = _pendingPassageSelection.value;
+    if (selection == null || selection.isCollapsed) return;
     final file = widget.file;
     final start = selection.start;
     final end = selection.end;
-    if (_selectionGestureBaseSpec == null ||
-        cause != SelectionChangedCause.drag) {
-      _selectionGestureBaseSpec = _passageSpecOutside(start, end);
-    }
+    final baseSpec = _passageSpecOutside(start, end, file.selectionSpec);
     final spec = StudySelection.includePassageRange(
-      _selectionGestureBaseSpec!,
+      baseSpec,
       start,
       end,
       _normalizedText,
     );
-    if (spec == null ||
-        (!file.isWholeDocument &&
-            file.selectionKind == 'passages' &&
-            spec == file.selectionSpec)) {
-      return;
-    }
+    if (spec == null) return;
     setState(() {
       _spec.value = TextEditingValue(
         text: spec,
@@ -183,16 +182,14 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
         selectionKind: 'passages',
         selectionSpec: spec,
       );
+      _pendingPassageSelection.value = null;
     });
   }
 
-  String _passageSpecOutside(int start, int end) {
+  String _passageSpecOutside(int start, int end, String currentSpec) {
     final file = widget.file;
     if (file.isWholeDocument || file.selectionKind != 'passages') return '';
-    final ranges = StudySelection.passageRanges(
-      file.selectionSpec,
-      _normalizedText,
-    );
+    final ranges = StudySelection.passageRanges(currentSpec, _normalizedText);
     if (ranges == null) return '';
     return ranges
         .where((range) => range.$2 <= start || range.$1 >= end)
@@ -203,6 +200,7 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
   @override
   void dispose() {
     _spec.dispose();
+    _pendingPassageSelection.dispose();
     if (_pdfObjectUrl case final url?) web.URL.revokeObjectURL(url);
     super.dispose();
   }
@@ -241,7 +239,7 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
               value: file.isWholeDocument,
               title: Text(context.tr('wholeDocumentOnly')),
               onChanged: (value) => setState(() {
-                _selectionGestureBaseSpec = null;
+                _pendingPassageSelection.value = null;
                 final wholeDocument = value ?? true;
                 final selectionKind = wholeDocument
                     ? 'all'
@@ -281,7 +279,7 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
                       : null,
                 ),
                 onChanged: (value) => setState(() {
-                  _selectionGestureBaseSpec = null;
+                  _pendingPassageSelection.value = null;
                   widget.wizardData.updateFileSelection(
                     file,
                     isWholeDocument: false,
@@ -318,6 +316,19 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 6),
+            ValueListenableBuilder<TextSelection?>(
+              valueListenable: _pendingPassageSelection,
+              builder: (context, selection, child) => Align(
+                alignment: Alignment.centerLeft,
+                child: FilledButton.tonal(
+                  onPressed: selection == null || selection.isCollapsed
+                      ? null
+                      : _commitPassageSelection,
+                  child: Text(context.tr('addSelectedText')),
+                ),
+              ),
             ),
             const SizedBox(height: 6),
             Container(

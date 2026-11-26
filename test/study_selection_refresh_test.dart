@@ -82,6 +82,14 @@ Future<void> _openFileSelector(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+Future<void> _commitSelectedText(WidgetTester tester) async {
+  final button = find.text('Add selected text');
+  await tester.ensureVisible(button);
+  await tester.pumpAndSettle();
+  await tester.tap(button);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   const studyId = 'selection-refresh-study';
   const text = 'alpha\nbeta';
@@ -339,7 +347,14 @@ void main() {
         const TextSelection(baseOffset: 1, extentOffset: 3),
         SelectionChangedCause.longPress,
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
+      expect(draft.attachedFiles.single.selectionSpec, isEmpty);
+      selectable.onSelectionChanged!(
+        const TextSelection.collapsed(offset: 3),
+        SelectionChangedCause.tap,
+      );
+      await tester.pump();
+      await _commitSelectedText(tester);
       expect(draft.attachedFiles.single.selectionSpec, 'p1:1-3');
       expect(draft.attachedFiles.single.selectionKind, 'passages');
       expect(
@@ -355,7 +370,8 @@ void main() {
         const TextSelection(baseOffset: 5, extentOffset: 6),
         SelectionChangedCause.longPress,
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await _commitSelectedText(tester);
       expect(draft.attachedFiles.single.selectionSpec, 'p1:1-3,p1:5-6');
 
       final spans = tester
@@ -407,22 +423,32 @@ void main() {
         const TextSelection(baseOffset: 1, extentOffset: 5),
         SelectionChangedCause.longPress,
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
       selectable = tester.widget<SelectableText>(find.byType(SelectableText));
       selectable.onSelectionChanged!(
         const TextSelection(baseOffset: 1, extentOffset: 3),
         SelectionChangedCause.drag,
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
+      expect(file.selectionSpec, 'p1:1-5,p1:7-9');
+      await _commitSelectedText(tester);
 
       expect(file.selectionSpec, 'p1:1-3,p1:7-9');
+      selectable = tester.widget<SelectableText>(find.byType(SelectableText));
+      selectable.onSelectionChanged!(
+        const TextSelection(baseOffset: 4, extentOffset: 6),
+        SelectionChangedCause.longPress,
+      );
+      await tester.pump();
+      await _commitSelectedText(tester);
+      expect(file.selectionSpec, 'p1:1-3,p1:4-6,p1:7-9');
       final highlighted = tester
           .widget<SelectableText>(find.byType(SelectableText))
           .textSpan!
           .children!
           .whereType<TextSpan>()
           .where((span) => span.style?.backgroundColor != null);
-      expect(highlighted.map((span) => span.text), ['bc', 'hi']);
+      expect(highlighted.map((span) => span.text), ['bc', 'ef', 'hi']);
     },
   );
 

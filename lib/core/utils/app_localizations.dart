@@ -439,6 +439,7 @@ class AppLocalizations {
       'wholeDocumentOnly': 'Use the whole source',
       'selectionPagesLabel': 'PDF page ranges (maximum 100 pages)',
       'selectionPassageLabel': 'Text passage using UTF-16 offsets',
+      'addSelectedText': 'Add selected text',
       'selectionAudioLabel': 'Audio intervals in milliseconds',
       'selectionInvalid': 'Enter a valid selection within this source.',
       'passageSelectionHint':
@@ -1074,6 +1075,7 @@ class AppLocalizations {
       'selectionPagesLabel':
           'Intervalos de páginas PDF (máximo de 100 páginas)',
       'selectionPassageLabel': 'Trecho de texto usando posições UTF-16',
+      'addSelectedText': 'Adicionar texto selecionado',
       'selectionAudioLabel': 'Intervalos de áudio em milissegundos',
       'selectionInvalid': 'Insira uma seleção válida dentro desta fonte.',
       'passageSelectionHint':
@@ -1686,6 +1688,7 @@ class AppLocalizations {
       'wholeDocumentOnly': 'ใช้แหล่งข้อมูลทั้งหมด',
       'selectionPagesLabel': 'ช่วงหน้า PDF (สูงสุด 100 หน้า)',
       'selectionPassageLabel': 'ช่วงข้อความโดยใช้ตำแหน่ง UTF-16',
+      'addSelectedText': 'เพิ่มข้อความที่เลือก',
       'selectionAudioLabel': 'ช่วงเสียงหน่วยมิลลิวินาที',
       'selectionInvalid': 'ระบุช่วงที่ถูกต้องภายในแหล่งข้อมูลนี้',
       'passageSelectionHint':
