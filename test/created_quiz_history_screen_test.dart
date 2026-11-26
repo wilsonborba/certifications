@@ -3,6 +3,7 @@ import 'package:certifications/domain/models/study_history.dart';
 import 'package:certifications/domain/services/study_history_api_service.dart';
 import 'package:certifications/presentation/widgets/completed_quizzes/created_quiz_history_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _HistoryApi extends StudyHistoryApiService {
@@ -268,6 +269,53 @@ void main() {
     expect(find.text('Criado a partir de: Escolher data'), findsOneWidget);
     expect(find.text('Aplicar filtros'), findsOneWidget);
     expect(find.text('Limpar filtros'), findsOneWidget);
+  });
+
+  testWidgets('expanded PT phone actions can scroll clear of both clips', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      _app(
+        CreatedQuizHistoryScreen(api: _HistoryApi()),
+        locale: const Locale('pt'),
+        textScale: 1.3,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('created-history-advanced-filters')),
+    );
+    await tester.pumpAndSettle();
+
+    Future<void> expectReachable(Finder action) async {
+      expect(action, findsOneWidget);
+      await tester.ensureVisible(action);
+      await tester.pumpAndSettle();
+      final actionRect = tester.getRect(action);
+      expect(actionRect.height, greaterThanOrEqualTo(48));
+      final scrollViews = find
+          .ancestor(of: action, matching: find.byType(SingleChildScrollView))
+          .evaluate()
+          .toList();
+      expect(scrollViews, hasLength(2));
+      for (final scrollView in scrollViews) {
+        final box = scrollView.renderObject! as RenderBox;
+        final clipRect = box.localToGlobal(Offset.zero) & box.size;
+        expect(actionRect.left, greaterThanOrEqualTo(clipRect.left));
+        expect(actionRect.top, greaterThanOrEqualTo(clipRect.top));
+        expect(actionRect.right, lessThanOrEqualTo(clipRect.right));
+        expect(actionRect.bottom, lessThanOrEqualTo(clipRect.bottom));
+      }
+      expect(action.hitTestable(), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }
+
+    await expectReachable(find.widgetWithText(FilledButton, 'Aplicar filtros'));
+    await expectReachable(find.widgetWithText(TextButton, 'Limpar filtros'));
   });
 
   testWidgets('short phone with keyboard keeps filters and paging reachable', (
