@@ -120,7 +120,9 @@ class BoxExplaning extends StatelessWidget {
     return Container(
       margin: margin,
       width: width,
-      height: height,
+      // Keep the designed height when content fits; long localized copy can
+      // grow the card instead of overflowing its text column.
+      constraints: BoxConstraints(minHeight: height),
       // keep parent transparent to preserve your “transparent vibe”
       child: Stack(
         clipBehavior: Clip.none,
