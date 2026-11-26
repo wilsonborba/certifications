@@ -30,6 +30,8 @@ class _AttemptScreenState extends State<AttemptScreen>
   bool _submitted = false;
   String? _error;
   DateTime? _awaySince;
+  DateTime? _focusLostAt;
+  DateTime? _hiddenAt;
   Stopwatch? _awayStopwatch;
 
   @override
@@ -42,6 +44,7 @@ class _AttemptScreenState extends State<AttemptScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _awayStopwatch?.stop();
     super.dispose();
   }
 
@@ -78,52 +81,85 @@ class _AttemptScreenState extends State<AttemptScreen>
     if (attempt == null || _submitted || attempt.status != 'in_progress') {
       return;
     }
+    if (state == AppLifecycleState.inactive) {
+      final now = DateTime.now();
+      _awaySince ??= now;
+      _awayStopwatch ??= Stopwatch()..start();
+      _focusLostAt ??= now;
+      return;
+    }
     if (state == AppLifecycleState.hidden) {
-      if (_awaySince == null) {
-        _awaySince = DateTime.now();
-        _awayStopwatch = Stopwatch()..start();
-      }
+      final now = DateTime.now();
+      _awaySince ??= now;
+      _awayStopwatch ??= Stopwatch()..start();
+      _hiddenAt ??= now;
       return;
     }
     if (state == AppLifecycleState.resumed) {
       final since = _awaySince;
       if (since == null) return;
+      final focusLostAt = _focusLostAt;
+      final hiddenAt = _hiddenAt;
       _awaySince = null;
+      _focusLostAt = null;
+      _hiddenAt = null;
       final returnedAt = DateTime.now();
       final stopwatch = _awayStopwatch;
       stopwatch?.stop();
       _awayStopwatch = null;
       final duration = stopwatch?.elapsedMilliseconds ?? 0;
-      unawaited(_recordReturn(attempt, since, returnedAt, duration));
+      unawaited(
+        _recordReturn(
+          attempt,
+          since,
+          focusLostAt,
+          hiddenAt,
+          returnedAt,
+          duration,
+        ),
+      );
     }
   }
 
   Future<void> _recordReturn(
     AttemptView attempt,
-    DateTime hiddenAt,
+    DateTime awaySince,
+    DateTime? focusLostAt,
+    DateTime? hiddenAt,
     DateTime returnedAt,
     int duration,
   ) async {
     try {
-      await _api.recordActivityEvents(
-        attemptId: attempt.id,
-        events: [
+      final events = <AttemptActivityEvent>[
+        if (focusLostAt != null)
+          AttemptActivityEvent(
+            eventKind: 'focus_lost',
+            dedupKey:
+                '${attempt.id}:focus_lost:${focusLostAt.microsecondsSinceEpoch}',
+            occurredAt: focusLostAt.millisecondsSinceEpoch ~/ 1000,
+          ),
+        if (hiddenAt != null)
           AttemptActivityEvent(
             eventKind: 'page_hidden',
             dedupKey:
                 '${attempt.id}:page_hidden:${hiddenAt.microsecondsSinceEpoch}',
-            durationMs: duration,
             occurredAt: hiddenAt.millisecondsSinceEpoch ~/ 1000,
           ),
-          AttemptActivityEvent(
-            eventKind: 'page_return',
-            dedupKey:
-                '${attempt.id}:page_return:${returnedAt.microsecondsSinceEpoch}',
-            durationMs: duration,
-            occurredAt: returnedAt.millisecondsSinceEpoch ~/ 1000,
-          ),
-        ],
-      );
+        AttemptActivityEvent(
+          eventKind: 'away_duration',
+          dedupKey:
+              '${attempt.id}:away_duration:${awaySince.microsecondsSinceEpoch}:${returnedAt.microsecondsSinceEpoch}',
+          durationMs: duration,
+          occurredAt: returnedAt.millisecondsSinceEpoch ~/ 1000,
+        ),
+        AttemptActivityEvent(
+          eventKind: 'page_return',
+          dedupKey:
+              '${attempt.id}:page_return:${returnedAt.microsecondsSinceEpoch}',
+          occurredAt: returnedAt.millisecondsSinceEpoch ~/ 1000,
+        ),
+      ];
+      await _api.recordActivityEvents(attemptId: attempt.id, events: events);
     } catch (_) {
       // Browser lifecycle delivery is best effort; a missing event is never
       // presented as evidence that the user stayed on the page.
@@ -132,7 +168,7 @@ class _AttemptScreenState extends State<AttemptScreen>
 
   Future<void> _select(AttemptQuestion question, String optionId) async {
     final attempt = _attempt;
-    if (attempt == null || _saving || _submitted) return;
+    if (attempt == null || _saving || _submitting || _submitted) return;
     final previous = _answers[question.questionId];
     setState(() {
       _saving = true;
@@ -271,7 +307,9 @@ class _AttemptScreenState extends State<AttemptScreen>
             RadioGroup<String>(
               groupValue: _answers[question.questionId],
               onChanged: (value) {
-                if (!_saving && value != null) _select(question, value);
+                if (!_saving && !_submitting && value != null) {
+                  _select(question, value);
+                }
               },
               child: Column(
                 children: [

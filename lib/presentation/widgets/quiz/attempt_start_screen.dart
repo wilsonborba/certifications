@@ -38,7 +38,11 @@ class _AttemptStartScreenState extends State<AttemptStartScreen> {
           await (widget.authenticate ?? ensureAuthenticatedForQuiz)(
             PendingQuizIntent(quizId: widget.quizId),
           );
-      if (!mounted || !canProceed) return;
+      if (!mounted) return;
+      if (!canProceed) {
+        setState(() => _starting = false);
+        return;
+      }
       final attempt = await _api.startAttempt(widget.quizId);
       if (!mounted) return;
       Navigator.pushReplacement(

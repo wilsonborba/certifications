@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/attempt.dart';
 import 'package:certifications/domain/services/attempt_api_service.dart';
@@ -12,7 +14,11 @@ class _AttemptApi extends AttemptApiService {
   int submitCalls = 0;
   bool completed = false;
   final saves = <String, String>{};
+  final saveRequests = <Map<String, String>>[];
   final events = <AttemptActivityEvent>[];
+  final eventBatches = <List<AttemptActivityEvent>>[];
+  Completer<void>? saveGate;
+  Completer<Map<String, dynamic>>? submitGate;
 
   @override
   Future<AttemptView> getAttempt(String attemptId) async {
@@ -32,6 +38,11 @@ class _AttemptApi extends AttemptApiService {
     required String questionId,
     required String selectedOptionId,
   }) async {
+    saveRequests.add({
+      'questionId': questionId,
+      'selectedOptionId': selectedOptionId,
+    });
+    await saveGate?.future;
     saves[questionId] = selectedOptionId;
   }
 
@@ -40,6 +51,7 @@ class _AttemptApi extends AttemptApiService {
     required String attemptId,
     required List<AttemptActivityEvent> events,
   }) async {
+    eventBatches.add(List.unmodifiable(events));
     this.events.addAll(events);
     return events.length;
   }
@@ -47,6 +59,8 @@ class _AttemptApi extends AttemptApiService {
   @override
   Future<Map<String, dynamic>> submitAttempt(String attemptId) async {
     submitCalls++;
+    final gate = submitGate;
+    if (gate != null) return gate.future;
     return const {'status': 'submitted'};
   }
 
@@ -162,6 +176,97 @@ void main() {
     expect(api.saves['question-1'], 'option-b');
   });
 
+  testWidgets('declining authentication allows an explicit start retry', (
+    tester,
+  ) async {
+    final api = _AttemptApi();
+    var authenticationCalls = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizationsDelegate(),
+          FallbackCupertinoLocalizationsDelegate(),
+          FallbackMaterialLocalizationsDelegate(),
+          DefaultWidgetsLocalizations.delegate,
+          DefaultMaterialLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: AttemptStartScreen(
+          quizId: 'quiz-1',
+          api: api,
+          authenticate: (_) async => ++authenticationCalls > 1,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Start quiz'));
+    await tester.pump();
+    expect(api.startCalls, 0);
+    expect(authenticationCalls, 1);
+    final startButton = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Start quiz'),
+    );
+    expect(startButton.onPressed, isNotNull);
+
+    await tester.tap(find.text('Start quiz'));
+    await tester.pumpAndSettle();
+    expect(authenticationCalls, 2);
+    expect(api.startCalls, 1);
+    expect(find.text('Prompt 1'), findsOneWidget);
+  });
+
+  testWidgets('late authentication completion after disposal does not start', (
+    tester,
+  ) async {
+    final api = _AttemptApi();
+    final authentication = Completer<bool>();
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizationsDelegate(),
+          FallbackCupertinoLocalizationsDelegate(),
+          FallbackMaterialLocalizationsDelegate(),
+          DefaultWidgetsLocalizations.delegate,
+          DefaultMaterialLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: AttemptStartScreen(
+          quizId: 'quiz-1',
+          api: api,
+          authenticate: (_) => authentication.future,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start quiz'));
+    await tester.pump();
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    authentication.complete(true);
+    await tester.pump();
+    expect(api.startCalls, 0);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('late answer-save completion after disposal is harmless', (
+    tester,
+  ) async {
+    final api = _AttemptApi()..saveGate = Completer<void>();
+    await tester.pumpWidget(_app(api));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Option B').first);
+    await tester.pump();
+    expect(api.saveRequests, [
+      {'questionId': 'question-1', 'selectedOptionId': 'option-b'},
+    ]);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.saveGate!.complete();
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'explicit start creates once and opens a refreshable attempt URL',
     (tester) async {
@@ -231,6 +336,30 @@ void main() {
     expect(find.text('Authoritative result route'), findsOneWidget);
   });
 
+  testWidgets('answer writes are locked while submit is pending', (
+    tester,
+  ) async {
+    final api = _AttemptApi()..submitGate = Completer<Map<String, dynamic>>();
+    await tester.pumpWidget(_app(api));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Submit').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Submit').last);
+    await tester.pump();
+
+    expect(api.submitCalls, 1);
+    expect(api.saveRequests, isEmpty);
+    await tester.tap(find.text('Option A').last);
+    await tester.pump();
+    expect(api.saveRequests, isEmpty);
+
+    api.submitGate!.complete(const {'status': 'submitted'});
+    await tester.pumpAndSettle();
+    expect(find.text('Authoritative result route'), findsOneWidget);
+  });
+
   testWidgets('opening a completed saved attempt resumes to GET results', (
     tester,
   ) async {
@@ -246,7 +375,33 @@ void main() {
     expect(find.text('Authoritative result route'), findsOneWidget);
   });
 
-  testWidgets('records a deduplicated hidden and return observation', (
+  testWidgets('focus-only absence records one loss, duration and return', (
+    tester,
+  ) async {
+    final api = _AttemptApi();
+    await tester.pumpWidget(_app(api));
+    await tester.pumpAndSettle();
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump();
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 40)),
+    );
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+
+    expect(api.events.map((event) => event.eventKind), [
+      'focus_lost',
+      'away_duration',
+      'page_return',
+    ]);
+    expect(api.events[1].durationMs, greaterThan(0));
+    expect(api.events[0].durationMs, 0);
+    expect(api.events[2].durationMs, 0);
+    expect(api.events.map((event) => event.dedupKey).toSet(), hasLength(3));
+  });
+
+  testWidgets('inactive and hidden notifications form one measured episode', (
     tester,
   ) async {
     final api = _AttemptApi();
@@ -256,20 +411,30 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
     await tester.pump();
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
     await tester.pump();
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 40)),
+    );
     expect(api.events, isEmpty);
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
-    final hidden = api.events.where(
-      (event) => event.eventKind == 'page_hidden',
-    );
-    final returned = api.events.where(
-      (event) => event.eventKind == 'page_return',
-    );
-    expect(hidden, hasLength(1));
-    expect(returned, hasLength(1));
-    expect(returned.single.durationMs, hidden.single.durationMs);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+
+    expect(api.events.map((event) => event.eventKind), [
+      'focus_lost',
+      'page_hidden',
+      'away_duration',
+      'page_return',
+    ]);
+    expect(api.eventBatches, hasLength(1));
+    expect(api.events[0].durationMs, 0);
+    expect(api.events[1].durationMs, 0);
+    expect(api.events[2].durationMs, greaterThan(0));
+    expect(api.events[3].durationMs, 0);
+    expect(api.events.map((event) => event.dedupKey).toSet(), hasLength(4));
   });
 }
