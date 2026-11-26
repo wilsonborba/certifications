@@ -5,9 +5,12 @@ import 'package:certifications/core/settings.dart';
 import 'package:certifications/core/utils/my_theme.dart';
 import 'package:certifications/domain/services/client_telemetry_service.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await initializeDateFormatting();
 
   setUrlStrategy(PathUrlStrategy());
 

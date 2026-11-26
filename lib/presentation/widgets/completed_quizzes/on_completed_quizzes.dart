@@ -2,6 +2,7 @@ import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/quiz.dart';
 import 'package:certifications/domain/services/quiz_api_service.dart';
 import 'package:certifications/presentation/components/attachment/app_bar.dart';
+import 'package:certifications/presentation/widgets/completed_quizzes/created_quiz_history_screen.dart';
 import 'package:certifications/presentation/components/quiz/quiz_leaderboard_view.dart';
 import 'package:certifications/presentation/components/quiz/quiz_share_modal.dart';
 import 'package:certifications/presentation/components/search/live_search_field.dart';
@@ -15,7 +16,8 @@ class OnCompletedQuizzesScreen extends StatefulWidget {
   const OnCompletedQuizzesScreen({super.key});
 
   @override
-  State<OnCompletedQuizzesScreen> createState() => _OnCompletedQuizzesScreenState();
+  State<OnCompletedQuizzesScreen> createState() =>
+      _OnCompletedQuizzesScreenState();
 }
 
 class _OnCompletedQuizzesScreenState extends State<OnCompletedQuizzesScreen> {
@@ -47,7 +49,11 @@ class _OnCompletedQuizzesScreenState extends State<OnCompletedQuizzesScreen> {
             final filtered = _searchQuery.isEmpty
                 ? quizzes
                 : quizzes
-                      .where((q) => q.title.toLowerCase().contains(_searchQuery.toLowerCase()))
+                      .where(
+                        (q) => q.title.toLowerCase().contains(
+                          _searchQuery.toLowerCase(),
+                        ),
+                      )
                       .toList();
 
             return Center(
@@ -58,10 +64,23 @@ class _OnCompletedQuizzesScreenState extends State<OnCompletedQuizzesScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const CreatedQuizHistoryScreen(),
+                            ),
+                          ),
+                          icon: const Icon(Icons.history),
+                          label: Text(context.tr('createdQuizHistoryTitle')),
+                        ),
+                      ),
                       if (quizzes.isNotEmpty) ...[
                         LiveSearchField(
                           hintText: context.tr('searchQuizzesHint'),
-                          onChanged: (value) => setState(() => _searchQuery = value),
+                          onChanged: (value) =>
+                              setState(() => _searchQuery = value),
                         ),
                         const SizedBox(height: 16),
                       ],
@@ -71,7 +90,11 @@ class _OnCompletedQuizzesScreenState extends State<OnCompletedQuizzesScreen> {
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(Icons.emoji_events_outlined, size: 48, color: Colors.grey),
+                                    const Icon(
+                                      Icons.emoji_events_outlined,
+                                      size: 48,
+                                      color: Colors.grey,
+                                    ),
                                     const SizedBox(height: 12),
                                     Text(context.tr('noCompletedQuizzesYet')),
                                   ],
@@ -80,7 +103,9 @@ class _OnCompletedQuizzesScreenState extends State<OnCompletedQuizzesScreen> {
                             : filtered.isEmpty
                             ? Center(
                                 child: Text(
-                                  context.trParams('noSearchResultsLabel', {'query': _searchQuery}),
+                                  context.trParams('noSearchResultsLabel', {
+                                    'query': _searchQuery,
+                                  }),
                                   textAlign: TextAlign.center,
                                 ),
                               )
@@ -148,9 +173,9 @@ class _CompletedQuizTileState extends State<_CompletedQuizTile> {
     } catch (_) {
       if (mounted) {
         setState(() => _busy = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.tr('errorGeneric'))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(context.tr('errorGeneric'))));
       }
     }
   }
@@ -192,9 +217,9 @@ class _CompletedQuizTileState extends State<_CompletedQuizTile> {
     } catch (_) {
       if (mounted) {
         setState(() => _busy = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.tr('errorGeneric'))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(context.tr('errorGeneric'))));
       }
     }
   }
@@ -249,7 +274,9 @@ class _CompletedQuizTileState extends State<_CompletedQuizTile> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    isPublic ? context.tr('visibilityPublic') : context.tr('visibilityPrivate'),
+                    isPublic
+                        ? context.tr('visibilityPublic')
+                        : context.tr('visibilityPrivate'),
                     style: Theme.of(context).textTheme.labelLarge,
                   ),
                   Switch(
@@ -268,17 +295,43 @@ class _CompletedQuizTileState extends State<_CompletedQuizTile> {
                 icon: const Icon(Icons.emoji_events_outlined),
                 onPressed: _busy ? null : _openLeaderboard,
               ),
+              if (isPublic)
+                IconButton(
+                  tooltip: context.tr('publicStatsAction'),
+                  icon: const Icon(Icons.bar_chart_outlined),
+                  onPressed: _busy
+                      ? null
+                      : () => Navigator.of(context).pushNamed(
+                          '/v1/quizzes/${Uri.encodeComponent(_quiz.id)}/statistics',
+                        ),
+                ),
+              if (!isPublic)
+                IconButton(
+                  tooltip: context.tr('privateStatsAction'),
+                  icon: const Icon(Icons.bar_chart_outlined),
+                  onPressed: _busy
+                      ? null
+                      : () => Navigator.of(context).pushNamed(
+                          '/v1/me/quizzes/${Uri.encodeComponent(_quiz.id)}/statistics',
+                        ),
+                ),
               _quiz.isDeleteProtected
                   ? Tooltip(
                       message: context.tr('deleteProtectedTooltip'),
                       child: IconButton(
-                        icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.redAccent,
+                        ),
                         onPressed: null,
                       ),
                     )
                   : IconButton(
                       tooltip: context.tr('delete'),
-                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: Colors.redAccent,
+                      ),
                       onPressed: _busy ? null : _delete,
                     ),
             ],

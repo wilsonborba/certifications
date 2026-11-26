@@ -29,6 +29,20 @@ void main() {
           'quiz_detail',
         ),
         (
+          '/v1/quizzes/q123/statistics',
+          CertificationsScreen.publicQuizStatistics,
+          'q123',
+          false,
+          'public_quiz_statistics',
+        ),
+        (
+          '/v1/me/quizzes/private-q/statistics',
+          CertificationsScreen.ownedQuizStatistics,
+          'private-q',
+          true,
+          'owned_quiz_statistics',
+        ),
+        (
           '/v1/dashboard',
           CertificationsScreen.dashboard,
           null,
@@ -110,6 +124,45 @@ void main() {
     },
   );
 
+  test('public certificate QR URL aliases the existing verification route', () {
+    for (final path in [
+      '/certificates/ASODYA-FIXTURE-CODE',
+      '/v1/certificates/ASODYA-FIXTURE-CODE',
+    ]) {
+      final route = CertificationsRoute.parse(Uri.parse(path));
+      expect(route.screen, CertificationsScreen.certificate, reason: path);
+      expect(route.id, 'ASODYA-FIXTURE-CODE', reason: path);
+      expect(route.requiresAuth, isFalse, reason: path);
+      expect(
+        route.routeTemplate,
+        '/v1/certificates/:certificate_code',
+        reason: path,
+      );
+    }
+
+    for (final path in [
+      '/certificates',
+      '/certificates/ASODYA-FIXTURE-CODE/extra',
+    ]) {
+      final route = CertificationsRoute.parse(Uri.parse(path));
+      expect(route.screen, CertificationsScreen.landing, reason: path);
+    }
+  });
+
+  test('prepared Notes continuation accepts only a study identifier query', () {
+    final route = CertificationsRoute.parse(
+      Uri.parse('/v1/studies/new?prepared_study_id=study_42'),
+    );
+    expect(route.screen, CertificationsScreen.studyNew);
+    expect(route.requiresAuth, isTrue);
+    expect(route.queryParameters['prepared_study_id'], 'study_42');
+
+    final unsafe = CertificationsRoute.parse(
+      Uri.parse('/v1/studies/new?prepared_study_id=study%2F42'),
+    );
+    expect(unsafe.preparedStudyId, isNull);
+  });
+
   testWidgets(
     'ScreenTrailObserver records template view and opening Area 10 routes performs no mutation',
     (tester) async {
@@ -154,6 +207,7 @@ void main() {
         '/v1/attempts/a7/results',
         '/v1/history',
         '/v1/certificates/C1',
+        '/certificates/C2',
         '/quizzes/shared/TOK_SECRET',
       ]) {
         nav.pushNamed(path);

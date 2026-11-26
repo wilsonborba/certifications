@@ -88,12 +88,29 @@ class CertificationsApiClient {
   }
 
   // Preparations & sources
-  Future<http.Response> listStudies({int? page, int? limit}) => _apiRequest(
+  Future<http.Response> listStudies({
+    int? page,
+    int? limit,
+    int? offset,
+    String? q,
+    int? createdFrom,
+    int? createdTo,
+    String? status,
+    String? quizId,
+    String? tag,
+  }) => _apiRequest(
     method: 'GET',
     url: endpoint('/studies'),
     queryParams: {
       if (page != null) 'page': page,
       if (limit != null) 'limit': limit,
+      if (offset != null) 'offset': offset,
+      if (q != null) 'q': q,
+      if (createdFrom != null) 'created_from': createdFrom,
+      if (createdTo != null) 'created_to': createdTo,
+      if (status != null) 'status': status,
+      if (quizId != null) 'quiz_id': quizId,
+      if (tag != null) 'tag': tag,
     },
   );
 
@@ -289,6 +306,56 @@ class CertificationsApiClient {
       if (limit != null) 'limit': limit,
     },
   );
+
+  /// Searches the public question catalog using the CertAPI #49 contract.
+  /// The projection intentionally contains no answer, explanation, citation,
+  /// or source fields; consumers should render only fields returned by the
+  /// server.
+  Future<http.Response> searchPublicQuestions({
+    String? q,
+    String? language,
+    String? origin,
+    required int limit,
+    required int offset,
+  }) {
+    if (limit < 1 || limit > 50) {
+      throw ArgumentError.value(limit, 'limit', 'Must be between 1 and 50');
+    }
+    if (offset < 0) {
+      throw ArgumentError.value(offset, 'offset', 'Must be non-negative');
+    }
+    return _apiRequest(
+      method: 'GET',
+      url: endpoint('/catalog/questions'),
+      queryParams: {
+        if (q != null && q.isNotEmpty) 'q': q,
+        if (language != null && language.isNotEmpty) 'language': language,
+        if (origin != null && origin.isNotEmpty) 'origin': origin,
+        'limit': limit,
+        'offset': offset,
+      },
+    );
+  }
+
+  /// Reuses an explicit page-sized set of current public immutable versions.
+  /// The backend revalidates public membership and derives provenance.
+  Future<http.Response> reuseStudyQuestions(
+    String studyId,
+    List<String> questionVersionIds,
+  ) {
+    if (questionVersionIds.isEmpty || questionVersionIds.length > 50) {
+      throw ArgumentError.value(
+        questionVersionIds.length,
+        'questionVersionIds.length',
+        'Must be between 1 and 50',
+      );
+    }
+    return _apiRequest(
+      method: 'POST',
+      url: endpoint('/studies/$studyId/questions/reuse'),
+      body: {'question_version_ids': questionVersionIds},
+    );
+  }
 
   Future<http.Response> getQuiz(String quizId) =>
       _apiRequest(method: 'GET', url: endpoint('/quizzes/$quizId'));

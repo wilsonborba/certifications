@@ -133,6 +133,7 @@ class _SharedQuizAnswerScreenState extends State<SharedQuizAnswerScreen> {
 
     return Scaffold(
       appBar: AttachmentAppBar(title: context.tr('question')),
+      endDrawer: const AttachmentSideMenu(),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 760),

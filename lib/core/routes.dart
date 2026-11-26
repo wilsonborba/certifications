@@ -3,6 +3,8 @@ enum CertificationsScreen {
   landing,
   catalog,
   quizDetail,
+  publicQuizStatistics,
+  ownedQuizStatistics,
   dashboard,
   studies,
   studyNew,
@@ -33,6 +35,7 @@ class CertificationsRoute {
 
   bool get requiresAuth => switch (screen) {
     CertificationsScreen.dashboard ||
+    CertificationsScreen.ownedQuizStatistics ||
     CertificationsScreen.studies ||
     CertificationsScreen.studyNew ||
     CertificationsScreen.studyDetail ||
@@ -43,6 +46,15 @@ class CertificationsRoute {
     CertificationsScreen.history => true,
     _ => false,
   };
+
+  /// Study identifier returned by the trusted prepared-source handoff.
+  /// The value is never copied to route telemetry or treated as authority.
+  String? get preparedStudyId {
+    final value = queryParameters['prepared_study_id'];
+    return value != null && RegExp(r'^[A-Za-z0-9_-]{1,128}$').hasMatch(value)
+        ? value
+        : null;
+  }
 
   static CertificationsRoute parse(Uri uri) {
     final segs = uri.pathSegments.where((s) => s.isNotEmpty).toList();
@@ -75,6 +87,18 @@ class CertificationsRoute {
         screen: CertificationsScreen.sharedQuiz,
         routeTemplate: '/quizzes/shared/:token',
         id: segs[2],
+        queryParameters: qp,
+      );
+    }
+
+    // Certificate artifacts use this public, stable URL in their QR code.
+    // Keep the existing v1 route as a compatibility alias, while normalizing
+    // both paths to the same safe telemetry template.
+    if (segs.length == 2 && segs[0] == 'certificates') {
+      return CertificationsRoute(
+        screen: CertificationsScreen.certificate,
+        routeTemplate: '/v1/certificates/:certificate_code',
+        id: segs[1],
         queryParameters: qp,
       );
     }
@@ -155,6 +179,14 @@ class CertificationsRoute {
             );
         }
       } else if (segs.length == 4) {
+        if (segs[1] == 'quizzes' && segs[3] == 'statistics') {
+          return CertificationsRoute(
+            screen: CertificationsScreen.publicQuizStatistics,
+            routeTemplate: '/v1/quizzes/:quiz_id/statistics',
+            id: segs[2],
+            queryParameters: qp,
+          );
+        }
         if (segs[1] == 'studies' && segs[3] == 'questions') {
           return CertificationsRoute(
             screen: CertificationsScreen.studyQuestions,
@@ -171,6 +203,16 @@ class CertificationsRoute {
             queryParameters: qp,
           );
         }
+      } else if (segs.length == 5 &&
+          segs[1] == 'me' &&
+          segs[2] == 'quizzes' &&
+          segs[4] == 'statistics') {
+        return CertificationsRoute(
+          screen: CertificationsScreen.ownedQuizStatistics,
+          routeTemplate: '/v1/me/quizzes/:quiz_id/statistics',
+          id: segs[3],
+          queryParameters: qp,
+        );
       }
     }
 
