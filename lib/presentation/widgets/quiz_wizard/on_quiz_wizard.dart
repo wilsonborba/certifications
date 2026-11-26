@@ -119,6 +119,7 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
   bool _createdDraftInThisSession = false;
   final Set<AttachedFile> _hydratedSelectionFiles = Set.identity();
   final Map<AttachedFile, String> _selectionDigestCache = Map.identity();
+  Set<String> _knownLocalSourceDigests = {};
   Future<void> _selectionMetadataTail = Future.value();
   int _generateStep = 0; // tracks which pipeline step is currently running
   String? _generateError;
@@ -151,6 +152,8 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
     _createdDraftInThisSession = false;
     _activeStudyId = widget.studyId;
     _hydratedSelectionFiles.clear();
+    _selectionDigestCache.clear();
+    _knownLocalSourceDigests = {};
     if (widget.studyId != null) _loadExistingStudy(widget.studyId!);
   }
 
@@ -333,25 +336,26 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
   ) async {
     if (!_canSyncSourceSelections(studyId, generation)) return;
 
-    if (_ownerStudyConfirmed) {
-      final saved = await _progressStore.getSourceSelections(studyId);
-      if (!_canSyncSourceSelections(studyId, generation)) return;
-      final selectedFiles = wizardData.attachedFiles
-          .where((file) => file.remoteSourceId == null)
-          .toList(growable: false);
-      final digests = <AttachedFile, String>{};
-      final digestCounts = <String, int>{};
-      for (final file in selectedFiles) {
-        final digest = _selectionDigestCache.putIfAbsent(
-          file,
-          () => StudySelection.contentDigest(file.bytes, kind: file.kind),
-        );
-        digests[file] = digest;
-        digestCounts.update(digest, (count) => count + 1, ifAbsent: () => 1);
-      }
+    var savedSelections = const <DraftSourceSelection>[];
+    final selectedFiles = wizardData.attachedFiles
+        .where((file) => file.remoteSourceId == null)
+        .toList(growable: false);
+    final digests = <AttachedFile, String>{};
+    final digestCounts = <String, int>{};
+    for (final file in selectedFiles) {
+      final digest = _selectionDigestCache.putIfAbsent(
+        file,
+        () => StudySelection.contentDigest(file.bytes, kind: file.kind),
+      );
+      digests[file] = digest;
+      digestCounts.update(digest, (count) => count + 1, ifAbsent: () => 1);
+    }
 
+    if (_ownerStudyConfirmed) {
+      savedSelections = await _progressStore.getSourceSelections(studyId);
+      if (!_canSyncSourceSelections(studyId, generation)) return;
       final entriesByDigest = {
-        for (final entry in saved) entry.contentDigest: entry,
+        for (final entry in savedSelections) entry.contentDigest: entry,
       };
       final restore = <(AttachedFile, String, String)>[];
       for (final file in selectedFiles) {
@@ -399,35 +403,40 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
     }
 
     if (!_canSyncSourceSelections(studyId, generation)) return;
-    final files = wizardData.attachedFiles
-        .where((file) => file.remoteSourceId == null && !file.isWholeDocument)
-        .toList(growable: false);
-    final digestCounts = <String, int>{};
-    final entries = <DraftSourceSelection>[];
-    for (final file in files) {
-      final digest = _selectionDigestCache.putIfAbsent(
-        file,
-        () => StudySelection.contentDigest(file.bytes, kind: file.kind),
-      );
-      digestCounts.update(digest, (count) => count + 1, ifAbsent: () => 1);
-      final spec = _canonicalSelection(file);
-      if (spec.isNotEmpty) {
-        entries.add(
-          DraftSourceSelection(
-            contentDigest: digest,
-            kind: file.selectionKind,
-            spec: spec,
-          ),
-        );
-      }
+    final entriesByDigest = {
+      for (final entry in savedSelections) entry.contentDigest: entry,
+    };
+    // Keep metadata for files that have not been reselected yet. A refresh
+    // starts with no local bytes, and the user may reselect several sources
+    // one at a time. Only a digest present in the current draft can replace or
+    // clear its prior selection.
+    for (final removedDigest in _knownLocalSourceDigests.difference(
+      digests.values.toSet(),
+    )) {
+      entriesByDigest.remove(removedDigest);
     }
-    // Identical content cannot safely distinguish two different selections.
-    // Leave both for explicit reselection rather than bind ranges by order.
-    final uniqueEntries = entries
-        .where((entry) => digestCounts[entry.contentDigest] == 1)
-        .toList(growable: false);
+    for (final file in selectedFiles) {
+      final digest = digests[file]!;
+      if (digestCounts[digest] != 1 || file.isWholeDocument) {
+        entriesByDigest.remove(digest);
+        continue;
+      }
+      final spec = _canonicalSelection(file);
+      if (spec.isEmpty) {
+        entriesByDigest.remove(digest);
+        continue;
+      }
+      entriesByDigest[digest] = DraftSourceSelection(
+        contentDigest: digest,
+        kind: file.selectionKind,
+        spec: spec,
+      );
+    }
     if (!_canSyncSourceSelections(studyId, generation)) return;
-    await _progressStore.saveSourceSelections(studyId, uniqueEntries);
+    await _progressStore.saveSourceSelections(studyId, entriesByDigest.values);
+    if (_canSyncSourceSelections(studyId, generation)) {
+      _knownLocalSourceDigests = digests.values.toSet();
+    }
   }
 
   @override

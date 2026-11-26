@@ -190,6 +190,66 @@ void main() {
     },
   );
 
+  testWidgets(
+    'fresh refresh keeps pending source selections until files are reselected',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      const secondText = 'gamma\ndelta';
+      const secondId = 'selection-refresh-second-study';
+      await store.clear(studyId);
+      await store.clear(secondId);
+      addTearDown(() async {
+        await store.clear(studyId);
+        await store.clear(secondId);
+      });
+      final bytes = utf8.encode(text);
+      final secondBytes = utf8.encode(secondText);
+      await store.saveSourceSelections(studyId, [
+        DraftSourceSelection(
+          contentDigest: StudySelection.contentDigest(bytes, kind: 'txt'),
+          kind: 'passages',
+          spec: selectedSpec,
+        ),
+        DraftSourceSelection(
+          contentDigest: StudySelection.contentDigest(secondBytes, kind: 'txt'),
+          kind: 'passages',
+          spec: 'p1:6-11',
+        ),
+      ]);
+      final draft = QuizWizardData()
+        ..name = 'Selection study'
+        ..currentStep = 1;
+
+      await tester.pumpWidget(
+        _wizard(
+          studyId: studyId,
+          draft: draft,
+          api: _SelectionStudyApi(),
+          progressStore: store,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(draft.attachedFiles, isEmpty);
+      expect(await store.getSourceSelections(studyId), hasLength(2));
+
+      draft.addFile(AttachedFile(bytes: bytes, name: 'notes.txt', kind: 'txt'));
+      await tester.pumpAndSettle();
+      await _openFileSelector(tester);
+
+      expect(draft.attachedFiles.single.selectionSpec, selectedSpec);
+      final retained = await store.getSourceSelections(studyId);
+      expect(retained, hasLength(2));
+      expect(
+        retained.singleWhere((entry) => entry.spec == 'p1:6-11').contentDigest,
+        StudySelection.contentDigest(secondBytes, kind: 'txt'),
+      );
+    },
+  );
+
   testWidgets('different reselected content does not inherit saved ranges', (
     tester,
   ) async {
