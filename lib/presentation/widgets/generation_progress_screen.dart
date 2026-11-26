@@ -44,6 +44,8 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
   bool _busy = false;
   bool _loading = true;
   Timer? _refreshTimer;
+  bool _refreshPending = false;
+  int _jobGeneration = 0;
 
   DraftProgressStore get _progressStore => widget._progressStore ?? _store;
 
@@ -52,21 +54,41 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
     super.initState();
     _activeJobId = widget.jobId;
     unawaited(_refresh(initial: true));
-    _refreshTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-      unawaited(_refresh());
-    });
+    _armRefreshTimer();
   }
 
   @override
   void didUpdateWidget(covariant GenerationProgressScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.jobId != widget.jobId) {
+      _jobGeneration++;
       _activeJobId = widget.jobId;
       _events.clear();
       _estimate = null;
       _job = null;
-      unawaited(_refresh(initial: true));
+      _loadError = null;
+      _loading = true;
+      _refreshPending = true;
+      _armRefreshTimer();
+      _drainPendingRefresh();
     }
+  }
+
+  void _armRefreshTimer() {
+    _refreshTimer ??= Timer.periodic(const Duration(seconds: 3), (_) {
+      unawaited(_refresh());
+    });
+  }
+
+  void _stopRefreshTimer() {
+    _refreshTimer?.cancel();
+    _refreshTimer = null;
+  }
+
+  void _drainPendingRefresh() {
+    if (!_refreshPending || !mounted || _busy) return;
+    _refreshPending = false;
+    unawaited(_refresh(initial: true));
   }
 
   @override
@@ -77,21 +99,37 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
 
   Future<void> _refresh({bool initial = false}) async {
     if (_busy) return;
+    _refreshPending = false;
     _busy = true;
+    final jobGeneration = _jobGeneration;
+    final requestedJobId = _activeJobId;
+    bool isCurrentRequest() =>
+        mounted &&
+        jobGeneration == _jobGeneration &&
+        requestedJobId == _activeJobId;
     if (initial && mounted) setState(() => _loading = true);
     try {
-      final job = await _api.get(_activeJobId);
+      final job = await _api.get(requestedJobId);
+      if (!isCurrentRequest()) {
+        _refreshPending = true;
+        return;
+      }
       final after = _events.isEmpty ? 0 : _events.last.seq;
+      var newEvents = <GenerationEvent>[];
       try {
-        final newEvents = await _api.events(jobId: job.id, after: after);
-        if (newEvents.isNotEmpty) _events.addAll(newEvents);
+        newEvents = await _api.events(jobId: job.id, after: after);
       } catch (_) {
         // The durable job status remains useful when the optional timeline is
         // unavailable or its event stream fails.
       }
-      if (_estimate == null) {
+      if (!isCurrentRequest()) {
+        _refreshPending = true;
+        return;
+      }
+      var estimate = _estimate;
+      if (estimate == null) {
         try {
-          _estimate = await _api.estimate(
+          estimate = await _api.estimate(
             studyId: job.studyId,
             language: job.language,
             count: job.requestedCount,
@@ -100,7 +138,26 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
           // A measured estimate is optional. Keep it unavailable on API error.
         }
       }
+      if (!isCurrentRequest()) {
+        _refreshPending = true;
+        return;
+      }
       await _progressStore.saveGenerationJobId(job.studyId, job.id);
+      if (!isCurrentRequest()) {
+        _refreshPending = true;
+        return;
+      }
+      if (newEvents.isNotEmpty) _events.addAll(newEvents);
+      _estimate ??= estimate;
+      if (job.isActive) {
+        _armRefreshTimer();
+      } else if (const {
+        'completed',
+        'cancelled',
+        'failed',
+      }.contains(job.status)) {
+        _stopRefreshTimer();
+      }
       if (!mounted) return;
       setState(() {
         _job = job;
@@ -108,13 +165,17 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
         _loading = false;
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!isCurrentRequest()) {
+        _refreshPending = true;
+        return;
+      }
       setState(() {
         _loadError = error;
         _loading = false;
       });
     } finally {
       _busy = false;
+      _drainPendingRefresh();
     }
   }
 
@@ -136,6 +197,7 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
       setState(() => _loadError = error);
     } finally {
       if (mounted) setState(() => _busy = false);
+      _drainPendingRefresh();
     }
   }
 
@@ -165,6 +227,7 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
       if (mounted) setState(() => _loadError = error);
     } finally {
       if (mounted) setState(() => _busy = false);
+      _drainPendingRefresh();
     }
   }
 
@@ -193,6 +256,7 @@ class _GenerationProgressScreenState extends State<GenerationProgressScreen> {
       setState(() => _loadError = error);
     } finally {
       if (mounted) setState(() => _busy = false);
+      _drainPendingRefresh();
     }
   }
 

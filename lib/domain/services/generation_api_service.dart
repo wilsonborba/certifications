@@ -104,7 +104,12 @@ class GenerationApiService {
     try {
       final decoded = jsonDecode(response.body);
       if (decoded is Map<String, dynamic>) {
-        code = decoded['code'] as String?;
+        final error = decoded['error'];
+        code = error is String
+            ? error
+            : error is Map<String, dynamic>
+            ? (error['code'] as String?)
+            : decoded['code'] as String?;
         message = decoded['message'] as String?;
       }
     } catch (_) {}

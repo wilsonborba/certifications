@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/core/utils/my_theme.dart';
 import 'package:certifications/domain/models/generation.dart';
 import 'package:certifications/domain/services/generation_api_service.dart';
 import 'package:certifications/domain/models/study.dart';
 import 'package:certifications/domain/models/authoring.dart';
+import 'package:certifications/domain/services/draft_progress_store.dart';
 import 'package:certifications/domain/services/study_api_service.dart';
 import 'package:certifications/domain/services/question_authoring_service.dart';
 import 'package:certifications/presentation/widgets/generation_progress_screen.dart';
@@ -17,15 +20,17 @@ class _FixtureGenerationApi implements GenerationApiService {
     this.failEstimate = false,
   });
   String status;
+  Completer<GenerationJob>? firstGetCompleter;
   String currentJobId = 'job-1';
   final requestedJobIds = <String>[];
+  final requestedEventJobIds = <String>[];
   int stopCalls = 0;
   int resumeCalls = 0;
   final bool failEvents;
   final bool failEstimate;
 
-  GenerationJob _job(String value) => GenerationJob(
-    id: currentJobId,
+  GenerationJob _job(String value, {String? id}) => GenerationJob(
+    id: id ?? currentJobId,
     studyId: 'study-1',
     status: value,
     language: 'en',
@@ -42,7 +47,10 @@ class _FixtureGenerationApi implements GenerationApiService {
   @override
   Future<GenerationJob> get(String jobId) async {
     requestedJobIds.add(jobId);
-    return _job(status);
+    if (jobId == 'job-1' && firstGetCompleter != null) {
+      return firstGetCompleter!.future;
+    }
+    return _job(status, id: jobId);
   }
 
   @override
@@ -65,6 +73,7 @@ class _FixtureGenerationApi implements GenerationApiService {
     required String jobId,
     int after = 0,
   }) async {
+    requestedEventJobIds.add(jobId);
     if (failEvents) throw const FormatException('events unavailable');
     return [
       GenerationEvent(
@@ -201,6 +210,78 @@ void main() {
     await _pumpScreen(tester, status: 'completed', size: const Size(1300, 860));
     expect(find.text('Generation completed'), findsWidgets);
     expect(find.text('Stop safely'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('terminal generation statuses stop polling', (tester) async {
+    for (final status in ['completed', 'cancelled', 'failed']) {
+      final api = _FixtureGenerationApi(status);
+      await _pumpScreen(
+        tester,
+        status: status,
+        size: const Size(390, 844),
+        api: api,
+      );
+      await tester.pump();
+      expect(api.requestedJobIds, ['job-1'], reason: status);
+
+      for (var poll = 0; poll < 3; poll++) {
+        await tester.pump(const Duration(seconds: 3));
+        await tester.pump();
+      }
+
+      expect(api.requestedJobIds, ['job-1'], reason: status);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+  });
+
+  testWidgets('new job id waits for old refresh then owns state and storage', (
+    tester,
+  ) async {
+    final store = DraftProgressStore.instance;
+    await store.clear('study-1');
+    addTearDown(() => store.clear('study-1'));
+    final api = _FixtureGenerationApi('queued')
+      ..firstGetCompleter = Completer<GenerationJob>();
+    var jobId = 'job-1';
+    late StateSetter updateJobId;
+
+    Widget host() => MaterialApp(
+      theme: AppTheme.light(),
+      locale: const Locale('en'),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizationsDelegate(),
+        FallbackMaterialLocalizationsDelegate(),
+        DefaultWidgetsLocalizations.delegate,
+        DefaultMaterialLocalizations.delegate,
+      ],
+      home: StatefulBuilder(
+        builder: (context, setState) {
+          updateJobId = setState;
+          return GenerationProgressScreen(jobId: jobId, api: api);
+        },
+      ),
+    );
+
+    await tester.pumpWidget(host());
+    await tester.pump();
+    expect(api.requestedJobIds, ['job-1']);
+
+    updateJobId(() => jobId = 'job-2');
+    await tester.pump();
+    expect(api.requestedJobIds, ['job-1']);
+    api.firstGetCompleter!.complete(api._job('completed', id: 'job-1'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump();
+
+    expect(api.requestedJobIds, ['job-1', 'job-2']);
+    expect(api.requestedEventJobIds, ['job-2']);
+    expect(find.text('Queue position'), findsOneWidget);
+    expect(find.text('Generation completed'), findsNothing);
+    expect(await store.getGenerationJobId('study-1'), 'job-2');
     expect(tester.takeException(), isNull);
   });
 

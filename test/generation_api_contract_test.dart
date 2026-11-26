@@ -131,4 +131,45 @@ void main() {
       ]);
     },
   );
+
+  test(
+    'resume parses the backend error envelope for an unknown Cortex outcome',
+    () async {
+      final client = MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(
+          request.url.path,
+          '/apps/certifications/v1/generations/job-1/resume',
+        );
+        return http.Response(
+          jsonEncode({
+            'error': 'cannot_resume_unknown_cortex_outcome',
+            'message': 'Cortex may already have accepted this request',
+          }),
+          409,
+        );
+      });
+      final service = GenerationApiService(
+        adapter: ApiAdapter(client: client, csrfTokenProvider: () => null),
+      );
+
+      await expectLater(
+        service.resume('job-1'),
+        throwsA(
+          isA<GenerationApiException>()
+              .having((error) => error.statusCode, 'statusCode', 409)
+              .having(
+                (error) => error.code,
+                'code',
+                'cannot_resume_unknown_cortex_outcome',
+              )
+              .having(
+                (error) => error.message,
+                'message',
+                'Cortex may already have accepted this request',
+              ),
+        ),
+      );
+    },
+  );
 }
