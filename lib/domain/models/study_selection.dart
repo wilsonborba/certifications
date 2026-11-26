@@ -94,6 +94,7 @@ class StudySelection {
       final end = int.tryParse(match.group(2) ?? match.group(1)!);
       if (start == null ||
           end == null ||
+          (!allowSingleton && end <= start) ||
           start < previousEnd ||
           (!mergeAdjacent && start == previousEnd)) {
         return null;
