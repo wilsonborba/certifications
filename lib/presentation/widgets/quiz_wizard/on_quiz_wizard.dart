@@ -343,8 +343,8 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
     });
 
     try {
-      final studyId = _activeStudyId ?? (await _api.create(wizardData.name)).id;
-      _activeStudyId = studyId;
+      final studyId = await _ensureStudyDraft();
+      if (studyId == null) return;
 
       // A browser refresh or navigation back must resume the existing server
       // job instead of creating a second generation request.
