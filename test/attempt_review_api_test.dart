@@ -30,6 +30,7 @@ void main() {
           'started_to': '200',
           'quiz_id': 'quiz/a',
           'tag': 'biology',
+          'status': 'completed',
           'limit': '10',
           'offset': '20',
         });
@@ -69,6 +70,7 @@ void main() {
           startedTo: 200,
           quizId: 'quiz/a',
           tag: 'biology',
+          status: AttemptHistoryStatus.completed,
           limit: 10,
           offset: 20,
         ),

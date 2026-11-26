@@ -400,7 +400,15 @@ class _OnStudyDashboardScreenState extends State<OnStudyDashboardScreen> {
                         ],
                         isDesktop: isDesktop,
                         onTapCompletedQuizzes: () =>
-                            Navigator.of(context).pushNamed('/v1/history'),
+                            Navigator.of(context).pushNamed(
+                              Uri(
+                                path: '/v1/history',
+                                queryParameters: {
+                                  'status':
+                                      AttemptHistoryStatus.completed.apiValue,
+                                },
+                              ).toString(),
+                            ),
                       ),
                       Align(
                         alignment: Alignment.centerRight,

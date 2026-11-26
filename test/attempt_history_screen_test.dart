@@ -44,6 +44,31 @@ Widget _app(Widget child, {Locale locale = const Locale('en')}) => MaterialApp(
 
 void main() {
   testWidgets(
+    'completed history filter comes from typed route state and can clear',
+    (tester) async {
+      final api = _HistoryApi();
+      await tester.pumpWidget(
+        _app(
+          AttemptHistoryScreen(
+            api: api,
+            initialStatus: AttemptHistoryStatus.fromQueryValue('completed'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(api.queries.single.status, AttemptHistoryStatus.completed);
+      final completedFilter = find.byType(FilterChip);
+      expect(tester.widget<FilterChip>(completedFilter).selected, isTrue);
+      await tester.tap(completedFilter);
+      await tester.pumpAndSettle();
+      expect(api.queries.last.status, isNull);
+      expect(tester.widget<FilterChip>(completedFilter).selected, isFalse);
+      expect(AttemptHistoryStatus.fromQueryValue('unknown'), isNull);
+    },
+  );
+
+  testWidgets(
     'history shows only producer supplied repeat metadata by locale',
     (tester) async {
       final rows = [
@@ -219,6 +244,7 @@ void main() {
     await tester.pumpWidget(_app(AttemptHistoryScreen(api: api)));
     await tester.pumpAndSettle();
 
+    expect(api.queries.single.status, isNull);
     expect(find.text('Unix timestamp'), findsNothing);
     expect(find.text('Choose date'), findsNWidgets(2));
     await tester.tap(find.text('Choose date').first);

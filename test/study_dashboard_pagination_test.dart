@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:certifications/core/routes.dart';
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/attempt_review.dart';
 import 'package:certifications/domain/models/quiz.dart';
@@ -44,6 +45,7 @@ class _AttemptApi extends AttemptReviewApiService {
   _AttemptApi({this.failOverview = false});
 
   final bool failOverview;
+  final queries = <AttemptHistoryQuery>[];
 
   @override
   Future<AttemptOverview> getOverview() async {
@@ -63,8 +65,10 @@ class _AttemptApi extends AttemptReviewApiService {
   }
 
   @override
-  Future<AttemptHistoryPage> listAttempts(AttemptHistoryQuery query) async =>
-      const AttemptHistoryPage(items: [], total: 0, limit: 20, offset: 0);
+  Future<AttemptHistoryPage> listAttempts(AttemptHistoryQuery query) async {
+    queries.add(query);
+    return const AttemptHistoryPage(items: [], total: 0, limit: 20, offset: 0);
+  }
 }
 
 class _StudyApi extends StudyApiService {
@@ -137,7 +141,21 @@ Widget _app({
       DefaultMaterialLocalizations.delegate,
     ],
     supportedLocales: AppLocalizations.supportedLocales,
-    routes: {'/v1/history': (_) => AttemptHistoryScreen(api: attempts)},
+    onGenerateRoute: (settings) {
+      final route = CertificationsRoute.parse(
+        Uri.tryParse(settings.name ?? '') ?? Uri(path: '/'),
+      );
+      if (route.screen != CertificationsScreen.history) return null;
+      return MaterialPageRoute<void>(
+        settings: RouteSettings(name: route.routeTemplate),
+        builder: (_) => AttemptHistoryScreen(
+          api: attempts,
+          initialStatus: AttemptHistoryStatus.fromQueryValue(
+            route.queryParameters['status'],
+          ),
+        ),
+      );
+    },
     home: OnStudyDashboardScreen(
       studyApi: studyApi,
       historyApi: historyApi,
@@ -291,12 +309,13 @@ void main() {
         items: [_studyJson('v2-history', 'V2 history row', 1760000000)],
       ),
     );
+    final attemptApi = _AttemptApi();
     await tester.pumpWidget(
       _app(
         historyApi: historyApi,
         studyApi: _StudyApi(),
         quizApi: _UnavailableQuizApi(),
-        attemptApi: _AttemptApi(),
+        attemptApi: attemptApi,
       ),
     );
     await tester.pumpAndSettle();
@@ -317,6 +336,11 @@ void main() {
     await tester.tap(find.byTooltip('View completed quizzes'));
     await tester.pumpAndSettle();
     expect(find.text('Attempt history'), findsOneWidget);
+    expect(
+      (tester.widget<FilterChip>(find.byType(FilterChip))).selected,
+      isTrue,
+    );
+    expect(attemptApi.queries.last.status, AttemptHistoryStatus.completed);
   });
 
   testWidgets('created-study history has an independent dashboard entry', (

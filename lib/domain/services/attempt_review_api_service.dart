@@ -9,9 +9,21 @@ class AttemptReviewApiException implements Exception {
   final int statusCode;
 }
 
+enum AttemptHistoryStatus {
+  completed;
+
+  String get apiValue => name;
+
+  static AttemptHistoryStatus? fromQueryValue(String? value) => switch (value) {
+    'completed' => AttemptHistoryStatus.completed,
+    _ => null,
+  };
+}
+
 class AttemptHistoryQuery {
   const AttemptHistoryQuery({
     this.q,
+    this.status,
     this.startedFrom,
     this.startedTo,
     this.quizId,
@@ -21,6 +33,7 @@ class AttemptHistoryQuery {
   });
 
   final String? q;
+  final AttemptHistoryStatus? status;
 
   /// Unix seconds, inclusive. The UI maps local calendar dates to these bounds.
   final int? startedFrom;
@@ -46,6 +59,7 @@ class AttemptHistoryQuery {
 
   Map<String, dynamic> toQueryParameters() => {
     if (q != null && q!.isNotEmpty) 'q': q,
+    if (status != null) 'status': status!.apiValue,
     if (startedFrom != null) 'started_from': startedFrom,
     if (startedTo != null) 'started_to': startedTo,
     if (quizId != null && quizId!.isNotEmpty) 'quiz_id': quizId,

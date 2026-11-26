@@ -163,6 +163,16 @@ void main() {
     expect(unsafe.preparedStudyId, isNull);
   });
 
+  test('completed history keeps the authenticated named route and filter', () {
+    final route = CertificationsRoute.parse(
+      Uri.parse('/v1/history?status=completed'),
+    );
+    expect(route.screen, CertificationsScreen.history);
+    expect(route.requiresAuth, isTrue);
+    expect(route.routeTemplate, '/v1/history');
+    expect(route.queryParameters['status'], 'completed');
+  });
+
   testWidgets(
     'ScreenTrailObserver records template view and opening Area 10 routes performs no mutation',
     (tester) async {
