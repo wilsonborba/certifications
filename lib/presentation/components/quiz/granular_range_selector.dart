@@ -66,6 +66,7 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
   late final TextEditingController _spec = TextEditingController(
     text: widget.file.selectionSpec,
   );
+  String? _selectionGestureBaseSpec;
   String? _pdfViewType;
   String? _pdfObjectUrl;
 
@@ -147,17 +148,22 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
     return TextSpan(children: spans);
   }
 
-  void _handleTextSelection(TextSelection selection, SelectionChangedCause? _) {
+  void _handleTextSelection(
+    TextSelection selection,
+    SelectionChangedCause? cause,
+  ) {
     if (!mounted || selection.isCollapsed) return;
     final file = widget.file;
-    final existingSpec =
-        !file.isWholeDocument && file.selectionKind == 'passages'
-        ? file.selectionSpec
-        : '';
+    final start = selection.start;
+    final end = selection.end;
+    if (_selectionGestureBaseSpec == null ||
+        cause != SelectionChangedCause.drag) {
+      _selectionGestureBaseSpec = _passageSpecOutside(start, end);
+    }
     final spec = StudySelection.includePassageRange(
-      existingSpec,
-      selection.start,
-      selection.end,
+      _selectionGestureBaseSpec!,
+      start,
+      end,
       _normalizedText,
     );
     if (spec == null ||
@@ -178,6 +184,20 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
         selectionSpec: spec,
       );
     });
+  }
+
+  String _passageSpecOutside(int start, int end) {
+    final file = widget.file;
+    if (file.isWholeDocument || file.selectionKind != 'passages') return '';
+    final ranges = StudySelection.passageRanges(
+      file.selectionSpec,
+      _normalizedText,
+    );
+    if (ranges == null) return '';
+    return ranges
+        .where((range) => range.$2 <= start || range.$1 >= end)
+        .map((range) => 'p1:${range.$1}-${range.$2}')
+        .join(',');
   }
 
   @override
@@ -221,6 +241,7 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
               value: file.isWholeDocument,
               title: Text(context.tr('wholeDocumentOnly')),
               onChanged: (value) => setState(() {
+                _selectionGestureBaseSpec = null;
                 final wholeDocument = value ?? true;
                 final selectionKind = wholeDocument
                     ? 'all'
@@ -260,6 +281,7 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
                       : null,
                 ),
                 onChanged: (value) => setState(() {
+                  _selectionGestureBaseSpec = null;
                   widget.wizardData.updateFileSelection(
                     file,
                     isWholeDocument: false,

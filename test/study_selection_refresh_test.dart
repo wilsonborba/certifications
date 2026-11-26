@@ -369,6 +369,63 @@ void main() {
     },
   );
 
+  testWidgets(
+    'drag updates replace the transient range and keep separate selections',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await store.clear(studyId);
+      addTearDown(() => store.clear(studyId));
+      final draft = QuizWizardData()..currentStep = 1;
+      final file = AttachedFile(
+        bytes: utf8.encode('abcdefghij'),
+        name: 'notes.txt',
+        kind: 'txt',
+        isWholeDocument: false,
+        selectionKind: 'passages',
+        selectionSpec: 'p1:1-5,p1:7-9',
+      );
+      draft.addFile(file);
+
+      await tester.pumpWidget(
+        _wizard(
+          studyId: studyId,
+          draft: draft,
+          api: _SelectionStudyApi(),
+          progressStore: store,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await _openFileSelector(tester);
+
+      var selectable = tester.widget<SelectableText>(
+        find.byType(SelectableText),
+      );
+      selectable.onSelectionChanged!(
+        const TextSelection(baseOffset: 1, extentOffset: 5),
+        SelectionChangedCause.longPress,
+      );
+      await tester.pumpAndSettle();
+      selectable = tester.widget<SelectableText>(find.byType(SelectableText));
+      selectable.onSelectionChanged!(
+        const TextSelection(baseOffset: 1, extentOffset: 3),
+        SelectionChangedCause.drag,
+      );
+      await tester.pumpAndSettle();
+
+      expect(file.selectionSpec, 'p1:1-3,p1:7-9');
+      final highlighted = tester
+          .widget<SelectableText>(find.byType(SelectableText))
+          .textSpan!
+          .children!
+          .whereType<TextSpan>()
+          .where((span) => span.style?.backgroundColor != null);
+      expect(highlighted.map((span) => span.text), ['bc', 'hi']);
+    },
+  );
+
   testWidgets('failed owner study read does not hydrate local ranges', (
     tester,
   ) async {
