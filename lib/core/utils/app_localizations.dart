@@ -268,7 +268,22 @@ class AppLocalizations {
           'Public previews do not include answers, explanations, citations, or source content.',
       'questionVisualTitle': 'Question visual',
       'questionVisualUnavailable':
-          'The Reports visual editor is not available in this build; no visual was generated or saved.',
+          'This dataset has no readable rows and matching published visual template.',
+      'questionVisualDatasetTooLarge':
+          'This Reports dataset has more rows than a question visual can save. Choose a smaller dataset.',
+      'questionVisualBody':
+          'Choose a readable Reports dataset and use its published visual. The rendered image is saved to this question version.',
+      'questionVisualAdd': 'Add Reports visual',
+      'questionVisualSavedCount': 'Saved visuals: {count}',
+      'questionVisualSelectReport': 'Report',
+      'questionVisualSelectDataset': 'Dataset',
+      'questionVisualSave': 'Save visual to question',
+      'questionVisualNoReports': 'No readable Reports are available.',
+      'questionVisualNoDatasets': 'This report has no readable datasets.',
+      'questionVisualLoadError':
+          'Could not load Reports visual data. Try again.',
+      'questionVisualSaveError':
+          'Could not save this visual. Nothing was confirmed as saved.',
       'plansIntro':
           'Free during the MVP — start a focused study with managed local capacity.',
       'planStudyTitle': 'Study without configuration',
@@ -901,7 +916,22 @@ class AppLocalizations {
           'As prévias públicas não incluem respostas, explicações, citações ou conteúdo das fontes.',
       'questionVisualTitle': 'Visual da pergunta',
       'questionVisualUnavailable':
-          'O editor visual do Reports não está disponível nesta versão; nenhum visual foi gerado ou salvo.',
+          'Este conjunto não tem linhas legíveis e um modelo visual publicado compatível.',
+      'questionVisualDatasetTooLarge':
+          'Este conjunto do Reports tem mais linhas do que um visual de pergunta pode salvar. Escolha um conjunto menor.',
+      'questionVisualBody':
+          'Escolha um conjunto legível do Reports e use seu visual publicado. A imagem será salva nesta versão da pergunta.',
+      'questionVisualAdd': 'Adicionar visual do Reports',
+      'questionVisualSavedCount': 'Visuais salvos: {count}',
+      'questionVisualSelectReport': 'Relatório',
+      'questionVisualSelectDataset': 'Conjunto de dados',
+      'questionVisualSave': 'Salvar visual na pergunta',
+      'questionVisualNoReports': 'Nenhum relatório legível está disponível.',
+      'questionVisualNoDatasets': 'Este relatório não tem conjuntos legíveis.',
+      'questionVisualLoadError':
+          'Não foi possível carregar os dados visuais do Reports. Tente novamente.',
+      'questionVisualSaveError':
+          'Não foi possível salvar este visual. Nada foi confirmado como salvo.',
       'plansIntro':
           'Grátis durante o MVP — comece um estudo focado com capacidade local gerenciada.',
       'planStudyTitle': 'Estude sem configuração',
@@ -1526,7 +1556,22 @@ class AppLocalizations {
           'ตัวอย่างสาธารณะไม่รวมคำตอบ คำอธิบาย การอ้างอิง หรือเนื้อหาแหล่งข้อมูล',
       'questionVisualTitle': 'ภาพประกอบคำถาม',
       'questionVisualUnavailable':
-          'ตัวแก้ไขภาพ Reports ยังไม่พร้อมใช้งานในรุ่นนี้ จึงยังไม่ได้สร้างหรือบันทึกภาพ',
+          'ชุดข้อมูลนี้ไม่มีแถวที่อ่านได้และแม่แบบภาพที่เผยแพร่ซึ่งตรงกัน',
+      'questionVisualDatasetTooLarge':
+          'ชุดข้อมูล Reports นี้มีแถวมากเกินกว่าจะบันทึกเป็นภาพคำถามได้ โปรดเลือกชุดข้อมูลที่เล็กกว่า',
+      'questionVisualBody':
+          'เลือกชุดข้อมูล Reports ที่อ่านได้และใช้ภาพที่เผยแพร่แล้ว ภาพที่สร้างจะบันทึกไว้กับเวอร์ชันคำถามนี้',
+      'questionVisualAdd': 'เพิ่มภาพจาก Reports',
+      'questionVisualSavedCount': 'ภาพที่บันทึกแล้ว: {count}',
+      'questionVisualSelectReport': 'รายงาน',
+      'questionVisualSelectDataset': 'ชุดข้อมูล',
+      'questionVisualSave': 'บันทึกภาพลงในคำถาม',
+      'questionVisualNoReports': 'ไม่มีรายงานที่อ่านได้',
+      'questionVisualNoDatasets': 'รายงานนี้ไม่มีชุดข้อมูลที่อ่านได้',
+      'questionVisualLoadError':
+          'โหลดข้อมูลภาพจาก Reports ไม่สำเร็จ โปรดลองอีกครั้ง',
+      'questionVisualSaveError':
+          'บันทึกภาพนี้ไม่สำเร็จ ระบบยังไม่ได้ยืนยันว่าบันทึกแล้ว',
       'plansIntro':
           'ฟรีในช่วง MVP — เริ่มการเรียนรู้แบบโฟกัสด้วยความจุในเครื่อง',
       'planStudyTitle': 'เรียนรู้โดยไม่ต้องตั้งค่า',

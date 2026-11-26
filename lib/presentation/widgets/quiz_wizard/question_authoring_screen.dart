@@ -1,9 +1,16 @@
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/authoring.dart';
 import 'package:certifications/domain/models/public_question_catalog.dart';
+import 'package:certifications/domain/models/study.dart';
 import 'package:certifications/domain/services/public_question_api_service.dart';
 import 'package:certifications/domain/services/question_authoring_service.dart';
+import 'package:certifications/domain/services/study_api_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:reports_view/reports_view.dart' as reports;
 
 class QuestionAuthoringScreen extends StatefulWidget {
   const QuestionAuthoringScreen({
@@ -13,6 +20,7 @@ class QuestionAuthoringScreen extends StatefulWidget {
     required this.onPublished,
     this.authoringService,
     this.publicQuestionService,
+    this.studyApiService,
   });
 
   final String studyId;
@@ -20,6 +28,7 @@ class QuestionAuthoringScreen extends StatefulWidget {
   final VoidCallback onPublished;
   final QuestionAuthoringService? authoringService;
   final PublicQuestionApiService? publicQuestionService;
+  final StudyApiService? studyApiService;
 
   @override
   State<QuestionAuthoringScreen> createState() =>
@@ -30,6 +39,7 @@ class _QuestionAuthoringScreenState extends State<QuestionAuthoringScreen> {
   late final _authoring = widget.authoringService ?? QuestionAuthoringService();
   late final _publicQuestions =
       widget.publicQuestionService ?? PublicQuestionApiService();
+  late final _studyApi = widget.studyApiService ?? StudyApiService();
   late Future<List<AuthoringQuestion>> _questions = _authoring.list(
     widget.studyId,
   );
@@ -95,6 +105,19 @@ class _QuestionAuthoringScreenState extends State<QuestionAuthoringScreen> {
     } catch (_) {
       if (mounted) _showMessage(context.tr('errorGeneric'));
     }
+  }
+
+  Future<void> _addVisual(AuthoringQuestion question) async {
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (_) => _QuestionVisualDialog(
+        studyId: widget.studyId,
+        question: question,
+        authoring: _authoring,
+        studies: _studyApi,
+      ),
+    );
+    if (saved == true && mounted) _reloadQuestions();
   }
 
   Future<void> _importCsv() async {
@@ -254,6 +277,7 @@ class _QuestionAuthoringScreenState extends State<QuestionAuthoringScreen> {
                       (question) => _QuestionCard(
                         question: question,
                         onEdit: () => _editQuestion(question),
+                        onAddVisual: () => _addVisual(question),
                       ),
                     ),
                   const SizedBox(height: 24),
@@ -417,16 +441,21 @@ class _QuestionAuthoringScreenState extends State<QuestionAuthoringScreen> {
     child: ListTile(
       leading: const Icon(Icons.insert_chart_outlined),
       title: Text(context.tr('questionVisualTitle')),
-      subtitle: Text(context.tr('questionVisualUnavailable')),
+      subtitle: Text(context.tr('questionVisualBody')),
     ),
   );
 }
 
 class _QuestionCard extends StatelessWidget {
-  const _QuestionCard({required this.question, required this.onEdit});
+  const _QuestionCard({
+    required this.question,
+    required this.onEdit,
+    required this.onAddVisual,
+  });
 
   final AuthoringQuestion question;
   final VoidCallback onEdit;
+  final VoidCallback onAddVisual;
 
   @override
   Widget build(BuildContext context) => Card(
@@ -491,10 +520,430 @@ class _QuestionCard extends StatelessWidget {
             }),
             style: Theme.of(context).textTheme.labelSmall,
           ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              OutlinedButton.icon(
+                onPressed:
+                    question.sourceScope == 'reused_public_question_version'
+                    ? null
+                    : onAddVisual,
+                icon: const Icon(Icons.insert_chart_outlined),
+                label: Text(context.tr('questionVisualAdd')),
+              ),
+              if (question.visuals.isNotEmpty)
+                Text(
+                  context.trParams('questionVisualSavedCount', {
+                    'count': '${question.visuals.length}',
+                  }),
+                ),
+            ],
+          ),
         ],
       ),
     ),
   );
+}
+
+class _QuestionVisualDialog extends StatefulWidget {
+  const _QuestionVisualDialog({
+    required this.studyId,
+    required this.question,
+    required this.authoring,
+    required this.studies,
+  });
+
+  final String studyId;
+  final AuthoringQuestion question;
+  final QuestionAuthoringService authoring;
+  final StudyApiService studies;
+
+  @override
+  State<_QuestionVisualDialog> createState() => _QuestionVisualDialogState();
+}
+
+class _QuestionVisualDialogState extends State<_QuestionVisualDialog> {
+  final _previewKey = GlobalKey();
+  List<ReportPickerItem> _reports = const [];
+  List<ReportDatasetPickerItem> _datasets = const [];
+  ReportPickerItem? _report;
+  ReportDatasetPickerItem? _dataset;
+  reports.DatasetPage? _page;
+  reports.VisualTemplate? _template;
+  bool _loading = true;
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReports();
+  }
+
+  String get _language {
+    final language = Localizations.localeOf(context).languageCode;
+    return language == 'pt' ? 'pt-BR' : language;
+  }
+
+  Future<void> _loadReports() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+      _reports = const [];
+      _datasets = const [];
+      _report = null;
+      _dataset = null;
+      _page = null;
+      _template = null;
+    });
+    try {
+      final reports = await widget.studies.listReports();
+      if (mounted) setState(() => _reports = reports);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = context.tr('questionVisualLoadError'));
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _selectReport(ReportPickerItem? report) async {
+    if (report == null) return;
+    setState(() {
+      _report = report;
+      _datasets = const [];
+      _dataset = null;
+      _page = null;
+      _template = null;
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final datasets = await widget.studies.listReportDatasets(report);
+      if (mounted && _report == report) setState(() => _datasets = datasets);
+    } catch (_) {
+      if (mounted && _report == report) {
+        setState(() => _error = context.tr('questionVisualLoadError'));
+      }
+    } finally {
+      if (mounted && _report == report) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _selectDataset(ReportDatasetPickerItem? dataset) async {
+    final report = _report;
+    if (dataset == null || report == null) return;
+    setState(() {
+      _dataset = dataset;
+      _page = null;
+      _template = null;
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final results = await Future.wait<Object>([
+        widget.studies.getReportDatasetPage(dataset, language: _language),
+        widget.studies.listReportVisualTemplates(language: _language),
+      ]);
+      if (!mounted || _dataset != dataset) return;
+      final page = results[0] as reports.DatasetPage;
+      final templates = results[1] as List<reports.VisualTemplate>;
+      final binding = page.visual;
+      reports.VisualTemplate? template;
+      if (binding != null) {
+        for (final candidate in templates) {
+          if (candidate.templateId == binding.template &&
+              candidate.version == binding.version) {
+            template = candidate;
+            break;
+          }
+        }
+      }
+      setState(() {
+        _page = page;
+        _template = template;
+      });
+    } catch (_) {
+      if (mounted && _dataset == dataset) {
+        setState(() => _error = context.tr('questionVisualLoadError'));
+      }
+    } finally {
+      if (mounted && _dataset == dataset) setState(() => _loading = false);
+    }
+  }
+
+  bool get _canRender {
+    final page = _page;
+    final template = _template;
+    final binding = page?.visual;
+    return page != null &&
+        page.rows.isNotEmpty &&
+        page.rows.length == page.totalRows &&
+        template != null &&
+        (template.visual == 'auto' ||
+            reports.VisualChooser.visualFromName(template.visual) !=
+                reports.Visual.auto) &&
+        binding != null &&
+        reports.TemplateValidator.validate(
+          template,
+          binding,
+          page.descriptor,
+        ).isValid;
+  }
+
+  void _retry() {
+    final dataset = _dataset;
+    if (dataset != null) {
+      _selectDataset(dataset);
+      return;
+    }
+    final report = _report;
+    if (report != null) {
+      _selectReport(report);
+      return;
+    }
+    _loadReports();
+  }
+
+  Future<void> _save() async {
+    final page = _page;
+    final template = _template;
+    final binding = page?.visual;
+    if (!_canRender || page == null || template == null || binding == null) {
+      return;
+    }
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    ui.Image? image;
+    try {
+      final job = await widget.authoring.prepareVisualJob(
+        studyId: widget.studyId,
+        question: widget.question,
+        templateId: template.templateId,
+        templateVersion: template.version,
+        mapping: binding.mapping,
+        config: binding.options,
+        rows: page.rows,
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 1800));
+      await WidgetsBinding.instance.endOfFrame;
+      final renderObject = _previewKey.currentContext?.findRenderObject();
+      if (renderObject is! RenderRepaintBoundary || !renderObject.hasSize) {
+        throw const FormatException('Reports preview is not ready to capture');
+      }
+      final capturedImage = await renderObject.toImage(
+        pixelRatio: job.scale.toDouble(),
+      );
+      image = capturedImage;
+      if (capturedImage.width != job.width * job.scale ||
+          capturedImage.height != job.height * job.scale) {
+        throw const FormatException('Reports preview dimensions do not match');
+      }
+      final data = await capturedImage.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
+      if (data == null) {
+        throw const FormatException('Reports PNG is unavailable');
+      }
+      final bytes = data.buffer.asUint8List(
+        data.offsetInBytes,
+        data.lengthInBytes,
+      );
+      if (bytes.length > 4 * 1024 * 1024) {
+        throw const FormatException('Reports PNG exceeds the upload limit');
+      }
+      final pngHeader = ByteData.sublistView(bytes);
+      if (bytes.length < 24 ||
+          bytes[0] != 137 ||
+          bytes[1] != 80 ||
+          bytes[2] != 78 ||
+          bytes[3] != 71 ||
+          bytes[4] != 13 ||
+          bytes[5] != 10 ||
+          bytes[6] != 26 ||
+          bytes[7] != 10 ||
+          pngHeader.getUint32(16) != capturedImage.width ||
+          pngHeader.getUint32(20) != capturedImage.height) {
+        throw const FormatException('Reports output is not a valid PNG');
+      }
+      await widget.authoring.uploadVisual(
+        studyId: widget.studyId,
+        question: widget.question,
+        job: job,
+        pngBytes: bytes,
+      );
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = context.tr('questionVisualSaveError'));
+      }
+    } finally {
+      image?.dispose();
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final page = _page;
+    final template = _template;
+    final binding = page?.visual;
+    final height = MediaQuery.sizeOf(context).height;
+    return Dialog(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 920, maxHeight: height * 0.9),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                context.tr('questionVisualTitle'),
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 12),
+              if (_reports.isNotEmpty)
+                DropdownButtonFormField<ReportPickerItem>(
+                  initialValue: _report,
+                  decoration: InputDecoration(
+                    labelText: context.tr('questionVisualSelectReport'),
+                  ),
+                  items: [
+                    for (final report in _reports)
+                      DropdownMenuItem(
+                        value: report,
+                        child: Text(
+                          '${report.title} · ${report.project}/${report.report}',
+                        ),
+                      ),
+                  ],
+                  onChanged: _loading || _saving ? null : _selectReport,
+                ),
+              if (_datasets.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                DropdownButtonFormField<ReportDatasetPickerItem>(
+                  initialValue: _dataset,
+                  decoration: InputDecoration(
+                    labelText: context.tr('questionVisualSelectDataset'),
+                  ),
+                  items: [
+                    for (final dataset in _datasets)
+                      DropdownMenuItem(
+                        value: dataset,
+                        child: Text('${dataset.title} · ${dataset.datasetId}'),
+                      ),
+                  ],
+                  onChanged: _loading || _saving ? null : _selectDataset,
+                ),
+              ],
+              if (_loading)
+                const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (_error != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(_error!),
+                      TextButton(
+                        onPressed: _saving ? null : _retry,
+                        child: Text(context.tr('retry')),
+                      ),
+                    ],
+                  ),
+                )
+              else if (_reports.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text(context.tr('questionVisualNoReports')),
+                )
+              else if (_report != null && !_loading && _datasets.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text(context.tr('questionVisualNoDatasets')),
+                )
+              else if (_dataset != null && !_canRender)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text(
+                    page != null && page.totalRows > page.rows.length
+                        ? context.tr('questionVisualDatasetTooLarge')
+                        : context.tr('questionVisualUnavailable'),
+                  ),
+                )
+              else if (_canRender &&
+                  page != null &&
+                  template != null &&
+                  binding != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  '${_dataset!.title} · ${template.title} v${template.version}',
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SingleChildScrollView(
+                      child: RepaintBoundary(
+                        key: _previewKey,
+                        child: SizedBox(
+                          width: 800,
+                          height: 480,
+                          child: reports.VisualChooser.buildTemplate(
+                            page: page,
+                            template: template,
+                            binding: binding,
+                            full: true,
+                            height: 480,
+                            title: template.title,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 8,
+                children: [
+                  TextButton(
+                    onPressed: _saving
+                        ? null
+                        : () => Navigator.of(context).pop(),
+                    child: Text(context.tr('cancel')),
+                  ),
+                  FilledButton.icon(
+                    onPressed: _canRender && !_loading && !_saving
+                        ? _save
+                        : null,
+                    icon: _saving
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.save_outlined),
+                    label: Text(context.tr('questionVisualSave')),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 String _originLabel(BuildContext context, String origin) => switch (origin) {

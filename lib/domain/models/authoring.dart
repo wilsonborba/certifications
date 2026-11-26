@@ -23,22 +23,31 @@ class AuthoringQuestion {
       versionNumber = _requiredInt(json, 'version_num'),
       language = _requiredString(json, 'language'),
       origin = _requiredString(json, 'origin'),
+      sourceScope = _optionalString(json, 'source_scope'),
       prompt = _requiredString(json, 'prompt'),
       alternatives = _alternatives(json['alternatives']),
       correctId = _requiredString(json, 'correct_id'),
       explanation = _requiredString(json, 'explanation'),
-      citationRef = _optionalString(json, 'citation_ref');
+      citationRef = _optionalString(json, 'citation_ref'),
+      visuals = ((json['visuals'] as List?) ?? const [])
+          .map(
+            (value) =>
+                QuestionVisual.fromJson((value as Map).cast<String, dynamic>()),
+          )
+          .toList(growable: false);
 
   final String id;
   final String versionId;
   final int versionNumber;
   final String language;
   final String origin;
+  final String sourceScope;
   final String prompt;
   final List<AuthoringAlternative> alternatives;
   final String correctId;
   final String explanation;
   final String citationRef;
+  final List<QuestionVisual> visuals;
 
   static String _requiredString(Map<String, dynamic> json, String key) {
     final value = json[key];
@@ -86,6 +95,110 @@ class AuthoringQuestion {
     'explanation': explanation,
     'citation_ref': citationRef,
   };
+}
+
+/// A durable image attached to the current immutable question version.
+class QuestionVisual {
+  const QuestionVisual({
+    required this.id,
+    required this.mimeType,
+    required this.createdAt,
+  });
+
+  factory QuestionVisual.fromJson(Map<String, dynamic> json) {
+    final id = json['id'];
+    final mimeType = json['mime_type'];
+    final createdAt = json['created_at'];
+    if (id is! String ||
+        id.isEmpty ||
+        mimeType is! String ||
+        mimeType != 'image/png' ||
+        createdAt is! int) {
+      throw const FormatException('Invalid question visual metadata');
+    }
+    return QuestionVisual(id: id, mimeType: mimeType, createdAt: createdAt);
+  }
+
+  final String id;
+  final String mimeType;
+  final int createdAt;
+}
+
+/// The owner-scoped preparation result for the two-step visual upload flow.
+class PreparedQuestionVisualJob {
+  const PreparedQuestionVisualJob({
+    required this.questionId,
+    required this.questionVersionId,
+    required this.jobId,
+    required this.templateId,
+    required this.templateVersion,
+    required this.width,
+    required this.height,
+    required this.scale,
+    required this.expiresAt,
+  });
+
+  factory PreparedQuestionVisualJob.fromJson(Map<String, dynamic> json) {
+    final questionId = json['question_id'];
+    final versionId = json['question_version_id'];
+    final renderJob = json['render_job'];
+    if (questionId is! String ||
+        questionId.isEmpty ||
+        versionId is! String ||
+        versionId.isEmpty ||
+        renderJob is! Map) {
+      throw const FormatException('Invalid prepared question visual job');
+    }
+    final job = renderJob.cast<String, dynamic>();
+    final id = job['job_id'];
+    final templateId = job['template_id'];
+    final templateVersion = job['template_version'];
+    final width = job['width'];
+    final height = job['height'];
+    final scale = job['scale'];
+    final expiresAt = job['expires_at'];
+    if (id is! String ||
+        id.isEmpty ||
+        templateId is! String ||
+        templateId.isEmpty ||
+        templateVersion is! int ||
+        templateVersion < 1 ||
+        width is! int ||
+        width < 200 ||
+        width > 2400 ||
+        height is! int ||
+        height < 200 ||
+        height > 2400 ||
+        scale is! int ||
+        scale < 1 ||
+        scale > 3 ||
+        expiresAt is! int ||
+        width * scale > 4096 ||
+        height * scale > 4096) {
+      throw const FormatException('Invalid prepared Reports render job');
+    }
+    return PreparedQuestionVisualJob(
+      questionId: questionId,
+      questionVersionId: versionId,
+      jobId: id,
+      templateId: templateId,
+      templateVersion: templateVersion,
+      width: width,
+      height: height,
+      scale: scale,
+      expiresAt: expiresAt,
+    );
+  }
+
+  final String questionId;
+  final String questionVersionId;
+  final String jobId;
+  final String templateId;
+  final int templateVersion;
+  final int width;
+  final int height;
+  final int scale;
+  final int expiresAt;
 }
 
 class CsvPreviewRow {

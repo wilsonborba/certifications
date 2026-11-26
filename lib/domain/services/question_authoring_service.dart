@@ -119,6 +119,66 @@ class QuestionAuthoringService {
     ),
   );
 
+  Future<PreparedQuestionVisualJob> prepareVisualJob({
+    required String studyId,
+    required AuthoringQuestion question,
+    required String templateId,
+    required int templateVersion,
+    required Map<String, List<String>> mapping,
+    required Map<String, dynamic> config,
+    required List<Map<String, dynamic>> rows,
+  }) async {
+    final prepared = PreparedQuestionVisualJob.fromJson(
+      _decode(
+        await _client.prepareQuestionVisualJob(studyId, question.id, {
+          'template_id': templateId,
+          'template_version': templateVersion,
+          'mapping': mapping,
+          'config': config,
+          'rows': rows,
+          'width': 800,
+          'height': 480,
+          'scale': 2,
+          'ttl_seconds': 900,
+        }),
+      ),
+    );
+    if (prepared.questionId != question.id ||
+        prepared.questionVersionId != question.versionId ||
+        prepared.templateId != templateId ||
+        prepared.templateVersion != templateVersion) {
+      throw const FormatException(
+        'Prepared visual job does not match question',
+      );
+    }
+    return prepared;
+  }
+
+  Future<QuestionVisual> uploadVisual({
+    required String studyId,
+    required AuthoringQuestion question,
+    required PreparedQuestionVisualJob job,
+    required List<int> pngBytes,
+  }) async {
+    if (job.questionId != question.id ||
+        job.questionVersionId != question.versionId ||
+        pngBytes.length > 4 * 1024 * 1024) {
+      throw const FormatException('Question visual upload is out of bounds');
+    }
+    return QuestionVisual.fromJson(
+      _decode(
+        await _client.uploadQuestionVisual(studyId, question.id, {
+          'question_version_id': job.questionVersionId,
+          'render_job_id': job.jobId,
+          'expected_width': job.width,
+          'expected_height': job.height,
+          'expected_scale': job.scale,
+          'png_base64': base64Encode(pngBytes),
+        }),
+      ),
+    );
+  }
+
   Map<String, dynamic> _decode(http.Response response) {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       String? message;

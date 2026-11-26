@@ -5,6 +5,7 @@ import 'package:certifications/domain/models/quiz.dart';
 import 'package:certifications/domain/models/study.dart';
 import 'package:certifications/domain/models/study_selection.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:reports_view/reports_view.dart' as reports;
 
 class StudyApiException implements Exception {
   const StudyApiException(this.statusCode, {this.message, this.requestId});
@@ -25,6 +26,7 @@ class StudyApiService {
   final ApiAdapter _adapter;
   String get _base =>
       '${app_settings.ASODYA_API_URL}/apps/certifications/v1/studies';
+  String get _reportsBase => '${app_settings.ASODYA_API_URL}/apps/reports/v1';
   Future<List<Study>> list() async {
     final response = await _adapter.get(Uri.parse(_base));
     return _list(response.body, response.statusCode);
@@ -73,6 +75,64 @@ class StudyApiService {
         .map(ReportDatasetPickerItem.fromJson)
         .where((dataset) => dataset.canView)
         .toList();
+  }
+
+  /// Loads the authorized dataset page used by the existing Reports renderer.
+  /// This is caller-scoped Reports data; callers must not substitute picker
+  /// descriptors or cached rows when preparing a question visual.
+  Future<reports.DatasetPage> getReportDatasetPage(
+    ReportDatasetPickerItem dataset, {
+    String language = 'en',
+  }) async {
+    if (!dataset.canView) {
+      throw const StudyApiException(
+        403,
+        message: 'Report dataset is not readable',
+      );
+    }
+    final uri =
+        Uri.parse(
+          '$_reportsBase/projects/${Uri.encodeComponent(dataset.project)}'
+          '/reports/${Uri.encodeComponent(dataset.report)}'
+          '/datasets/${Uri.encodeComponent(dataset.datasetId)}',
+        ).replace(
+          queryParameters: {'limit': '1000', 'offset': '0', 'lang': language},
+        );
+    final page = reports.DatasetPage.fromJson(_data(await _adapter.get(uri)));
+    if (page.descriptor.datasetId != dataset.datasetId ||
+        !page.descriptor.canView ||
+        page.rows.length > page.limit ||
+        page.totalRows < page.rows.length) {
+      throw const FormatException('Invalid authorized Reports dataset page');
+    }
+    return page;
+  }
+
+  /// Reads immutable published template versions from the existing Reports
+  /// catalog. The version on the returned item is sent unchanged to prepare.
+  Future<List<reports.VisualTemplate>> listReportVisualTemplates({
+    String language = 'en',
+  }) async {
+    final response = await _adapter.get(
+      Uri.parse(
+        '$_reportsBase/templates',
+      ).replace(queryParameters: {'lang': language}),
+    );
+    final payload = _data(response);
+    final items = payload['templates'];
+    if (items is! List || items.any((item) => item is! Map)) {
+      throw const FormatException('Reports template response is invalid');
+    }
+    return items
+        .map(
+          (item) => reports.VisualTemplate.fromJson(
+            (item as Map).cast<String, dynamic>(),
+          ),
+        )
+        .where(
+          (template) => template.templateId.isNotEmpty && template.version > 0,
+        )
+        .toList(growable: false);
   }
 
   /// Attaches one all-only Reports dataset to the prepared study. Reports

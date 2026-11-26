@@ -274,7 +274,8 @@ void main() {
 
     await tester.tap(find.byTooltip('Edit question'));
     await tester.pumpAndSettle();
-    expect(find.byType(TextField), findsNWidgets(9));
+    // Prompt, five preserved alternatives, explanation, and supporting source.
+    expect(find.byType(TextField), findsNWidgets(8));
     expect(find.text('ANSWER5'), findsOneWidget);
 
     final explanation = find.byWidgetPredicate(

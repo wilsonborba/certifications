@@ -278,6 +278,26 @@ class CertificationsApiClient {
     body: body,
   );
 
+  Future<http.Response> prepareQuestionVisualJob(
+    String studyId,
+    String questionId,
+    Map<String, dynamic> body,
+  ) => _apiRequest(
+    method: 'POST',
+    url: endpoint('/studies/$studyId/questions/$questionId/visual_jobs'),
+    body: body,
+  );
+
+  Future<http.Response> uploadQuestionVisual(
+    String studyId,
+    String questionId,
+    Map<String, dynamic> body,
+  ) => _apiRequest(
+    method: 'POST',
+    url: endpoint('/studies/$studyId/questions/$questionId/visuals'),
+    body: body,
+  );
+
   Future<http.Response> getReportsPicker() =>
       _apiRequest(method: 'GET', url: endpoint('/reports/picker'));
 
