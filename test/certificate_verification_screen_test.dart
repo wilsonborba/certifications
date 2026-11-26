@@ -274,6 +274,12 @@ void main() {
         reason:
             'activity fact labels should share a left edge at ${width}px, text scale $textScale',
       );
+      final eventTimestamp = find.text(eventDateTime);
+      await tester.ensureVisible(eventTimestamp);
+      await tester.pumpAndSettle();
+      final eventBounds = tester.getRect(eventTimestamp);
+      expect(eventBounds.top, greaterThanOrEqualTo(0));
+      expect(eventBounds.bottom, lessThanOrEqualTo(844));
       expect(tester.takeException(), isNull);
     }
   });

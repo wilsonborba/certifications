@@ -7,7 +7,18 @@ import 'package:certifications/presentation/components/attachment/app_bar.dart';
 import 'package:certifications/domain/services/certificate_verification_api_service.dart';
 import 'package:certifications/presentation/components/certificates/certificate_issue_card.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:reports_view/reports_view.dart';
+
+String _localizedDecimal(BuildContext context, num value) => NumberFormat(
+  '0.0',
+  Localizations.localeOf(context).languageCode,
+).format(value);
+
+String _localizedCount(BuildContext context, num value) =>
+    NumberFormat.decimalPattern(
+      Localizations.localeOf(context).languageCode,
+    ).format(value);
 
 class AttemptHistoryScreen extends StatefulWidget {
   const AttemptHistoryScreen({this.api, super.key});
@@ -223,7 +234,7 @@ class _AttemptHistoryScreenState extends State<AttemptHistoryScreen> {
                                   horizontal: 12,
                                 ),
                                 child: Text(
-                                  '${page.offset + 1}–${page.offset + page.items.length} / ${page.total}',
+                                  '${_localizedCount(context, page.offset + 1)}–${_localizedCount(context, page.offset + page.items.length)} / ${_localizedCount(context, page.total)}',
                                 ),
                               ),
                               TextButton(
@@ -306,7 +317,7 @@ class _HistoryRow extends StatelessWidget {
     trailing: Text(
       item.scorePct == null
           ? context.tr('unavailable')
-          : '${item.scorePct!.toStringAsFixed(1)}%',
+          : '${_localizedDecimal(context, item.scorePct!)}%',
     ),
     onTap: item.status == 'completed'
         ? () => Navigator.of(
@@ -376,10 +387,12 @@ class _AttemptResultsScreenState extends State<AttemptResultsScreen> {
                 Text(
                   result.scorePct == null
                       ? context.tr('unavailable')
-                      : '${result.scorePct!.toStringAsFixed(1)}%',
+                      : '${_localizedDecimal(context, result.scorePct!)}%',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
-                Text('${result.scoreCorrect} / ${result.scoreTotal}'),
+                Text(
+                  '${_localizedCount(context, result.scoreCorrect)} / ${_localizedCount(context, result.scoreTotal)}',
+                ),
                 if (result.status == 'completed') ...[
                   const SizedBox(height: 16),
                   CertificateIssueCard(
@@ -513,7 +526,7 @@ class _ResultStats extends StatelessWidget {
                 }),
                 value: denominator == 0 || pct == null
                     ? context.tr('noScoreSample')
-                    : '${(pct as num).toStringAsFixed(1)}% · ${item['correct']} / $denominator',
+                    : '${_localizedDecimal(context, pct as num)}% · ${_localizedCount(context, (item['correct'] as num?) ?? 0)} / ${_localizedCount(context, denominator)}',
               );
             },
           ),
@@ -556,15 +569,15 @@ class _AttemptDashboardScreenState extends State<AttemptDashboardScreen> {
               children: [
                 _Metric(
                   label: context.tr('createdQuizzes'),
-                  value: '${v.createdQuizCount}',
+                  value: _localizedCount(context, v.createdQuizCount),
                 ),
                 _Metric(
                   label: context.tr('completedAttempts'),
-                  value: '${v.completedAttemptCount}',
+                  value: _localizedCount(context, v.completedAttemptCount),
                 ),
                 _Metric(
                   label: context.tr('distinctQuizzesAttempted'),
-                  value: '${v.distinctQuizzesAttempted}',
+                  value: _localizedCount(context, v.distinctQuizzesAttempted),
                 ),
                 _Metric(
                   label: context.tr('averageScore'),
@@ -588,7 +601,7 @@ class _AttemptDashboardScreenState extends State<AttemptDashboardScreen> {
                       v.completionTimeDenominator == 0 ||
                           v.averageCompletionTimeSeconds == null
                       ? context.tr('unavailable')
-                      : '${v.averageCompletionTimeSeconds!.toStringAsFixed(1)} s · n=${v.completionTimeDenominator}',
+                      : '${_localizedDecimal(context, v.averageCompletionTimeSeconds!)} s · n=${_localizedCount(context, v.completionTimeDenominator)}',
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -622,7 +635,7 @@ class _AttemptDashboardScreenState extends State<AttemptDashboardScreen> {
   String _mean(double? value, int denominator, BuildContext context) =>
       denominator == 0 || value == null
       ? context.tr('noScoreSample')
-      : '${(value as num).toStringAsFixed(1)}% · n=$denominator';
+      : '${_localizedDecimal(context, value)}% · n=${_localizedCount(context, denominator)}';
 }
 
 class _Metric extends StatelessWidget {
@@ -656,11 +669,15 @@ class _ProvenanceRow extends StatelessWidget {
     final pct = values['correct_percentage'];
     return ListTile(
       title: Text(context.tr(labelKey)),
-      subtitle: Text(n == 0 ? context.tr('emptyGroup') : '$correct / $n'),
+      subtitle: Text(
+        n == 0
+            ? context.tr('emptyGroup')
+            : '${_localizedCount(context, correct)} / ${_localizedCount(context, n)}',
+      ),
       trailing: Text(
         n == 0 || pct == null
             ? context.tr('unavailable')
-            : '${(pct as num).toStringAsFixed(1)}%',
+            : '${_localizedDecimal(context, pct as num)}%',
       ),
     );
   }
@@ -761,12 +778,12 @@ class _QuizStatisticsScreenState extends State<_QuizStatisticsScreen> {
               children: [
                 _Metric(
                   label: context.tr('completedAttempts'),
-                  value: '${data.completedAttemptCount}',
+                  value: _localizedCount(context, data.completedAttemptCount),
                 ),
                 const SizedBox(height: 8),
                 _Metric(
                   label: context.tr('distinctParticipants'),
-                  value: '${data.distinctParticipants}',
+                  value: _localizedCount(context, data.distinctParticipants),
                 ),
                 const SizedBox(height: 8),
                 _Metric(
@@ -775,7 +792,7 @@ class _QuizStatisticsScreenState extends State<_QuizStatisticsScreen> {
                       data.averageScoreDenominator == 0 ||
                           data.averageScorePct == null
                       ? context.tr('noScoreSample')
-                      : '${data.averageScorePct!.toStringAsFixed(1)}% · n=${data.averageScoreDenominator}',
+                      : '${_localizedDecimal(context, data.averageScorePct!)}% · n=${_localizedCount(context, data.averageScoreDenominator)}',
                 ),
                 const SizedBox(height: 8),
                 _Metric(
@@ -784,7 +801,7 @@ class _QuizStatisticsScreenState extends State<_QuizStatisticsScreen> {
                       data.durationDenominator == 0 ||
                           data.typicalDurationSec == null
                       ? context.tr('unavailable')
-                      : '${data.typicalDurationSec} s · n=${data.durationDenominator}',
+                      : '${_localizedCount(context, data.typicalDurationSec!)} s · n=${_localizedCount(context, data.durationDenominator)}',
                 ),
                 Text(
                   context.tr(
@@ -815,7 +832,9 @@ class _QuizStatisticsScreenState extends State<_QuizStatisticsScreen> {
                     )
                   else
                     _ScoreDistributionTable(bands: data.scoreDistribution),
-                  Text('n=${data.scoreDistributionDenominator}'),
+                  Text(
+                    'n=${_localizedCount(context, data.scoreDistributionDenominator)}',
+                  ),
                 ],
                 const SizedBox(height: 16),
                 Text(
@@ -863,7 +882,7 @@ class _ScoreDistributionTable extends StatelessWidget {
               DataRow(
                 cells: [
                   DataCell(Text(band.label)),
-                  DataCell(Text('${band.count}')),
+                  DataCell(Text(_localizedCount(context, band.count))),
                 ],
               ),
           ],

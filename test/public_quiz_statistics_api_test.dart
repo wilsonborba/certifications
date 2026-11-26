@@ -163,6 +163,7 @@ void main() {
     final service = PublicQuizStatisticsApiService(
       adapter: ApiAdapter(client: client, csrfTokenProvider: () => null),
     );
+    addTearDown(client.close);
     final preferences = AppPreferences()..locale = const Locale('en');
     Widget host(Widget child) => MaterialApp(
       theme: AppTheme.light(),
@@ -180,18 +181,41 @@ void main() {
         '/v1/history': (_) => const Scaffold(body: Text('history reached')),
       },
     );
+    void expectEmptyStatisticValues() {
+      final averageScoreCard = find.ancestor(
+        of: find.text('Average score'),
+        matching: find.byType(Card),
+      );
+      expect(
+        find.descendant(
+          of: averageScoreCard,
+          matching: find.text('No scored attempts yet'),
+        ),
+        findsOneWidget,
+      );
+      final durationCard = find.ancestor(
+        of: find.text('Typical duration'),
+        matching: find.byType(Card),
+      );
+      expect(
+        find.descendant(of: durationCard, matching: find.text('Unavailable')),
+        findsOneWidget,
+      );
+    }
 
     await tester.pumpWidget(
       host(PublicQuizStatisticsScreen(quizId: 'quiz-1', api: service)),
     );
     await tester.pumpAndSettle();
     expect(find.text('Public score distribution'), findsNWidgets(2));
+    expectEmptyStatisticValues();
 
     await tester.pumpWidget(
       host(OwnedQuizStatisticsScreen(quizId: 'quiz-1', api: service)),
     );
     await tester.pumpAndSettle();
     expect(find.text('Your quiz statistics'), findsNWidgets(2));
+    expectEmptyStatisticValues();
     expect(paths, [
       '/apps/certifications/v1/quizzes/quiz-1/statistics',
       '/apps/certifications/v1/me/quizzes/quiz-1/statistics',
@@ -220,8 +244,90 @@ void main() {
     expect(find.text('dashboard reached'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
-    client.close();
   });
+
+  testWidgets(
+    'statistics use locale number separators and retain empty states',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final client = MockClient((request) async {
+        return http.Response(
+          jsonEncode({
+            'quiz_id': 'quiz-localized',
+            'completed_attempt_count': 1234,
+            'distinct_participants': 1234,
+            'average_score_pct': 66.7,
+            'average_score_denominator': 1234,
+            'typical_duration_sec': 125,
+            'duration_denominator': 1234,
+            'basis': 'all_completed_attempts',
+            'score_distribution_denominator': 1234,
+            'score_distribution': [
+              {'score_band': '50-79%', 'attempt_count': 1234},
+            ],
+            'question_provenance': {},
+            'score_distribution_report_view': {},
+          }),
+          200,
+        );
+      });
+      final service = PublicQuizStatisticsApiService(
+        adapter: ApiAdapter(client: client, csrfTokenProvider: () => null),
+      );
+      addTearDown(client.close);
+      var locale = const Locale('en');
+
+      Widget app(Widget child) => MaterialApp(
+        theme: AppTheme.light(),
+        locale: locale,
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: const [
+          AppLocalizationsDelegate(),
+          FallbackCupertinoLocalizationsDelegate(),
+          FallbackMaterialLocalizationsDelegate(),
+          DefaultWidgetsLocalizations.delegate,
+          DefaultMaterialLocalizations.delegate,
+        ],
+        home: child,
+      );
+
+      await tester.pumpWidget(
+        app(PublicQuizStatisticsScreen(quizId: 'quiz-localized', api: service)),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('66.7% · n=1,234'), findsOneWidget);
+      expect(find.text('125 s · n=1,234'), findsOneWidget);
+      expect(find.text('1,234'), findsAtLeastNWidgets(3));
+
+      await tester.pumpWidget(
+        app(OwnedQuizStatisticsScreen(quizId: 'quiz-localized', api: service)),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Your quiz statistics'), findsNWidgets(2));
+      expect(find.text('66.7% · n=1,234'), findsOneWidget);
+
+      locale = const Locale('pt');
+      await tester.pumpWidget(
+        app(PublicQuizStatisticsScreen(quizId: 'quiz-localized', api: service)),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('66,7% · n=1.234'), findsOneWidget);
+      expect(find.text('125 s · n=1.234'), findsOneWidget);
+      expect(find.text('1.234'), findsAtLeastNWidgets(3));
+
+      await tester.pumpWidget(
+        app(OwnedQuizStatisticsScreen(quizId: 'quiz-localized', api: service)),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Estatísticas do seu questionário'), findsNWidgets(2));
+      expect(find.text('66,7% · n=1.234'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
 
   test('public statistics retain the server denominator basis', () async {
     final client = MockClient((request) async {
