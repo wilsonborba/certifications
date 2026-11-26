@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:certifications/core/utils/app_localizations.dart';
 import 'package:certifications/domain/models/quiz_wizard_data.dart';
+import 'package:certifications/domain/models/study.dart';
 import 'package:certifications/domain/models/study_selection.dart';
 import 'package:certifications/domain/services/client_telemetry_service.dart';
 import 'package:certifications/domain/services/draft_progress_store.dart';
@@ -14,6 +15,7 @@ import 'package:certifications/presentation/components/quiz/futuristic_loading.d
 import 'package:certifications/presentation/widgets/quiz_wizard/desktop_quiz_wizard.dart';
 import 'package:certifications/presentation/widgets/quiz_wizard/mobile_quiz_wizard.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class OnQuizWizardScreen extends StatefulWidget {
   const OnQuizWizardScreen({
@@ -55,6 +57,35 @@ class OnQuizWizardScreen extends StatefulWidget {
   State<OnQuizWizardScreen> createState() => _OnQuizWizardScreenState();
 }
 
+class _InspectionMetricAggregate {
+  int applicableSources = 0;
+  int measuredSources = 0;
+  int unknownSources = 0;
+  num total = 0;
+
+  bool get isApplicable => applicableSources > 0;
+
+  void add(Object? value, {required bool integerOnly}) {
+    applicableSources++;
+    if (value is! num ||
+        !value.isFinite ||
+        value < 0 ||
+        (integerOnly && value % 1 != 0)) {
+      unknownSources++;
+      return;
+    }
+    measuredSources++;
+    total += value;
+  }
+
+  void clear() {
+    applicableSources = 0;
+    measuredSources = 0;
+    unknownSources = 0;
+    total = 0;
+  }
+}
+
 class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
   late final _api = widget.apiService ?? StudyApiService();
   late final _generationApi = widget.generationApi ?? GenerationApiService();
@@ -71,9 +102,16 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
   bool _analyzingSources = false;
   bool _analysisComplete = false;
   String? _analysisStatus;
-  int _inspectedSources = 0;
-  int _inspectedPages = 0;
-  int _inspectedCharacters = 0;
+  final _InspectionMetricAggregate _pdfPageCounts =
+      _InspectionMetricAggregate();
+  final _InspectionMetricAggregate _textCharacterCounts =
+      _InspectionMetricAggregate();
+  final _InspectionMetricAggregate _wavDurations = _InspectionMetricAggregate();
+  int _analysisRunId = 0;
+  Completer<void>? _analysisAbort;
+  ModalRoute<dynamic>? _observedRoute;
+  Animation<double>? _routeAnimation;
+  Animation<double>? _routeCoverAnimation;
   String? _activeStudyId;
   int _generateStep = 0; // tracks which pipeline step is currently running
   String? _generateError;
@@ -90,6 +128,98 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
     if (widget.studyId != null) {
       _loadExistingStudy(widget.studyId!);
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (identical(route, _observedRoute)) return;
+    _routeAnimation?.removeStatusListener(_handleRouteAnimation);
+    _routeCoverAnimation?.removeStatusListener(_handleCoverAnimation);
+    _observedRoute = route;
+    _routeAnimation = route?.animation;
+    _routeCoverAnimation = route?.secondaryAnimation;
+    _routeAnimation?.addStatusListener(_handleRouteAnimation);
+    _routeCoverAnimation?.addStatusListener(_handleCoverAnimation);
+  }
+
+  void _handleRouteAnimation(AnimationStatus status) {
+    if (status == AnimationStatus.reverse) _cancelSourceInspection();
+  }
+
+  void _handleCoverAnimation(AnimationStatus status) {
+    if (status == AnimationStatus.forward) _cancelSourceInspection();
+  }
+
+  void _cancelSourceInspection() {
+    final abort = _analysisAbort;
+    if (abort == null || abort.isCompleted) return;
+    _analysisRunId++;
+    abort.complete();
+    if (mounted && _analyzingSources) {
+      setState(() {
+        _analyzingSources = false;
+        _analysisStatus = null;
+      });
+    }
+  }
+
+  bool _canContinueInspection(int runId, Completer<void> abort) {
+    if (!mounted || runId != _analysisRunId || abort.isCompleted) return false;
+    if (_observedRoute?.isCurrent == false) {
+      _cancelSourceInspection();
+      return false;
+    }
+    return true;
+  }
+
+  int? _nonNegativeInteger(Object? value) {
+    if (value is! num || !value.isFinite || value < 0 || value % 1 != 0) {
+      return null;
+    }
+    return value.toInt();
+  }
+
+  void _recordInspectedSource(StudyAnalysisEvent event) {
+    final mimeType = (event.data['mime_type'] as String? ?? '').toLowerCase();
+    final sourceKind = (event.data['source_kind'] as String? ?? '')
+        .toLowerCase();
+    if (mimeType == 'application/pdf') {
+      _pdfPageCounts.add(event.data['page_count'], integerOnly: true);
+    }
+    if (mimeType.startsWith('text/') || sourceKind == 'report') {
+      _textCharacterCounts.add(
+        event.data['text_char_count'],
+        integerOnly: true,
+      );
+    }
+    if (const {'audio/wav', 'audio/x-wav', 'audio/wave'}.contains(mimeType)) {
+      _wavDurations.add(event.data['duration_seconds'], integerOnly: false);
+    }
+  }
+
+  String _formatInspectionMetric(
+    BuildContext context,
+    String labelKey,
+    _InspectionMetricAggregate metric, {
+    bool isDuration = false,
+  }) {
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final format = isDuration
+        ? NumberFormat('0.######', locale)
+        : NumberFormat.decimalPattern(locale);
+    final formattedTotal = format.format(metric.total);
+    final value = switch ((metric.measuredSources, metric.unknownSources)) {
+      (0, _) => context.tr('sourceInspectionUnknown'),
+      (_, 0) => formattedTotal,
+      (_, final unknownCount) =>
+        context.trParams('sourceInspectionPartialMetric', {
+          'value': formattedTotal,
+          'count': NumberFormat.decimalPattern(locale).format(unknownCount),
+        }),
+    };
+    return context.trParams(labelKey, {'value': value});
   }
 
   Future<void> _loadExistingStudy(String studyId) async {
@@ -152,6 +282,11 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
 
   @override
   void dispose() {
+    _routeAnimation?.removeStatusListener(_handleRouteAnimation);
+    _routeCoverAnimation?.removeStatusListener(_handleCoverAnimation);
+    final abort = _analysisAbort;
+    if (abort != null && !abort.isCompleted) abort.complete();
+    _analysisRunId++;
     wizardData.removeListener(_persistDraftState);
     wizardData.dispose();
     super.dispose();
@@ -189,8 +324,14 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
     }
   }
 
-  Future<void> _uploadAttachedFiles(String studyId) async {
+  Future<void> _uploadAttachedFiles(
+    String studyId, {
+    bool Function()? shouldContinue,
+  }) async {
+    bool canContinue() => mounted && (shouldContinue?.call() ?? true);
+
     for (var index = 0; index < wizardData.attachedFiles.length; index++) {
+      if (!canContinue()) return;
       final file = wizardData.attachedFiles[index];
       setState(() {
         _uploadFileIndex = index;
@@ -210,11 +351,12 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
               bytes: file.bytes,
               mimeType: _mimeType(file.kind),
               onProgress: (progress) {
-                if (!mounted) return;
+                if (!canContinue()) return;
                 setState(() => _uploadProgress = progress);
               },
             )
           : await _api.getSource(studyId, file.remoteSourceId!);
+      if (!canContinue()) return;
       file.remoteSourceId = source.id;
       if (source.selectionKind != selectionKind ||
           source.selectionSpec != selectionSpec) {
@@ -225,9 +367,11 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
           spec: selectionSpec,
         );
       }
+      if (!canContinue()) return;
       file.remoteSourceId = source.id;
       wizardData.addExistingSource(source);
       final refreshed = await _api.get(studyId);
+      if (!canContinue()) return;
       wizardData.setAccountQuota(
         usedBytes: refreshed.accountUsedBytes,
         maxBytes: refreshed.accountMaxBytes,
@@ -261,25 +405,34 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
 
   Future<void> _inspectSources() async {
     if (_analyzingSources || _generating) return;
+    final runId = ++_analysisRunId;
+    final abort = Completer<void>();
+    _analysisAbort = abort;
     setState(() {
       _analyzingSources = true;
       _analysisComplete = false;
       _analysisStatus = context.tr('sourceInspectionStarting');
-      _inspectedSources = 0;
-      _inspectedPages = 0;
-      _inspectedCharacters = 0;
+      _pdfPageCounts.clear();
+      _textCharacterCounts.clear();
+      _wavDurations.clear();
     });
     try {
       await _ensureStudyDraft();
+      if (!_canContinueInspection(runId, abort)) return;
       final studyId = _activeStudyId;
       if (studyId == null) {
         throw const FormatException('Study draft unavailable');
       }
-      await _uploadAttachedFiles(studyId);
+      await _uploadAttachedFiles(
+        studyId,
+        shouldContinue: () => _canContinueInspection(runId, abort),
+      );
+      if (!_canContinueInspection(runId, abort)) return;
       await _api.streamAnalysis(
         studyId,
+        abortTrigger: abort.future,
         onEvent: (event) {
-          if (!mounted) return;
+          if (!_canContinueInspection(runId, abort)) return;
           switch (event.name) {
             case 'stage':
               setState(
@@ -288,11 +441,7 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
               break;
             case 'source_inspected':
               setState(() {
-                _inspectedSources++;
-                _inspectedPages +=
-                    (event.data['page_count'] as num?)?.toInt() ?? 0;
-                _inspectedCharacters +=
-                    (event.data['text_char_count'] as num?)?.toInt() ?? 0;
+                _recordInspectedSource(event);
                 _analysisStatus = context.tr('sourceInspectionRunning');
               });
               break;
@@ -304,32 +453,62 @@ class _OnQuizWizardScreenState extends State<OnQuizWizardScreen> {
             case 'complete':
               setState(() {
                 _analysisComplete = true;
-                _analysisStatus = context.trParams('sourceInspectionComplete', {
-                  'count':
-                      '${event.data['inspected_sources'] ?? _inspectedSources}',
-                  'pages': '$_inspectedPages',
-                  'characters': '$_inspectedCharacters',
-                });
+                final count = _nonNegativeInteger(
+                  event.data['inspected_sources'],
+                );
+                final lines = <String>[
+                  context.trParams('sourceInspectionComplete', {
+                    'count': count == null
+                        ? context.tr('sourceInspectionUnknown')
+                        : NumberFormat.decimalPattern(
+                            Localizations.localeOf(context).toLanguageTag(),
+                          ).format(count),
+                  }),
+                  if (_pdfPageCounts.isApplicable)
+                    _formatInspectionMetric(
+                      context,
+                      'sourceInspectionPdfPages',
+                      _pdfPageCounts,
+                    ),
+                  if (_textCharacterCounts.isApplicable)
+                    _formatInspectionMetric(
+                      context,
+                      'sourceInspectionTextCharacters',
+                      _textCharacterCounts,
+                    ),
+                  if (_wavDurations.isApplicable)
+                    _formatInspectionMetric(
+                      context,
+                      'sourceInspectionWavDuration',
+                      _wavDurations,
+                      isDuration: true,
+                    ),
+                ];
+                _analysisStatus = lines.join('\n');
               });
               break;
           }
         },
       );
+      if (!_canContinueInspection(runId, abort)) return;
       if (!_analysisComplete && mounted) {
         setState(() => _analysisStatus = context.tr('sourceInspectionError'));
       }
     } on StudyApiException catch (error) {
-      if (!mounted) return;
+      if (!_canContinueInspection(runId, abort)) return;
       setState(() {
         _analysisStatus = error.statusCode == 404 || error.statusCode == 405
             ? context.tr('sourceInspectionUnavailable')
             : context.tr('sourceInspectionError');
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!_canContinueInspection(runId, abort)) return;
       setState(() => _analysisStatus = context.tr('sourceInspectionError'));
     } finally {
-      if (mounted) setState(() => _analyzingSources = false);
+      if (identical(_analysisAbort, abort)) _analysisAbort = null;
+      if (mounted && runId == _analysisRunId) {
+        setState(() => _analyzingSources = false);
+      }
     }
   }
 

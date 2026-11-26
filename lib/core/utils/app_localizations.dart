@@ -123,8 +123,13 @@ class AppLocalizations {
           'Checks available page, duration, and text metadata. It does not create a study summary; you can skip it and start.',
       'sourceInspectionStarting': 'Preparing sources for inspection…',
       'sourceInspectionRunning': 'Inspecting selected sources…',
-      'sourceInspectionComplete':
-          'Inspected {count} source(s): {pages} pages and {characters} text characters.',
+      'sourceInspectionComplete': 'Inspected {count} source(s).',
+      'sourceInspectionPdfPages': 'PDF pages: {value}',
+      'sourceInspectionTextCharacters': 'Text/Reports characters: {value}',
+      'sourceInspectionWavDuration': 'WAV duration: {value} seconds',
+      'sourceInspectionUnknown': 'unknown',
+      'sourceInspectionPartialMetric':
+          '{value} measured; {count} source(s) unknown',
       'sourceInspectionError': 'Source inspection could not be completed.',
       'sourceInspectionUnavailable':
           'Source inspection is not available right now. You can still start.',
@@ -739,8 +744,13 @@ class AppLocalizations {
           'Verifica páginas, duração e metadados de texto disponíveis. Não cria um resumo do estudo; você pode pular e começar.',
       'sourceInspectionStarting': 'Preparando fontes para inspeção…',
       'sourceInspectionRunning': 'Inspecionando fontes selecionadas…',
-      'sourceInspectionComplete':
-          '{count} fonte(s) inspecionada(s): {pages} páginas e {characters} caracteres de texto.',
+      'sourceInspectionComplete': '{count} fonte(s) inspecionada(s).',
+      'sourceInspectionPdfPages': 'Páginas do PDF: {value}',
+      'sourceInspectionTextCharacters': 'Caracteres de texto/Reports: {value}',
+      'sourceInspectionWavDuration': 'Duração do WAV: {value} segundos',
+      'sourceInspectionUnknown': 'desconhecido',
+      'sourceInspectionPartialMetric':
+          '{value} medido(s); {count} fonte(s) desconhecida(s)',
       'sourceInspectionError':
           'Não foi possível concluir a inspeção das fontes.',
       'sourceInspectionUnavailable':
@@ -1362,8 +1372,13 @@ class AppLocalizations {
           'ตรวจสอบจำนวนหน้า ระยะเวลา และข้อมูลข้อความที่มีอยู่ การตรวจนี้ไม่สร้างสรุปการศึกษา คุณข้ามและเริ่มได้',
       'sourceInspectionStarting': 'กำลังเตรียมแหล่งข้อมูลเพื่อตรวจสอบ…',
       'sourceInspectionRunning': 'กำลังตรวจสอบแหล่งข้อมูลที่เลือก…',
-      'sourceInspectionComplete':
-          'ตรวจสอบ {count} แหล่งแล้ว: {pages} หน้า และข้อความ {characters} ตัวอักษร',
+      'sourceInspectionComplete': 'ตรวจสอบแล้ว {count} แหล่ง',
+      'sourceInspectionPdfPages': 'หน้า PDF: {value}',
+      'sourceInspectionTextCharacters': 'อักขระข้อความ/Reports: {value}',
+      'sourceInspectionWavDuration': 'ระยะเวลา WAV: {value} วินาที',
+      'sourceInspectionUnknown': 'ไม่ทราบ',
+      'sourceInspectionPartialMetric':
+          'วัดได้ {value}; ไม่ทราบอีก {count} แหล่ง',
       'sourceInspectionError': 'ตรวจสอบแหล่งข้อมูลไม่สำเร็จ',
       'sourceInspectionUnavailable':
           'ขณะนี้ตรวจสอบแหล่งข้อมูลไม่ได้ แต่คุณยังเริ่มได้',

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:certifications/core/utils/app_localizations.dart';
@@ -12,6 +13,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+
+class _EventStreamClient extends http.BaseClient {
+  _EventStreamClient(this.body, this.onRequest);
+
+  final String body;
+  final void Function(http.BaseRequest request) onRequest;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    onRequest(request);
+    return http.StreamedResponse(
+      Stream<List<int>>.value(utf8.encode(body)),
+      200,
+      headers: const {'content-type': 'text/event-stream'},
+    );
+  }
+}
 
 void main() {
   test('study detail parses the Rust study, source, and quota contract', () {
@@ -401,25 +419,36 @@ void main() {
   test(
     'analysis stream parses the published stage and source metadata events',
     () async {
-      final client = MockClient((request) async {
-        expect(request.method, 'POST');
-        expect(request.url.path, endsWith('/studies/study-6/analysis/stream'));
-        expect(request.headers['accept'], 'text/event-stream');
-        expect(request.body, isEmpty);
-        return http.Response(
-          'event: stage\ndata: {"study_id":"study-6","stage":"preparing_sources","total_sources":1,"ready_sources":1,"total_bytes":8,"estimate_status":"available","estimated_processing_ms":500}\n\n'
-          'event: source_inspected\ndata: {"stage":"inspecting_source","source_id":"source-6","source_kind":"upload","mime_type":"text/plain","selection_kind":"all","selection_spec":"","size_bytes":8,"page_count":0,"duration_seconds":null,"text_char_count":8,"elapsed_ms":2}\n\n'
-          'event: complete\ndata: {"study_id":"study-6","stage":"ready","inspected_sources":1,"total_ready_sources":1}\n\n',
-          200,
-          headers: {'content-type': 'text/event-stream'},
-        );
-      });
+      final abortTrigger = Completer<void>();
+      final client = _EventStreamClient(
+        'event: stage\ndata: {"study_id":"study-6","stage":"preparing_sources","total_sources":1,"ready_sources":1,"total_bytes":8,"estimate_status":"available","estimated_processing_ms":500}\n\n'
+        'event: source_inspected\ndata: {"stage":"inspecting_source","source_id":"source-6","source_kind":"upload","mime_type":"text/plain","selection_kind":"all","selection_spec":"","size_bytes":8,"page_count":null,"duration_seconds":null,"text_char_count":8,"elapsed_ms":2}\n\n'
+        'event: complete\ndata: {"study_id":"study-6","stage":"ready","inspected_sources":1,"total_ready_sources":1}\n\n',
+        (request) {
+          expect(request.method, 'POST');
+          expect(request, isA<http.Abortable>());
+          expect(
+            (request as http.Abortable).abortTrigger,
+            same(abortTrigger.future),
+          );
+          expect(
+            request.url.path,
+            endsWith('/studies/study-6/analysis/stream'),
+          );
+          expect(request.headers['accept'], 'text/event-stream');
+          expect((request as http.Request).body, isEmpty);
+        },
+      );
       final service = StudyApiService(
         adapter: ApiAdapter(client: client, csrfTokenProvider: () => null),
       );
       final events = <StudyAnalysisEvent>[];
 
-      await service.streamAnalysis('study-6', onEvent: events.add);
+      await service.streamAnalysis(
+        'study-6',
+        onEvent: events.add,
+        abortTrigger: abortTrigger.future,
+      );
 
       expect(events.map((event) => event.name), [
         'stage',
@@ -427,7 +456,7 @@ void main() {
         'complete',
       ]);
       expect(events.first.data['estimated_processing_ms'], 500);
-      expect(events[1].data['page_count'], 0);
+      expect(events[1].data['page_count'], isNull);
       expect(events[1].data['text_char_count'], 8);
       expect(events.last.data['total_ready_sources'], 1);
       expect(events.last.data.containsKey('summary'), isFalse);
