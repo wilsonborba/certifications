@@ -495,15 +495,20 @@ void main() {
       StudySelection.audio('ms:0-12500,30000-45000'),
       'ms:0-12500,30000-45000',
     );
+    expect(StudySelection.audio('ms:0-10,10-20'), 'ms:0-20');
+    expect(StudySelection.audio('ms:0-10,11-20'), 'ms:0-10,11-20');
+    expect(StudySelection.audio('ms:0-10,11-5'), isNull);
+    expect(StudySelection.audio('ms:0-10,9-20'), isNull);
     expect(StudySelection.audio('ms:0-100,ms:200-300'), isNull);
     expect(StudySelection.audio('ms:300-400,0-100'), isNull);
     expect(StudySelection.passage('p1:0-4', 'A😀B'), 'p1:0-4');
     expect(StudySelection.passage('p1:0-5', 'A😀B'), isNull);
     expect(StudySelection.passage('p1:1-1', 'abc'), isNull);
     expect(
-      StudySelection.passage('p1:0-4,4-5', '\uFEFFA\r\n😀B'),
-      'p1:0-4,4-5',
+      StudySelection.passage('p1:0-4,p1:4-5', '\uFEFFA\r\n😀B'),
+      'p1:0-4,p1:4-5',
     );
+    expect(StudySelection.passage('p1:0-4,4-5', 'ABCDE'), isNull);
     expect(StudySelection.passage('p1:0-6', '\uFEFFA\r\n😀B'), isNull);
     final tooManyPageRanges = List.generate(
       65,
