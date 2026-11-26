@@ -101,6 +101,25 @@ void main() {
     );
   });
 
+  test('text selections use canonical disjoint UTF-16 ranges', () {
+    const source = 'A😀XBC';
+    final first = StudySelection.includePassageRange('', 1, 3, source);
+    expect(first, 'p1:1-3');
+    expect(
+      StudySelection.includePassageRange(first!, 5, 6, source),
+      'p1:1-3,p1:5-6',
+    );
+    expect(
+      StudySelection.includePassageRange('', 2, 3, source),
+      isNull,
+      reason: 'offset 2 would split the emoji surrogate pair',
+    );
+    expect(StudySelection.passageRanges('p1:1-3,p1:5-6', source), [
+      (1, 3),
+      (5, 6),
+    ]);
+  });
+
   test(
     'metadata is bounded, contains no source content, and clears by draft',
     () async {
@@ -187,6 +206,13 @@ void main() {
       expect(draft.attachedFiles.single.selectionKind, 'passages');
       expect(draft.attachedFiles.single.selectionSpec, selectedSpec);
       expect(draft.attachedFiles.single.isWholeDocument, isFalse);
+      final selectedSpans = tester
+          .widget<SelectableText>(find.byType(SelectableText))
+          .textSpan!
+          .children!
+          .whereType<TextSpan>()
+          .where((span) => span.style?.backgroundColor != null);
+      expect(selectedSpans.map((span) => span.text), ['alpha']);
     },
   );
 
@@ -285,6 +311,63 @@ void main() {
     expect(draft.attachedFiles.single.isWholeDocument, isTrue);
     expect(draft.attachedFiles.single.selectionKind, 'all');
   });
+
+  testWidgets(
+    'text selection updates payload and highlights each source range',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final draft = _fileStudyDraft(utf8.encode('A😀XBC'));
+
+      await tester.pumpWidget(
+        _wizard(
+          studyId: studyId,
+          draft: draft,
+          api: _SelectionStudyApi(),
+          progressStore: store,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await _openFileSelector(tester);
+
+      var selectable = tester.widget<SelectableText>(
+        find.byType(SelectableText),
+      );
+      selectable.onSelectionChanged!(
+        const TextSelection(baseOffset: 1, extentOffset: 3),
+        SelectionChangedCause.longPress,
+      );
+      await tester.pumpAndSettle();
+      expect(draft.attachedFiles.single.selectionSpec, 'p1:1-3');
+      expect(draft.attachedFiles.single.selectionKind, 'passages');
+      expect(
+        StudySelection.passage(
+          draft.attachedFiles.single.selectionSpec,
+          'A😀XBC',
+        ),
+        'p1:1-3',
+      );
+
+      selectable = tester.widget<SelectableText>(find.byType(SelectableText));
+      selectable.onSelectionChanged!(
+        const TextSelection(baseOffset: 5, extentOffset: 6),
+        SelectionChangedCause.longPress,
+      );
+      await tester.pumpAndSettle();
+      expect(draft.attachedFiles.single.selectionSpec, 'p1:1-3,p1:5-6');
+
+      final spans = tester
+          .widget<SelectableText>(find.byType(SelectableText))
+          .textSpan!
+          .children!
+          .whereType<TextSpan>()
+          .where((span) => span.style?.backgroundColor != null)
+          .toList();
+      expect(spans.map((span) => span.text), ['😀', 'C']);
+    },
+  );
 
   testWidgets('failed owner study read does not hydrate local ranges', (
     tester,

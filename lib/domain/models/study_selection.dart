@@ -87,6 +87,62 @@ class StudySelection {
     return ranges.map((r) => 'p1:${r.$1}-${r.$2}').join(',');
   }
 
+  /// Adds a text selection expressed in UTF-16 code-unit offsets and returns
+  /// the canonical passage spec. Overlapping selections are combined; separate
+  /// selections remain ordered source ranges.
+  static String? includePassageRange(
+    String currentSpec,
+    int start,
+    int end,
+    String normalizedText,
+  ) {
+    final text = normalizeText(normalizedText);
+    if (start < 0 || end <= start || end > text.length) return null;
+    if (!_isUtf16Boundary(text, start) || !_isUtf16Boundary(text, end)) {
+      return null;
+    }
+
+    final ranges = passageRanges(currentSpec, text) ?? <(int, int)>[];
+    ranges.add((start, end));
+    ranges.sort((a, b) => a.$1.compareTo(b.$1));
+    final merged = <(int, int)>[];
+    for (final range in ranges) {
+      if (merged.isNotEmpty && range.$1 <= merged.last.$2) {
+        merged[merged.length - 1] = (
+          merged.last.$1,
+          range.$2 > merged.last.$2 ? range.$2 : merged.last.$2,
+        );
+      } else {
+        merged.add(range);
+      }
+    }
+    final spec = merged.map((range) => 'p1:${range.$1}-${range.$2}').join(',');
+    return passage(spec, text);
+  }
+
+  /// Returns validated passage offsets for rendering source highlights.
+  static List<(int, int)>? passageRanges(String input, String text) {
+    final canonical = passage(input, text);
+    if (canonical == null) return null;
+    return [
+      for (final item in canonical.split(','))
+        (
+          int.parse(item.substring(3, item.indexOf('-', 3))),
+          int.parse(item.substring(item.indexOf('-', 3) + 1)),
+        ),
+    ];
+  }
+
+  static bool _isUtf16Boundary(String text, int offset) {
+    if (offset <= 0 || offset >= text.length) return true;
+    final previous = text.codeUnitAt(offset - 1);
+    final next = text.codeUnitAt(offset);
+    return !(previous >= 0xD800 &&
+        previous <= 0xDBFF &&
+        next >= 0xDC00 &&
+        next <= 0xDFFF);
+  }
+
   static List<(int, int)>? _parseRanges(
     String input, {
     required bool allowSingleton,

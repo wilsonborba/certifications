@@ -113,6 +113,73 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
     return null;
   }
 
+  String get _normalizedText =>
+      StudySelection.normalizeText(utf8.decode(widget.file.bytes));
+
+  TextSpan _textPreviewSpan(Color highlightColor, Color highlightTextColor) {
+    final text = _normalizedText;
+    final ranges =
+        widget.file.isWholeDocument || widget.file.selectionKind != 'passages'
+        ? null
+        : StudySelection.passageRanges(widget.file.selectionSpec, text);
+    if (ranges == null || ranges.isEmpty) return TextSpan(text: text);
+
+    final spans = <TextSpan>[];
+    var cursor = 0;
+    for (final (start, end) in ranges) {
+      if (cursor < start) {
+        spans.add(TextSpan(text: text.substring(cursor, start)));
+      }
+      spans.add(
+        TextSpan(
+          text: text.substring(start, end),
+          style: TextStyle(
+            backgroundColor: highlightColor,
+            color: highlightTextColor,
+          ),
+        ),
+      );
+      cursor = end;
+    }
+    if (cursor < text.length) {
+      spans.add(TextSpan(text: text.substring(cursor)));
+    }
+    return TextSpan(children: spans);
+  }
+
+  void _handleTextSelection(TextSelection selection, SelectionChangedCause? _) {
+    if (!mounted || selection.isCollapsed) return;
+    final file = widget.file;
+    final existingSpec =
+        !file.isWholeDocument && file.selectionKind == 'passages'
+        ? file.selectionSpec
+        : '';
+    final spec = StudySelection.includePassageRange(
+      existingSpec,
+      selection.start,
+      selection.end,
+      _normalizedText,
+    );
+    if (spec == null ||
+        (!file.isWholeDocument &&
+            file.selectionKind == 'passages' &&
+            spec == file.selectionSpec)) {
+      return;
+    }
+    setState(() {
+      _spec.value = TextEditingValue(
+        text: spec,
+        selection: TextSelection.collapsed(offset: spec.length),
+      );
+      widget.wizardData.updateFileSelection(
+        file,
+        isWholeDocument: false,
+        selectionKind: 'passages',
+        selectionSpec: spec,
+      );
+    });
+  }
+
   @override
   void dispose() {
     _spec.dispose();
@@ -224,6 +291,13 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
             ),
           ] else if (isText) ...[
             const SizedBox(height: 8),
+            Text(
+              context.tr('passageSelectionHint'),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 6),
             Container(
               constraints: const BoxConstraints(maxHeight: 360),
               width: double.infinity,
@@ -234,10 +308,13 @@ class _GranularRangeSelectorState extends State<GranularRangeSelector> {
                 border: Border.all(color: scheme.outlineVariant),
               ),
               child: SingleChildScrollView(
-                child: SelectableText(
-                  StudySelection.normalizeText(
-                    utf8.decode(file.bytes, allowMalformed: true),
+                child: SelectableText.rich(
+                  _textPreviewSpan(
+                    scheme.secondaryContainer,
+                    scheme.onSecondaryContainer,
                   ),
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  onSelectionChanged: _handleTextSelection,
                 ),
               ),
             ),
