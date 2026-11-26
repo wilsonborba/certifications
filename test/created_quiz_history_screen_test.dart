@@ -3,7 +3,6 @@ import 'package:certifications/domain/models/study_history.dart';
 import 'package:certifications/domain/services/study_history_api_service.dart';
 import 'package:certifications/presentation/widgets/completed_quizzes/created_quiz_history_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _HistoryApi extends StudyHistoryApiService {

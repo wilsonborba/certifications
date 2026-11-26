@@ -123,10 +123,7 @@ class CertificateVerificationApiService {
       } on FormatException {
         // Keep the status code if an intermediary returns a non-JSON error.
       }
-      throw CertificateApiException(
-        response.statusCode,
-        errorCode: errorCode,
-      );
+      throw CertificateApiException(response.statusCode, errorCode: errorCode);
     }
   }
 }
